@@ -8,7 +8,5 @@ namespace Pos.Infrastructure.Platform;
 /// </summary>
 public sealed class SystemCurrentUser : ICurrentUser
 {
-    public static readonly Guid SystemUserId = Guid.Parse("00000000-0000-7000-8000-000000000001");
-
-    public Guid UserId => SystemUserId;
+    public Guid UserId => SystemUser.Id;
 }

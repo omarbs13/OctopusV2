@@ -3,6 +3,7 @@ using Pos.Domain.Common;
 using Pos.Domain.Products;
 
 using Pos.Application.Abstractions;
+using Pos.Application.Inventory;
 
 namespace Pos.Application.Products;
 
@@ -15,7 +16,9 @@ internal static class ProductRules
         Func<T, string?> sku,
         Func<T, string?> barcode,
         Func<T, string?> priceText,
-        Func<T, string?> unitCode)
+        Func<T, string?> unitCode,
+        Func<T, bool> tracksInventory,
+        Func<T, string?> minimumStockText)
     {
         validator.RuleFor(x => Product.NormalizeName(name(x)))
             .Cascade(CascadeMode.Stop)
@@ -46,6 +49,30 @@ internal static class ProductRules
         validator.RuleFor(x => unitCode(x))
             .Must(UnitOfMeasure.IsValidCode).WithMessage(ProductMessages.UnitRequired)
             .OverridePropertyName(ProductFields.UnitCode);
+
+        validator.RuleFor(x => ParseMinimum(tracksInventory(x), minimumStockText(x), unitCode(x)))
+            .Must(r => r is not { Error: not null })
+            .WithMessage(x =>
+            {
+                var unit = UnitOfMeasure.Find(unitCode(x));
+                var error = ParseMinimum(tracksInventory(x), minimumStockText(x), unitCode(x))!.Value.Error!.Value;
+                return InventoryMessages.ForMinimum(error, unit?.Name ?? string.Empty, unit?.DecimalPlaces ?? 0);
+            })
+            .OverridePropertyName(ProductFields.MinimumStock);
+    }
+
+    /// <summary>
+    /// Existencia mínima capturada, con los decimales de la unidad elegida; se ignora si el producto
+    /// no controla inventario. Vacío significa sin mínimo.
+    /// </summary>
+    public static QuantityParseResult? ParseMinimum(bool tracksInventory, string? text, string? unitCode)
+    {
+        if (!tracksInventory || string.IsNullOrWhiteSpace(text))
+        {
+            return null;
+        }
+
+        return Quantity.Parse(text, UnitOfMeasure.Find(unitCode)?.DecimalPlaces ?? 0, allowZero: true);
     }
 
     public static ValidationFailed ToError(FluentValidation.Results.ValidationResult result) =>

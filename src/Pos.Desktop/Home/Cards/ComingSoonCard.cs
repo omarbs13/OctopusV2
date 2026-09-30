@@ -18,28 +18,6 @@ public abstract class ComingSoonCard : DashboardCard
     }
 }
 
-public sealed class LowStockCard(OperationRunner runner) : ComingSoonCard(runner, Strings.Card_InventoryPending)
-{
-    public override string Title => Strings.Card_LowStock;
-
-    public override string Icon => "Icon.Warning";
-
-    public override int Order => 20;
-
-    public override DashboardCardKind Kind => DashboardCardKind.Metric;
-}
-
-public sealed class OutOfStockCard(OperationRunner runner) : ComingSoonCard(runner, Strings.Card_InventoryPending)
-{
-    public override string Title => Strings.Card_OutOfStock;
-
-    public override string Icon => "Icon.Stock";
-
-    public override int Order => 30;
-
-    public override DashboardCardKind Kind => DashboardCardKind.Metric;
-}
-
 public sealed class SalesTodayChart(OperationRunner runner) : ComingSoonCard(runner, Strings.Card_SalesPending)
 {
     public override string Title => Strings.Chart_SalesToday;

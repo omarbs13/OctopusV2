@@ -40,7 +40,8 @@ public sealed class CreateProductHandler
         }
 
         var price = Money.Parse(command.PriceText).Value!.Value;
-        var product = Product.Create(command.Name, sku, barcode, price, command.UnitCode);
+        var minimum = ProductRules.ParseMinimum(command.TracksInventory, command.MinimumStockText, command.UnitCode)?.Value;
+        var product = Product.Create(command.Name, sku, barcode, price, command.UnitCode, command.TracksInventory, minimum);
         ProductImages.Apply(product, command.Image);
         _products.Add(product);
 

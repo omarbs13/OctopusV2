@@ -19,6 +19,8 @@ internal static class ScenarioSql
             "PriceCents" INTEGER NOT NULL,
             "UnitCode" TEXT NOT NULL DEFAULT 'H87',
             "IsActive" INTEGER NOT NULL,
+            "TracksInventory" INTEGER NOT NULL DEFAULT 0,
+            "MinimumStock" INTEGER NULL,
             "CreatedAt" TEXT NOT NULL,
             "CreatedBy" TEXT NOT NULL,
             "UpdatedAt" TEXT NOT NULL,

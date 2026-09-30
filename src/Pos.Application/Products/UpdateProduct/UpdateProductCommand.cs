@@ -10,4 +10,6 @@ public sealed record UpdateProductCommand(
     string PriceText,
     string UnitCode,
     bool IsActive,
-    ProductImageChange? Image = null);
+    ProductImageChange? Image = null,
+    bool TracksInventory = false,
+    string? MinimumStockText = null);

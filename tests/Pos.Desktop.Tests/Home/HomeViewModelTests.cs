@@ -1,5 +1,6 @@
 using Pos.Desktop.Home;
 using Pos.Desktop.Home.Cards;
+using Pos.Desktop.Inventory;
 using Pos.Desktop.Navigation;
 using Pos.Desktop.Resources;
 using Pos.Desktop.Tests.TestSupport;
@@ -58,20 +59,26 @@ public sealed class HomeViewModelTests : IDisposable
     }
 
     [Fact]
-    public async Task ExistenciasYVentas_EstadoVacioSinNumeros()
+    public async Task Ventas_EstadoVacioSinNumeros_EInventarioMuestraConteoNavegable()
     {
         await Home.OnActivatedAsync();
 
-        var empty = Home.Cards.Where(c => c is not ActiveProductsCard).ToList();
-        Assert.Equal(5, empty.Count);
-        Assert.All(empty, c =>
+        Assert.All(Home.Charts, c =>
         {
             Assert.Equal(DashboardCardState.Empty, c.State);
             Assert.Null(c.Value);
             Assert.False(c.IsNavigable);
+            Assert.Equal(Strings.Card_SalesPending, c.Message);
         });
-        Assert.All(Home.Metrics.Where(c => c is not ActiveProductsCard), c => Assert.Equal(Strings.Card_InventoryPending, c.Message));
-        Assert.All(Home.Charts, c => Assert.Equal(Strings.Card_SalesPending, c.Message));
+
+        var inventory = Home.Cards.Where(c => c is LowStockCard or OutOfStockCard).ToList();
+        Assert.Equal(2, inventory.Count);
+        Assert.All(inventory, c =>
+        {
+            Assert.Equal(DashboardCardState.Ready, c.State);
+            Assert.Equal("0", c.Value);
+            Assert.True(c.IsNavigable);
+        });
     }
 
     [Fact]
@@ -99,7 +106,7 @@ public sealed class HomeViewModelTests : IDisposable
         await navigator.NavigateAsync("home");
         var home = (HomeViewModel)navigator.CurrentPage!;
 
-        await home.ActivateCardCommand.ExecuteAsync(home.Cards.OfType<LowStockCard>().Single());
+        await home.ActivateCardCommand.ExecuteAsync(home.Cards.OfType<SalesTodayChart>().Single());
         Assert.Equal("home", navigator.CurrentEntryId);
 
         await home.ActivateCardCommand.ExecuteAsync(home.Cards.OfType<ActiveProductsCard>().Single());

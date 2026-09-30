@@ -123,4 +123,67 @@
   <data name="Unsaved_Discard" xml:space="preserve"><value>Descartar</value></data>
   <data name="Unsaved_KeepEditing" xml:space="preserve"><value>Seguir editando</value></data>
   <data name="Common_ViewNotRegistered" xml:space="preserve"><value>Esta pantalla no está disponible. Contacte a soporte.</value></data>
+  <data name="Editor_InventorySection" xml:space="preserve"><value>Inventario</value></data>
+  <data name="Editor_TracksInventory" xml:space="preserve"><value>Controla inventario</value></data>
+  <data name="Editor_MinimumStock" xml:space="preserve"><value>Existencia mínima</value></data>
+  <data name="Editor_MinimumStockHint" xml:space="preserve"><value>Opcional; genera alertas de existencia baja</value></data>
+  <data name="Editor_OnHand" xml:space="preserve"><value>Existencia actual</value></data>
+  <data name="Editor_InventoryLocked" xml:space="preserve"><value>Tiene movimientos de inventario; no se puede cambiar la unidad ni dejar de controlar el inventario.</value></data>
+  <data name="Products_ColStock" xml:space="preserve"><value>Existencia</value></data>
+  <data name="Products_ViewMovements" xml:space="preserve"><value>Ver movimientos</value></data>
+  <data name="Stock_SearchPlaceholder" xml:space="preserve"><value>Buscar por nombre, SKU o código de barras (Ctrl+F)</value></data>
+  <data name="Stock_FilterAll" xml:space="preserve"><value>Todos</value></data>
+  <data name="Stock_FilterNormal" xml:space="preserve"><value>Normal</value></data>
+  <data name="Stock_FilterLow" xml:space="preserve"><value>Existencia baja</value></data>
+  <data name="Stock_FilterOut" xml:space="preserve"><value>Sin existencia</value></data>
+  <data name="Stock_ShowInactive" xml:space="preserve"><value>Incluir inactivos</value></data>
+  <data name="Stock_Register" xml:space="preserve"><value>Registrar movimiento</value></data>
+  <data name="Stock_ColName" xml:space="preserve"><value>Nombre</value></data>
+  <data name="Stock_ColSku" xml:space="preserve"><value>SKU</value></data>
+  <data name="Stock_ColOnHand" xml:space="preserve"><value>Existencia</value></data>
+  <data name="Stock_ColUnit" xml:space="preserve"><value>Unidad</value></data>
+  <data name="Stock_ColMinimum" xml:space="preserve"><value>Mínimo</value></data>
+  <data name="Stock_ColStatus" xml:space="preserve"><value>Estado</value></data>
+  <data name="Stock_StatusNormal" xml:space="preserve"><value>Normal</value></data>
+  <data name="Stock_StatusLow" xml:space="preserve"><value>Baja</value></data>
+  <data name="Stock_StatusOut" xml:space="preserve"><value>Sin existencia</value></data>
+  <data name="Stock_Inactive" xml:space="preserve"><value>Inactivo</value></data>
+  <data name="Stock_EmptyNone" xml:space="preserve"><value>Ningún producto controla inventario. Actívelo en Catálogos &gt; Productos.</value></data>
+  <data name="Stock_EmptyNoMatch" xml:space="preserve"><value>No hay productos que coincidan.</value></data>
+  <data name="Movements_Product" xml:space="preserve"><value>Producto</value></data>
+  <data name="Movements_ProductSearch" xml:space="preserve"><value>Buscar producto...</value></data>
+  <data name="Movements_ClearProduct" xml:space="preserve"><value>Quitar filtro</value></data>
+  <data name="Movements_Type" xml:space="preserve"><value>Tipo</value></data>
+  <data name="Movements_AllTypes" xml:space="preserve"><value>Todos</value></data>
+  <data name="Movements_From" xml:space="preserve"><value>Desde</value></data>
+  <data name="Movements_To" xml:space="preserve"><value>Hasta</value></data>
+  <data name="Movements_Register" xml:space="preserve"><value>Registrar movimiento</value></data>
+  <data name="Movements_ColDate" xml:space="preserve"><value>Fecha y hora</value></data>
+  <data name="Movements_ColProduct" xml:space="preserve"><value>Producto</value></data>
+  <data name="Movements_ColType" xml:space="preserve"><value>Tipo</value></data>
+  <data name="Movements_ColQuantity" xml:space="preserve"><value>Cantidad</value></data>
+  <data name="Movements_ColResulting" xml:space="preserve"><value>Existencia resultante</value></data>
+  <data name="Movements_ColUnit" xml:space="preserve"><value>Unidad</value></data>
+  <data name="Movements_ColReason" xml:space="preserve"><value>Motivo</value></data>
+  <data name="Movements_ColReference" xml:space="preserve"><value>Referencia</value></data>
+  <data name="Movements_ColUser" xml:space="preserve"><value>Usuario</value></data>
+  <data name="Movements_Empty" xml:space="preserve"><value>No hay movimientos que coincidan.</value></data>
+  <data name="MovementType_Initial" xml:space="preserve"><value>Inventario inicial</value></data>
+  <data name="MovementType_Receipt" xml:space="preserve"><value>Entrada</value></data>
+  <data name="MovementType_AdjustIn" xml:space="preserve"><value>Ajuste positivo</value></data>
+  <data name="MovementType_AdjustOut" xml:space="preserve"><value>Ajuste negativo</value></data>
+  <data name="MovementEditor_Title" xml:space="preserve"><value>Registrar movimiento</value></data>
+  <data name="MovementEditor_Product" xml:space="preserve"><value>Producto</value></data>
+  <data name="MovementEditor_OnHand" xml:space="preserve"><value>Existencia actual</value></data>
+  <data name="MovementEditor_Type" xml:space="preserve"><value>Tipo</value></data>
+  <data name="MovementEditor_Quantity" xml:space="preserve"><value>Cantidad</value></data>
+  <data name="MovementEditor_WholeHint" xml:space="preserve"><value>Enteros</value></data>
+  <data name="MovementEditor_DecimalHint" xml:space="preserve"><value>Hasta 3 decimales</value></data>
+  <data name="MovementEditor_Resulting" xml:space="preserve"><value>Existencia resultante</value></data>
+  <data name="MovementEditor_Reason" xml:space="preserve"><value>Motivo</value></data>
+  <data name="MovementEditor_Reference" xml:space="preserve"><value>Referencia</value></data>
+  <data name="MovementEditor_ReferenceHint" xml:space="preserve"><value>Folio de factura o remisión</value></data>
+  <data name="MovementEditor_ProductRequired" xml:space="preserve"><value>Elija un producto.</value></data>
+  <data name="MovementEditor_Changed" xml:space="preserve"><value>La existencia cambió mientras capturaba; revise y vuelva a intentar.</value></data>
+  <data name="MovementEditor_Registered" xml:space="preserve"><value>Movimiento registrado. Existencia: {0} {1}.</value></data>
 </root>

@@ -39,6 +39,9 @@ public abstract partial class DashboardCard : ViewModelBase
     /// <summary>Id de la opción de menú a la que lleva la tarjeta, si tiene.</summary>
     public virtual string? NavigateTo => null;
 
+    /// <summary>Argumento que se entrega a la pantalla destino al navegar (por ejemplo, un filtro).</summary>
+    public virtual object? NavigationArgument => null;
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsNavigable), nameof(IsReady), nameof(IsEmpty), nameof(IsError), nameof(IsLoading))]
     public partial DashboardCardState State { get; private set; } = DashboardCardState.Loading;

@@ -14,6 +14,8 @@
     <!-- Repositorio en memoria compartido con Pos.Application.Tests (sin duplicar código). -->
     <Compile Include="..\Pos.Application.Tests\TestSupport\InMemoryProductRepository.cs" Link="TestSupport\InMemoryProductRepository.cs" />
     <Compile Include="..\Pos.Application.Tests\TestSupport\FakeClock.cs" Link="TestSupport\FakeClock.cs" />
+    <Compile Include="..\Pos.Application.Tests\TestSupport\InMemoryInventoryRepository.cs" Link="TestSupport\InMemoryInventoryRepository.cs" />
+    <Compile Include="..\Pos.Application.Tests\TestSupport\FakeWriteTransactions.cs" Link="TestSupport\FakeWriteTransactions.cs" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="Xunit" />

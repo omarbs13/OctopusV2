@@ -34,7 +34,7 @@ public sealed partial class HomeViewModel : PageViewModel
     {
         if (card is { IsNavigable: true, NavigateTo: { } target })
         {
-            await _navigator.NavigateAsync(target);
+            await _navigator.NavigateAsync(target, card.NavigationArgument);
         }
     }
 }

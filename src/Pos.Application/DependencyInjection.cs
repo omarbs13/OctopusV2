@@ -2,6 +2,10 @@ using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using Pos.Application.Diagnostics.ExportDiagnostics;
 using Pos.Application.Diagnostics.GetAppInfo;
+using Pos.Application.Inventory.GetStockAlerts;
+using Pos.Application.Inventory.RegisterMovement;
+using Pos.Application.Inventory.SearchMovements;
+using Pos.Application.Inventory.SearchStock;
 using Pos.Application.Products.CountActiveProducts;
 using Pos.Application.Products.CreateProduct;
 using Pos.Application.Products.DeleteProduct;
@@ -32,6 +36,13 @@ public static class DependencyInjection
         services.AddScoped<CountActiveProductsHandler>();
         services.AddSingleton<ListUnitsOfMeasureHandler>();
         services.AddScoped<PrepareProductImageHandler>();
+
+        // Inventario
+        services.AddSingleton<IValidator<RegisterMovementCommand>, RegisterMovementValidator>();
+        services.AddScoped<RegisterMovementHandler>();
+        services.AddScoped<SearchStockHandler>();
+        services.AddScoped<SearchMovementsHandler>();
+        services.AddScoped<GetStockAlertsHandler>();
 
         // Diagnóstico
         services.AddScoped<GetAppInfoHandler>();

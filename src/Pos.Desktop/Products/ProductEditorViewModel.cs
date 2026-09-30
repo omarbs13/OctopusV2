@@ -29,6 +29,7 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
 
     private Guid? _productId;
     private int _expectedVersion;
+    private long? _onHandThousandths;
 
     /// <summary>Cambio de imagen pendiente; se aplica solo al guardar (003, FR-025).</summary>
     private ProductImageChange _imageChange = ProductImageChange.KeepCurrent;
@@ -60,6 +61,43 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
     [ObservableProperty]
     public partial bool IsActive { get; set; } = true;
 
+    /// <summary>Controla inventario (FR-001); por omisión no.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(OnHandText))]
+    public partial bool TracksInventory { get; set; }
+
+    /// <summary>Existencia mínima capturada; vacío significa sin mínimo.</summary>
+    [ObservableProperty]
+    public partial string MinimumStockText { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string? MinimumStockError { get; set; }
+
+    [ObservableProperty]
+    public partial string? TracksInventoryError { get; set; }
+
+    /// <summary>Con movimientos no se puede cambiar la unidad ni dejar de controlar inventario (FR-006).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanChangeInventorySettings))]
+    public partial bool HasMovements { get; private set; }
+
+    public bool CanChangeInventorySettings => !HasMovements;
+
+    /// <summary>Existencia actual con su unidad, de solo lectura (FR-005); "—" si no controla inventario.</summary>
+    public string OnHandText
+    {
+        get
+        {
+            if (!TracksInventory)
+            {
+                return QuantityConverter.NoValue;
+            }
+
+            var unit = UnitOfMeasure.Find(UnitCode) ?? UnitOfMeasure.Default;
+            return $"{QuantityConverter.Format(_onHandThousandths ?? 0, unit.DecimalPlaces)} {unit.Name}";
+        }
+    }
+
     [ObservableProperty]
     public partial string? NameError { get; set; }
 
@@ -74,6 +112,8 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
 
     [ObservableProperty]
     public partial string? UnitCodeError { get; set; }
+
+    partial void OnUnitCodeChanged(string value) => OnPropertyChanged(nameof(OnHandText));
 
     /// <summary>Imagen que se muestra en la vista previa: la actual o la recién seleccionada.</summary>
     [ObservableProperty]
@@ -146,10 +186,10 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
             "GuardarProducto",
             () => _productId is { } id
                 ? _useCases.RunAsync<UpdateProductHandler, Result<ProductDto>>(h => h.HandleAsync(
-                    new UpdateProductCommand(id, _expectedVersion, Name, Sku, Barcode, PriceText, UnitCode, IsActive, _imageChange),
+                    new UpdateProductCommand(id, _expectedVersion, Name, Sku, Barcode, PriceText, UnitCode, IsActive, _imageChange, TracksInventory, MinimumStockText),
                     CancellationToken.None))
                 : _useCases.RunAsync<CreateProductHandler, Result<ProductDto>>(h => h.HandleAsync(
-                    new CreateProductCommand(Name, Sku, Barcode, PriceText, UnitCode, _imageChange),
+                    new CreateProductCommand(Name, Sku, Barcode, PriceText, UnitCode, _imageChange, TracksInventory, MinimumStockText),
                     CancellationToken.None)),
             new Dictionary<string, object?> { ["ProductId"] = _productId, ["Sku"] = Sku });
 
@@ -176,7 +216,9 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
         Money.TryParse(PriceText, out var price) ? price.Cents.ToString(System.Globalization.CultureInfo.InvariantCulture) : PriceText.Trim(),
         UnitCode,
         IsActive,
-        _imageChange);
+        _imageChange,
+        TracksInventory,
+        TracksInventory ? MinimumStockText.Trim() : string.Empty);
 
     [RelayCommand(CanExecute = nameof(CanChangeImage))]
     private async Task SelectImageAsync()
@@ -285,6 +327,13 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
         PriceText = Money.FromCents(product.PriceCents).ToEditableString();
         UnitCode = product.UnitCode;
         IsActive = product.IsActive;
+        TracksInventory = product.TracksInventory;
+        MinimumStockText = product.MinimumStockThousandths is { } minimum
+            ? Quantity.FromThousandths(minimum).ToEditableString(product.DecimalPlaces)
+            : string.Empty;
+        _onHandThousandths = product.OnHandThousandths;
+        HasMovements = product.HasMovements;
+        OnPropertyChanged(nameof(OnHandText));
         PreviewImage = product.Image;
         ImageError = null;
         _imageChange = ProductImageChange.KeepCurrent;
@@ -311,12 +360,18 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
             case ProductFields.UnitCode:
                 UnitCodeError = message;
                 break;
+            case ProductFields.MinimumStock:
+                MinimumStockError = message;
+                break;
+            case ProductFields.TracksInventory:
+                TracksInventoryError = message;
+                break;
         }
     }
 
     private void ClearErrors()
     {
-        NameError = SkuError = BarcodeError = PriceError = UnitCodeError = null;
+        NameError = SkuError = BarcodeError = PriceError = UnitCodeError = MinimumStockError = TracksInventoryError = null;
         FocusField = null;
     }
 }
@@ -330,4 +385,6 @@ internal sealed record ProductFormState(
     string Price,
     string UnitCode,
     bool IsActive,
-    ProductImageChange Image);
+    ProductImageChange Image,
+    bool TracksInventory,
+    string MinimumStock);

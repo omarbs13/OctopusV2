@@ -14,6 +14,7 @@ internal sealed class UnitOfMeasureConfiguration : IEntityTypeConfiguration<Unit
         builder.Property(u => u.Code).HasMaxLength(UnitOfMeasure.CodeMaxLength).ValueGeneratedNever();
         builder.Property(u => u.Name).HasMaxLength(UnitOfMeasure.NameMaxLength).IsRequired();
         builder.Property(u => u.SortOrder).IsRequired();
+        builder.Property(u => u.DecimalPlaces).IsRequired().HasDefaultValue(0);
         builder.HasData(UnitOfMeasure.All);
     }
 }

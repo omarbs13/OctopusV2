@@ -27,10 +27,21 @@ public sealed class Navigator
 
     public PageViewModel? CurrentPage { get; private set; }
 
-    public async Task<bool> NavigateAsync(string entryId)
+    /// <summary>
+    /// Navega a una opción. Si la pantalla destino implementa <see cref="INavigationArgumentReceiver"/>,
+    /// recibe el argumento antes de <see cref="PageViewModel.OnActivatedAsync"/>, aunque ya sea la
+    /// pantalla actual (research §9).
+    /// </summary>
+    public async Task<bool> NavigateAsync(string entryId, object? argument = null)
     {
         if (entryId == CurrentEntryId)
         {
+            if (argument is not null && CurrentPage is INavigationArgumentReceiver current)
+            {
+                current.Receive(argument);
+                await CurrentPage.OnActivatedAsync();
+            }
+
             return true;
         }
 
@@ -48,6 +59,11 @@ public sealed class Navigator
 
         CurrentEntryId = entry.Id;
         CurrentPage = (PageViewModel)(entry.Resolve?.Invoke(_services) ?? _services.GetRequiredService(entry.ViewModelType));
+        if (argument is not null && CurrentPage is INavigationArgumentReceiver receiver)
+        {
+            receiver.Receive(argument);
+        }
+
         CurrentChanged?.Invoke(this, EventArgs.Empty);
         await CurrentPage.OnActivatedAsync();
         return true;

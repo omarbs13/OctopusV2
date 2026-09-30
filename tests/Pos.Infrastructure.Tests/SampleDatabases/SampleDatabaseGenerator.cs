@@ -1,6 +1,7 @@
 using System.Reflection;
 using Microsoft.Data.Sqlite;
 using Pos.Domain.Common;
+using Pos.Domain.Inventory;
 using Pos.Domain.Products;
 using Pos.Infrastructure.Persistence;
 using Pos.Infrastructure.Tests.TestSupport;
@@ -43,6 +44,23 @@ public sealed class SampleDatabaseGenerator
         DatabaseTestHelpers.Execute(
             db.Directory.Paths.DatabaseFile,
             $"UPDATE Products SET PriceCents = 0 WHERE Sku = '{SampleData.ZeroPriceSku}';");
+
+        // Desde 0.3.0: un producto que controla inventario, con movimientos de los cuatro tipos.
+        await using (var context = db.CreateDbContext())
+        {
+            var product = context.Products.Single(p => p.Sku == SampleData.InventorySku);
+            var unit = UnitOfMeasure.Find(product.UnitCode)!;
+            product.Update(product.Name, product.Sku, product.Barcode, product.Price, product.UnitCode, product.IsActive, tracksInventory: true, Quantity.FromThousandths(5000));
+
+            var stock = ProductStock.Start(product.Id);
+            context.ProductStocks.Add(stock);
+            context.InventoryMovements.AddRange(
+                stock.Record(MovementType.Initial, Quantity.FromThousandths(10_500), unit, true, true, null, null),
+                stock.Record(MovementType.Receipt, Quantity.FromThousandths(2_000), unit, true, true, null, "F-1234"),
+                stock.Record(MovementType.AdjustIn, Quantity.FromThousandths(1_500), unit, true, true, "Conteo físico", null),
+                stock.Record(MovementType.AdjustOut, Quantity.FromThousandths(4_000), unit, true, true, "Merma", null));
+            await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
 
         // Un solo archivo autocontenido: sin WAL pendiente. Primero se liberan las conexiones del pool.
         SqliteConnection.ClearAllPools();
@@ -89,6 +107,14 @@ public static class SampleData
 
     /// <summary>Desde 0.2.0: producto con precio 0, permitido antes de 003.</summary>
     public const string ZeroPriceSku = "MUE-004";
+
+    /// <summary>Desde 0.3.0: producto en kilo que controla inventario, con 4 movimientos.</summary>
+    public const string InventorySku = KilogramSku;
+
+    /// <summary>Desde 0.3.0: existencia final del producto con inventario (10.500 + 2 + 1.5 − 4).</summary>
+    public const long InventoryOnHandThousandths = 10_000;
+
+    public const int InventoryMovementCount = 4;
 
     public static IEnumerable<Product> Products(DateTime utcNow)
     {

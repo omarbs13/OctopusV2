@@ -48,6 +48,14 @@ public sealed partial class Product
 
     public bool IsActive { get; private set; }
 
+    /// <summary>Indica si el producto controla inventario (FR-001); por omisión no.</summary>
+    public bool TracksInventory { get; private set; }
+
+    /// <summary>Existencia mínima para alertas (FR-004). Nulo si no controla inventario o no la define.</summary>
+    public long? MinimumStockThousandths { get; private set; }
+
+    public Quantity? MinimumStock => MinimumStockThousandths is { } m ? Quantity.FromThousandths(m) : null;
+
     public DateTime CreatedAt { get; private set; }
 
     public Guid CreatedBy { get; private set; }
@@ -74,7 +82,14 @@ public sealed partial class Product
     /// </summary>
     public bool ImageChanged { get; private set; }
 
-    public static Product Create(string name, string sku, string? barcode, Money price, string unitCode)
+    public static Product Create(
+        string name,
+        string sku,
+        string? barcode,
+        Money price,
+        string unitCode,
+        bool tracksInventory = false,
+        Quantity? minimumStock = null)
     {
         var product = new Product
         {
@@ -83,12 +98,33 @@ public sealed partial class Product
             Version = 1,
         };
         product.Apply(name, sku, barcode, price, unitCode);
+        product.ApplyInventory(tracksInventory, minimumStock);
         return product;
     }
 
-    public void Update(string name, string sku, string? barcode, Money price, string unitCode, bool isActive)
+    /// <summary>
+    /// Actualiza el producto. Con <paramref name="hasMovements"/> no se puede cambiar la unidad ni
+    /// dejar de controlar inventario (FR-006).
+    /// </summary>
+    public void Update(
+        string name,
+        string sku,
+        string? barcode,
+        Money price,
+        string unitCode,
+        bool isActive,
+        bool tracksInventory = false,
+        Quantity? minimumStock = null,
+        bool hasMovements = false)
     {
+        if (!CanChangeInventorySettings(hasMovements, UnitCode, unitCode, TracksInventory, tracksInventory))
+        {
+            throw new DomainException(
+                "Un producto con movimientos de inventario no puede cambiar de unidad ni dejar de controlar inventario.");
+        }
+
         Apply(name, sku, barcode, price, unitCode);
+        ApplyInventory(tracksInventory, minimumStock);
         IsActive = isActive;
     }
 
@@ -151,6 +187,27 @@ public sealed partial class Product
     /// <summary>El precio de venta debe ser mayor que 0 (003, FR-015).</summary>
     public static bool IsValidPrice(Money price) => price.Cents > 0;
 
+    /// <summary>
+    /// La existencia mínima, si existe, debe respetar los decimales de la unidad (FR-003, FR-004).
+    /// </summary>
+    public static bool IsValidMinimumStock(Quantity? minimum, UnitOfMeasure unit)
+    {
+        ArgumentNullException.ThrowIfNull(unit);
+        return minimum is null
+            || (minimum.Value <= Quantity.FromThousandths(Quantity.MaxCaptureThousandths) && minimum.Value.FitsDecimals(unit.DecimalPlaces));
+    }
+
+    /// <summary>
+    /// Con movimientos no se puede cambiar de unidad ni pasar de controlar a no controlar inventario (FR-006).
+    /// </summary>
+    public static bool CanChangeInventorySettings(
+        bool hasMovements,
+        string currentUnit,
+        string newUnit,
+        bool currentTracks,
+        bool newTracks) =>
+        !hasMovements || (string.Equals(currentUnit, newUnit, StringComparison.Ordinal) && (newTracks || !currentTracks));
+
     /// <summary>Indica si un texto de búsqueda tiene la forma de un código de barras completo.</summary>
     public static bool LooksLikeFullBarcode(string text) => BarcodePattern().IsMatch(text);
 
@@ -192,6 +249,18 @@ public sealed partial class Product
         Barcode = normalizedBarcode;
         Price = price;
         UnitCode = unitCode;
+    }
+
+    private void ApplyInventory(bool tracksInventory, Quantity? minimumStock)
+    {
+        var unit = UnitOfMeasure.Find(UnitCode)!;
+        if (tracksInventory && !IsValidMinimumStock(minimumStock, unit))
+        {
+            throw new DomainException("La existencia mínima no es válida para la unidad del producto.");
+        }
+
+        TracksInventory = tracksInventory;
+        MinimumStockThousandths = tracksInventory ? minimumStock?.Thousandths : null;
     }
 
     [GeneratedRegex(@"^[0-9]{8,14}$", RegexOptions.CultureInvariant)]

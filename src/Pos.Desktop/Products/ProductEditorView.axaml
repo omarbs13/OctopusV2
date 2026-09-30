@@ -57,10 +57,36 @@
       <ComboBox x:Name="UnitBox"
                 HorizontalAlignment="Stretch"
                 ItemsSource="{Binding Units}"
+                IsEnabled="{Binding CanChangeInventorySettings}"
                 SelectedValue="{Binding UnitCode}"
                 SelectedValueBinding="{Binding Code, x:DataType=units:UnitOfMeasureDto}"
                 DisplayMemberBinding="{Binding Name, x:DataType=units:UnitOfMeasureDto}" />
       <TextBlock Classes="error" Text="{Binding UnitCodeError}" IsVisible="{Binding UnitCodeError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+    </StackPanel>
+
+    <!-- Inventario (004, FR-001, FR-004, FR-005, FR-006) -->
+    <StackPanel Classes="field">
+      <forms:FieldLabel Text="{x:Static res:Strings.Editor_InventorySection}" />
+      <CheckBox x:Name="TracksInventoryBox"
+                Content="{x:Static res:Strings.Editor_TracksInventory}"
+                IsChecked="{Binding TracksInventory}"
+                IsEnabled="{Binding CanChangeInventorySettings}" />
+      <TextBlock Classes="error" Text="{Binding TracksInventoryError}" IsVisible="{Binding TracksInventoryError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+      <TextBlock Text="{x:Static res:Strings.Editor_InventoryLocked}" TextWrapping="Wrap" FontSize="12" Opacity="0.75"
+                 IsVisible="{Binding HasMovements}" />
+    </StackPanel>
+
+    <StackPanel Classes="field" IsVisible="{Binding TracksInventory}">
+      <forms:FieldLabel Text="{x:Static res:Strings.Editor_MinimumStock}" />
+      <TextBox x:Name="MinimumStockBox" Text="{Binding MinimumStockText}"
+               PlaceholderText="{x:Static res:Strings.Editor_MinimumStockHint}"
+               IsEnabled="{Binding TracksInventory}" />
+      <TextBlock Classes="error" Text="{Binding MinimumStockError}" IsVisible="{Binding MinimumStockError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+    </StackPanel>
+
+    <StackPanel Classes="field">
+      <forms:FieldLabel Text="{x:Static res:Strings.Editor_OnHand}" />
+      <TextBlock Text="{Binding OnHandText}" />
     </StackPanel>
 
     <!-- Imagen (003, FR-021 a FR-025) -->

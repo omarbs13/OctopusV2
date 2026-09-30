@@ -69,6 +69,8 @@ public sealed class SampleDatabaseUpgradeTests
             Assert.Equal(0, Scalar<long>(connection, $"SELECT PriceCents FROM Products WHERE Sku = '{SampleData.ZeroPriceSku}'"));
         }
 
+        AssertInventory(connection, sampleFile);
+
         foreach (var index in new[] { "IX_Products_Sku", "IX_Products_Barcode", "IX_Products_NameSearch" })
         {
             var sql = Scalar<string>(connection, $"SELECT sql FROM sqlite_master WHERE type = 'index' AND name = '{index}'");
@@ -79,6 +81,28 @@ public sealed class SampleDatabaseUpgradeTests
         foreignKeys.CommandText = "PRAGMA foreign_key_check";
         using var violations = foreignKeys.ExecuteReader();
         Assert.False(violations.Read());
+    }
+
+    /// <summary>004: los productos existentes quedan sin control de inventario, sin existencia ni movimientos (FR-023).</summary>
+    private static void AssertInventory(SqliteConnection connection, string sampleFile)
+    {
+        Assert.Equal(3, Scalar<long>(connection, "SELECT COUNT(*) FROM UnitsOfMeasure WHERE DecimalPlaces = 3 AND Code IN ('KGM', 'LTR', 'MTR')"));
+        Assert.Equal(5, Scalar<long>(connection, "SELECT COUNT(*) FROM UnitsOfMeasure WHERE DecimalPlaces = 0"));
+
+        if (sampleFile == "v0.3.0.db")
+        {
+            Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM Products WHERE TracksInventory = 1"));
+            Assert.Equal(5000, Scalar<long>(connection, $"SELECT MinimumStock FROM Products WHERE Sku = '{SampleData.InventorySku}'"));
+            Assert.Equal(SampleData.InventoryOnHandThousandths, Scalar<long>(connection, "SELECT OnHand FROM ProductStocks"));
+            Assert.Equal(SampleData.InventoryMovementCount, Scalar<long>(connection, "SELECT COUNT(*) FROM InventoryMovements"));
+            Assert.Equal(4, Scalar<long>(connection, "SELECT COUNT(DISTINCT Type) FROM InventoryMovements"));
+        }
+        else
+        {
+            Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM Products WHERE TracksInventory <> 0 OR MinimumStock IS NOT NULL"));
+            Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM ProductStocks"));
+            Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM InventoryMovements"));
+        }
     }
 
     private static T Scalar<T>(SqliteConnection connection, string sql)

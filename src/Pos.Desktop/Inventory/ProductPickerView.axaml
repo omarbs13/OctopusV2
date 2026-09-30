@@ -1,0 +1,24 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Pos.Desktop.Inventory"
+             xmlns:res="using:Pos.Desktop.Resources"
+             x:Class="Pos.Desktop.Inventory.ProductPickerView"
+             x:DataType="vm:ProductPickerViewModel">
+  <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="4" ColumnSpacing="8">
+    <TextBox Grid.Row="0" Grid.ColumnSpan="2"
+             Text="{Binding SearchText}"
+             PlaceholderText="{x:Static res:Strings.Movements_ProductSearch}" />
+    <ComboBox Grid.Row="1" Grid.Column="0" HorizontalAlignment="Stretch"
+              ItemsSource="{Binding Options}"
+              SelectedItem="{Binding Selected}">
+      <ComboBox.ItemTemplate>
+        <DataTemplate x:DataType="vm:ProductOption">
+          <TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" />
+        </DataTemplate>
+      </ComboBox.ItemTemplate>
+    </ComboBox>
+    <Button Grid.Row="1" Grid.Column="1" MinHeight="32"
+            Content="{x:Static res:Strings.Movements_ClearProduct}"
+            Command="{Binding ClearCommand}" />
+  </Grid>
+</UserControl>

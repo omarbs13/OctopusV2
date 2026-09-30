@@ -17,6 +17,92 @@ namespace Pos.Infrastructure.Persistence.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.12");
 
+            modelBuilder.Entity("Pos.Domain.Inventory.InventoryMovement", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("QuantityThousandths")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("Quantity");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(250)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Reference")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("ResultingStockThousandths")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("ResultingStock");
+
+                    b.Property<int>("Sequence")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt", "Id")
+                        .HasDatabaseName("IX_InventoryMovements_CreatedAt");
+
+                    b.HasIndex("ProductId", "Sequence")
+                        .IsUnique()
+                        .HasDatabaseName("IX_InventoryMovements_Product_Sequence");
+
+                    b.HasIndex("Type", "CreatedAt")
+                        .HasDatabaseName("IX_InventoryMovements_Type_CreatedAt");
+
+                    b.ToTable("InventoryMovements", (string)null);
+                });
+
+            modelBuilder.Entity("Pos.Domain.Inventory.ProductStock", b =>
+                {
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("MovementCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("OnHandThousandths")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("OnHand");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("ProductId");
+
+                    b.ToTable("ProductStocks", (string)null);
+                });
+
             modelBuilder.Entity("Pos.Domain.Products.Product", b =>
                 {
                     b.Property<Guid>("Id")
@@ -38,6 +124,10 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("INTEGER");
 
+                    b.Property<long?>("MinimumStockThousandths")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("MinimumStock");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -56,6 +146,11 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("TEXT");
+
+                    b.Property<bool>("TracksInventory")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
 
                     b.Property<string>("UnitCode")
                         .IsRequired()
@@ -90,6 +185,10 @@ namespace Pos.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("NameSearch", "Sku")
                         .HasDatabaseName("IX_Products_NameSearch")
+                        .HasFilter("\"DeletedAt\" IS NULL");
+
+                    b.HasIndex("TracksInventory", "IsActive")
+                        .HasDatabaseName("IX_Products_TracksInventory")
                         .HasFilter("\"DeletedAt\" IS NULL");
 
                     b.ToTable("Products", (string)null);
@@ -142,6 +241,11 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         .HasMaxLength(3)
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("DecimalPlaces")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(0);
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -158,51 +262,77 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         new
                         {
                             Code = "H87",
+                            DecimalPlaces = 0,
                             Name = "Pieza",
                             SortOrder = 1
                         },
                         new
                         {
                             Code = "KGM",
+                            DecimalPlaces = 3,
                             Name = "Kilogramo",
                             SortOrder = 2
                         },
                         new
                         {
                             Code = "GRM",
+                            DecimalPlaces = 0,
                             Name = "Gramo",
                             SortOrder = 3
                         },
                         new
                         {
                             Code = "LTR",
+                            DecimalPlaces = 3,
                             Name = "Litro",
                             SortOrder = 4
                         },
                         new
                         {
                             Code = "MLT",
+                            DecimalPlaces = 0,
                             Name = "Mililitro",
                             SortOrder = 5
                         },
                         new
                         {
                             Code = "MTR",
+                            DecimalPlaces = 3,
                             Name = "Metro",
                             SortOrder = 6
                         },
                         new
                         {
                             Code = "XBX",
+                            DecimalPlaces = 0,
                             Name = "Caja",
                             SortOrder = 7
                         },
                         new
                         {
                             Code = "XPK",
+                            DecimalPlaces = 0,
                             Name = "Paquete",
                             SortOrder = 8
                         });
+                });
+
+            modelBuilder.Entity("Pos.Domain.Inventory.InventoryMovement", b =>
+                {
+                    b.HasOne("Pos.Domain.Products.Product", null)
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Pos.Domain.Inventory.ProductStock", b =>
+                {
+                    b.HasOne("Pos.Domain.Products.Product", null)
+                        .WithOne()
+                        .HasForeignKey("Pos.Domain.Inventory.ProductStock", "ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Pos.Domain.Products.Product", b =>

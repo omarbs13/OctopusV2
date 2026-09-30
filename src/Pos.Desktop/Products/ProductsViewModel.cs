@@ -8,6 +8,8 @@ using Pos.Application.Products.DeleteProduct;
 using Pos.Application.Products.SearchProducts;
 using Pos.Desktop.Common;
 using Pos.Desktop.Forms;
+using Pos.Desktop.Inventory;
+using Pos.Desktop.Navigation;
 using Pos.Desktop.Resources;
 
 namespace Pos.Desktop.Products;
@@ -22,6 +24,7 @@ public sealed partial class ProductsViewModel : PageViewModel, IDisposable
     private readonly OperationRunner _runner;
     private readonly IDialogService _dialogs;
     private readonly Func<ProductEditorViewModel> _editorFactory;
+    private readonly Navigator? _navigator;
 
     private CancellationTokenSource? _pendingSearch;
     private int _searchVersion;
@@ -31,8 +34,10 @@ public sealed partial class ProductsViewModel : PageViewModel, IDisposable
         UseCases useCases,
         OperationRunner runner,
         IDialogService dialogs,
-        Func<ProductEditorViewModel> editorFactory)
+        Func<ProductEditorViewModel> editorFactory,
+        Navigator? navigator = null)
     {
+        _navigator = navigator;
         _useCases = useCases;
         _runner = runner;
         _dialogs = dialogs;
@@ -186,6 +191,16 @@ public sealed partial class ProductsViewModel : PageViewModel, IDisposable
         }
 
         await SearchAsync();
+    }
+
+    /// <summary>Abre Movimientos ya filtrado por el producto de la fila (FR-019).</summary>
+    [RelayCommand]
+    private async Task ViewMovementsAsync(ProductListItemDto? item)
+    {
+        if (item is { TracksInventory: true } && _navigator is not null)
+        {
+            await _navigator.NavigateAsync(InventoryModule.MovementsPageId, new MovementsProductFilter(item.Id, item.Name));
+        }
     }
 
     private bool HasSelection() => SelectedItem is not null;

@@ -11,7 +11,10 @@ public class UpdateProductHandlerTests
 {
     private readonly InMemoryProductRepository _repository = new();
 
-    private UpdateProductHandler Handler => new(_repository, new UpdateProductValidator());
+    private readonly InMemoryInventoryRepository _inventory = new();
+    private readonly FakeWriteTransactions _transactions = new();
+
+    private UpdateProductHandler Handler => new(_repository, new UpdateProductValidator(), _inventory, _transactions);
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 

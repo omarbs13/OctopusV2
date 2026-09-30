@@ -38,6 +38,11 @@ internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Property(p => p.IsActive).IsRequired();
+
+        // Los productos existentes quedan como "no controla inventario" (FR-023).
+        builder.Property(p => p.TracksInventory).IsRequired().HasDefaultValue(false);
+        builder.Property(p => p.MinimumStockThousandths).HasColumnName("MinimumStock");
+        builder.Ignore(p => p.MinimumStock);
         builder.Property(p => p.CreatedAt).IsRequired();
         builder.Property(p => p.CreatedBy).IsRequired();
         builder.Property(p => p.UpdatedAt).IsRequired();
@@ -64,6 +69,10 @@ internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasDatabaseName(BarcodeIndexName)
             .IsUnique()
             .HasFilter("\"DeletedAt\" IS NULL AND \"Barcode\" IS NOT NULL");
+
+        builder.HasIndex(p => new { p.TracksInventory, p.IsActive })
+            .HasDatabaseName("IX_Products_TracksInventory")
+            .HasFilter("\"DeletedAt\" IS NULL");
 
         // Compuesto para que el orden del listado paginado salga del índice (003, research §2).
         builder.HasIndex(p => new { p.NameSearch, p.Sku })

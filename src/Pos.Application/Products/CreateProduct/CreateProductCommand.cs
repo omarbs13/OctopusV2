@@ -10,4 +10,6 @@ public sealed record CreateProductCommand(
     string? Barcode,
     string PriceText,
     string UnitCode,
-    ProductImageChange? Image = null);
+    ProductImageChange? Image = null,
+    bool TracksInventory = false,
+    string? MinimumStockText = null);

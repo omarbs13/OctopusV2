@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Pos.Application;
 using Pos.Application.Abstractions;
 using Pos.Application.Diagnostics;
+using Pos.Application.Inventory;
 using Pos.Application.Products;
 using Pos.Application.Tests.TestSupport;
 using Pos.Desktop.Common;
@@ -21,6 +22,8 @@ public sealed class DesktopTestHost : IDisposable
         var services = new ServiceCollection();
         services.AddApplication();
         services.AddSingleton<IProductRepository>(Repository);
+        services.AddSingleton<IInventoryRepository>(Inventory);
+        services.AddSingleton<IWriteTransactions>(new FakeWriteTransactions());
         services.AddSingleton<ICurrentUser, FixedCurrentUser>();
         services.AddSingleton<IClock>(Clock);
         services.AddSingleton<IAppInfo, FakeAppInfo>();
@@ -36,6 +39,8 @@ public sealed class DesktopTestHost : IDisposable
     }
 
     public InMemoryProductRepository Repository { get; } = new();
+
+    public InMemoryInventoryRepository Inventory { get; } = new();
 
     public FakeDialogService Dialogs { get; } = new();
 

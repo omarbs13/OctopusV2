@@ -45,11 +45,18 @@ public partial class ProductEditorView : UserControl
             return;
         }
 
+        if (field == ProductFields.TracksInventory)
+        {
+            TracksInventoryBox.Focus();
+            return;
+        }
+
         TextBox target = field switch
         {
             ProductFields.Sku => SkuBox,
             ProductFields.Barcode => BarcodeBox,
             ProductFields.Price => PriceBox,
+            ProductFields.MinimumStock => MinimumStockBox,
             _ => NameBox,
         };
         target.Focus();

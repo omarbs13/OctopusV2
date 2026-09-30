@@ -103,7 +103,10 @@ POS_GENERATE_SAMPLE_DB=1 dotnet test --project tests/Pos.Infrastructure.Tests --
 
 Esto crea `tests/Pos.Infrastructure.Tests/SampleDatabases/v<versión>.db` con los datos de
 `SampleData`: 20 productos, incluidos inactivos, uno borrado y uno con acentos. Desde 0.2.0
-también hay uno por kilo, uno con imagen y uno con precio 0 (permitido antes de 0.2.0). El generador se
+también hay uno por kilo, uno con imagen y uno con precio 0 (permitido antes de 0.2.0). Desde 0.3.0
+el producto por kilo controla inventario (mínimo 5) y tiene movimientos de los cuatro tipos, con
+existencia final de 10 kg; los productos de versiones anteriores quedan sin control de inventario.
+El generador se
 niega a sobrescribir un archivo existente. Agrega el `.db` al commit; nunca lo modifiques
 después.
 

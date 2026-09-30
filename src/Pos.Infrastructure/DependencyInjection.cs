@@ -2,9 +2,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Pos.Application.Abstractions;
 using Pos.Application.Diagnostics;
+using Pos.Application.Inventory;
 using Pos.Application.Products;
 using Pos.Application.Startup;
 using Pos.Infrastructure.Diagnostics;
+using Pos.Infrastructure.Inventory;
 using Pos.Infrastructure.Persistence;
 using Pos.Infrastructure.Platform;
 using Pos.Infrastructure.Products;
@@ -35,6 +37,8 @@ public static class DependencyInjection
         services.AddScoped(sp => sp.GetRequiredService<IDbContextFactory<PosDbContext>>().CreateDbContext());
 
         services.AddScoped<IProductRepository, ProductRepository>();
+        services.AddScoped<IInventoryRepository, InventoryRepository>();
+        services.AddScoped<IWriteTransactions, WriteTransactions>();
         services.AddSingleton<IImageProcessor, SkiaImageProcessor>();
         services.AddSingleton<IDatabaseMaintenance, SqliteDatabaseMaintenance>();
         services.AddSingleton<IBackupService, SqliteBackupService>();

@@ -11,9 +11,6 @@ public sealed class ProductRepository : IProductRepository
     // SQLITE_CONSTRAINT_UNIQUE: https://www.sqlite.org/rescode.html#constraint_unique
     private const int SqliteConstraintUnique = 2067;
 
-    /// <summary>Carácter de escape para LIKE.</summary>
-    private const string LikeEscape = @"\";
-
     private readonly PosDbContext _context;
 
     public ProductRepository(PosDbContext context) => _context = context;
@@ -47,23 +44,28 @@ public sealed class ProductRepository : IProductRepository
         // Una página fuera de rango (por ejemplo, tras borrar el último registro) se ajusta a la última válida.
         var page = Math.Clamp(search.Page, 1, ProductPage.PageCount(total, search.PageSize));
 
-        var items = await query
-            .Join(_context.UnitsOfMeasure, p => p.UnitCode, u => u.Code, (p, u) => new { Product = p, UnitName = u.Name })
-            .OrderBy(x => x.Product.NameSearch)
-            .ThenBy(x => x.Product.Sku)
+        var items = await (
+                from p in query
+                join u in _context.UnitsOfMeasure on p.UnitCode equals u.Code
+                join s in _context.ProductStocks on p.Id equals s.ProductId into stocks
+                from s in stocks.DefaultIfEmpty()
+                orderby p.NameSearch, p.Sku
+                select new ProductListItemDto(
+                    p.Id,
+                    p.Name,
+                    p.Sku,
+                    p.Barcode,
+                    p.Price.Cents,
+                    p.UnitCode,
+                    u.Name,
+                    p.IsActive,
+                    p.Version,
+                    p.Image != null ? p.Image.Thumbnail : null,
+                    p.TracksInventory,
+                    p.TracksInventory ? (s == null ? 0L : s.OnHandThousandths) : null,
+                    u.DecimalPlaces))
             .Skip((page - 1) * search.PageSize)
             .Take(search.PageSize)
-            .Select(x => new ProductListItemDto(
-                x.Product.Id,
-                x.Product.Name,
-                x.Product.Sku,
-                x.Product.Barcode,
-                x.Product.Price.Cents,
-                x.Product.UnitCode,
-                x.UnitName,
-                x.Product.IsActive,
-                x.Product.Version,
-                x.Product.Image != null ? x.Product.Image.Thumbnail : null))
             .ToListAsync(cancellationToken);
 
         return new ProductPage(items, total, page, search.PageSize);
@@ -142,35 +144,9 @@ public sealed class ProductRepository : IProductRepository
             query = query.Where(p => p.IsActive);
         }
 
-        if (search.NameText is not null)
-        {
-            var namePattern = LikeContains(search.NameText);
-            var skuPattern = LikeContains(search.SkuText ?? search.NameText);
-            var barcodeText = search.BarcodeText ?? search.NameText;
-            var barcodePattern = LikeContains(barcodeText);
-
-            query = search.BarcodeExact
-                ? query.Where(p =>
-                    EF.Functions.Like(p.NameSearch, namePattern, LikeEscape)
-                    || EF.Functions.Like(p.Sku, skuPattern, LikeEscape)
-                    || p.Barcode == barcodeText)
-                : query.Where(p =>
-                    EF.Functions.Like(p.NameSearch, namePattern, LikeEscape)
-                    || EF.Functions.Like(p.Sku, skuPattern, LikeEscape)
-                    || EF.Functions.Like(p.Barcode, barcodePattern, LikeEscape));
-        }
+        query = ProductTextFilter.Apply(query, search.NameText, search.SkuText, search.BarcodeText, search.BarcodeExact);
 
         return query;
-    }
-
-    /// <summary>Patrón LIKE de "contiene", escapando los comodines del texto buscado.</summary>
-    private static string LikeContains(string text)
-    {
-        var escaped = text
-            .Replace(@"\", @"\\", StringComparison.Ordinal)
-            .Replace("%", @"\%", StringComparison.Ordinal)
-            .Replace("_", @"\_", StringComparison.Ordinal);
-        return $"%{escaped}%";
     }
 
     /// <summary>SQLite indica en el mensaje la columna del índice violado: "UNIQUE constraint failed: Products.Sku".</summary>
