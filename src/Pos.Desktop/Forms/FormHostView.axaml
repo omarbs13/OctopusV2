@@ -7,12 +7,13 @@
   <!-- El DataContext sigue siendo el de la pantalla; el estado del formulario se lee de Host. -->
   <Grid ColumnDefinitions="*,Auto">
     <!-- Listado -->
-    <ContentPresenter Grid.Column="0"
+    <ContentPresenter Grid.Column="0" ClipToBounds="True"
                       Content="{Binding $parent[forms:FormHostView].ListContent}"
                       IsVisible="{Binding $parent[forms:FormHostView].Host.IsListVisible, FallbackValue=True}" />
 
     <!-- Formulario corto: panel lateral sobre el listado -->
-    <Border Grid.Column="1"
+    <Border Grid.Column="1" ZIndex="1"
+            Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
             IsVisible="{Binding $parent[forms:FormHostView].Host.IsSidePanel, FallbackValue=False}"
             Margin="16,0,0,0" Padding="16"
             CornerRadius="6" BorderThickness="1"
