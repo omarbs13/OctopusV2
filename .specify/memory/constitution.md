@@ -1,231 +1,199 @@
 <!--
 Sync Impact Report
-- Version change: sin versión previa (constitución inicial) -> 1.0.0
-- Principios incorporados: sin principios previos -> 1. Operación Offline-First; 2. Arquitectura
-	modular y límites de dependencia; 3. Integridad de datos y sincronización; 4. API y contratos
-	explícitos; 5. Seguridad, permisos y configuración; 6. Calidad, pruebas y compilación
-	reproducible; 7. Experiencia de caja y abstracciones de hardware; 8. Evolución sostenible y
-	observabilidad.
-- Secciones añadidas: Stack y restricciones técnicas; Proceso y convenciones.
-- Secciones eliminadas: ninguna.
-- Seguimiento: TODO(RATIFICATION_DATE), falta confirmar la fecha original de adopción.
+- Version change: 1.0.0 -> 1.1.0 (MINOR: amplía materialmente las obligaciones del
+	Principio IV).
+- Principios modificados: IV. Integridad de datos (mismo título). Se añaden reglas sobre
+	gestión del esquema Code First, orden obligatorio de migración al arrancar, inmutabilidad
+	de migraciones publicadas, revisión del SQL generado, bases de ejemplo por versión con
+	prueba de migración, y siembra de datos (HasData frente al asistente de primer arranque).
+- Motivo: proteger las bases de clientes en producción durante las actualizaciones.
+- Impacto en el código existente: ninguno; aún no hay código de aplicación.
+- Plan de migración: no aplica.
+- Secciones añadidas: ninguna. Secciones eliminadas: ninguna.
+- Pendientes: ninguno.
 Este informe es temporal y debe retirarse antes de confirmar la constitución en un commit.
 -->
-# Constitución de POS Offline-First
+# Constitución de POS
+
+Punto de venta de escritorio para Windows y Linux, desarrollado en .NET 10 con Avalonia y
+SQLite local. El objetivo actual es un POS estable, en producción con clientes reales. Una
+versión web con API solo se desarrollará si un cliente la solicita; hasta entonces está fuera
+del proyecto.
 
 ## Core Principles
 
-### 1. Operación Offline-First
-**NO NEGOCIABLE (MUST)**
-- La caja MUST poder vender, cobrar, imprimir tickets, abrir y cerrar turnos y consultar
-	el catálogo sin internet y sin latencia de red.
-- Toda escritura MUST persistirse primero en SQLite. Ninguna venta ni interacción de la
-	interfaz MUST esperar una respuesta de red.
-- La sincronización MUST ejecutarse en segundo plano, admitir reintentos, ser idempotente
-	y recuperarse de interrupciones a mitad de una operación.
-- Ninguna operación de caja MUST depender de una llamada a la API en tiempo real.
+### I. La venta nunca se detiene (estabilidad primero)
+- El POS funciona completamente sin conexión a internet; ninguna funcionalidad del flujo de
+	venta puede depender de la red.
+- Toda operación que modifique varios registros (una venta, un cobro, un corte de caja) se
+	ejecuta en una única transacción: se guarda completa o no se guarda.
+- Un error inesperado nunca debe cerrar la aplicación ni perder la venta en curso; se registra
+	en el log y se muestra al operador un mensaje comprensible, sin detalles técnicos.
+- SQLite opera en modo WAL. La aplicación realiza respaldos automáticos de la base de datos y
+	siempre respalda antes de aplicar migraciones.
+- La estabilidad tiene prioridad sobre funcionalidades nuevas: un defecto que afecte ventas,
+	cobros o cortes se corrige antes de continuar con otra funcionalidad.
 
-**RECOMENDADO (SHOULD)**
-- La interfaz SHOULD mostrar el estado de conexión y la cantidad o estado de cambios
-	pendientes de sincronización.
+**Justificación**: el POS está en producción con clientes reales; una venta perdida o una caja
+detenida tiene un costo directo para el negocio del cliente.
 
-**Justificación**: la continuidad de venta y la integridad local son requisitos centrales,
-no modos degradados sujetos a disponibilidad de internet.
+### II. Arquitectura por capas con dependencias hacia el centro
+- La solución se organiza en `Pos.Domain`, `Pos.Application`, `Pos.Infrastructure` y
+	`Pos.Desktop`, más sus proyectos de pruebas.
+- `Pos.Domain` no depende de ningún otro proyecto ni de librerías de infraestructura.
+- `Pos.Application` depende solo de `Pos.Domain` y define las interfaces (puertos) que necesita:
+	persistencia, reloj, usuario actual y dispositivos.
+- `Pos.Infrastructure` implementa esas interfaces (EF Core, SQLite, dispositivos) y depende de
+	Application y Domain.
+- `Pos.Desktop` depende de Application. Referencia Infrastructure únicamente para registrar
+	dependencias en el arranque (composition root). Ningún ViewModel ni vista accede al
+	`DbContext` ni a SQL.
+- Estas reglas se verifican con pruebas automáticas de arquitectura que forman parte de la
+	suite.
+- Dentro de cada capa, el código se organiza por funcionalidad (por ejemplo
+	`Productos/CrearProducto`), no por tipo técnico.
 
-### 2. Arquitectura modular y límites de dependencia
-**NO NEGOCIABLE (MUST)**
-- El repositorio MUST ser un monorepo con una única solución .NET (`.sln`) bajo `src/`,
-	pruebas bajo `tests/` organizadas por proyecto (Domain, Application, Infrastructure,
-	Api y Desktop), y la aplicación Angular bajo `web/`, fuera de la solución .NET.
-- Los proyectos MUST respetar estas responsabilidades: `Pos.Domain` contiene entidades,
-	value objects y reglas puras; `Pos.Application` contiene casos de uso, validaciones e
-	interfaces; `Pos.Contracts` contiene DTOs y contratos; `Pos.Infrastructure.Local`
-	implementa persistencia SQLite y cola local; `Pos.Infrastructure.Cloud` implementa
-	persistencia PostgreSQL; `Pos.Api` expone la API; `Pos.Desktop` contiene UI Avalonia,
-	ViewModels y composición de dependencias.
-- `Pos.Domain` MUST carecer de dependencias externas. `Pos.Application` MUST depender
-	únicamente de `Pos.Domain` y `Pos.Contracts`.
-- `Pos.Infrastructure.Local`, `Pos.Infrastructure.Cloud`, `Pos.Api` y `Pos.Desktop`
-	MUST depender de `Pos.Application` según las reglas de referencia de la solución.
-- `Pos.Desktop` MUST NOT referenciar `Pos.Api` ni `Pos.Infrastructure.Cloud`; accederá
-	a servicios remotos solo por HTTP y contratos de `Pos.Contracts`. La UI MUST NOT
-	acceder directamente a EF Core ni a SQLite.
-- `Pos.Api` MUST referenciar `Pos.Application`, `Pos.Contracts` y
-	`Pos.Infrastructure.Cloud`, y MUST NOT referenciar `Pos.Desktop` ni
-	`Pos.Infrastructure.Local`.
-- La solución MUST mantener Clean Architecture y un monolito modular. La lógica de
-	negocio y validaciones compartidas residirán en Domain y Application; la web consumirá
-	contratos mediante OpenAPI, no compartirá código C#.
+**Justificación**: las dependencias dirigidas hacia el dominio aíslan las reglas de negocio de
+la UI y de la persistencia. Las pruebas de arquitectura impiden que esos límites se erosionen
+con el tiempo.
 
-**RECOMENDADO (SHOULD)**
-- Los módulos SHOULD conservar límites explícitos para permitir evolución o extracción
-	futura sin anticipar infraestructura distribuida.
+### III. La lógica de negocio vive en el núcleo
+- Las reglas de negocio viven en Domain; la orquestación y la validación de entrada, en
+	Application mediante casos de uso.
+- Los ViewModels solo coordinan la interfaz: invocan casos de uso y presentan resultados. No
+	calculan totales, impuestos ni descuentos.
+- Cada caso de uso valida su entrada y devuelve un resultado explícito de éxito o de error de
+	negocio; las excepciones se reservan para fallas inesperadas.
 
-**Justificación**: las dependencias dirigidas hacia el dominio aíslan las reglas de negocio
-y permiten crecer sin acoplar la caja a la API o al proveedor de persistencia.
+**Justificación**: las reglas de negocio concentradas en el núcleo se pueden probar sin UI y
+se pueden reutilizar si algún día existe otra interfaz.
 
-### 3. Integridad de datos y sincronización
-**NO NEGOCIABLE (MUST)**
-- Toda entidad sincronizable MUST tener un identificador GUID (se SHOULD preferir UUID v7
-	generado en el cliente), `CreatedAt`, `UpdatedAt` en UTC, `IsDeleted` para borrado lógico
-	y `RowVersion` o equivalente para concurrencia. MUST identificar `DeviceId`, `BranchId`
-	y `RegisterId` para auditoría y resolución de conflictos.
-- Los datos sincronizables MUST NOT borrarse físicamente. Las fechas MUST almacenarse en
-	UTC y la hora local MUST limitarse a presentación. El código MUST NOT usar
-	`DateTime.Now`; el tiempo MUST obtenerse mediante `IClock` inyectado.
-- Los importes MUST usar `decimal` con precisión definida, nunca `double` ni `float`.
-	Moneda e impuestos MUST ser configuración, no constantes de código.
-- La numeración de tickets o folios MUST evitar colisiones entre cajas desconectadas,
-	mediante prefijo de dispositivo o serie por caja.
-- Las ventas MUST ser inmutables y append-only; las correcciones MUST expresarse mediante
-	devoluciones o cancelaciones. Catálogo y precios MUST aplicar última escritura gana con
-	auditoría. El inventario MUST sincronizarse mediante movimientos/deltas, no valores
-	absolutos. La política de conflictos MUST documentarse por entidad.
-- Las migraciones MUST usar EF Core Migrations versionadas para SQLite y PostgreSQL.
-	El escritorio MUST migrar la base local al actualizar sin perder datos.
-- Antes de implementar sincronización, MUST elegirse un único motor entre Dotmim.Sync y
-	PowerSync mediante ADR y prueba de concepto. Toda sincronización MUST estar detrás de
-	`ISyncService`. Si el motor elegido gestiona estado de sincronización, MUST NOT
-	duplicarse esa función con columnas manuales.
+### IV. Integridad de datos
+- Los identificadores son GUID v7 generados en la aplicación (`Guid.CreateVersion7`); no se
+	usan identificadores autoincrementales en entidades de negocio.
+- Toda fecha se almacena en UTC y se convierte a hora local solo al mostrarla.
+- Las entidades de negocio incluyen:
+	- Fecha y usuario de creación.
+	- Fecha y usuario de última modificación.
+	- Borrado lógico (`DeletedAt`).
+	- Una versión entera para concurrencia optimista.
+- No se eliminan físicamente registros con valor histórico o contable (ventas, cobros, cortes,
+	movimientos de inventario); se anulan o se marcan como borrados.
+- Los importes monetarios se representan en el dominio con un value object de dinero y se
+	almacenan como enteros en centavos. Nunca se usa `double` ni `float` para dinero.
+- El esquema cambia solo mediante migraciones de EF Core versionadas en el repositorio.
+- El esquema se gestiona con EF Core Code First: el modelo en C# es la fuente de verdad y no
+	se escriben scripts SQL manuales de esquema.
+- Las migraciones se aplican automáticamente al arrancar, en este orden obligatorio:
+	1. Verificar que haya una sola instancia de la aplicación en ejecución.
+	2. Detectar si la base es más nueva que la aplicación; en ese caso no abrirla.
+	3. Respaldar la base con la API de backup de SQLite.
+	4. Migrar.
+	5. Si la migración falla, restaurar el respaldo y no continuar.
+- Una migración publicada nunca se modifica ni se elimina; las correcciones se hacen con
+	migraciones nuevas.
+- El SQL generado de cada migración se revisa antes de integrarla, prestando atención a las
+	reconstrucciones de tablas.
+- Por cada versión publicada se conserva una base de ejemplo. Una prueba automática migra
+	todas esas bases a la versión actual y verifica la integridad de los datos.
+- Los catálogos fijos se siembran con `HasData`; los datos propios de cada instalación se
+	crean en el asistente de primer arranque.
 
-**RECOMENDADO (SHOULD)**
-- La generación cliente de UUID v7 SHOULD utilizar una implementación mantenida y
-	compatible con el entorno .NET seleccionado.
+**Justificación**: estas decisiones son baratas hoy y muy costosas de introducir después,
+porque obligarían a migrar datos de clientes en producción.
 
-**Justificación**: identificadores globales, políticas de conflicto explícitas y escrituras
-locales recuperables evitan pérdida de datos y colisiones en operación desconectada.
+### V. Multiplataforma real (Windows y Linux)
+- Todo el código fuera de los adaptadores de plataforma debe funcionar igual en Windows y
+	Linux.
+- El acceso al hardware (impresora de tickets, cajón de dinero, lector de códigos, báscula) se
+	define mediante interfaces en Application, con implementaciones por sistema operativo en
+	Infrastructure.
+- Las rutas de archivos, configuración y datos se resuelven con las APIs multiplataforma de
+	.NET; no se escriben rutas fijas.
+- La integración continua compila y ejecuta las pruebas en Windows y en Linux.
 
-### 4. API y contratos explícitos
-**NO NEGOCIABLE (MUST)**
-- `Pos.Api` MUST ser ASP.NET Core Web API dentro de la solución y MUST ofrecer endpoints
-	versionados bajo `/api/v1/`, documentados con OpenAPI/Swagger, incluidos endpoints
-	dedicados a sincronización.
-- La API MUST revalidar toda entrada y MUST NOT confiar en validaciones del cliente.
-	Controladores o endpoints MUST ser delgados; la lógica de aplicación MUST vivir en
-	`Pos.Application`. El proyecto MUST elegir un único estilo de endpoints y mantenerlo.
-- Los errores MUST seguir ProblemDetails y la API MUST exponer un healthcheck en `/health`.
-	El desarrollo local MUST poder ejecutar la API junto con PostgreSQL mediante Docker
-	Compose.
-- Angular MUST usar TypeScript estricto y consumir la API. Sus DTOs MUST generarse desde
-	OpenAPI con NSwag u OpenAPI Generator; MUST NOT escribirse DTOs manuales en la web.
+**Justificación**: solo se puede garantizar el soporte a los dos sistemas operativos si se
+verifica de forma continua en ambos.
 
-**RECOMENDADO (SHOULD)**
-- Los cambios incompatibles en contratos SHOULD introducir una nueva versión de API y
-	documentar el período de transición.
+### VI. Calidad verificable
+- `dotnet build` y `dotnet test` ejecutados desde la raíz terminan sin errores ni
+	advertencias; las advertencias se tratan como errores.
+- Cada caso de uso tiene pruebas unitarias; cada regla de dominio tiene pruebas que cubren sus
+	casos límite.
+- La persistencia se prueba contra SQLite real (conexión en memoria o archivo temporal), nunca
+	con el proveedor InMemory de EF Core.
+- Todo defecto corregido incluye una prueba que lo reproduce.
 
-**Justificación**: contratos verificables y validación en el servidor protegen la
-consistencia entre escritorio, nube y web, incluso ante clientes antiguos o no confiables.
+**Justificación**: el proveedor InMemory no reproduce transacciones, restricciones ni
+concurrencia de SQLite. Las pruebas de regresión evitan que un defecto corregido vuelva a
+aparecer.
 
-### 5. Seguridad, permisos y configuración
-**NO NEGOCIABLE (MUST)**
-- Secretos MUST NOT almacenarse en el repositorio; MUST obtenerse mediante User Secrets,
-	variables de entorno o mecanismos seguros equivalentes.
-- La autenticación remota MUST usar tokens JWT/OIDC. La sesión offline del cajero MUST
-	poder autenticarse con PIN local almacenado como hash seguro.
-- Los roles cajero, supervisor y administrador y sus permisos MUST aplicarse tanto en la
-	aplicación como en la API. Acciones críticas (cancelaciones, descuentos, cortes de caja
-	y cambios de precio) MUST generar registros de auditoría.
-- URLs de API, cadenas de conexión y puertos MUST provenir de configuración por entorno
-	(Development, Staging, Production), nunca de valores fijos en código. Escritorio,
-	Angular y API MUST poder cambiar de destino solo mediante configuración.
+### VII. Simplicidad (YAGNI)
+- No se construye nada para un escenario hipotético. Quedan fuera hasta que un cliente lo
+	requiera: API, aplicación web, sincronización, multi-sucursal, microservicios y colas de
+	mensajes.
+- Solo se aceptan preparaciones para el futuro cuyo costo presente sea mínimo y cuya ausencia
+	obligaría a migrar datos (las definidas en el Principio IV).
+- No se usan MediatR ni repositorios genéricos. Los casos de uso son clases simples y los
+	repositorios, cuando existan, son específicos por agregado.
+- Cada dependencia externa nueva debe justificarse en el plan de la funcionalidad.
 
-**RECOMENDADO (SHOULD)**
-- La protección criptográfica de la base local con datos sensibles SHOULD evaluarse,
-	incluida SQLCipher, antes de almacenar esos datos en producción.
+**Justificación**: la complejidad sin un requisito real frena la entrega y agrega puntos de
+falla a un producto cuya prioridad es la estabilidad.
 
-**Justificación**: el control de acceso debe mantenerse en operación local y remota, y la
-configuración externa evita exponer secretos o acoplar compilaciones a un entorno.
+### VIII. Soporte y diagnóstico en campo
+- El logging es estructurado, con Serilog, y escribe en archivos rotativos dentro de la
+	carpeta de datos de la aplicación.
+- Cada error registrado incluye contexto suficiente para reproducirlo (operación, usuario,
+	identificadores), sin datos sensibles.
+- La aplicación muestra su versión y permite exportar los logs y un respaldo de la base para
+	soporte técnico.
 
-### 6. Calidad, pruebas y compilación reproducible
-**NO NEGOCIABLE (MUST)**
-- Domain y Application MUST desarrollarse con TDD. Las reglas de precios, impuestos,
-	descuentos y cierre de caja MUST contar con pruebas automatizadas.
-- Los repositorios MUST tener pruebas de integración con SQLite en archivo temporal; la
-	API MUST tener pruebas de integración con PostgreSQL mediante Testcontainers.
-- MUST existir pruebas explícitas para corte de red durante una venta, reintentos,
-	conflictos y sincronización duplicada.
-- Nullable reference types MUST estar activados, los warnings MUST tratarse como errores
-	y el repositorio MUST incluir análisis estático y `.editorconfig`.
-- Un único `dotnet build` y `dotnet test` ejecutados desde la raíz MUST compilar y probar
-	toda la solución .NET.
+**Justificación**: el POS opera en equipos de clientes sin acceso directo del equipo de
+desarrollo; el diagnóstico depende de lo que la aplicación registre y permita exportar.
 
-**RECOMENDADO (SHOULD)**
-- La cobertura SHOULD concentrarse en reglas y fallos de negocio; los umbrales deberán
-	medir riesgos reales, no perseguir un porcentaje sin valor diagnóstico.
+### IX. Seguridad local
+- Las contraseñas de usuarios se almacenan con un hash robusto (por ejemplo PBKDF2 o Argon2),
+	nunca en texto plano.
+- Las operaciones sensibles (anular ventas, abrir el cajón sin venta, descuentos fuera de
+	rango, cortes) quedan registradas en una bitácora de auditoría.
+- No se incluyen secretos ni credenciales en el repositorio.
 
-**Justificación**: los escenarios de desconexión, concurrencia y dinero requieren evidencia
-automatizada para impedir regresiones que una prueba exclusivamente visual no detectaría.
+**Justificación**: el manejo de efectivo exige trazabilidad de quién hizo cada operación
+sensible y protección de las credenciales de los operadores.
 
-### 7. Experiencia de caja y abstracciones de hardware
-**NO NEGOCIABLE (MUST)**
-- Los flujos de caja MUST poder operarse con teclado, lector de códigos de barras y
-	pantalla táctil, con los mínimos pasos razonables para una venta.
-- Las operaciones de E/S MUST ser asíncronas y ejecutarse fuera del hilo de UI; la UI
-	MUST permanecer receptiva.
-- Impresión de tickets y control del cajón de dinero MUST abstraerse tras interfaces de
-	hardware, incluyendo `IPrinterService`.
+## Restricciones técnicas
 
-**RECOMENDADO (SHOULD)**
-- Los flujos de cobro SHOULD priorizar entrada rápida por lector y navegación por teclado,
-	manteniendo controles táctiles claros.
+- .NET 10 (LTS), C# con nullable habilitado.
+- Avalonia (versión estable más reciente) con patrón MVVM mediante CommunityToolkit.Mvvm;
+	inyección de dependencias con Microsoft.Extensions.Hosting.
+- EF Core con proveedor SQLite.
+- FluentValidation para la validación de entrada en Application.
+- Serilog para logging; xUnit para pruebas; NetArchTest para pruebas de arquitectura.
+- `Directory.Build.props` con `TreatWarningsAsErrors` y analizadores habilitados; gestión
+	central de paquetes con `Directory.Packages.props`.
+- Idioma: el código (tipos, métodos, variables) en inglés; la interfaz de usuario, los
+	mensajes al operador y la documentación en español.
 
-**Justificación**: la velocidad de atención y la continuidad operativa dependen de una UI
-receptiva y de no acoplar reglas de caja a dispositivos concretos.
+## Flujo de desarrollo
 
-### 8. Evolución sostenible y observabilidad
-**NO NEGOCIABLE (MUST)**
-- La solución MUST conservar capacidad de evolucionar hacia multi-sucursal,
-	multi-tenant, inventario centralizado, reportes en la nube y facturación fiscal por país
-	sin hacer que esas capacidades sean dependencias de la operación local actual.
-- El proyecto MUST evitar microservicios, colas externas e infraestructura adicional hasta
-	que un requisito medible lo exija; el diseño modular MUST permitir extraer componentes
-	si la necesidad se demuestra.
-- Escritorio y API MUST usar logging estructurado con Serilog y correlación entre cliente
-	y servidor.
-
-**RECOMENDADO (SHOULD)**
-- Los cambios que aumenten complejidad SHOULD demostrar el requisito medible que los
-	justifica y SHOULD conservar observabilidad de fallos de sincronización y operación.
-
-**Justificación**: mantener módulos claros y señales operativas útiles permite crecer con
-evidencia sin pagar antes el costo de sistemas distribuidos.
-
-## Stack y restricciones técnicas
-- Escritorio MUST usar C# con la última versión LTS de .NET disponible para el proyecto,
-	Avalonia UI, MVVM con CommunityToolkit.Mvvm y compiled bindings activados.
-- La base local MUST usar SQLite mediante EF Core y Microsoft.Data.Sqlite.
-- El backend MUST usar ASP.NET Core Web API en C# dentro de la misma solución .NET.
-- La base de nube MUST ser PostgreSQL, accedida mediante EF Core con Npgsql.
-- La web MUST usar Angular y TypeScript estricto; sus modelos de API MUST generarse desde
-	OpenAPI.
-- Los registros de decisiones arquitectónicas MUST almacenarse en `docs/adr/`.
-
-## Proceso y convenciones
-- Ninguna funcionalidad MUST implementarse sin especificación, plan y tareas. Cada plan
-	MUST indicar los proyectos afectados entre Domain, Application, API, Desktop y web.
-- Las decisiones arquitectónicas importantes MUST registrarse mediante ADR. Cualquier
-	desviación de un principio NO NEGOCIABLE MUST tener un ADR aprobado antes de
-	implementarse.
-- El trabajo SHOULD organizarse en ramas cortas por funcionalidad y PRs pequeños; los
-	commits MUST seguir Conventional Commits.
-- El código MUST nombrarse en inglés; la documentación y los textos de usuario MUST estar
-	en español. La localización MUST prepararse desde el inicio mediante recursos, no
-	cadenas fijas.
-- El logging MUST ser estructurado en escritorio y API, con correlación de solicitudes
-	entre cliente y servidor.
+- Toda funcionalidad sigue el flujo de Spec Kit: especificación, plan, tareas e
+	implementación.
+- El plan de cada funcionalidad debe incluir una verificación explícita de cumplimiento de
+	esta constitución; cualquier desviación se justifica por escrito en el plan.
+- Cada funcionalidad se entrega con sus pruebas y con la documentación necesaria para operarla
+	o darle soporte.
 
 ## Governance
-Esta constitución prevalece sobre convenciones locales incompatibles. Toda propuesta de
-enmienda MUST actualizar este documento, explicar su impacto, obtener aprobación de los
-mantenedores y revisar plantillas, planes y tareas afectados. La revisión MUST comprobar
-que los principios NO NEGOCIABLES se cumplen; una desviación requiere un ADR aprobado
-antes de implementarse. Las revisiones de diseño y PR MUST verificar el cumplimiento y
-documentar excepciones aprobadas.
 
-El versionado sigue SemVer: MAJOR para eliminar o redefinir de forma incompatible un
-principio o regla; MINOR para añadir principios o ampliar materialmente las obligaciones;
-PATCH para aclaraciones y cambios editoriales sin alterar obligaciones. La fecha de última
-enmienda MUST actualizarse con cada cambio aprobado. La fecha de ratificación conserva la
-fecha de adopción original.
+- Esta constitución prevalece sobre cualquier otra guía o práctica del proyecto.
+- Las enmiendas requieren documentar el motivo, el impacto en el código existente y un plan de
+	migración si aplica.
+- La constitución usa versionado semántico:
+	- MAJOR: eliminar o redefinir principios.
+	- MINOR: agregar principios o secciones.
+	- PATCH: aclaraciones.
+- El cumplimiento se verifica en la revisión de cada plan, según la verificación exigida en
+	"Flujo de desarrollo".
 
-**Version**: 1.0.0 | **Ratified**: TODO(RATIFICATION_DATE): confirmar fecha original de adopción | **Last Amended**: 2026-09-28
+**Version**: 1.1.0 | **Ratified**: 2026-09-29 | **Last Amended**: 2026-09-29

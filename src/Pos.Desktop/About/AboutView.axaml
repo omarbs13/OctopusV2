@@ -1,0 +1,32 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Pos.Desktop.About"
+             xmlns:res="using:Pos.Desktop.Resources"
+             x:Class="Pos.Desktop.About.AboutView"
+             x:DataType="vm:AboutViewModel">
+
+  <StackPanel Spacing="16" MaxWidth="720" HorizontalAlignment="Left">
+    <TextBlock Text="{x:Static res:Strings.Shell_NavAbout}" FontSize="22" FontWeight="SemiBold" />
+
+    <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto" RowSpacing="10" ColumnSpacing="16">
+      <TextBlock Grid.Row="0" Grid.Column="0" FontWeight="SemiBold" Text="{x:Static res:Strings.About_Version}" />
+      <SelectableTextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Version}" />
+
+      <TextBlock Grid.Row="1" Grid.Column="0" FontWeight="SemiBold" Text="{x:Static res:Strings.About_DataDirectory}" VerticalAlignment="Center" />
+      <SelectableTextBlock Grid.Row="1" Grid.Column="1" Text="{Binding DataDirectory}" TextWrapping="Wrap" VerticalAlignment="Center" />
+      <Button Grid.Row="1" Grid.Column="2" Content="{x:Static res:Strings.About_CopyPath}" Command="{Binding CopyDataDirectoryCommand}" />
+
+      <TextBlock Grid.Row="2" Grid.Column="0" FontWeight="SemiBold" Text="{x:Static res:Strings.About_OperatingSystem}" />
+      <SelectableTextBlock Grid.Row="2" Grid.Column="1" Text="{Binding OperatingSystem}" TextWrapping="Wrap" />
+    </Grid>
+
+    <Separator />
+
+    <TextBlock Text="{x:Static res:Strings.About_Description}" TextWrapping="Wrap" />
+    <StackPanel Orientation="Horizontal" Spacing="12">
+      <Button Classes="accent" Content="{x:Static res:Strings.About_Export}" Command="{Binding ExportCommand}" />
+      <ProgressBar IsIndeterminate="True" Width="160" IsVisible="{Binding IsExporting}" VerticalAlignment="Center" />
+      <TextBlock Text="{x:Static res:Strings.About_Exporting}" IsVisible="{Binding IsExporting}" VerticalAlignment="Center" />
+    </StackPanel>
+  </StackPanel>
+</UserControl>

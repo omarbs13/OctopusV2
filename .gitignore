@@ -480,3 +480,11 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# POS: archivos auxiliares de SQLite y resultados de pruebas
+*.db-wal
+*.db-shm
+*.db.tmp
+TestResults/
+# Las bases de ejemplo por versión SÍ se versionan
+!tests/Pos.Infrastructure.Tests/SampleDatabases/*.db

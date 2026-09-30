@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Pos.Desktop\Pos.Desktop.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Repositorio en memoria compartido con Pos.Application.Tests (sin duplicar código). -->
+    <Compile Include="..\Pos.Application.Tests\TestSupport\InMemoryProductRepository.cs" Link="TestSupport\InMemoryProductRepository.cs" />
+    <Compile Include="..\Pos.Application.Tests\TestSupport\FakeClock.cs" Link="TestSupport\FakeClock.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+</Project>

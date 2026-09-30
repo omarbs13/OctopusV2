@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AppTitle" xml:space="preserve"><value>POS</value></data>
+  <data name="Common_Accept" xml:space="preserve"><value>Aceptar</value></data>
+  <data name="Common_Cancel" xml:space="preserve"><value>Cancelar</value></data>
+  <data name="Common_ErrorTitle" xml:space="preserve"><value>Error</value></data>
+  <data name="Common_InfoTitle" xml:space="preserve"><value>Información</value></data>
+  <data name="Common_UnexpectedError" xml:space="preserve"><value>Ocurrió un error inesperado. La información quedó registrada para soporte. Puede intentar de nuevo.</value></data>
+  <data name="Shell_NavProducts" xml:space="preserve"><value>Productos</value></data>
+  <data name="Shell_NavAbout" xml:space="preserve"><value>Acerca de</value></data>
+  <data name="Startup_Title" xml:space="preserve"><value>POS</value></data>
+  <data name="Startup_AlreadyRunning" xml:space="preserve"><value>El POS ya está abierto. Se mostrará la ventana existente.</value></data>
+  <data name="Startup_NewerDatabase" xml:space="preserve"><value>Los datos fueron creados por una versión más reciente del POS. Instale la versión correcta para poder abrirlos.</value></data>
+  <data name="Startup_MigrationFailed" xml:space="preserve"><value>No se pudo actualizar la base de datos. Se restauraron sus datos anteriores. Contacte a soporte.</value></data>
+  <data name="Startup_InsufficientSpace" xml:space="preserve"><value>No hay espacio suficiente en el disco para actualizar la base de datos de forma segura. Libere espacio y vuelva a abrir el POS.</value></data>
+  <data name="Startup_Locked" xml:space="preserve"><value>La base de datos está en uso por otro programa. Ciérrelo y vuelva a abrir el POS.</value></data>
+  <data name="Startup_PermissionDenied" xml:space="preserve"><value>No hay permisos para escribir en la carpeta de datos: {0}. Contacte a soporte.</value></data>
+  <data name="Startup_CorruptedConfirm" xml:space="preserve"><value>La base de datos está dañada. ¿Desea restaurar el respaldo del {0}? Los cambios posteriores a esa fecha se perderán; la base dañada se conservará para soporte.</value></data>
+  <data name="Startup_RestoreButton" xml:space="preserve"><value>Restaurar</value></data>
+  <data name="Startup_CorruptedNoBackup" xml:space="preserve"><value>La base de datos está dañada y no hay respaldos disponibles. Contacte a soporte.</value></data>
+  <data name="Startup_ContactSupport" xml:space="preserve"><value>No se restauró el respaldo. El POS no puede abrir una base dañada; contacte a soporte.</value></data>
+  <data name="Editor_NewTitle" xml:space="preserve"><value>Nuevo producto</value></data>
+  <data name="Editor_EditTitle" xml:space="preserve"><value>Editar producto</value></data>
+  <data name="Editor_Name" xml:space="preserve"><value>Nombre</value></data>
+  <data name="Editor_Sku" xml:space="preserve"><value>SKU</value></data>
+  <data name="Editor_Barcode" xml:space="preserve"><value>Código de barras (opcional)</value></data>
+  <data name="Editor_Price" xml:space="preserve"><value>Precio</value></data>
+  <data name="Editor_PriceHint" xml:space="preserve"><value>Ejemplo: 1234.50</value></data>
+  <data name="Editor_Active" xml:space="preserve"><value>Activo</value></data>
+  <data name="Editor_Save" xml:space="preserve"><value>Guardar</value></data>
+  <data name="Editor_DuplicateSku" xml:space="preserve"><value>Ya existe un producto con este SKU.</value></data>
+  <data name="Editor_DuplicateBarcode" xml:space="preserve"><value>Ya existe un producto con este código de barras.</value></data>
+  <data name="Editor_ConflictTitle" xml:space="preserve"><value>Producto modificado</value></data>
+  <data name="Editor_Conflict" xml:space="preserve"><value>Otro proceso modificó este producto después de que lo abrió. ¿Recargar los datos actuales?</value></data>
+  <data name="Editor_Reload" xml:space="preserve"><value>Recargar</value></data>
+  <data name="Editor_NotFound" xml:space="preserve"><value>El producto ya no existe.</value></data>
+  <data name="Products_SearchPlaceholder" xml:space="preserve"><value>Buscar por nombre, SKU o código de barras (Ctrl+F)</value></data>
+  <data name="Products_ShowInactive" xml:space="preserve"><value>Mostrar inactivos</value></data>
+  <data name="Products_New" xml:space="preserve"><value>Nuevo producto (Ctrl+N)</value></data>
+  <data name="Products_Edit" xml:space="preserve"><value>Editar (F2)</value></data>
+  <data name="Products_Delete" xml:space="preserve"><value>Borrar (Supr)</value></data>
+  <data name="Products_Empty" xml:space="preserve"><value>No se encontraron productos.</value></data>
+  <data name="Products_HasMore" xml:space="preserve"><value>Se muestran los primeros 200 resultados; refine la búsqueda.</value></data>
+  <data name="Products_ColName" xml:space="preserve"><value>Nombre</value></data>
+  <data name="Products_ColSku" xml:space="preserve"><value>SKU</value></data>
+  <data name="Products_ColBarcode" xml:space="preserve"><value>Código de barras</value></data>
+  <data name="Products_ColPrice" xml:space="preserve"><value>Precio</value></data>
+  <data name="Products_ColStatus" xml:space="preserve"><value>Estado</value></data>
+  <data name="Products_Active" xml:space="preserve"><value>Activo</value></data>
+  <data name="Products_Inactive" xml:space="preserve"><value>Inactivo</value></data>
+  <data name="Products_DeleteTitle" xml:space="preserve"><value>Borrar producto</value></data>
+  <data name="Products_DeleteConfirm" xml:space="preserve"><value>¿Borrar el producto «{0}» ({1})? Dejará de aparecer en el catálogo.</value></data>
+  <data name="Products_DeleteConflict" xml:space="preserve"><value>Otro proceso modificó este producto. Revise los datos actuales antes de borrarlo.</value></data>
+  <data name="About_Version" xml:space="preserve"><value>Versión</value></data>
+  <data name="About_DataDirectory" xml:space="preserve"><value>Carpeta de datos</value></data>
+  <data name="About_OperatingSystem" xml:space="preserve"><value>Sistema operativo</value></data>
+  <data name="About_CopyPath" xml:space="preserve"><value>Copiar ruta</value></data>
+  <data name="About_Export" xml:space="preserve"><value>Exportar diagnóstico…</value></data>
+  <data name="About_ExportTitle" xml:space="preserve"><value>Guardar diagnóstico</value></data>
+  <data name="About_Exporting" xml:space="preserve"><value>Exportando diagnóstico…</value></data>
+  <data name="About_ExportDone" xml:space="preserve"><value>Diagnóstico exportado en {0}.</value></data>
+  <data name="About_Description" xml:space="preserve"><value>Para soporte técnico: la exportación genera un archivo con los registros recientes y un respaldo de la base de datos.</value></data>
+</root>

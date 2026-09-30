@@ -1,0 +1,59 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Pos.Desktop.Products"
+             xmlns:res="using:Pos.Desktop.Resources"
+             x:Class="Pos.Desktop.Products.ProductEditorView"
+             x:DataType="vm:ProductEditorViewModel">
+
+  <UserControl.KeyBindings>
+    <KeyBinding Gesture="Enter" Command="{Binding SaveCommand}" />
+    <KeyBinding Gesture="Escape" Command="{Binding CancelCommand}" />
+  </UserControl.KeyBindings>
+
+  <UserControl.Styles>
+    <Style Selector="TextBlock.error">
+      <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCriticalBrush}" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="Margin" Value="0,2,0,0" />
+    </Style>
+    <Style Selector="StackPanel.field">
+      <Setter Property="Spacing" Value="4" />
+    </Style>
+  </UserControl.Styles>
+
+  <StackPanel Spacing="14" Width="300">
+    <TextBlock Text="{Binding Title}" FontSize="20" FontWeight="SemiBold" />
+
+    <StackPanel Classes="field">
+      <TextBlock Text="{x:Static res:Strings.Editor_Name}" />
+      <TextBox x:Name="NameBox" Text="{Binding Name}" MaxLength="200" />
+      <TextBlock Classes="error" Text="{Binding NameError}" IsVisible="{Binding NameError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+    </StackPanel>
+
+    <StackPanel Classes="field">
+      <TextBlock Text="{x:Static res:Strings.Editor_Sku}" />
+      <TextBox x:Name="SkuBox" Text="{Binding Sku}" MaxLength="50" LostFocus="OnSkuLostFocus" />
+      <TextBlock Classes="error" Text="{Binding SkuError}" IsVisible="{Binding SkuError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+    </StackPanel>
+
+    <StackPanel Classes="field">
+      <TextBlock Text="{x:Static res:Strings.Editor_Barcode}" />
+      <TextBox x:Name="BarcodeBox" Text="{Binding Barcode}" MaxLength="14" />
+      <TextBlock Classes="error" Text="{Binding BarcodeError}" IsVisible="{Binding BarcodeError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+    </StackPanel>
+
+    <StackPanel Classes="field">
+      <TextBlock Text="{x:Static res:Strings.Editor_Price}" />
+      <TextBox x:Name="PriceBox" Text="{Binding PriceText}" PlaceholderText="{x:Static res:Strings.Editor_PriceHint}" />
+      <TextBlock Classes="error" Text="{Binding PriceError}" IsVisible="{Binding PriceError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+    </StackPanel>
+
+    <CheckBox Content="{x:Static res:Strings.Editor_Active}" IsChecked="{Binding IsActive}" IsVisible="{Binding IsEditMode}" />
+
+    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+      <Button Content="{x:Static res:Strings.Editor_Save}" Command="{Binding SaveCommand}" Classes="accent" MinWidth="100" />
+      <Button Content="{x:Static res:Strings.Common_Cancel}" Command="{Binding CancelCommand}" MinWidth="100" />
+    </StackPanel>
+  </StackPanel>
+</UserControl>

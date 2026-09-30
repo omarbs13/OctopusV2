@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "avalonia-mvvm": {
+      "source": "abdssamie/quater",
+      "sourceType": "github",
+      "skillPath": ".opencode/skills/avalonia-mvvm/SKILL.md",
+      "computedHash": "ad553846fa1c924be3b135c8a1910f9af97ac11b42a29e2d31786b350c4ea12e"
+    }
+  }
+}
