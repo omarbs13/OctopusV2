@@ -59,3 +59,30 @@ public sealed record LockedOut(DateTime UntilUtc) : Error;
 
 /// <summary>La operación dejaría el sistema sin administrador activo, o un administrador intenta desactivarse o quitarse el rol (007, FR-018).</summary>
 public sealed record LastAdministrator : Error;
+
+/// <summary>No hay turno abierto; se requiere uno para vender (008, FR-001).</summary>
+public sealed record ShiftRequired : Error;
+
+/// <summary>El turno abierto es de otro usuario; hay que cerrarlo antes de vender (008, FR-005).</summary>
+public sealed record ShiftOwnedByOther(string OpenedByName) : Error;
+
+/// <summary>Ya existe un turno abierto en la caja (008, FR-004).</summary>
+public sealed record ShiftAlreadyOpen : Error;
+
+/// <summary>El turno ya está cerrado y no admite cambios (008, FR-018).</summary>
+public sealed record ShiftClosed : Error;
+
+/// <summary>
+/// El retiro o la devolución excede el efectivo esperado. <c>AvailableCents</c> solo se llena para
+/// quien tiene <c>ManageShifts</c> y únicamente en retiros (008, FR-008, FR-010).
+/// </summary>
+public sealed record InsufficientCash(long? AvailableCents) : Error;
+
+/// <summary>El dueño del turno tiene una venta en curso; hay que terminarla o cancelarla (008, FR-013).</summary>
+public sealed record SaleInProgress : Error;
+
+/// <summary>Un administrador cierra el turno de otro usuario que tiene una venta conservada; falta confirmar el descarte (008, FR-013).</summary>
+public sealed record HeldSaleWillBeDiscarded(string OwnerName) : Error;
+
+/// <summary>El efectivo esperado cambió entre el conteo y el cierre; hay que revisar las cifras (008, research §8).</summary>
+public sealed record ShiftChanged : Error;

@@ -5,6 +5,7 @@ using Pos.Application;
 using Pos.Desktop.About;
 using Pos.Desktop.Administration;
 using Pos.Desktop.Auth;
+using Pos.Desktop.CashShifts;
 using Pos.Desktop.Common;
 using Pos.Desktop.Home;
 using Pos.Desktop.Inventory;
@@ -67,6 +68,7 @@ internal static class HostBuilder
         services.AddProductsModule();
         services.AddInventoryModule();
         services.AddSalesModule();
+        services.AddCashShiftsModule();
         services.AddAdministrationModule();
         services.AddSettingsModule();
         services.AddHelpModule();

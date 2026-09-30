@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Pos.Application.Products;
+using Pos.Application.CashShifts;
+using Pos.Domain.CashShifts;
 using Pos.Application.Sales;
 using Pos.Domain.Sales;
 using Pos.Infrastructure.Sales;
@@ -41,6 +43,7 @@ public sealed class SaleAtomicityTests : IAsyncLifetime
         var tracked = await SalesTestSupport.SeedProductAsync(_db, "ATO-1");
         var plain = await SalesTestSupport.SeedProductAsync(_db, "ATO-2", tracks: false);
         await SalesTestSupport.StockAsync(_db, tracked, "10");
+        await SalesTestSupport.EnsureShiftAsync(_db);
         var draftId = Guid.CreateVersion7();
 
         await using (var context = _db.CreateDbContext())
@@ -90,6 +93,12 @@ public sealed class SaleAtomicityTests : IAsyncLifetime
         public Task<SalePage> SearchAsync(SaleSearch search, CancellationToken ct) => inner.SearchAsync(search, ct);
 
         public Task<SaleDetailDto?> GetDetailAsync(Guid id, CancellationToken ct) => inner.GetDetailAsync(id, ct);
+
+        public Task<ShiftSalesTotals> GetShiftTotalsAsync(Guid shiftId, CancellationToken ct) => inner.GetShiftTotalsAsync(shiftId, ct);
+
+        public Task<IReadOnlyList<ShiftSaleRowDto>> ListByShiftAsync(Guid shiftId, CancellationToken ct) => inner.ListByShiftAsync(shiftId, ct);
+
+        public Task<long> GetCashAppliedAsync(Guid saleId, CancellationToken ct) => inner.GetCashAppliedAsync(saleId, ct);
 
         public Task<SalesDashboard> GetDashboardAsync(IReadOnlyList<DayWindow> days, CancellationToken ct) =>
             inner.GetDashboardAsync(days, ct);

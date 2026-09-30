@@ -73,6 +73,7 @@ public sealed class SampleDatabaseUpgradeTests
         AssertInventory(connection, sampleFile);
         AssertSales(connection, sampleFile);
         AssertUsers(connection, sampleFile);
+        AssertCashShifts(connection);
 
         foreach (var index in new[] { "IX_Products_Sku", "IX_Products_Barcode", "IX_Products_NameSearch" })
         {
@@ -100,7 +101,7 @@ public sealed class SampleDatabaseUpgradeTests
             Assert.Equal(SampleData.InventoryMovementCount, Scalar<long>(connection, "SELECT COUNT(*) FROM InventoryMovements"));
             Assert.Equal(4, Scalar<long>(connection, "SELECT COUNT(DISTINCT Type) FROM InventoryMovements"));
         }
-        else if (sampleFile is "v0.4.0.db" or "v0.5.0.db")
+        else if (HasSales(sampleFile))
         {
             // 005: la existencia negativa, los movimientos de venta y las ventas se conservan tal cual.
             Assert.Equal(2, Scalar<long>(connection, "SELECT COUNT(*) FROM Products WHERE TracksInventory = 1"));
@@ -130,7 +131,7 @@ public sealed class SampleDatabaseUpgradeTests
     /// </summary>
     private static void AssertSales(SqliteConnection connection, string sampleFile)
     {
-        if (sampleFile is not ("v0.4.0.db" or "v0.5.0.db"))
+        if (!HasSales(sampleFile))
         {
             foreach (var table in new[] { "Sales", "SaleLines", "SalePayments", "SaleDrafts", "AuditEntries" })
             {
@@ -162,7 +163,8 @@ public sealed class SampleDatabaseUpgradeTests
     /// </summary>
     private static void AssertUsers(SqliteConnection connection, string sampleFile)
     {
-        Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM Users"));
+        // Desde 0.6.0 la base de ejemplo ya trae un administrador y un cajero además de "Sistema".
+        Assert.Equal(sampleFile == "v0.6.0.db" ? 3 : 1, Scalar<long>(connection, "SELECT COUNT(*) FROM Users"));
         Assert.Equal(
             1,
             Scalar<long>(connection, $"""
@@ -174,8 +176,17 @@ public sealed class SampleDatabaseUpgradeTests
         Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM pragma_table_info('SaleDrafts') WHERE name = 'Slot'"));
         Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM sqlite_master WHERE sql LIKE '%CK_SaleDrafts_Slot%'"));
 
-        if (sampleFile is not ("v0.4.0.db" or "v0.5.0.db"))
+        if (!HasSales(sampleFile))
         {
+            return;
+        }
+
+        if (sampleFile == "v0.6.0.db")
+        {
+            // Las ventas conservan a su cajero: el administrador hizo la 1 y el cajero la 2 y la 3 (con su borrador).
+            Assert.Equal(1, Scalar<long>(connection, $"SELECT COUNT(*) FROM Sales s JOIN Users u ON u.Id = s.CreatedBy WHERE u.UserName = '{SampleData.AdminUserName}'"));
+            Assert.Equal(2, Scalar<long>(connection, $"SELECT COUNT(*) FROM Sales s JOIN Users u ON u.Id = s.CreatedBy WHERE u.UserName = '{SampleData.CashierUserName}'"));
+            Assert.Equal(1, Scalar<long>(connection, $"SELECT COUNT(*) FROM SaleDrafts d JOIN Users u ON u.Id = d.UserId WHERE u.UserName = '{SampleData.CashierUserName}'"));
             return;
         }
 
@@ -187,6 +198,23 @@ public sealed class SampleDatabaseUpgradeTests
         Assert.Equal(1, Scalar<long>(connection, $"SELECT COUNT(*) FROM SaleDrafts WHERE UserId = '{SystemUser.Id}'"));
         Assert.Contains("productId", Scalar<string>(connection, $"SELECT LinesJson FROM SaleDrafts WHERE UserId = '{SystemUser.Id}'"), StringComparison.Ordinal);
     }
+
+    /// <summary>
+    /// 008: las ventas anteriores quedan sin turno (<c>CashShiftId</c> nulo), no hay turnos y el índice
+    /// único filtrado garantiza un solo turno abierto por caja.
+    /// </summary>
+    private static void AssertCashShifts(SqliteConnection connection)
+    {
+        Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM Sales WHERE CashShiftId IS NOT NULL"));
+        Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM CashShifts"));
+        Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM CashMovements"));
+        Assert.Contains(
+            "WHERE \"Status\" = 'OPEN'",
+            Scalar<string>(connection, "SELECT sql FROM sqlite_master WHERE type = 'index' AND name = 'IX_CashShifts_OpenPerRegister'"),
+            StringComparison.Ordinal);
+    }
+
+    private static bool HasSales(string sampleFile) => sampleFile is "v0.4.0.db" or "v0.5.0.db" or "v0.6.0.db";
 
     private static T Scalar<T>(SqliteConnection connection, string sql)
     {

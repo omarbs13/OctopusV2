@@ -435,4 +435,102 @@
   <data name="Sales_Cashier" xml:space="preserve"><value>Cajero</value></data>
   <data name="Sales_CashierAll" xml:space="preserve"><value>Todos</value></data>
   <data name="Auth_PasswordIncorrect" xml:space="preserve"><value>Contraseña incorrecta.</value></data>
+  <data name="Nav_Shifts" xml:space="preserve"><value>Turnos</value></data>
+  <data name="Auth_OperationWithdrawCash" xml:space="preserve"><value>Retiro de efectivo</value></data>
+  <data name="Shift_NoneTitle" xml:space="preserve"><value>No hay un turno abierto</value></data>
+  <data name="Shift_NoneText" xml:space="preserve"><value>Abra un turno para empezar a vender.</value></data>
+  <data name="Shift_OtherText" xml:space="preserve"><value>Hay un turno abierto de {0} desde {1}. Debe cerrarse antes de vender.</value></data>
+  <data name="Shift_CloseOther" xml:space="preserve"><value>Cerrar ese turno</value></data>
+  <data name="Shift_Bar" xml:space="preserve"><value>Turno {0} · desde {1} · {2} · {3}</value></data>
+  <data name="Shift_SalesOne" xml:space="preserve"><value>1 venta</value></data>
+  <data name="Shift_SalesMany" xml:space="preserve"><value>{0} ventas</value></data>
+  <data name="Shift_Deposit" xml:space="preserve"><value>Ingreso</value></data>
+  <data name="Shift_Withdrawal" xml:space="preserve"><value>Retiro</value></data>
+  <data name="Shift_Close" xml:space="preserve"><value>Cerrar turno</value></data>
+  <data name="Shift_Open" xml:space="preserve"><value>Abrir turno</value></data>
+  <data name="Shift_Finish" xml:space="preserve"><value>Terminar</value></data>
+  <data name="Shift_OpenTitle" xml:space="preserve"><value>Abrir turno</value></data>
+  <data name="Shift_OpenDescription" xml:space="preserve"><value>Capture el efectivo con el que inicia el turno para dar cambio.</value></data>
+  <data name="Shift_OpeningFloat" xml:space="preserve"><value>Fondo inicial</value></data>
+  <data name="Shift_ZeroFloatTitle" xml:space="preserve"><value>Fondo inicial en cero</value></data>
+  <data name="Shift_ZeroFloatQuestion" xml:space="preserve"><value>¿Abrir el turno sin fondo inicial?</value></data>
+  <data name="Shift_ZeroFloatConfirm" xml:space="preserve"><value>Abrir sin fondo</value></data>
+  <data name="Shift_CloseTitle" xml:space="preserve"><value>Cerrar turno</value></data>
+  <data name="Shift_CloseOwnerNote" xml:space="preserve"><value>Turno de {0}</value></data>
+  <data name="Shift_CountedLabel" xml:space="preserve"><value>Efectivo contado en caja</value></data>
+  <data name="Shift_CountNext" xml:space="preserve"><value>Continuar</value></data>
+  <data name="Shift_Expected" xml:space="preserve"><value>Efectivo esperado</value></data>
+  <data name="Shift_Counted" xml:space="preserve"><value>Efectivo contado</value></data>
+  <data name="Shift_Difference" xml:space="preserve"><value>Diferencia</value></data>
+  <data name="Shift_Over" xml:space="preserve"><value>Sobrante</value></data>
+  <data name="Shift_Short" xml:space="preserve"><value>Faltante</value></data>
+  <data name="Shift_Balanced" xml:space="preserve"><value>Cuadrado</value></data>
+  <data name="Shift_Card" xml:space="preserve"><value>Tarjeta</value></data>
+  <data name="Shift_Transfer" xml:space="preserve"><value>Transferencia</value></data>
+  <data name="Shift_Comment" xml:space="preserve"><value>Comentario</value></data>
+  <data name="Shift_CommentRequired" xml:space="preserve"><value>Capture un comentario: el efectivo contado no coincide con el esperado.</value></data>
+  <data name="Shift_Recount" xml:space="preserve"><value>Volver a contar</value></data>
+  <data name="Shift_ConfirmClose" xml:space="preserve"><value>Confirmar cierre</value></data>
+  <data name="Shift_ClosedTitle" xml:space="preserve"><value>Turno cerrado</value></data>
+  <data name="Shift_Closed" xml:space="preserve"><value>Turno {0} cerrado</value></data>
+  <data name="Shift_PrintReport" xml:space="preserve"><value>Reimprimir corte</value></data>
+  <data name="Shift_HeldSaleTitle" xml:space="preserve"><value>Venta conservada</value></data>
+  <data name="Shift_HeldSaleContinue" xml:space="preserve"><value>Continuar</value></data>
+  <data name="Shift_HeldSaleQuestion" xml:space="preserve"><value>{0} ¿Continuar?</value></data>
+  <data name="Shift_ChangedNotice" xml:space="preserve"><value>El turno cambió. Revise las cifras de nuevo.</value></data>
+  <data name="Shift_Changed" xml:space="preserve"><value>Los datos del turno cambiaron. Vuelva a intentarlo.</value></data>
+  <data name="CashMovement_DepositTitle" xml:space="preserve"><value>Ingreso de efectivo</value></data>
+  <data name="CashMovement_WithdrawalTitle" xml:space="preserve"><value>Retiro de efectivo</value></data>
+  <data name="CashMovement_Amount" xml:space="preserve"><value>Monto</value></data>
+  <data name="CashMovement_Reason" xml:space="preserve"><value>Motivo</value></data>
+  <data name="CashMovement_Save" xml:space="preserve"><value>Guardar</value></data>
+  <data name="CashMovement_Registered" xml:space="preserve"><value>Movimiento {0} registrado</value></data>
+  <data name="CashMovement_Print" xml:space="preserve"><value>Imprimir comprobante</value></data>
+  <data name="CashMovement_Done" xml:space="preserve"><value>Cerrar</value></data>
+  <data name="CashMovement_AmountInvalid" xml:space="preserve"><value>Capture un monto válido mayor que 0.</value></data>
+  <data name="Shifts_Status" xml:space="preserve"><value>Estado</value></data>
+  <data name="Shifts_StatusAll" xml:space="preserve"><value>Todos</value></data>
+  <data name="Shifts_StatusOpen" xml:space="preserve"><value>Abierto</value></data>
+  <data name="Shifts_StatusClosed" xml:space="preserve"><value>Cerrado</value></data>
+  <data name="Shifts_User" xml:space="preserve"><value>Usuario</value></data>
+  <data name="Shifts_UserAll" xml:space="preserve"><value>Todos</value></data>
+  <data name="Shifts_ColShift" xml:space="preserve"><value>Turno</value></data>
+  <data name="Shifts_ColUser" xml:space="preserve"><value>Usuario</value></data>
+  <data name="Shifts_ColOpened" xml:space="preserve"><value>Apertura</value></data>
+  <data name="Shifts_ColClosed" xml:space="preserve"><value>Cierre</value></data>
+  <data name="Shifts_ColSold" xml:space="preserve"><value>Total vendido</value></data>
+  <data name="Shifts_ColDifference" xml:space="preserve"><value>Diferencia</value></data>
+  <data name="Shifts_Empty" xml:space="preserve"><value>No hay turnos que coincidan.</value></data>
+  <data name="Shifts_DetailTitle" xml:space="preserve"><value>Turno {0}</value></data>
+  <data name="Shifts_DetailHeader" xml:space="preserve"><value>{0} · {1} · abierto {2} · fondo {3}</value></data>
+  <data name="Shifts_ClosedBy" xml:space="preserve"><value>Cerrado por {0} el {1}</value></data>
+  <data name="Shifts_TabSales" xml:space="preserve"><value>Ventas</value></data>
+  <data name="Shifts_TabMovements" xml:space="preserve"><value>Movimientos</value></data>
+  <data name="Shifts_TabReconciliation" xml:space="preserve"><value>Arqueo</value></data>
+  <data name="Shifts_ExpectedNow" xml:space="preserve"><value>Efectivo esperado al momento</value></data>
+  <data name="Shifts_NoCount" xml:space="preserve"><value>Sin conteo: el turno sigue abierto.</value></data>
+  <data name="Shifts_SalesEmpty" xml:space="preserve"><value>Sin ventas.</value></data>
+  <data name="Shifts_MovementsEmpty" xml:space="preserve"><value>Sin movimientos.</value></data>
+  <data name="Shifts_ColFolio" xml:space="preserve"><value>Folio</value></data>
+  <data name="Shifts_ColTime" xml:space="preserve"><value>Hora</value></data>
+  <data name="Shifts_ColTotal" xml:space="preserve"><value>Total</value></data>
+  <data name="Shifts_ColType" xml:space="preserve"><value>Tipo</value></data>
+  <data name="Shifts_ColAmount" xml:space="preserve"><value>Monto</value></data>
+  <data name="Shifts_ColReason" xml:space="preserve"><value>Motivo</value></data>
+  <data name="Shifts_ColBy" xml:space="preserve"><value>Usuario</value></data>
+  <data name="Shifts_ColAuthorized" xml:space="preserve"><value>Autorizó</value></data>
+  <data name="Shifts_TypeIn" xml:space="preserve"><value>Ingreso</value></data>
+  <data name="Shifts_TypeOut" xml:space="preserve"><value>Retiro</value></data>
+  <data name="Shifts_PrintMovement" xml:space="preserve"><value>Imprimir</value></data>
+  <data name="Shifts_SalesCount" xml:space="preserve"><value>Ventas: {0} · Canceladas: {1}</value></data>
+  <data name="Shifts_CashSales" xml:space="preserve"><value>Efectivo en ventas</value></data>
+  <data name="Shifts_CashCancelled" xml:space="preserve"><value>Efectivo cancelado</value></data>
+  <data name="Shifts_Deposits" xml:space="preserve"><value>Ingresos</value></data>
+  <data name="Shifts_Withdrawals" xml:space="preserve"><value>Retiros</value></data>
+  <data name="Shifts_Float" xml:space="preserve"><value>Fondo inicial</value></data>
+  <data name="Card_Shift" xml:space="preserve"><value>Turno actual</value></data>
+  <data name="Card_ShiftOf" xml:space="preserve"><value>Turno de {0}</value></data>
+  <data name="Card_ShiftSince" xml:space="preserve"><value>Desde {0}</value></data>
+  <data name="Card_ShiftSold" xml:space="preserve"><value>Total vendido {0}</value></data>
+  <data name="Card_NoShift" xml:space="preserve"><value>No hay turno abierto</value></data>
 </root>

@@ -11,6 +11,12 @@ public interface IAccessControl
     Task<AccessDecision> CheckAsync(Permission permission, CancellationToken cancellationToken);
 
     Task<AccessDecision> CheckAsync(Permission permission, Guid? authorizationGrantId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Indica si el usuario conectado tiene el permiso, sin registrar rechazos ni consumir concesiones
+    /// (008, research §7). Sirve para decidir qué tanto mostrar, no para autorizar.
+    /// </summary>
+    Task<bool> HasAsync(Permission permission, CancellationToken cancellationToken);
 }
 
 /// <summary>
@@ -59,6 +65,13 @@ public sealed partial class AccessControl : IAccessControl
 
         LogDenied(user.Id, permission);
         return AccessDecision.Deny(new Forbidden(permission, RolePermissions.IsAuthorizable(permission)));
+    }
+
+    public async Task<bool> HasAsync(Permission permission, CancellationToken cancellationToken)
+    {
+        var sessionUser = _session.User;
+        var user = sessionUser is null ? null : await _users.GetAsync(sessionUser.Id, cancellationToken);
+        return user is { IsActive: true, IsSystem: false } && RolePermissions.Has(user.Role, permission);
     }
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Operación rechazada por permisos. UserId={UserId} Permiso={Permission}")]

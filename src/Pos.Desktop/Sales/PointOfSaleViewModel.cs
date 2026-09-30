@@ -3,6 +3,8 @@ using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Pos.Application.Abstractions;
+using Pos.Application.CashShifts;
+using Pos.Application.CashShifts.GetCurrentShift;
 using Pos.Application.Inventory;
 using Pos.Application.Sales;
 using Pos.Application.Sales.ConfirmSale;
@@ -12,12 +14,15 @@ using Pos.Application.Sales.GetSaleDraft;
 using Pos.Application.Sales.ReviewSale;
 using Pos.Application.Sales.SaveSaleDraft;
 using Pos.Desktop.Auth;
+using Pos.Desktop.CashShifts;
 using Pos.Desktop.Common;
 using Pos.Desktop.Resources;
 using Pos.Desktop.Settings;
+using Pos.Domain.CashShifts;
 using Pos.Domain.Common;
 using Pos.Domain.Products;
 using Pos.Domain.Sales;
+using Pos.Domain.Users;
 using Serilog;
 
 namespace Pos.Desktop.Sales;
@@ -75,6 +80,8 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
     private readonly ScanQueue _scans;
     private readonly TicketPrintingService _printing;
     private readonly AdminAuthorizationService? _authorization;
+    private readonly CashShiftDialogs? _shiftDialogs;
+    private readonly ICurrentPermissions? _permissions;
 
     private CheckoutViewModel? _pendingCheckout;
     private bool _draftChecked;
@@ -86,9 +93,13 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
         IDialogService dialogs,
         ILogger logger,
         TicketPrintingService printing,
-        AdminAuthorizationService? authorization = null)
+        AdminAuthorizationService? authorization = null,
+        CashShiftDialogs? shiftDialogs = null,
+        ICurrentPermissions? permissions = null)
     {
         _authorization = authorization;
+        _shiftDialogs = shiftDialogs;
+        _permissions = permissions;
         _printing = printing;
         _useCases = useCases;
         _runner = runner;
@@ -174,15 +185,155 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
 
     public bool HasLastSale => LastSaleText is not null;
 
+    /// <summary>Estado del turno de la caja (008): sin turno, de otro usuario, propio o aún sin consultar.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsShiftNone), nameof(IsShiftOther), nameof(IsShiftOwn), nameof(IsSaleBlocked))]
+    public partial ShiftViewState ShiftState { get; private set; } = ShiftViewState.Unknown;
+
+    [ObservableProperty]
+    public partial CurrentShiftSummary? CurrentShift { get; private set; }
+
+    /// <summary>"Turno T-000123 · desde 08:15 · 23 ventas · $4,560.00": sin fondo, esperado ni movimientos (FR-022).</summary>
+    [ObservableProperty]
+    public partial string ShiftBarText { get; private set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string ShiftOtherText { get; private set; } = string.Empty;
+
+    public bool IsShiftNone => ShiftState == ShiftViewState.None;
+
+    public bool IsShiftOther => ShiftState == ShiftViewState.Other;
+
+    public bool IsShiftOwn => ShiftState == ShiftViewState.Own;
+
+    /// <summary>Sin turno propio no se puede vender: el carrito se reemplaza por el panel de turno.</summary>
+    public bool IsSaleBlocked => IsShiftNone || IsShiftOther;
+
+    /// <summary>Solo un administrador puede cerrar el turno de otro usuario (FR-024).</summary>
+    public bool CanCloseOtherShift => _permissions?.Has(Permission.ManageShifts) ?? false;
+
     public override async Task OnActivatedAsync()
     {
-        if (!_draftChecked)
+        await RefreshShiftAsync();
+        FocusCaptureRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Consulta el turno de la caja y presenta uno de los tres estados (contracts/ui.md).</summary>
+    public async Task RefreshShiftAsync()
+    {
+        var (completed, result) = await _runner.RunAsync(
+            "ConsultarTurnoActual",
+            () => _useCases.RunAsync<GetCurrentShiftHandler, Result<CurrentShiftSummary?>>(h => h.HandleAsync(CancellationToken.None)));
+        if (completed && result is { IsSuccess: true })
+        {
+            ApplyShift(result.Value);
+        }
+
+        // La venta conservada se ofrece solo cuando ya se puede vender (con turno propio).
+        if (!_draftChecked && !IsSaleBlocked)
         {
             _draftChecked = true;
             await OfferDraftRecoveryAsync();
         }
+    }
 
+    private void ApplyShift(CurrentShiftSummary? shift)
+    {
+        CurrentShift = shift;
+        if (shift is null)
+        {
+            ShiftBarText = string.Empty;
+            ShiftOtherText = string.Empty;
+            ShiftState = ShiftViewState.None;
+        }
+        else if (shift.IsMine)
+        {
+            ShiftBarText = string.Format(
+                Display,
+                Strings.Shift_Bar,
+                shift.Folio,
+                shift.OpenedAtUtc.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture),
+                shift.SalesCount == 1 ? Strings.Shift_SalesOne : string.Format(Display, Strings.Shift_SalesMany, shift.SalesCount),
+                MoneyConverter.Format(shift.TotalSoldCents));
+            ShiftOtherText = string.Empty;
+            ShiftState = ShiftViewState.Own;
+        }
+        else
+        {
+            ShiftBarText = string.Empty;
+            ShiftOtherText = string.Format(
+                Display,
+                Strings.Shift_OtherText,
+                shift.OpenedByName,
+                shift.OpenedAtUtc.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture));
+            ShiftState = ShiftViewState.Other;
+        }
+
+        UpdateCanCheckout();
         FocusCaptureRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    [RelayCommand]
+    private async Task OpenShiftAsync()
+    {
+        if (_shiftDialogs is null || IsModalOpen)
+        {
+            return;
+        }
+
+        if (await _shiftDialogs.OpenShiftAsync())
+        {
+            await RefreshShiftAsync();
+        }
+    }
+
+    [RelayCommand]
+    private Task DepositAsync() => RegisterMovementAsync(CashMovementType.In);
+
+    [RelayCommand]
+    private Task WithdrawalAsync() => RegisterMovementAsync(CashMovementType.Out);
+
+    private async Task RegisterMovementAsync(CashMovementType type)
+    {
+        if (_shiftDialogs is null || IsModalOpen || CurrentShift is not { IsMine: true } shift)
+        {
+            return;
+        }
+
+        if (await _shiftDialogs.RegisterMovementAsync(shift.ShiftId, type))
+        {
+            await RefreshShiftAsync();
+        }
+    }
+
+    /// <summary>Cerrar turno propio: espera el guardado pendiente del borrador antes de contar (research §9).</summary>
+    [RelayCommand]
+    private async Task CloseShiftAsync()
+    {
+        if (_shiftDialogs is null || IsModalOpen || CurrentShift is not { IsMine: true } shift)
+        {
+            return;
+        }
+
+        if (await _shiftDialogs.CloseShiftAsync(shift.ShiftId, ownerName: null, beforeCount: FlushDraftAsync))
+        {
+            await RefreshShiftAsync();
+        }
+    }
+
+    /// <summary>Un administrador cierra el turno de otro usuario desde el panel de turno ajeno (Historia 1, escenario 5).</summary>
+    [RelayCommand]
+    private async Task CloseOtherShiftAsync()
+    {
+        if (_shiftDialogs is null || IsModalOpen || !CanCloseOtherShift || CurrentShift is not { IsMine: false } shift)
+        {
+            return;
+        }
+
+        if (await _shiftDialogs.CloseShiftAsync(shift.ShiftId, shift.OpenedByName))
+        {
+            await RefreshShiftAsync();
+        }
     }
 
     /// <summary>Salir no pregunta: la venta queda en el borrador. Solo espera a que termine el guardado.</summary>
@@ -206,6 +357,8 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
     partial void OnDrawerReasonChanged(DrawerReasonViewModel? value) => OnModalChanged();
 
     partial void OnLastSaleTextChanged(string? value) => OnPropertyChanged(nameof(HasLastSale));
+
+    partial void OnShiftStateChanged(ShiftViewState value) => UpdateCanCheckout();
 
     private void OnModalChanged()
     {
@@ -480,6 +633,17 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
                 ShowStatus(Strings.Sale_Changed, warning: true);
                 break;
 
+            case ShiftRequired or ShiftOwnedByOther:
+                // Otro usuario o un administrador cerró o cambió el turno: el carrito sigue en el borrador (research §14).
+                CloseCheckout();
+                ShowStatus(
+                    result.Error is ShiftOwnedByOther other
+                        ? CashShiftMessages.ShiftOwnedByOther(other.OpenedByName)
+                        : CashShiftMessages.ShiftRequired,
+                    warning: true);
+                await RefreshShiftAsync();
+                break;
+
             case ValidationFailed validation:
                 checkout.ErrorMessage = validation.Errors is [{ } first, ..] ? first.Message : Strings.Sale_NotRegistered;
                 break;
@@ -515,6 +679,7 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
         LastSaleText = string.Format(Display, Strings.Sale_Registered, folio);
         LastChangeText = string.Format(Display, Strings.Sale_ChangeGiven, MoneyConverter.Format(changeCents));
         _logger.Information("Venta mostrada al operador. Folio={Folio}", folio);
+        _ = RefreshShiftAsync();
     }
 
     /// <summary>Vacía la venta con un borrador nuevo; el guardado sin líneas descarta el borrador anterior.</summary>
@@ -535,6 +700,11 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
 
     private async Task ProcessCodeAsync(string text)
     {
+        if (IsSaleBlocked)
+        {
+            return;
+        }
+
         DismissLastSale();
         var (completed, result) = await _runner.RunAsync(
             "BuscarProductoParaVender",
@@ -690,7 +860,7 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
         UpdateCanCheckout();
     }
 
-    private void UpdateCanCheckout() => CanCheckout = Cart.CanCheckout && !IsModalOpen;
+    private void UpdateCanCheckout() => CanCheckout = Cart.CanCheckout && !IsModalOpen && !IsSaleBlocked;
 
     private bool HasSelectedLine() => SelectedLine is not null;
 

@@ -35,7 +35,12 @@ public sealed partial class AdminAuthorizationViewModel : ViewModelBase
     public string Message => string.Format(
         System.Globalization.CultureInfo.CurrentCulture,
         Strings.Auth_AuthorizeMessage,
-        _permission == Permission.CancelSales ? Strings.Auth_OperationCancelSale : Strings.Auth_OperationOpenDrawer);
+        _permission switch
+        {
+            Permission.CancelSales => Strings.Auth_OperationCancelSale,
+            Permission.WithdrawCash => Strings.Auth_OperationWithdrawCash,
+            _ => Strings.Auth_OperationOpenDrawer,
+        });
 
     [ObservableProperty]
     public partial string UserName { get; set; } = string.Empty;

@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Pos.Application.Abstractions;
 using Pos.Application.Products;
+using Pos.Application.CashShifts;
+using Pos.Domain.CashShifts;
 using Pos.Application.Sales;
 using Pos.Application.Sales.CancelSale;
 using Pos.Domain.Inventory;
@@ -169,6 +171,12 @@ public sealed class CancelSaleTests : IAsyncLifetime
         public Task<SalePage> SearchAsync(SaleSearch search, CancellationToken ct) => inner.SearchAsync(search, ct);
 
         public Task<SaleDetailDto?> GetDetailAsync(Guid id, CancellationToken ct) => inner.GetDetailAsync(id, ct);
+
+        public Task<ShiftSalesTotals> GetShiftTotalsAsync(Guid shiftId, CancellationToken ct) => inner.GetShiftTotalsAsync(shiftId, ct);
+
+        public Task<IReadOnlyList<ShiftSaleRowDto>> ListByShiftAsync(Guid shiftId, CancellationToken ct) => inner.ListByShiftAsync(shiftId, ct);
+
+        public Task<long> GetCashAppliedAsync(Guid saleId, CancellationToken ct) => inner.GetCashAppliedAsync(saleId, ct);
 
         public Task<SalesDashboard> GetDashboardAsync(IReadOnlyList<DayWindow> days, CancellationToken ct) =>
             inner.GetDashboardAsync(days, ct);

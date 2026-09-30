@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Pos.Domain.Audit;
 using Pos.Domain.Business;
+using Pos.Domain.CashShifts;
 using Pos.Domain.Inventory;
 using Pos.Domain.Products;
 using Pos.Domain.Sales;
@@ -44,15 +45,19 @@ public class PosDbContext : DbContext
 
     public DbSet<User> Users => Set<User>();
 
+    public DbSet<CashShift> CashShifts => Set<CashShift>();
+
+    public DbSet<CashMovement> CashMovements => Set<CashMovement>();
+
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
-        RejectMovementChanges();
+        RejectImmutableChanges();
         return base.SaveChanges(acceptAllChangesOnSuccess);
     }
 
     public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
     {
-        RejectMovementChanges();
+        RejectImmutableChanges();
         return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
     }
 
@@ -81,6 +86,8 @@ public class PosDbContext : DbContext
         modelBuilder.ApplyConfiguration(new AuditEntryConfiguration());
         modelBuilder.ApplyConfiguration(new BusinessProfileConfiguration());
         modelBuilder.ApplyConfiguration(new UserConfiguration());
+        modelBuilder.ApplyConfiguration(new CashShiftConfiguration());
+        modelBuilder.ApplyConfiguration(new CashMovementConfiguration());
     }
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
@@ -93,14 +100,26 @@ public class PosDbContext : DbContext
     }
 
     /// <summary>
-    /// Los movimientos de inventario y la bitácora de auditoría son inmutables: no se modifican ni
-    /// se borran (004 FR-010, 005 Principio IX).
+    /// Los movimientos de inventario y de efectivo, la bitácora de auditoría y los turnos cerrados son
+    /// inmutables: no se modifican ni se borran (004 FR-010, 005 Principio IX, 008 research §10).
     /// </summary>
-    private void RejectMovementChanges()
+    private void RejectImmutableChanges()
     {
         if (ChangeTracker.Entries<InventoryMovement>().Any(e => e.State is EntityState.Modified or EntityState.Deleted))
         {
             throw new InvalidOperationException("Los movimientos de inventario no se pueden modificar ni borrar.");
+        }
+
+        if (ChangeTracker.Entries<CashMovement>().Any(e => e.State is EntityState.Modified or EntityState.Deleted))
+        {
+            throw new InvalidOperationException("Los movimientos de efectivo no se pueden modificar ni borrar.");
+        }
+
+        if (ChangeTracker.Entries<CashShift>().Any(e =>
+                e.State is EntityState.Modified or EntityState.Deleted
+                && e.Property(nameof(CashShift.Status)).OriginalValue is CashShiftStatus.Closed))
+        {
+            throw new InvalidOperationException("Un turno cerrado no se puede modificar ni borrar.");
         }
 
         if (ChangeTracker.Entries<AuditEntry>().Any(e => e.State is EntityState.Modified or EntityState.Deleted))

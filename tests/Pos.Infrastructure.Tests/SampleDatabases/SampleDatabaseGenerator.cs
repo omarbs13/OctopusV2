@@ -1,11 +1,11 @@
 using System.Reflection;
 using Microsoft.Data.Sqlite;
-using Pos.Application.Abstractions;
 using Pos.Application.Sales;
 using Pos.Application.Sales.SaveSaleDraft;
 using Pos.Domain.Common;
 using Pos.Domain.Inventory;
 using Pos.Domain.Products;
+using Pos.Domain.Users;
 using Pos.Infrastructure.Persistence;
 using Pos.Infrastructure.Tests.TestSupport;
 
@@ -65,8 +65,11 @@ public sealed class SampleDatabaseGenerator
             await context.SaveChangesAsync(TestContext.Current.CancellationToken);
         }
 
+        // Desde 0.6.0: un administrador y un cajero (007), que hacen las ventas.
+        var (adminId, cashierId) = await SeedUsersAsync(db);
+
         // Desde 0.4.0: ventas completadas y canceladas, una existencia negativa y un borrador.
-        await SeedSalesAsync(db);
+        await SeedSalesAsync(db, adminId, cashierId);
 
         // Un solo archivo autocontenido: sin WAL pendiente. Primero se liberan las conexiones del pool.
         SqliteConnection.ClearAllPools();
@@ -74,10 +77,20 @@ public sealed class SampleDatabaseGenerator
         File.Copy(db.Directory.Paths.DatabaseFile, target);
     }
 
-    private static async Task SeedSalesAsync(TestDb db)
+    private static async Task<(Guid AdminId, Guid CashierId)> SeedUsersAsync(TestDb db)
+    {
+        var admin = User.Create("Administrador de muestra", SampleData.AdminUserName, UserRole.Admin, "hash-de-muestra");
+        var cashier = User.Create("Cajero de muestra", SampleData.CashierUserName, UserRole.Cashier, "hash-de-muestra");
+        await using var context = db.CreateDbContext();
+        context.Users.AddRange(admin, cashier);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        return (admin.Id, cashier.Id);
+    }
+
+    private static async Task SeedSalesAsync(TestDb db, Guid adminId, Guid cashierId)
     {
         var ct = TestContext.Current.CancellationToken;
-        db.User.UserId = SystemUser.Id;
+        db.User.UserId = adminId;
 
         // La pieza con inventario arranca con 3 y se venden 5: queda en -2.
         await using (var context = db.CreateDbContext())
@@ -94,6 +107,7 @@ public sealed class SampleDatabaseGenerator
 
         db.Clock.UtcNow = new DateTime(2026, 9, 30, 12, 0, 0, DateTimeKind.Utc);
         await SalesTestSupport.SellOkAsync(db, (kilogram, 2000), (service, 1000));
+        db.User.UserId = cashierId;
         db.Clock.UtcNow = new DateTime(2026, 9, 30, 12, 30, 0, DateTimeKind.Utc);
         var cancelled = await SalesTestSupport.SellOkAsync(db, (kilogram, 1500));
         Assert.True((await SalesTestSupport.CancelAsync(db, cancelled.SaleId, SampleData.CancellationReason)).IsSuccess);
@@ -173,6 +187,10 @@ public static class SampleData
     /// <summary>Desde 0.4.0: 3 ventas (una cancelada), 4 líneas, 3 pagos, un borrador y una entrada de bitácora.</summary>
     public const int SaleCount = 3;
     public const string CancellationReason = "Error de captura";
+
+    /// <summary>Desde 0.6.0: usuarios de muestra. El administrador hace la venta 1; el cajero, la 2 y la 3 y el borrador.</summary>
+    public const string AdminUserName = "admin";
+    public const string CashierUserName = "cajero";
 
     public static IEnumerable<Product> Products(DateTime utcNow)
     {

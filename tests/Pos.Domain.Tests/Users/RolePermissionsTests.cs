@@ -5,10 +5,10 @@ namespace Pos.Domain.Tests.Users;
 public class RolePermissionsTests
 {
     [Fact]
-    public void Cajero_TieneExactamenteLosPermisosDeLaHistoria4()
+    public void Cajero_TieneExactamenteSusPermisos()
     {
         Assert.Equal(
-            [Permission.Sell, Permission.ViewOwnSales, Permission.ViewProducts, Permission.ViewInventory],
+            [Permission.Sell, Permission.ViewOwnSales, Permission.ViewProducts, Permission.ViewInventory, Permission.OperateShift],
             RolePermissions.For(UserRole.Cashier).Order());
     }
 
@@ -19,10 +19,10 @@ public class RolePermissionsTests
     }
 
     [Fact]
-    public void SoloCancelarVentaYAbrirCajonSeAutorizan()
+    public void SoloCancelarVentaCajonYRetiroSeAutorizan()
     {
         var authorizable = Enum.GetValues<Permission>().Where(RolePermissions.IsAuthorizable);
 
-        Assert.Equal([Permission.CancelSales, Permission.OpenDrawerWithoutSale], authorizable.Order());
+        Assert.Equal([Permission.CancelSales, Permission.OpenDrawerWithoutSale, Permission.WithdrawCash], authorizable.Order());
     }
 }

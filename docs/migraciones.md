@@ -138,6 +138,24 @@ La migración `UsersAndRoles`:
   líneas y que desaparezca `CK_SaleDrafts_Slot`. Al crear el primer administrador en el asistente, la
   venta conservada de "Sistema" se reasigna a ese administrador.
 
+Desde 0.6.0 (turnos de caja) la base de ejemplo `v0.6.0.db` se generó con el esquema de
+`UsersAndRoles`, **antes** de crear la migración `CashShifts`, y trae un administrador, un cajero y las
+ventas de ambos (el administrador hizo la 1; el cajero, la 2 y la 3 y el borrador). La migración
+`CashShifts` **no reconstruye ninguna tabla**:
+
+- Crea `CashShifts` y `CashMovements` (esta con llave foránea `Restrict` hacia `CashShifts`, porque la
+  tabla es nueva) con sus índices, entre ellos el índice único filtrado
+  `IX_CashShifts_OpenPerRegister ... WHERE "Status" = 'OPEN'` (un solo turno abierto por caja).
+- Agrega `Sales.CashShiftId` con `ALTER TABLE "Sales" ADD "CashShiftId" TEXT NULL`, **sin llave
+  foránea** (una llave foránea obligaría a EF Core a reconstruir `Sales`, la tabla más grande) y el
+  índice `IX_Sales_CashShiftId_Status`. Las ventas anteriores quedan con `NULL`.
+- No actualiza datos.
+
+`CashShiftsMigrationTests` revisa el SQL y falla si contiene `DROP TABLE` o `ef_temp_`.
+`SampleDatabaseUpgradeTests` verifica, tras migrar cada base de ejemplo, que las ventas conservan sus
+datos con `CashShiftId` nulo, que `CashShifts` y `CashMovements` están vacías y que el índice único
+filtrado existe. Ver [turnos-de-caja.md](turnos-de-caja.md).
+
 Cuando una funcionalidad agregue tablas nuevas, amplía `SampleData` para que la base de ejemplo
 de la siguiente versión también tenga datos en ellas, y agrega verificaciones en
 `SampleDatabaseUpgradeTests`.

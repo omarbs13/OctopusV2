@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Pos.Application.Abstractions;
 using Pos.Application.Business;
+using Pos.Application.CashShifts;
 using Pos.Application.Printing.Ticket;
 using Pos.Application.Sales;
 using Pos.Application.Users.Access;
@@ -17,6 +18,7 @@ public sealed partial class PrintTicketHandler
     private readonly IAccessControl _access;
     private readonly ICurrentUser _currentUser;
     private readonly ISaleRepository _sales;
+    private readonly ICashShiftRepository _shifts;
     private readonly IBusinessProfileRepository _profiles;
     private readonly IPrintingSettingsStore _settings;
     private readonly ITicketPrinter _printer;
@@ -26,6 +28,7 @@ public sealed partial class PrintTicketHandler
         IAccessControl access,
         ICurrentUser currentUser,
         ISaleRepository sales,
+        ICashShiftRepository shifts,
         IBusinessProfileRepository profiles,
         IPrintingSettingsStore settings,
         ITicketPrinter printer,
@@ -34,6 +37,7 @@ public sealed partial class PrintTicketHandler
         _access = access;
         _currentUser = currentUser;
         _sales = sales;
+        _shifts = shifts;
         _profiles = profiles;
         _settings = settings;
         _printer = printer;
@@ -44,9 +48,15 @@ public sealed partial class PrintTicketHandler
     {
         ArgumentNullException.ThrowIfNull(command);
 
-        // El ticket de una venta es de quien la hizo (o de quien ve todas); el de prueba es de configuración.
+        // El ticket de una venta es de quien la hizo (o de quien ve todas); el de prueba es de configuración;
+        // el corte y los comprobantes de efectivo son del turno (008).
         var access = await _access.CheckAsync(
-            command.Source is PrintSource.SaleSource ? Permission.ViewOwnSales : Permission.ManageSettings,
+            command.Source switch
+            {
+                PrintSource.SaleSource => Permission.ViewOwnSales,
+                PrintSource.ShiftReportSource or PrintSource.CashMovementSource => Permission.OperateShift,
+                _ => Permission.ManageSettings,
+            },
             cancellationToken);
         if (!access.Allowed)
         {
@@ -76,6 +86,42 @@ public sealed partial class PrintTicketHandler
 
                 folio = sale.Folio;
                 ticket = TicketBuilder.Build(profile, sale, settings.Columns, new TicketOptions(command.IsReprint));
+            }
+            else if (command.Source is PrintSource.ShiftReportSource shiftSource)
+            {
+                var report = await _shifts.GetReportAsync(shiftSource.ShiftId, cancellationToken);
+                if (report is null)
+                {
+                    return Result.Failure<PrintedTicket>(new NotFound());
+                }
+
+                // El corte es del administrador o de quien cerró el turno, que lo imprime al cerrar (research §12).
+                if (report.ClosedById != _currentUser.UserId
+                    && await _access.CheckAsync(Permission.ManageShifts, cancellationToken) is { Allowed: false } denied)
+                {
+                    return Result.Failure<PrintedTicket>(denied.Error!);
+                }
+
+                folio = report.Folio;
+                ticket = ShiftTicketBuilder.BuildReport(profile, report, settings.Columns, new TicketOptions(command.IsReprint));
+            }
+            else if (command.Source is PrintSource.CashMovementSource movementSource)
+            {
+                var receipt = await _shifts.FindMovementAsync(movementSource.MovementId, cancellationToken);
+                if (receipt is null)
+                {
+                    return Result.Failure<PrintedTicket>(new NotFound());
+                }
+
+                // Comprobante: del administrador o del movimiento propio en el turno propio (research §12).
+                var own = receipt.CreatedById == _currentUser.UserId && receipt.ShiftOwnerId == _currentUser.UserId;
+                if (!own && await _access.CheckAsync(Permission.ManageShifts, cancellationToken) is { Allowed: false } denied)
+                {
+                    return Result.Failure<PrintedTicket>(denied.Error!);
+                }
+
+                folio = receipt.Folio;
+                ticket = ShiftTicketBuilder.BuildMovementReceipt(profile, receipt, settings.Columns, new TicketOptions(command.IsReprint));
             }
             else
             {

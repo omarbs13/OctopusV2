@@ -1,8 +1,10 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Pos.Application.Abstractions;
+using Pos.Application.CashShifts;
 using Pos.Application.Products;
 using Pos.Application.Sales;
+using Pos.Domain.CashShifts;
 using Pos.Domain.Sales;
 using Pos.Infrastructure.Persistence;
 
@@ -169,6 +171,68 @@ public sealed class SaleRepository : ISaleRepository
                 p.Reference))],
             sale.CreatedBy);
     }
+
+    public async Task<ShiftSalesTotals> GetShiftTotalsAsync(Guid shiftId, CancellationToken cancellationToken)
+    {
+        var sales = _context.Sales.AsNoTracking().Where(s => s.CashShiftId == shiftId);
+
+        var byStatus = await sales
+            .GroupBy(s => s.Status)
+            .Select(g => new { Status = g.Key, Count = g.Count(), Cents = g.Sum(s => s.TotalCents) })
+            .ToListAsync(cancellationToken);
+        var payments = await (
+                from p in _context.SalePayments.AsNoTracking()
+                join s in sales on p.SaleId equals s.Id
+                select new { s.Status, p.Method, p.AmountCents })
+            .GroupBy(x => new { x.Status, x.Method })
+            .Select(g => new { g.Key.Status, g.Key.Method, Cents = g.Sum(x => x.AmountCents) })
+            .ToListAsync(cancellationToken);
+
+        long Paid(PaymentMethod method, SaleStatus? status = null) =>
+            payments.Where(p => p.Method == method && (status is null || p.Status == status)).Sum(p => p.Cents);
+
+        var completed = byStatus.FirstOrDefault(x => x.Status == SaleStatus.Completed);
+        var cancelled = byStatus.FirstOrDefault(x => x.Status == SaleStatus.Cancelled);
+        return new ShiftSalesTotals(
+            completed?.Count ?? 0,
+            cancelled?.Count ?? 0,
+            completed?.Cents ?? 0,
+            Paid(PaymentMethod.Cash),
+            Paid(PaymentMethod.Cash, SaleStatus.Cancelled),
+            Paid(PaymentMethod.Card, SaleStatus.Completed),
+            Paid(PaymentMethod.Transfer, SaleStatus.Completed));
+    }
+
+    public async Task<IReadOnlyList<ShiftSaleRowDto>> ListByShiftAsync(Guid shiftId, CancellationToken cancellationToken)
+    {
+        var rows = await _context.Sales.AsNoTracking()
+            .Where(s => s.CashShiftId == shiftId)
+            .OrderBy(s => s.CreatedAt)
+            .ThenBy(s => s.Id)
+            .Select(s => new { s.Id, s.FolioNumber, s.CreatedAt, s.TotalCents, s.Status })
+            .ToListAsync(cancellationToken);
+
+        var ids = rows.Select(r => r.Id).ToList();
+        var methods = (await _context.SalePayments.AsNoTracking()
+                .Where(p => ids.Contains(p.SaleId))
+                .Select(p => new { p.SaleId, p.Method })
+                .ToListAsync(cancellationToken))
+            .GroupBy(p => p.SaleId)
+            .ToDictionary(g => g.Key, g => (IReadOnlyList<PaymentMethod>)[.. g.Select(p => p.Method).Distinct().Order()]);
+
+        return [.. rows.Select(r => new ShiftSaleRowDto(
+            r.Id,
+            Folio.Format(r.FolioNumber),
+            r.CreatedAt,
+            r.TotalCents,
+            methods.GetValueOrDefault(r.Id) ?? [],
+            r.Status))];
+    }
+
+    public async Task<long> GetCashAppliedAsync(Guid saleId, CancellationToken cancellationToken) =>
+        await _context.SalePayments.AsNoTracking()
+            .Where(p => p.SaleId == saleId && p.Method == PaymentMethod.Cash)
+            .SumAsync(p => (long?)p.AmountCents, cancellationToken) ?? 0;
 
     public async Task<SalesDashboard> GetDashboardAsync(IReadOnlyList<DayWindow> days, CancellationToken cancellationToken)
     {

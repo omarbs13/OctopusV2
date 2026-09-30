@@ -5,6 +5,8 @@ using Pos.Application.Printing;
 using Pos.Application.Printing.PrintTicket;
 using Pos.Application.Printing.Ticket;
 using Pos.Application.Products;
+using Pos.Application.CashShifts;
+using Pos.Domain.CashShifts;
 using Pos.Application.Sales;
 using Pos.Domain.Business;
 using Pos.Domain.Sales;
@@ -21,7 +23,7 @@ public sealed class PrintTicketHandlerTests
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     private PrintTicketHandler Handler =>
-        new(new AllowAllAccessControl(), new FakeCurrentUser(), _sales, new FakeProfiles(), _settings, _printer, NullLogger<PrintTicketHandler>.Instance);
+        new(new AllowAllAccessControl(), new FakeCurrentUser(), _sales, null!, new FakeProfiles(), _settings, _printer, NullLogger<PrintTicketHandler>.Instance);
 
     [Fact]
     public async Task Muestra_ImprimeElTicketDePruebaEnElAnchoConfigurado()
@@ -155,6 +157,12 @@ public sealed class PrintTicketHandlerTests
         public void Add(Sale sale) => throw new NotSupportedException();
 
         public Task<SalePage> SearchAsync(SaleSearch search, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+        public Task<ShiftSalesTotals> GetShiftTotalsAsync(Guid shiftId, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+        public Task<IReadOnlyList<ShiftSaleRowDto>> ListByShiftAsync(Guid shiftId, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+        public Task<long> GetCashAppliedAsync(Guid saleId, CancellationToken cancellationToken) => throw new NotSupportedException();
 
         public Task<SalesDashboard> GetDashboardAsync(IReadOnlyList<DayWindow> days, CancellationToken cancellationToken) => throw new NotSupportedException();
 

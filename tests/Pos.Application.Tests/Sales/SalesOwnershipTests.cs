@@ -1,4 +1,6 @@
 using Pos.Application.Abstractions;
+using Pos.Application.CashShifts;
+using Pos.Domain.CashShifts;
 using Pos.Application.Sales;
 using Pos.Application.Sales.GetSale;
 using Pos.Application.Sales.SearchSales;
@@ -102,6 +104,12 @@ public class SalesOwnershipTests
         public Task<Sale?> GetAsync(Guid id, CancellationToken cancellationToken) => throw new NotSupportedException();
 
         public void Add(Sale sale) => throw new NotSupportedException();
+
+        public Task<ShiftSalesTotals> GetShiftTotalsAsync(Guid shiftId, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+        public Task<IReadOnlyList<ShiftSaleRowDto>> ListByShiftAsync(Guid shiftId, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+        public Task<long> GetCashAppliedAsync(Guid saleId, CancellationToken cancellationToken) => throw new NotSupportedException();
 
         public Task<SalesDashboard> GetDashboardAsync(IReadOnlyList<DayWindow> days, CancellationToken cancellationToken) => throw new NotSupportedException();
 

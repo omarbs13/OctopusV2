@@ -20,8 +20,15 @@ public static class AuditActions
     public const string HeldSaleDiscarded = "HELD_SALE_DISCARDED";
     public const string SaleCancelled = "SALE_CANCELLED";
     public const string DrawerOpened = "DRAWER_OPENED";
+    public const string ShiftOpened = "SHIFT_OPENED";
+    public const string CashDeposit = "CASH_DEPOSIT";
+    public const string CashWithdrawal = "CASH_WITHDRAWAL";
+    public const string ShiftCashCounted = "SHIFT_CASH_COUNTED";
+    public const string ShiftClosed = "SHIFT_CLOSED";
+    public const string ShiftClosedByAdmin = "SHIFT_CLOSED_BY_ADMIN";
 
     public const string UserEntity = "User";
+    public const string CashShiftEntity = "CashShift";
 
     /// <summary>Texto en español de cada evento, en el orden en que se ofrece en el filtro.</summary>
     public static readonly IReadOnlyDictionary<string, string> All = new Dictionary<string, string>
@@ -41,6 +48,12 @@ public static class AuditActions
         [HeldSaleDiscarded] = "Venta conservada descartada",
         [SaleCancelled] = "Venta cancelada",
         [DrawerOpened] = "Cajón abierto sin venta",
+        [ShiftOpened] = "Turno abierto",
+        [CashDeposit] = "Ingreso de efectivo",
+        [CashWithdrawal] = "Retiro de efectivo",
+        [ShiftCashCounted] = "Conteo de caja",
+        [ShiftClosed] = "Turno cerrado",
+        [ShiftClosedByAdmin] = "Turno cerrado por administrador",
     }.ToFrozenDictionary();
 
     /// <summary>Texto en español del evento; el código tal cual si no está en el catálogo.</summary>

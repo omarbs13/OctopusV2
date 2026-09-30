@@ -2,9 +2,11 @@ using FluentValidation;
 using Microsoft.Extensions.Logging;
 using Pos.Application.Abstractions;
 using Pos.Application.Audit;
+using Pos.Application.CashShifts;
 using Pos.Application.Users.Access;
 using Pos.Application.Inventory;
 using Pos.Application.Products;
+using Pos.Domain.CashShifts;
 using Pos.Domain.Sales;
 using Pos.Domain.Users;
 
@@ -20,6 +22,7 @@ public sealed partial class CancelSaleHandler
 
     private readonly IAccessControl _access;
     private readonly ISaleRepository _sales;
+    private readonly ICashShiftRepository _shifts;
     private readonly IInventoryRepository _inventory;
     private readonly IAuditLog _audit;
     private readonly IWriteTransactions _transactions;
@@ -31,6 +34,7 @@ public sealed partial class CancelSaleHandler
     public CancelSaleHandler(
         IAccessControl access,
         ISaleRepository sales,
+        ICashShiftRepository shifts,
         IInventoryRepository inventory,
         IAuditLog audit,
         IWriteTransactions transactions,
@@ -41,6 +45,7 @@ public sealed partial class CancelSaleHandler
     {
         _access = access;
         _sales = sales;
+        _shifts = shifts;
         _inventory = inventory;
         _audit = audit;
         _transactions = transactions;
@@ -84,6 +89,25 @@ public sealed partial class CancelSaleHandler
             return Result.Failure(new Conflict());
         }
 
+        // 008: solo se cancelan ventas del turno abierto actual (incluye rechazar las anteriores a 0.6.0, sin turno).
+        var shift = await _shifts.GetOpenAsync(CashRegister.Default, cancellationToken);
+        if (shift is null || sale.CashShiftId != shift.Id)
+        {
+            return Result.Failure(new InvalidState(CashShiftMessages.SaleFromClosedShift));
+        }
+
+        var saleCash = await _sales.GetCashAppliedAsync(sale.Id, cancellationToken);
+        if (saleCash > 0)
+        {
+            var expected = shift.ExpectedCash(await _sales.GetShiftTotalsAsync(shift.Id, cancellationToken));
+            if (!CashShiftMath.CanRefund(expected, saleCash))
+            {
+                // Nunca se revela el monto esperado, a ningún rol (clarificación 1).
+                LogInsufficientCash(sale.Id, shift.Id);
+                return Result.Failure(new InsufficientCash(null));
+            }
+        }
+
         var reason = command.Reason.Trim();
         sale.Cancel(reason, _clock.UtcNow, _currentUser.UserId);
 
@@ -117,6 +141,9 @@ public sealed partial class CancelSaleHandler
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Venta cancelada. SaleId={SaleId} Folio={Folio}")]
     private partial void LogCancelled(Guid saleId, string folio);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Cancelación de venta rechazada por efectivo insuficiente. SaleId={SaleId} ShiftId={ShiftId}")]
+    private partial void LogInsufficientCash(Guid saleId, Guid shiftId);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Cancelación de venta rechazada por conflicto. SaleId={SaleId}")]
     private partial void LogConflict(Guid saleId);

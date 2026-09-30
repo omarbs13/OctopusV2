@@ -1,0 +1,62 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Pos.Desktop.CashShifts"
+             xmlns:res="using:Pos.Desktop.Resources"
+             xmlns:forms="using:Pos.Desktop.Forms"
+             x:Class="Pos.Desktop.CashShifts.CashMovementView"
+             x:DataType="vm:CashMovementViewModel">
+
+  <UserControl.KeyBindings>
+    <KeyBinding Gesture="Escape" Command="{Binding CloseCommand}" />
+  </UserControl.KeyBindings>
+
+  <Border Padding="20" CornerRadius="8" BorderThickness="1" Width="480"
+          Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+          BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
+    <StackPanel Spacing="10">
+      <TextBlock Text="{Binding Title}" FontSize="18" FontWeight="SemiBold" />
+
+      <!-- Captura -->
+      <StackPanel Spacing="10" IsVisible="{Binding IsEditing}">
+        <StackPanel Spacing="4">
+          <forms:FieldLabel Text="{x:Static res:Strings.CashMovement_Amount}" IsRequired="True" />
+          <TextBox x:Name="AmountBox" Text="{Binding AmountText}" MinHeight="48" FontSize="20" PlaceholderText="0.00" />
+          <TextBlock Text="{Binding AmountError}" FontSize="12" TextWrapping="Wrap"
+                     Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                     IsVisible="{Binding AmountError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+        </StackPanel>
+        <StackPanel Spacing="4">
+          <forms:FieldLabel Text="{x:Static res:Strings.CashMovement_Reason}" IsRequired="True" />
+          <TextBox Text="{Binding Reason}" MaxLength="250" AcceptsReturn="False" TextWrapping="Wrap" MinHeight="48">
+            <TextBox.KeyBindings>
+              <KeyBinding Gesture="Enter" Command="{Binding SaveCommand}" />
+            </TextBox.KeyBindings>
+          </TextBox>
+          <TextBlock Text="{Binding ReasonError}" FontSize="12" TextWrapping="Wrap"
+                     Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                     IsVisible="{Binding ReasonError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+        </StackPanel>
+        <TextBlock Text="{Binding ErrorMessage}" TextWrapping="Wrap"
+                   Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                   IsVisible="{Binding ErrorMessage, Converter={x:Static ObjectConverters.IsNotNull}}" />
+        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+          <Button Classes="accent" MinHeight="48" MinWidth="130"
+                  Content="{x:Static res:Strings.CashMovement_Save}" Command="{Binding SaveCommand}" />
+          <Button MinHeight="48" MinWidth="110"
+                  Content="{x:Static res:Strings.Common_Cancel}" Command="{Binding CloseCommand}" />
+        </StackPanel>
+      </StackPanel>
+
+      <!-- Resultado -->
+      <StackPanel Spacing="10" IsVisible="{Binding IsDone}">
+        <TextBlock Text="{Binding DoneText}" FontSize="16" TextWrapping="Wrap" />
+        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+          <Button MinHeight="48" MinWidth="170"
+                  Content="{x:Static res:Strings.CashMovement_Print}" Command="{Binding PrintCommand}" />
+          <Button Classes="accent" MinHeight="48" MinWidth="110"
+                  Content="{x:Static res:Strings.CashMovement_Done}" Command="{Binding CloseCommand}" />
+        </StackPanel>
+      </StackPanel>
+    </StackPanel>
+  </Border>
+</UserControl>

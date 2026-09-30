@@ -26,9 +26,9 @@ public class SaleTests
     public void Register_requires_payments_that_add_up_to_the_total()
     {
         Assert.Throws<DomainException>(() =>
-            Sale.Register(1, Guid.NewGuid(), [Line(1, "10.00", "2")], [Cash("19.99")]));
+            Sale.Register(1, Guid.NewGuid(), Guid.NewGuid(), [Line(1, "10.00", "2")], [Cash("19.99")]));
 
-        var sale = Sale.Register(1, Guid.NewGuid(), [Line(1, "10.00", "2")], [Cash("20.00")]);
+        var sale = Sale.Register(1, Guid.NewGuid(), Guid.NewGuid(), [Line(1, "10.00", "2")], [Cash("20.00")]);
 
         Assert.Equal(2000, sale.TotalCents);
         Assert.Equal(SaleStatus.Completed, sale.Status);
@@ -38,15 +38,15 @@ public class SaleTests
     [Fact]
     public void Register_rejects_empty_sales_and_two_cash_payments()
     {
-        Assert.Throws<DomainException>(() => Sale.Register(1, Guid.NewGuid(), [], [Cash("10.00")]));
+        Assert.Throws<DomainException>(() => Sale.Register(1, Guid.NewGuid(), Guid.NewGuid(), [], [Cash("10.00")]));
         Assert.Throws<DomainException>(() =>
-            Sale.Register(1, Guid.NewGuid(), [Line(1, "10.00", "2")], [Cash("10.00"), Cash("10.00")]));
+            Sale.Register(1, Guid.NewGuid(), Guid.NewGuid(), [Line(1, "10.00", "2")], [Cash("10.00"), Cash("10.00")]));
     }
 
     [Fact]
     public void Cancel_leaves_status_reason_date_and_user()
     {
-        var sale = Sale.Register(1, Guid.NewGuid(), [Line(1)], [Cash("10.00")]);
+        var sale = Sale.Register(1, Guid.NewGuid(), Guid.NewGuid(), [Line(1)], [Cash("10.00")]);
         var user = Guid.NewGuid();
         var now = new DateTime(2026, 9, 30, 12, 0, 0, DateTimeKind.Utc);
 
@@ -61,7 +61,7 @@ public class SaleTests
     [Fact]
     public void Cancel_without_reason_or_twice_is_rejected()
     {
-        var sale = Sale.Register(1, Guid.NewGuid(), [Line(1)], [Cash("10.00")]);
+        var sale = Sale.Register(1, Guid.NewGuid(), Guid.NewGuid(), [Line(1)], [Cash("10.00")]);
         var now = DateTime.UtcNow;
 
         Assert.Throws<DomainException>(() => sale.Cancel("  ", now, Guid.NewGuid()));

@@ -17,6 +17,8 @@ internal sealed class SaleConfiguration : IEntityTypeConfiguration<Sale>
 
         builder.Property(s => s.FolioNumber).IsRequired();
         builder.Property(s => s.DraftId).IsRequired();
+        // Sin llave foránea hacia CashShifts: evita reconstruir Sales en la migración (008, research §5).
+        builder.Property(s => s.CashShiftId);
         builder.Property(s => s.TotalCents).IsRequired();
         builder.Property(s => s.Status)
             .HasConversion(status => status.ToCode(), code => SaleStatusExtensions.FromCode(code))
@@ -46,6 +48,9 @@ internal sealed class SaleConfiguration : IEntityTypeConfiguration<Sale>
         builder.HasIndex(s => s.DraftId).HasDatabaseName(DraftIndexName).IsUnique();
         builder.HasIndex(s => new { s.CreatedAt, s.Id }).HasDatabaseName("IX_Sales_CreatedAt");
         builder.HasIndex(s => new { s.Status, s.CreatedAt }).HasDatabaseName("IX_Sales_Status_CreatedAt");
+
+        // Totales por turno (008, research §3).
+        builder.HasIndex(s => new { s.CashShiftId, s.Status }).HasDatabaseName("IX_Sales_CashShiftId_Status");
 
         // Filtro por cajero y propiedad de las ventas (007, research §7).
         builder.HasIndex(s => new { s.CreatedBy, s.CreatedAt }).HasDatabaseName("IX_Sales_CreatedBy_CreatedAt");

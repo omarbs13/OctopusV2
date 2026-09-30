@@ -1,0 +1,109 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Pos.Desktop.CashShifts"
+             xmlns:res="using:Pos.Desktop.Resources"
+             x:Class="Pos.Desktop.CashShifts.ShiftDetailView"
+             x:DataType="vm:ShiftDetailViewModel">
+
+  <UserControl.KeyBindings>
+    <KeyBinding Gesture="Escape" Command="{Binding CancelCommand}" />
+  </UserControl.KeyBindings>
+
+  <StackPanel Spacing="12" MaxWidth="980" HorizontalAlignment="Left">
+    <TextBlock Text="{Binding Title}" FontSize="22" FontWeight="SemiBold" />
+    <TextBlock Text="{Binding HeaderText}" TextWrapping="Wrap" />
+    <TextBlock Text="{Binding ClosedText}" TextWrapping="Wrap" IsVisible="{Binding HasClosedText}" />
+
+    <StackPanel Orientation="Horizontal" Spacing="8">
+      <Button MinHeight="44" Content="{x:Static res:Strings.Shift_PrintReport}"
+              Command="{Binding ReprintReportCommand}" IsVisible="{Binding IsClosed}" />
+      <Button Classes="accent" MinHeight="44" Content="{x:Static res:Strings.Shift_Close}"
+              Command="{Binding CloseShiftCommand}" IsVisible="{Binding IsOpen}" />
+    </StackPanel>
+
+    <TabControl>
+      <!-- Ventas -->
+      <TabItem Header="{x:Static res:Strings.Shifts_TabSales}">
+        <StackPanel Spacing="4">
+          <Grid ColumnDefinitions="120,80,120,*,120" Margin="12,0">
+            <Grid.Styles>
+              <Style Selector="TextBlock">
+                <Setter Property="FontWeight" Value="SemiBold" />
+              </Style>
+            </Grid.Styles>
+            <TextBlock Grid.Column="0" Text="{x:Static res:Strings.Shifts_ColFolio}" />
+            <TextBlock Grid.Column="1" Text="{x:Static res:Strings.Shifts_ColTime}" />
+            <TextBlock Grid.Column="2" Text="{x:Static res:Strings.Shifts_ColTotal}" TextAlignment="Right" />
+            <TextBlock Grid.Column="3" Text="{x:Static res:Strings.Sales_ColPayments}" Margin="12,0,0,0" />
+            <TextBlock Grid.Column="4" Text="{x:Static res:Strings.Sales_Status}" />
+          </Grid>
+          <ItemsControl ItemsSource="{Binding Sales}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:ShiftSaleRowView">
+                <Grid ColumnDefinitions="120,80,120,*,120" Margin="12,2">
+                  <TextBlock Grid.Column="0" Text="{Binding Folio}" />
+                  <TextBlock Grid.Column="1" Text="{Binding TimeText}" />
+                  <TextBlock Grid.Column="2" Text="{Binding TotalText}" TextAlignment="Right" />
+                  <TextBlock Grid.Column="3" Text="{Binding MethodsText}" Margin="12,0,0,0" TextTrimming="CharacterEllipsis" />
+                  <TextBlock Grid.Column="4" Text="{Binding StatusText}" />
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </TabItem>
+
+      <!-- Movimientos -->
+      <TabItem Header="{x:Static res:Strings.Shifts_TabMovements}">
+        <StackPanel Spacing="4">
+          <Grid ColumnDefinitions="140,70,90,120,*,140,140,110" Margin="12,0">
+            <Grid.Styles>
+              <Style Selector="TextBlock">
+                <Setter Property="FontWeight" Value="SemiBold" />
+              </Style>
+            </Grid.Styles>
+            <TextBlock Grid.Column="0" Text="{x:Static res:Strings.Shifts_ColFolio}" />
+            <TextBlock Grid.Column="1" Text="{x:Static res:Strings.Shifts_ColTime}" />
+            <TextBlock Grid.Column="2" Text="{x:Static res:Strings.Shifts_ColType}" />
+            <TextBlock Grid.Column="3" Text="{x:Static res:Strings.Shifts_ColAmount}" TextAlignment="Right" />
+            <TextBlock Grid.Column="4" Text="{x:Static res:Strings.Shifts_ColReason}" Margin="12,0,0,0" />
+            <TextBlock Grid.Column="5" Text="{x:Static res:Strings.Shifts_ColBy}" />
+            <TextBlock Grid.Column="6" Text="{x:Static res:Strings.Shifts_ColAuthorized}" />
+          </Grid>
+          <ItemsControl ItemsSource="{Binding Movements}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:CashMovementRow">
+                <Grid ColumnDefinitions="140,70,90,120,*,140,140,110" Margin="12,2">
+                  <TextBlock Grid.Column="0" Text="{Binding Folio}" VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="1" Text="{Binding TimeText}" VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="2" Text="{Binding TypeText}" VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="3" Text="{Binding AmountText}" TextAlignment="Right" VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="4" Text="{Binding Reason}" Margin="12,0,0,0" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="5" Text="{Binding UserName}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="6" Text="{Binding AuthorizedText}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                  <Button Grid.Column="7" MinHeight="36" Content="{x:Static res:Strings.Shifts_PrintMovement}"
+                          Command="{Binding $parent[UserControl].((vm:ShiftDetailViewModel)DataContext).PrintMovementCommand}"
+                          CommandParameter="{Binding}" />
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </TabItem>
+
+      <!-- Arqueo -->
+      <TabItem Header="{x:Static res:Strings.Shifts_TabReconciliation}">
+        <ItemsControl ItemsSource="{Binding Reconciliation}" MaxWidth="560" HorizontalAlignment="Left">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:ReconciliationRow">
+              <Grid ColumnDefinitions="*,Auto" Margin="12,3">
+                <TextBlock Grid.Column="0" Text="{Binding Label}" TextWrapping="Wrap" FontWeight="{Binding IsEmphasis, Converter={x:Static vm:EmphasisWeightConverter.Instance}}" />
+                <TextBlock Grid.Column="1" Text="{Binding Value}" TextWrapping="Wrap" MaxWidth="320" FontWeight="{Binding IsEmphasis, Converter={x:Static vm:EmphasisWeightConverter.Instance}}" />
+              </Grid>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </TabItem>
+    </TabControl>
+  </StackPanel>
+</UserControl>

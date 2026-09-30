@@ -1,4 +1,6 @@
+using Pos.Application.CashShifts;
 using Pos.Application.Products;
+using Pos.Domain.CashShifts;
 using Pos.Domain.Sales;
 
 namespace Pos.Application.Sales;
@@ -22,6 +24,15 @@ public interface ISaleRepository
     Task<SalePage> SearchAsync(SaleSearch search, CancellationToken cancellationToken);
 
     Task<SaleDetailDto?> GetDetailAsync(Guid id, CancellationToken cancellationToken);
+
+    /// <summary>Totales de las ventas de un turno en una sola consulta agregada (008, research §3).</summary>
+    Task<ShiftSalesTotals> GetShiftTotalsAsync(Guid shiftId, CancellationToken cancellationToken);
+
+    /// <summary>Ventas de un turno para su detalle, de la más antigua a la más reciente.</summary>
+    Task<IReadOnlyList<ShiftSaleRowDto>> ListByShiftAsync(Guid shiftId, CancellationToken cancellationToken);
+
+    /// <summary>Efectivo aplicado (neto de cambio) de la venta, 0 si no tuvo pago en efectivo.</summary>
+    Task<long> GetCashAppliedAsync(Guid saleId, CancellationToken cancellationToken);
 
     Task<SalesDashboard> GetDashboardAsync(IReadOnlyList<DayWindow> days, CancellationToken cancellationToken);
 

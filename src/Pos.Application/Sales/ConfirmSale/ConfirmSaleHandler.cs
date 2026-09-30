@@ -1,6 +1,7 @@
 using FluentValidation;
 using Microsoft.Extensions.Logging;
 using Pos.Application.Abstractions;
+using Pos.Application.CashShifts;
 using Pos.Application.Inventory;
 using Pos.Application.Products;
 using Pos.Domain.Common;
@@ -24,6 +25,7 @@ public sealed partial class ConfirmSaleHandler
     private readonly IInventoryRepository _inventory;
     private readonly ISaleRepository _sales;
     private readonly ISaleDraftStore _drafts;
+    private readonly ShiftGuard _shiftGuard;
     private readonly IWriteTransactions _transactions;
     private readonly IValidator<ConfirmSaleCommand> _validator;
     private readonly ILogger<ConfirmSaleHandler> _logger;
@@ -34,6 +36,7 @@ public sealed partial class ConfirmSaleHandler
         IInventoryRepository inventory,
         ISaleRepository sales,
         ISaleDraftStore drafts,
+        ShiftGuard shiftGuard,
         IWriteTransactions transactions,
         IValidator<ConfirmSaleCommand> validator,
         ILogger<ConfirmSaleHandler> logger)
@@ -43,6 +46,7 @@ public sealed partial class ConfirmSaleHandler
         _inventory = inventory;
         _sales = sales;
         _drafts = drafts;
+        _shiftGuard = shiftGuard;
         _transactions = transactions;
         _validator = validator;
         _logger = logger;
@@ -71,6 +75,13 @@ public sealed partial class ConfirmSaleHandler
             return Result.Failure<ConfirmedSale>(new AlreadyRegistered(existing.SaleId, existing.Folio));
         }
 
+        // 008: solo el dueño del turno abierto vende; se verifica dentro de la transacción (research §5).
+        var shiftResult = await _shiftGuard.RequireOwnOpenShiftAsync(cancellationToken);
+        if (!shiftResult.IsSuccess)
+        {
+            return Result.Failure<ConfirmedSale>(shiftResult.Error);
+        }
+
         var ids = command.Lines.Select(l => l.ProductId).ToList();
         var products = (await _products.GetManyAsync(ids, includeDeleted: true, cancellationToken)).ToDictionary(p => p.Id);
         var tracked = products.Values.Where(p => p.TracksInventory).Select(p => p.Id).ToList();
@@ -91,7 +102,7 @@ public sealed partial class ConfirmSaleHandler
 
         try
         {
-            return await RegisterAsync(command, products, stocks, transaction, cancellationToken);
+            return await RegisterAsync(command, shiftResult.Value.Id, products, stocks, transaction, cancellationToken);
         }
         catch (DomainException ex)
         {
@@ -102,6 +113,7 @@ public sealed partial class ConfirmSaleHandler
 
     private async Task<Result<ConfirmedSale>> RegisterAsync(
         ConfirmSaleCommand command,
+        Guid cashShiftId,
         Dictionary<Guid, Product> products,
         Dictionary<Guid, ProductStock> stocks,
         IWriteTransaction transaction,
@@ -174,6 +186,7 @@ public sealed partial class ConfirmSaleHandler
         var sale = Sale.Register(
             folioNumber,
             command.DraftId,
+            cashShiftId,
             lines,
             checkout.ToPayments().Select(SalePayment.Create));
         _sales.Add(sale);

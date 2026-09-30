@@ -24,6 +24,9 @@ public sealed class Sale
     /// <summary>Clave de idempotencia: un borrador solo produce una venta (research §4).</summary>
     public Guid DraftId { get; private set; }
 
+    /// <summary>Turno de caja en que se hizo la venta. Nulo en las ventas anteriores a 0.6.0 (sin llave foránea, research §5).</summary>
+    public Guid? CashShiftId { get; private set; }
+
     public long TotalCents { get; private set; }
 
     public SaleStatus Status { get; private set; }
@@ -55,6 +58,7 @@ public sealed class Sale
     public static Sale Register(
         long folioNumber,
         Guid draftId,
+        Guid cashShiftId,
         IEnumerable<SaleLine> lines,
         IEnumerable<SalePayment> payments)
     {
@@ -66,6 +70,11 @@ public sealed class Sale
         if (folioNumber < 1)
         {
             throw new DomainException("El folio no es válido.");
+        }
+
+        if (cashShiftId == Guid.Empty)
+        {
+            throw new DomainException("La venta debe pertenecer a un turno.");
         }
 
         if (lineList.Count == 0)
@@ -94,6 +103,7 @@ public sealed class Sale
             Id = Guid.CreateVersion7(),
             FolioNumber = folioNumber,
             DraftId = draftId,
+            CashShiftId = cashShiftId,
             TotalCents = total,
             Status = SaleStatus.Completed,
             Version = 1,

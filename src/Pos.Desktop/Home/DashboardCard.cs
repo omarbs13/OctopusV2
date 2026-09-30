@@ -95,10 +95,10 @@ public abstract partial class DashboardCard : ViewModelBase
     /// <summary>Obtiene los datos y llama a <see cref="SetReady"/> o <see cref="SetEmpty"/>.</summary>
     protected abstract Task LoadCoreAsync();
 
-    protected void SetReady(string? value)
+    protected void SetReady(string? value, string? message = null)
     {
         Value = value;
-        Message = null;
+        Message = message;
         State = DashboardCardState.Ready;
     }
 

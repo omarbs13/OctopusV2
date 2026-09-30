@@ -19,4 +19,7 @@ public enum Permission
     ViewAuditLog,
     ManageSettings,
     ExportDiagnostics,
+    OperateShift,
+    WithdrawCash,
+    ManageShifts,
 }

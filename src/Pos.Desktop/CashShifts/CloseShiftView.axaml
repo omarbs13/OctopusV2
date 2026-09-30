@@ -1,0 +1,93 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Pos.Desktop.CashShifts"
+             xmlns:res="using:Pos.Desktop.Resources"
+             xmlns:forms="using:Pos.Desktop.Forms"
+             x:Class="Pos.Desktop.CashShifts.CloseShiftView"
+             x:DataType="vm:CloseShiftViewModel">
+
+  <UserControl.KeyBindings>
+    <KeyBinding Gesture="Escape" Command="{Binding CancelCommand}" />
+  </UserControl.KeyBindings>
+
+  <Border Padding="20" CornerRadius="8" BorderThickness="1" Width="520"
+          Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+          BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
+    <StackPanel Spacing="10">
+      <TextBlock Text="{x:Static res:Strings.Shift_CloseTitle}" FontSize="18" FontWeight="SemiBold" />
+      <TextBlock Text="{Binding OwnerNote}" Opacity="0.8"
+                 IsVisible="{Binding OwnerNote, Converter={x:Static ObjectConverters.IsNotNull}}" />
+
+      <!-- Paso 1: conteo, sin ninguna cifra esperada -->
+      <StackPanel Spacing="10" IsVisible="{Binding IsCountStep}">
+        <StackPanel Spacing="4">
+          <forms:FieldLabel Text="{x:Static res:Strings.Shift_CountedLabel}" IsRequired="True" />
+          <TextBox x:Name="CountedBox" Text="{Binding CountedText}" MinHeight="56" FontSize="24" PlaceholderText="0.00">
+            <TextBox.KeyBindings>
+              <KeyBinding Gesture="Enter" Command="{Binding CountCommand}" />
+            </TextBox.KeyBindings>
+          </TextBox>
+          <TextBlock Text="{Binding CountedError}" FontSize="12" TextWrapping="Wrap"
+                     Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                     IsVisible="{Binding CountedError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+          <Button Classes="accent" MinHeight="48" MinWidth="130"
+                  Content="{x:Static res:Strings.Shift_CountNext}" Command="{Binding CountCommand}" />
+          <Button MinHeight="48" MinWidth="110"
+                  Content="{x:Static res:Strings.Common_Cancel}" Command="{Binding CancelCommand}" />
+        </StackPanel>
+      </StackPanel>
+
+      <!-- Paso 2: cifras y comentario -->
+      <StackPanel Spacing="10" IsVisible="{Binding IsFiguresStep}">
+        <TextBlock Text="{Binding Notice}" TextWrapping="Wrap" Foreground="{DynamicResource SystemFillColorCautionBrush}"
+                   IsVisible="{Binding Notice, Converter={x:Static ObjectConverters.IsNotNull}}" />
+        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="6">
+          <TextBlock Grid.Row="0" Text="{x:Static res:Strings.Shift_Expected}" />
+          <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding ExpectedText}" FontWeight="SemiBold" />
+          <TextBlock Grid.Row="1" Text="{x:Static res:Strings.Shift_Counted}" />
+          <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding CountedFigureText}" FontWeight="SemiBold" />
+          <TextBlock Grid.Row="2" Text="{Binding DifferenceLabel}" FontSize="18" FontWeight="Bold" />
+          <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding DifferenceText}" FontSize="18" FontWeight="Bold" />
+          <TextBlock Grid.Row="3" Text="{x:Static res:Strings.Shift_Card}" />
+          <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding CardText}" />
+          <TextBlock Grid.Row="4" Text="{x:Static res:Strings.Shift_Transfer}" />
+          <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding TransferText}" />
+        </Grid>
+
+        <StackPanel Spacing="4">
+          <forms:FieldLabel Text="{x:Static res:Strings.Shift_Comment}" IsRequired="{Binding NeedsComment}" />
+          <TextBox Text="{Binding Comment}" MaxLength="250" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" />
+          <TextBlock Text="{Binding CommentRequiredText}" FontSize="12" TextWrapping="Wrap"
+                     IsVisible="{Binding CommentRequiredText, Converter={x:Static ObjectConverters.IsNotNull}}" />
+          <TextBlock Text="{Binding CommentError}" FontSize="12" TextWrapping="Wrap"
+                     Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                     IsVisible="{Binding CommentError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+        </StackPanel>
+
+        <TextBlock Text="{Binding ErrorMessage}" TextWrapping="Wrap"
+                   Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                   IsVisible="{Binding ErrorMessage, Converter={x:Static ObjectConverters.IsNotNull}}" />
+
+        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+          <Button MinHeight="48" MinWidth="150"
+                  Content="{x:Static res:Strings.Shift_Recount}" Command="{Binding RecountCommand}" />
+          <Button Classes="accent" MinHeight="48" MinWidth="170"
+                  Content="{x:Static res:Strings.Shift_ConfirmClose}" Command="{Binding ConfirmCloseCommand}" />
+        </StackPanel>
+      </StackPanel>
+
+      <!-- Paso 3: cerrado e impresión del corte -->
+      <StackPanel Spacing="10" IsVisible="{Binding IsDoneStep}">
+        <TextBlock Text="{Binding DoneText}" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap" />
+        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+          <Button MinHeight="48" MinWidth="170"
+                  Content="{x:Static res:Strings.Shift_PrintReport}" Command="{Binding PrintReportCommand}" />
+          <Button Classes="accent" MinHeight="48" MinWidth="110"
+                  Content="{x:Static res:Strings.Shift_Finish}" Command="{Binding FinishCommand}" />
+        </StackPanel>
+      </StackPanel>
+    </StackPanel>
+  </Border>
+</UserControl>

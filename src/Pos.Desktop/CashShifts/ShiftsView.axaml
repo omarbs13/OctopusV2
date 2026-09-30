@@ -1,0 +1,138 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Pos.Desktop.CashShifts"
+             xmlns:res="using:Pos.Desktop.Resources"
+             xmlns:forms="using:Pos.Desktop.Forms"
+             x:Class="Pos.Desktop.CashShifts.ShiftsView"
+             x:DataType="vm:ShiftsViewModel">
+
+  <UserControl.KeyBindings>
+    <KeyBinding Gesture="Alt+Home" Command="{Binding FirstPageCommand}" />
+    <KeyBinding Gesture="Alt+PageUp" Command="{Binding PreviousPageCommand}" />
+    <KeyBinding Gesture="Alt+PageDown" Command="{Binding NextPageCommand}" />
+    <KeyBinding Gesture="Alt+End" Command="{Binding LastPageCommand}" />
+  </UserControl.KeyBindings>
+
+  <UserControl.Styles>
+    <Style Selector="TextBlock.short">
+      <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCriticalBrush}" />
+    </Style>
+    <Style Selector="TextBlock.over">
+      <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCautionBrush}" />
+    </Style>
+  </UserControl.Styles>
+
+  <forms:FormHostView Host="{Binding Forms}">
+    <forms:FormHostView.ListContent>
+      <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
+        <!-- Filtros -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,*,*,*" ColumnSpacing="12" Margin="0,0,0,12">
+          <StackPanel Grid.Column="0" Spacing="4">
+            <TextBlock Text="{x:Static res:Strings.Movements_From}" FontWeight="SemiBold" />
+            <CalendarDatePicker HorizontalAlignment="Stretch" SelectedDate="{Binding FromDate}" />
+          </StackPanel>
+          <StackPanel Grid.Column="1" Spacing="4">
+            <TextBlock Text="{x:Static res:Strings.Movements_To}" FontWeight="SemiBold" />
+            <CalendarDatePicker HorizontalAlignment="Stretch" SelectedDate="{Binding ToDate}" />
+          </StackPanel>
+          <StackPanel Grid.Column="2" Spacing="4">
+            <TextBlock Text="{x:Static res:Strings.Shifts_User}" FontWeight="SemiBold" />
+            <ComboBox HorizontalAlignment="Stretch"
+                      ItemsSource="{Binding UserOptions}"
+                      SelectedItem="{Binding SelectedUser}"
+                      DisplayMemberBinding="{Binding Label, x:DataType=vm:ShiftUserOption}" />
+          </StackPanel>
+          <StackPanel Grid.Column="3" Spacing="4">
+            <TextBlock Text="{x:Static res:Strings.Shifts_Status}" FontWeight="SemiBold" />
+            <ComboBox HorizontalAlignment="Stretch"
+                      ItemsSource="{Binding StatusOptions}"
+                      SelectedItem="{Binding SelectedStatus}"
+                      DisplayMemberBinding="{Binding Label, x:DataType=vm:ShiftStatusOption}" />
+          </StackPanel>
+        </Grid>
+
+        <TextBlock Grid.Row="1" Margin="0,0,0,8" Text="{Binding FilterError}"
+                   Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                   IsVisible="{Binding FilterError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+
+        <!-- Encabezados -->
+        <Grid Grid.Row="2" Margin="12,0,12,4" ColumnDefinitions="110,*,150,150,130,130">
+          <Grid.Styles>
+            <Style Selector="TextBlock">
+              <Setter Property="FontWeight" Value="SemiBold" />
+            </Style>
+          </Grid.Styles>
+          <TextBlock Grid.Column="0" Text="{x:Static res:Strings.Shifts_ColShift}" />
+          <TextBlock Grid.Column="1" Text="{x:Static res:Strings.Shifts_ColUser}" />
+          <TextBlock Grid.Column="2" Text="{x:Static res:Strings.Shifts_ColOpened}" />
+          <TextBlock Grid.Column="3" Text="{x:Static res:Strings.Shifts_ColClosed}" />
+          <TextBlock Grid.Column="4" Text="{x:Static res:Strings.Shifts_ColSold}" TextAlignment="Right" />
+          <TextBlock Grid.Column="5" Text="{x:Static res:Strings.Shifts_ColDifference}" TextAlignment="Right" />
+        </Grid>
+
+        <ListBox x:Name="ShiftsList" Grid.Row="3"
+                 ItemsSource="{Binding Rows}"
+                 SelectedItem="{Binding SelectedRow}"
+                 DoubleTapped="OnRowDoubleTapped">
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:ShiftRow">
+              <Grid ColumnDefinitions="110,*,150,150,130,130" MinHeight="40">
+                <Grid.Styles>
+                  <Style Selector="TextBlock">
+                    <Setter Property="VerticalAlignment" Value="Center" />
+                  </Style>
+                </Grid.Styles>
+                <TextBlock Grid.Column="0" Text="{Binding Folio}" FontWeight="SemiBold" />
+                <TextBlock Grid.Column="1" Text="{Binding UserName}" TextTrimming="CharacterEllipsis" />
+                <TextBlock Grid.Column="2" Text="{Binding OpenedText}" />
+                <TextBlock Grid.Column="3" Text="{Binding ClosedText}" />
+                <TextBlock Grid.Column="4" Text="{Binding SoldText}" TextAlignment="Right" />
+                <TextBlock Grid.Column="5" Text="{Binding DifferenceText}" TextAlignment="Right"
+                           Classes.short="{Binding IsShort}" Classes.over="{Binding IsOver}" />
+              </Grid>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+
+        <TextBlock Grid.Row="3" Margin="12" Text="{x:Static res:Strings.Shifts_Empty}"
+                   IsVisible="{Binding IsEmpty}" TextWrapping="Wrap"
+                   HorizontalAlignment="Center" VerticalAlignment="Top" />
+
+        <!-- Paginación -->
+        <Grid Grid.Row="4" Margin="0,8,0,0" ColumnDefinitions="*,Auto">
+          <Grid.Styles>
+            <Style Selector="Button.pager">
+              <Setter Property="MinWidth" Value="44" />
+              <Setter Property="MinHeight" Value="44" />
+              <Setter Property="HorizontalContentAlignment" Value="Center" />
+              <Setter Property="VerticalContentAlignment" Value="Center" />
+            </Style>
+          </Grid.Styles>
+          <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="{Binding PageSummary}" />
+          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+            <Button Classes="pager" Command="{Binding FirstPageCommand}"
+                    ToolTip.Tip="{x:Static res:Strings.Products_FirstPage}"
+                    AutomationProperties.Name="{x:Static res:Strings.Products_FirstPage}">
+              <PathIcon Data="{StaticResource Icon.PageFirst}" />
+            </Button>
+            <Button Classes="pager" Command="{Binding PreviousPageCommand}"
+                    ToolTip.Tip="{x:Static res:Strings.Products_PreviousPage}"
+                    AutomationProperties.Name="{x:Static res:Strings.Products_PreviousPage}">
+              <PathIcon Data="{StaticResource Icon.PagePrevious}" />
+            </Button>
+            <Button Classes="pager" Command="{Binding NextPageCommand}"
+                    ToolTip.Tip="{x:Static res:Strings.Products_NextPage}"
+                    AutomationProperties.Name="{x:Static res:Strings.Products_NextPage}">
+              <PathIcon Data="{StaticResource Icon.PageNext}" />
+            </Button>
+            <Button Classes="pager" Command="{Binding LastPageCommand}"
+                    ToolTip.Tip="{x:Static res:Strings.Products_LastPage}"
+                    AutomationProperties.Name="{x:Static res:Strings.Products_LastPage}">
+              <PathIcon Data="{StaticResource Icon.PageLast}" />
+            </Button>
+          </StackPanel>
+        </Grid>
+      </Grid>
+    </forms:FormHostView.ListContent>
+  </forms:FormHostView>
+</UserControl>

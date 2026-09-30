@@ -32,8 +32,25 @@
     </Style>
   </UserControl.Styles>
 
-  <Grid>
-    <Grid RowDefinitions="*,Auto" ColumnDefinitions="*,300">
+  <Grid RowDefinitions="Auto,*">
+    <!-- Barra de turno propio: sin fondo, esperado ni movimientos (FR-022, SC-005) -->
+    <Border Grid.Row="0" Margin="0,0,0,8" Padding="12,8" CornerRadius="6"
+            Background="{DynamicResource SystemControlBackgroundListLowBrush}"
+            IsVisible="{Binding IsShiftOwn}">
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBlock Grid.Column="0" Text="{Binding ShiftBarText}" FontWeight="SemiBold" VerticalAlignment="Center"
+                   TextTrimming="CharacterEllipsis" />
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+          <Button MinHeight="40" Content="{x:Static res:Strings.Shift_Deposit}" Command="{Binding DepositCommand}" />
+          <Button MinHeight="40" Content="{x:Static res:Strings.Shift_Withdrawal}" Command="{Binding WithdrawalCommand}" />
+          <Button MinHeight="40" Content="{x:Static res:Strings.Shift_Close}" Command="{Binding CloseShiftCommand}" />
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <Grid Grid.Row="1">
+    <!-- Sin turno propio el carrito se reemplaza por el panel de turno (abajo) -->
+    <Grid RowDefinitions="*,Auto" ColumnDefinitions="*,300" IsVisible="{Binding !IsSaleBlocked}">
       <!-- Captura y líneas -->
       <DockPanel Grid.Row="0" Grid.Column="0" Margin="0,0,16,0">
         <TextBox x:Name="CaptureBox" DockPanel.Dock="Top" MinHeight="52" FontSize="20" Margin="0,0,0,8"
@@ -143,6 +160,22 @@
       </Grid>
     </Grid>
 
+    <!-- Sin turno abierto -->
+    <StackPanel IsVisible="{Binding IsShiftNone}" Spacing="12" MaxWidth="480"
+                HorizontalAlignment="Center" VerticalAlignment="Center">
+      <TextBlock Text="{x:Static res:Strings.Shift_NoneTitle}" FontSize="24" FontWeight="SemiBold" TextWrapping="Wrap" />
+      <TextBlock Text="{x:Static res:Strings.Shift_NoneText}" TextWrapping="Wrap" />
+      <Button Classes="touch accent" Content="{x:Static res:Strings.Shift_Open}" Command="{Binding OpenShiftCommand}" />
+    </StackPanel>
+
+    <!-- Turno abierto de otro usuario: no se puede vender hasta cerrarlo -->
+    <StackPanel IsVisible="{Binding IsShiftOther}" Spacing="12" MaxWidth="520"
+                HorizontalAlignment="Center" VerticalAlignment="Center">
+      <TextBlock Text="{Binding ShiftOtherText}" FontSize="20" FontWeight="SemiBold" TextWrapping="Wrap" />
+      <Button Classes="touch accent" Content="{x:Static res:Strings.Shift_CloseOther}"
+              Command="{Binding CloseOtherShiftCommand}" IsVisible="{Binding CanCloseOtherShift}" />
+    </StackPanel>
+
     <!-- Selector de productos (búsqueda por nombre) -->
     <Grid Background="#99000000" IsVisible="{Binding Chooser, Converter={x:Static ObjectConverters.IsNotNull}}">
       <ContentControl Content="{Binding Chooser}" HorizontalAlignment="Center" VerticalAlignment="Center" />
@@ -158,6 +191,7 @@
       <ScrollViewer HorizontalAlignment="Center" VerticalAlignment="Center">
         <ContentControl Content="{Binding Checkout}" />
       </ScrollViewer>
+    </Grid>
     </Grid>
   </Grid>
 </UserControl>

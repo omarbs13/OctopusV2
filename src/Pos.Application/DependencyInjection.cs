@@ -22,6 +22,14 @@ using Pos.Application.Products.ListUnitsOfMeasure;
 using Pos.Application.Products.PrepareProductImage;
 using Pos.Application.Products.SearchProducts;
 using Pos.Application.Products.UpdateProduct;
+using Pos.Application.CashShifts;
+using Pos.Application.CashShifts.CloseShift;
+using Pos.Application.CashShifts.CountShiftCash;
+using Pos.Application.CashShifts.GetCurrentShift;
+using Pos.Application.CashShifts.GetShiftDetail;
+using Pos.Application.CashShifts.OpenShift;
+using Pos.Application.CashShifts.RegisterCashMovement;
+using Pos.Application.CashShifts.SearchShifts;
 using Pos.Application.Sales.CancelSale;
 using Pos.Application.Sales.ConfirmSale;
 using Pos.Application.Sales.DiscardSaleDraft;
@@ -131,6 +139,18 @@ public static class DependencyInjection
         services.AddSingleton<IValidator<CancelSaleCommand>, CancelSaleValidator>();
         services.AddScoped<CancelSaleHandler>();
         services.AddScoped<GetSalesDashboardHandler>();
+
+        // Turnos de caja (008)
+        services.AddScoped<ShiftGuard>();
+        services.AddScoped<GetCurrentShiftHandler>();
+        services.AddSingleton<IValidator<OpenShiftCommand>, OpenShiftValidator>();
+        services.AddScoped<OpenShiftHandler>();
+        services.AddSingleton<IValidator<RegisterCashMovementCommand>, RegisterCashMovementValidator>();
+        services.AddScoped<RegisterCashMovementHandler>();
+        services.AddScoped<CountShiftCashHandler>();
+        services.AddScoped<CloseShiftHandler>();
+        services.AddScoped<SearchShiftsHandler>();
+        services.AddScoped<GetShiftDetailHandler>();
 
         // Datos del negocio
         services.AddScoped<GetBusinessProfileHandler>();

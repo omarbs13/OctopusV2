@@ -9,6 +9,7 @@ using Pos.Application.Users.Session;
 using Pos.Domain.Sales;
 using Pos.Domain.Users;
 using Pos.Infrastructure.Audit;
+using Pos.Infrastructure.CashShifts;
 using Pos.Infrastructure.Inventory;
 using Pos.Infrastructure.Persistence;
 using Pos.Infrastructure.Sales;
@@ -36,6 +37,7 @@ public sealed class CancelSaleAuthorizationTests : IAsyncLifetime
         new(
             new AccessControl(session, new UserRepository(context), grants, NullLogger<AccessControl>.Instance),
             new SaleRepository(context),
+            new CashShiftRepository(context),
             new InventoryRepository(context),
             new AuditLog(context),
             new WriteTransactions(context),

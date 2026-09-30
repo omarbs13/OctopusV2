@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Pos.Application.Abstractions;
+using Pos.Application.CashShifts;
 using Pos.Application.Sales;
 using Pos.Application.Sales.CancelSale;
 using Pos.Desktop.Auth;
@@ -91,6 +92,11 @@ public sealed partial class CancelSaleViewModel : ViewModelBase
             case InvalidState invalid:
                 await _dialogs.ShowMessageAsync(Strings.Common_InfoTitle, invalid.Message);
                 await _finished();
+                break;
+
+            case InsufficientCash:
+                // Nunca se muestra el efectivo esperado: se sugiere registrar un ingreso y reintentar (008, FR-008).
+                ErrorMessage = CashShiftMessages.RefundExceedsCash;
                 break;
 
             case Conflict:
