@@ -1,0 +1,63 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Pos.Desktop.Auth"
+             xmlns:res="using:Pos.Desktop.Resources"
+             xmlns:forms="using:Pos.Desktop.Forms"
+             x:Class="Pos.Desktop.Auth.FirstAdminView"
+             x:DataType="vm:FirstAdminViewModel">
+
+  <UserControl.KeyBindings>
+    <KeyBinding Gesture="Ctrl+Enter" Command="{Binding CreateCommand}" />
+  </UserControl.KeyBindings>
+
+  <UserControl.Styles>
+    <Style Selector="TextBlock.error">
+      <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCriticalBrush}" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+      <Setter Property="FontSize" Value="12" />
+    </Style>
+  </UserControl.Styles>
+
+  <ScrollViewer>
+    <Border Padding="24" CornerRadius="8" BorderThickness="1" Width="420"
+            HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,24"
+            Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+            BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
+      <StackPanel Spacing="12">
+        <TextBlock Text="{x:Static res:Strings.Auth_FirstAdminTitle}" FontSize="22" FontWeight="SemiBold" />
+        <TextBlock Text="{x:Static res:Strings.Auth_FirstAdminDescription}" TextWrapping="Wrap" />
+
+        <StackPanel Spacing="4">
+          <forms:FieldLabel Text="{x:Static res:Strings.Auth_FullName}" IsRequired="True" />
+          <TextBox x:Name="FullNameBox" Text="{Binding FullName}" MaxLength="100" MinHeight="40" />
+          <TextBlock Classes="error" Text="{Binding FullNameError}" IsVisible="{Binding FullNameError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+        </StackPanel>
+
+        <StackPanel Spacing="4">
+          <forms:FieldLabel Text="{x:Static res:Strings.Auth_UserName}" IsRequired="True" />
+          <TextBox x:Name="UserNameBox" Text="{Binding UserName}" MaxLength="40" MinHeight="40" />
+          <TextBlock Classes="error" Text="{Binding UserNameError}" IsVisible="{Binding UserNameError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+        </StackPanel>
+
+        <StackPanel Spacing="4">
+          <forms:FieldLabel Text="{x:Static res:Strings.Auth_Password}" IsRequired="True" />
+          <TextBox x:Name="PasswordBox" Text="{Binding Password}" PasswordChar="●" MinHeight="40" />
+          <TextBlock Classes="error" Text="{Binding PasswordError}" IsVisible="{Binding PasswordError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+        </StackPanel>
+
+        <StackPanel Spacing="4">
+          <forms:FieldLabel Text="{x:Static res:Strings.Auth_ConfirmPassword}" IsRequired="True" />
+          <TextBox x:Name="ConfirmPasswordBox" Text="{Binding ConfirmPassword}" PasswordChar="●" MinHeight="40">
+            <TextBox.KeyBindings>
+              <KeyBinding Gesture="Enter" Command="{Binding CreateCommand}" />
+            </TextBox.KeyBindings>
+          </TextBox>
+          <TextBlock Classes="error" Text="{Binding ConfirmPasswordError}" IsVisible="{Binding ConfirmPasswordError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+        </StackPanel>
+
+        <Button Classes="accent" MinHeight="44" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                Content="{x:Static res:Strings.Auth_CreateAndContinue}" Command="{Binding CreateCommand}" />
+      </StackPanel>
+    </Border>
+  </ScrollViewer>
+</UserControl>

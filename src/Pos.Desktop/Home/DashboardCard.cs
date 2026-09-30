@@ -42,6 +42,9 @@ public abstract partial class DashboardCard : ViewModelBase
     /// <summary>Las barras se dibujan en horizontal (ranking) en lugar de en vertical (serie por día).</summary>
     public virtual bool IsHorizontal => false;
 
+    /// <summary>Permiso que exige la tarjeta para mostrarse; nulo si la ven todos (007, FR-008).</summary>
+    public virtual Pos.Domain.Users.Permission? RequiredPermission => null;
+
     /// <summary>Id de la opción de menú a la que lleva la tarjeta, si tiene.</summary>
     public virtual string? NavigateTo => null;
 

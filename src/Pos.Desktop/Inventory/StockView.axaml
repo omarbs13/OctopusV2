@@ -35,6 +35,7 @@
                     Content="{x:Static res:Strings.Stock_ShowInactive}"
                     IsChecked="{Binding IncludeInactive}" />
           <Button Grid.Row="1" Grid.ColumnSpan="3" HorizontalAlignment="Left" Classes="accent"
+                  IsVisible="{Binding CanRegisterMovements}"
                   Content="{x:Static res:Strings.Stock_Register}"
                   Command="{Binding RegisterMovementCommand}" />
         </Grid>

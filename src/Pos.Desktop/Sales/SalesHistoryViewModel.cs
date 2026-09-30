@@ -5,11 +5,14 @@ using CommunityToolkit.Mvvm.Input;
 using Pos.Application.Abstractions;
 using Pos.Application.Sales;
 using Pos.Application.Sales.SearchSales;
+using Pos.Application.Users;
+using Pos.Application.Users.ListCashiers;
 using Pos.Desktop.Common;
 using Pos.Desktop.Forms;
 using Pos.Desktop.Navigation;
 using Pos.Desktop.Resources;
 using Pos.Domain.Sales;
+using Pos.Domain.Users;
 
 namespace Pos.Desktop.Sales;
 
@@ -19,6 +22,8 @@ public sealed record SaleStatusOption(SaleStatus? Status, string Label);
 /// <summary>Fila del listado de ventas con los textos ya formateados.</summary>
 public sealed record SaleRow(SaleListItemDto Item)
 {
+    public string CashierName => Item.CashierName;
+
     public Guid Id => Item.Id;
 
     public string Folio => Item.Folio;
@@ -34,6 +39,9 @@ public sealed record SaleRow(SaleListItemDto Item)
     public string StatusText => IsCancelled ? Strings.Sales_StatusCancelled : Strings.Sales_StatusCompleted;
 }
 
+/// <summary>Opción del filtro de cajero; el valor nulo significa "Todos" (solo quien ve todas las ventas).</summary>
+public sealed record CashierOption(Guid? UserId, string Label);
+
 /// <summary>Filtro de fechas que entrega Inicio al abrir "Ventas realizadas" (por ejemplo, hoy).</summary>
 public sealed record SalesDateFilter(DateTime FromLocalDate, DateTime ToLocalDate);
 
@@ -47,11 +55,18 @@ public sealed partial class SalesHistoryViewModel : PageViewModel, INavigationAr
     private int _searchVersion;
     private bool _suppressAutoSearch;
 
-    public SalesHistoryViewModel(UseCases useCases, OperationRunner runner, Func<SaleDetailViewModel> detailFactory)
+    public SalesHistoryViewModel(
+        UseCases useCases,
+        OperationRunner runner,
+        Func<SaleDetailViewModel> detailFactory,
+        ICurrentPermissions? permissions = null)
     {
         _useCases = useCases;
         _runner = runner;
         _detailFactory = detailFactory;
+        CanFilterByCashier = permissions?.Has(Permission.ViewAllSales) ?? false;
+        CashierOptions = [new CashierOption(null, Strings.Sales_CashierAll)];
+        SelectedCashier = CashierOptions[0];
         StatusOptions =
         [
             new(null, Strings.Sales_StatusAll),
@@ -62,6 +77,14 @@ public sealed partial class SalesHistoryViewModel : PageViewModel, INavigationAr
         SelectedStatus = StatusOptions[0];
         _suppressAutoSearch = false;
     }
+
+    /// <summary>El filtro por cajero solo lo ve quien puede ver todas las ventas (FR-026).</summary>
+    public bool CanFilterByCashier { get; }
+
+    public ObservableCollection<CashierOption> CashierOptions { get; }
+
+    [ObservableProperty]
+    public partial CashierOption SelectedCashier { get; set; }
 
     public override string Title => Strings.Nav_SalesHistory;
 
@@ -114,7 +137,11 @@ public sealed partial class SalesHistoryViewModel : PageViewModel, INavigationAr
     public string PageSummary =>
         string.Format(CultureInfo.CurrentCulture, Strings.Products_PageSummary, TotalCount, CurrentPage, TotalPages);
 
-    public override Task OnActivatedAsync() => SearchAsync();
+    public override async Task OnActivatedAsync()
+    {
+        await LoadCashiersAsync();
+        await SearchAsync();
+    }
 
     /// <summary>Un <see cref="SalesDateFilter"/> fija las fechas, limpia folio y estado y vuelve a la página 1.</summary>
     public void Receive(object argument)
@@ -140,6 +167,8 @@ public sealed partial class SalesHistoryViewModel : PageViewModel, INavigationAr
     }
 
     partial void OnSelectedStatusChanged(SaleStatusOption value) => RestartSearch();
+
+    partial void OnSelectedCashierChanged(CashierOption value) => RestartSearch();
 
     partial void OnFromDateChanged(DateTime? value) => RestartSearch();
 
@@ -202,6 +231,41 @@ public sealed partial class SalesHistoryViewModel : PageViewModel, INavigationAr
     private static DateTime LocalMidnightToUtc(DateTime date) =>
         new DateTime(date.Year, date.Month, date.Day, 0, 0, 0, DateTimeKind.Local).ToUniversalTime();
 
+    /// <summary>Cajeros para el filtro (Administrador); se conserva la elección al volver a la pantalla.</summary>
+    private async Task LoadCashiersAsync()
+    {
+        if (!CanFilterByCashier)
+        {
+            return;
+        }
+
+        var (completed, result) = await _runner.RunQuietlyResultAsync(
+            "ListarCajeros",
+            () => _useCases.RunAsync<ListCashiersHandler, Result<IReadOnlyList<UserOption>>>(h => h.HandleAsync(CancellationToken.None)));
+        if (!completed || result is not { IsSuccess: true })
+        {
+            return;
+        }
+
+        var selected = SelectedCashier.UserId;
+        _suppressAutoSearch = true;
+        try
+        {
+            CashierOptions.Clear();
+            CashierOptions.Add(new CashierOption(null, Strings.Sales_CashierAll));
+            foreach (var cashier in result.Value)
+            {
+                CashierOptions.Add(new CashierOption(cashier.Id, cashier.FullName));
+            }
+
+            SelectedCashier = CashierOptions.FirstOrDefault(o => o.UserId == selected) ?? CashierOptions[0];
+        }
+        finally
+        {
+            _suppressAutoSearch = false;
+        }
+    }
+
     private async Task SearchAsync()
     {
         var version = Interlocked.Increment(ref _searchVersion);
@@ -212,7 +276,8 @@ public sealed partial class SalesHistoryViewModel : PageViewModel, INavigationAr
             ToDate is { } to ? LocalMidnightToUtc(to.AddDays(1)) : null,
             FolioText,
             SelectedStatus.Status,
-            CurrentPage);
+            CurrentPage,
+            CanFilterByCashier ? SelectedCashier.UserId : null);
 
         var (completed, result) = await _runner.RunAsync(
             "BuscarVentas",

@@ -1,0 +1,30 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Pos.Desktop.Settings"
+             xmlns:res="using:Pos.Desktop.Resources"
+             x:Class="Pos.Desktop.Settings.SecuritySettingsView"
+             x:DataType="vm:SecuritySettingsViewModel">
+
+  <ScrollViewer>
+    <StackPanel Spacing="12" MaxWidth="640" HorizontalAlignment="Left">
+      <TextBlock Text="{x:Static res:Strings.SecuritySettings_Title}" FontSize="22" FontWeight="SemiBold" />
+      <TextBlock Text="{x:Static res:Strings.SecuritySettings_Hint}" TextWrapping="Wrap" Opacity="0.8" />
+
+      <CheckBox IsChecked="{Binding IsEnabled}" Content="{x:Static res:Strings.SecuritySettings_Enabled}" />
+
+      <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsEnabled}">
+        <TextBlock Text="{x:Static res:Strings.SecuritySettings_IdleBefore}" VerticalAlignment="Center" />
+        <TextBox Text="{Binding MinutesText}" Width="80" MinHeight="44" MaxLength="3" HorizontalContentAlignment="Right" />
+        <TextBlock Text="{x:Static res:Strings.SecuritySettings_IdleAfter}" VerticalAlignment="Center" />
+      </StackPanel>
+      <TextBlock Text="{Binding MinutesError}" TextWrapping="Wrap"
+                 Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                 IsVisible="{Binding MinutesError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+
+      <Button Classes="accent" MinHeight="44" MinWidth="140" HorizontalContentAlignment="Center"
+              Command="{Binding SaveCommand}" Content="{x:Static res:Strings.Auth_Save}" />
+      <TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap"
+                 IsVisible="{Binding StatusMessage, Converter={x:Static ObjectConverters.IsNotNull}}" />
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

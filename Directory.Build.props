@@ -12,7 +12,7 @@
     <NoWarn>$(NoWarn);CS1591</NoWarn>
     <InvariantGlobalization>false</InvariantGlobalization>
     <SatelliteResourceLanguages>es</SatelliteResourceLanguages>
-    <Version>0.4.0</Version>
+    <Version>0.5.0</Version>
     <Company>POS</Company>
     <Product>POS</Product>
   </PropertyGroup>

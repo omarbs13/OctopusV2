@@ -6,6 +6,7 @@ using Pos.Application.Diagnostics.ExportDiagnostics;
 using Pos.Application.Diagnostics.GetAppInfo;
 using Pos.Desktop.Common;
 using Pos.Desktop.Resources;
+using Pos.Domain.Users;
 
 namespace Pos.Desktop.About;
 
@@ -23,8 +24,10 @@ public sealed partial class AboutViewModel : PageViewModel
         OperationRunner runner,
         IDialogService dialogs,
         IClock clock,
-        IClipboardService clipboard)
+        IClipboardService clipboard,
+        ICurrentPermissions? permissions = null)
     {
+        CanExport = permissions?.Has(Permission.ExportDiagnostics) ?? true;
         _useCases = useCases;
         _runner = runner;
         _dialogs = dialogs;
@@ -33,6 +36,9 @@ public sealed partial class AboutViewModel : PageViewModel
     }
 
     public override string Title => Strings.Shell_NavAbout;
+
+    /// <summary>Puede exportar el diagnóstico (incluye una copia de la base); solo el Administrador.</summary>
+    public bool CanExport { get; }
 
     [ObservableProperty]
     public partial string Version { get; private set; } = string.Empty;

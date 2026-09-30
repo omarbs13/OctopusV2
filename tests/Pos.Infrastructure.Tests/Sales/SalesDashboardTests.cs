@@ -29,7 +29,7 @@ public sealed class SalesDashboardTests : IAsyncLifetime
     private async Task<SalesDashboard> DashboardAsync(params DayWindow[] days)
     {
         await using var context = _db.CreateDbContext();
-        return (await new GetSalesDashboardHandler(new SaleRepository(context))
+        return (await new GetSalesDashboardHandler(new AllowAllAccessControl(), new SaleRepository(context))
             .HandleAsync(new SalesDashboardQuery(days), Ct)).Value;
     }
 
@@ -93,7 +93,7 @@ public sealed class SalesDashboardTests : IAsyncLifetime
         var dashboard = await DashboardAsync(day);
 
         await using var context = _db.CreateDbContext();
-        var page = (await new SearchSalesHandler(new SaleRepository(context)).HandleAsync(
+        var page = (await new SearchSalesHandler(new AllowAllAccessControl(), _db.User, new SaleRepository(context)).HandleAsync(
             new SearchSalesQuery(day.FromUtc, day.ToUtcExclusive, null, SaleStatus.Completed), Ct)).Value;
         Assert.Equal(page.TotalCount, dashboard.Days[0].Count);
         Assert.Equal(page.Items.Sum(i => i.TotalCents), dashboard.Days[0].TotalCents);

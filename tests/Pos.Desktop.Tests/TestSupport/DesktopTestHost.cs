@@ -6,6 +6,8 @@ using Pos.Application.Inventory;
 using Pos.Application.Products;
 using Pos.Application.Sales;
 using Pos.Application.Tests.TestSupport;
+using Pos.Application.Users.Access;
+using Pos.Application.Users.Session;
 using Pos.Desktop.Common;
 
 namespace Pos.Desktop.Tests.TestSupport;
@@ -17,6 +19,7 @@ namespace Pos.Desktop.Tests.TestSupport;
 public sealed class DesktopTestHost : IDisposable
 {
     private readonly ServiceProvider _provider;
+    private readonly IServiceScope _scope;
 
     public DesktopTestHost(Action<IServiceCollection>? configure = null)
     {
@@ -27,6 +30,10 @@ public sealed class DesktopTestHost : IDisposable
         services.AddSingleton<ISaleRepository>(Sales);
         services.AddSingleton<IWriteTransactions>(new FakeWriteTransactions());
         services.AddSingleton<ICurrentUser, FixedCurrentUser>();
+        services.AddScoped<IAccessControl, AllowAllAccessControl>();
+        services.AddSingleton<IUserSession>(Session);
+        services.AddSingleton<ICurrentPermissions, SessionPermissions>();
+        services.AddSingleton<Pos.Desktop.Shell.ISessionNavigation, FakeSessionNavigation>();
         services.AddSingleton<IClock>(Clock);
         services.AddSingleton<IAppInfo, FakeAppInfo>();
         services.AddSingleton<IAppPaths, FakeAppPaths>();
@@ -38,7 +45,13 @@ public sealed class DesktopTestHost : IDisposable
         services.AddSingleton<UseCases>();
         configure?.Invoke(services);
         _provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
+
+        // Las pantallas son de la sesión (scoped): los ViewModels y el menú se resuelven de un ámbito de sesión.
+        _scope = _provider.CreateScope();
     }
+
+    /// <summary>Sesión de pruebas: un Administrador, salvo que la prueba fije otro rol.</summary>
+    public FakeUserSession Session { get; } = new();
 
     public InMemoryProductRepository Repository { get; } = new();
 
@@ -61,7 +74,11 @@ public sealed class DesktopTestHost : IDisposable
     public OperationRunner Runner => _provider.GetRequiredService<OperationRunner>();
 
     public T Get<T>()
-        where T : notnull => _provider.GetRequiredService<T>();
+        where T : notnull => _scope.ServiceProvider.GetRequiredService<T>();
 
-    public void Dispose() => _provider.Dispose();
+    public void Dispose()
+    {
+        _scope.Dispose();
+        _provider.Dispose();
+    }
 }

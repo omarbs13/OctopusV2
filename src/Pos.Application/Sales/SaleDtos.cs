@@ -55,7 +55,8 @@ public sealed record SaleSearch(
     long? FolioNumber,
     SaleStatus? Status,
     int Page,
-    int PageSize);
+    int PageSize,
+    Guid? CashierId = null);
 
 public sealed record SaleListItemDto(
     Guid Id,
@@ -63,7 +64,8 @@ public sealed record SaleListItemDto(
     DateTime CreatedAtUtc,
     long TotalCents,
     IReadOnlyList<PaymentMethod> Methods,
-    SaleStatus Status);
+    SaleStatus Status,
+    string CashierName);
 
 public sealed record SalePage(IReadOnlyList<SaleListItemDto> Items, long TotalCount, int Page, int PageSize)
 {
@@ -102,7 +104,8 @@ public sealed record SaleDetailDto(
     DateTime? CancelledAtUtc,
     string? CancelledByName,
     IReadOnlyList<SaleLineDto> Lines,
-    IReadOnlyList<SalePaymentDto> Payments);
+    IReadOnlyList<SalePaymentDto> Payments,
+    Guid CreatedById);
 
 /// <summary>Un día local convertido a UTC: <c>[FromUtc, ToUtcExclusive)</c>.</summary>
 public sealed record DayWindow(DateOnly LocalDate, DateTime FromUtc, DateTime ToUtcExclusive);

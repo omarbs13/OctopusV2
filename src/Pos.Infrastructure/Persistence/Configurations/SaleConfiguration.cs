@@ -46,5 +46,8 @@ internal sealed class SaleConfiguration : IEntityTypeConfiguration<Sale>
         builder.HasIndex(s => s.DraftId).HasDatabaseName(DraftIndexName).IsUnique();
         builder.HasIndex(s => new { s.CreatedAt, s.Id }).HasDatabaseName("IX_Sales_CreatedAt");
         builder.HasIndex(s => new { s.Status, s.CreatedAt }).HasDatabaseName("IX_Sales_Status_CreatedAt");
+
+        // Filtro por cajero y propiedad de las ventas (007, research §7).
+        builder.HasIndex(s => new { s.CreatedBy, s.CreatedAt }).HasDatabaseName("IX_Sales_CreatedBy_CreatedAt");
     }
 }

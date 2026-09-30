@@ -33,7 +33,7 @@ public class CountActiveProductsHandlerTests
             _repository.Seed(deleted);
         }
 
-        var result = await new CountActiveProductsHandler(_repository).HandleAsync(Ct);
+        var result = await new CountActiveProductsHandler(new AllowAllAccessControl(), _repository).HandleAsync(Ct);
 
         Assert.Equal(12, result.Value);
     }
@@ -41,7 +41,7 @@ public class CountActiveProductsHandlerTests
     [Fact]
     public async Task SinProductos_EsCero()
     {
-        var result = await new CountActiveProductsHandler(_repository).HandleAsync(Ct);
+        var result = await new CountActiveProductsHandler(new AllowAllAccessControl(), _repository).HandleAsync(Ct);
 
         Assert.Equal(0, result.Value);
     }

@@ -34,7 +34,7 @@
             <CheckBox Grid.Column="1" Margin="12,0"
                       Content="{x:Static res:Strings.Products_ShowInactive}"
                       IsChecked="{Binding IncludeInactive}" />
-            <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="8">
+            <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="8" IsVisible="{Binding CanManage}">
               <Button Classes="accent"
                       Content="{x:Static res:Strings.Products_New}"
                       Command="{Binding NewProductCommand}" />

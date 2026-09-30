@@ -13,6 +13,7 @@ public sealed class Navigator
     private readonly NavigationRegistry _registry;
     private readonly IServiceProvider _services;
     private readonly ILogger _logger;
+    private readonly Dictionary<string, PageViewModel> _resolved = [];
 
     public Navigator(NavigationRegistry registry, IServiceProvider services, ILogger logger)
     {
@@ -59,6 +60,7 @@ public sealed class Navigator
 
         CurrentEntryId = entry.Id;
         CurrentPage = (PageViewModel)(entry.Resolve?.Invoke(_services) ?? _services.GetRequiredService(entry.ViewModelType));
+        _resolved[entry.Id] = CurrentPage;
         if (argument is not null && CurrentPage is INavigationArgumentReceiver receiver)
         {
             receiver.Receive(argument);
@@ -68,6 +70,11 @@ public sealed class Navigator
         await CurrentPage.OnActivatedAsync();
         return true;
     }
+
+    /// <summary>La pantalla de la opción si ya se abrió en esta sesión; nulo si nunca se ha abierto.</summary>
+    public TPage? Resolved<TPage>(string entryId)
+        where TPage : PageViewModel =>
+        _resolved.GetValueOrDefault(entryId) as TPage;
 
     public Task<bool> CanLeaveCurrentAsync() =>
         CurrentPage is ILeaveGuard guard ? guard.CanLeaveAsync() : Task.FromResult(true);

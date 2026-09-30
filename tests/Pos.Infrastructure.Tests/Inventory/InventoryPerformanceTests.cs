@@ -63,14 +63,14 @@ public sealed class InventoryPerformanceTests : IAsyncLifetime
     private async Task<StockPage> StockAsync(StockFilter filter, string? text = null, int page = 1)
     {
         await using var context = _db.CreateDbContext();
-        return (await new SearchStockHandler(new InventoryRepository(context))
+        return (await new SearchStockHandler(new AllowAllAccessControl(), new InventoryRepository(context))
             .HandleAsync(new SearchStockQuery(text, filter, IncludeInactive: true, page), Ct)).Value;
     }
 
     private async Task<MovementPage> MovementsAsync(SearchMovementsQuery query)
     {
         await using var context = _db.CreateDbContext();
-        return (await new SearchMovementsHandler(new InventoryRepository(context)).HandleAsync(query, Ct)).Value;
+        return (await new SearchMovementsHandler(new AllowAllAccessControl(), new InventoryRepository(context)).HandleAsync(query, Ct)).Value;
     }
 
     private static async Task<(T Result, TimeSpan Elapsed)> MeasureAsync<T>(Func<Task<T>> action)

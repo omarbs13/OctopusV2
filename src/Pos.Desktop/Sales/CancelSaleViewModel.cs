@@ -3,8 +3,10 @@ using CommunityToolkit.Mvvm.Input;
 using Pos.Application.Abstractions;
 using Pos.Application.Sales;
 using Pos.Application.Sales.CancelSale;
+using Pos.Desktop.Auth;
 using Pos.Desktop.Common;
 using Pos.Desktop.Resources;
+using Pos.Domain.Users;
 
 namespace Pos.Desktop.Sales;
 
@@ -17,6 +19,7 @@ public sealed partial class CancelSaleViewModel : ViewModelBase
     private readonly SaleDetailDto _sale;
     private readonly Func<Task> _finished;
     private readonly Action _close;
+    private readonly AdminAuthorizationService? _authorization;
 
     public CancelSaleViewModel(
         UseCases useCases,
@@ -24,8 +27,10 @@ public sealed partial class CancelSaleViewModel : ViewModelBase
         IDialogService dialogs,
         SaleDetailDto sale,
         Func<Task> finished,
-        Action close)
+        Action close,
+        AdminAuthorizationService? authorization = null)
     {
+        _authorization = authorization;
         _useCases = useCases;
         _runner = runner;
         _dialogs = dialogs;
@@ -51,13 +56,24 @@ public sealed partial class CancelSaleViewModel : ViewModelBase
         ReasonError = null;
         ErrorMessage = null;
 
-        var command = new CancelSaleCommand(_sale.Id, _sale.Version, Reason);
-        var (completed, result) = await _runner.RunAsync(
-            "CancelarVenta",
-            () => _useCases.RunAsync<CancelSaleHandler, Result>(h => h.HandleAsync(command, CancellationToken.None)),
-            new Dictionary<string, object?> { ["SaleId"] = _sale.Id });
+        var result = await CancelAsync(grantId: null);
+        if (result is { Error: Forbidden { CanBeAuthorized: true } } && _authorization is not null)
+        {
+            // Sin el permiso: se ofrece la autorización de un administrador sin cerrar la sesión (FR-013).
+            var request = await _dialogs.AskAsync(
+                Strings.Auth_AuthorizeTitle,
+                Strings.Auth_RequestAuthorizationQuestion,
+                Strings.Auth_RequestAuthorization,
+                Strings.Common_Cancel);
+            if (!request || await _authorization.RequestAsync(Permission.CancelSales) is not { } grant)
+            {
+                return;
+            }
 
-        if (!completed || result is null)
+            result = await CancelAsync(grant);
+        }
+
+        if (result is null)
         {
             return;
         }
@@ -82,10 +98,24 @@ public sealed partial class CancelSaleViewModel : ViewModelBase
                 await _finished();
                 break;
 
+            case Forbidden:
+                ErrorMessage = Strings.Common_Forbidden;
+                break;
+
             default:
                 ErrorMessage = Strings.Common_UnexpectedError;
                 break;
         }
+    }
+
+    private async Task<Result?> CancelAsync(Guid? grantId)
+    {
+        var command = new CancelSaleCommand(_sale.Id, _sale.Version, Reason, grantId);
+        var (completed, result) = await _runner.RunAsync(
+            "CancelarVenta",
+            () => _useCases.RunAsync<CancelSaleHandler, Result>(h => h.HandleAsync(command, CancellationToken.None)),
+            new Dictionary<string, object?> { ["SaleId"] = _sale.Id, ["Authorized"] = grantId is not null });
+        return completed ? result : null;
     }
 
     [RelayCommand]

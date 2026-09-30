@@ -19,7 +19,8 @@ Pos/
 ├── app.lock                     Bloqueo de instancia única (lo libera el sistema si el proceso muere)
 ├── logo.png                     Logotipo del cliente (opcional) para la pantalla de carga
 ├── preferences/
-│   └── navigation.json          Estado del menú lateral (contraído y grupos abiertos)
+│   ├── navigation.json          Estado del menú lateral (contraído y grupos abiertos)
+│   └── security.json            Tiempo de inactividad antes de bloquear la sesión (0 = desactivado)
 ├── data/
 │   ├── pos.db                   Base de datos SQLite (modo WAL)
 │   ├── pos.db-wal               Diario WAL; forma parte de la base mientras la app está abierta

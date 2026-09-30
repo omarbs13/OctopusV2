@@ -1,8 +1,8 @@
 namespace Pos.Application.Abstractions;
 
 /// <summary>
-/// Usuario de sistema fijo mientras no exista autenticación. Se muestra como "Sistema" en el
-/// historial de movimientos.
+/// Usuario "Sistema": dueño de los registros anteriores a los usuarios (007) y usuario de las
+/// operaciones sin sesión (arranque, intentos de acceso). No puede iniciar sesión.
 /// </summary>
 public static class SystemUser
 {

@@ -22,8 +22,8 @@
 
     <Separator />
 
-    <TextBlock Text="{x:Static res:Strings.About_Description}" TextWrapping="Wrap" />
-    <StackPanel Orientation="Horizontal" Spacing="12">
+    <TextBlock Text="{x:Static res:Strings.About_Description}" TextWrapping="Wrap" IsVisible="{Binding CanExport}" />
+    <StackPanel Orientation="Horizontal" Spacing="12" IsVisible="{Binding CanExport}">
       <Button Classes="accent" Content="{x:Static res:Strings.About_Export}" Command="{Binding ExportCommand}" />
       <ProgressBar IsIndeterminate="True" Width="160" IsVisible="{Binding IsExporting}" VerticalAlignment="Center" />
       <TextBlock Text="{x:Static res:Strings.About_Exporting}" IsVisible="{Binding IsExporting}" VerticalAlignment="Center" />

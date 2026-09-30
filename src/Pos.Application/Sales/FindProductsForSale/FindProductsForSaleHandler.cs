@@ -3,6 +3,8 @@ using Pos.Application.Inventory;
 using Pos.Application.Products;
 using Pos.Domain.Common;
 using Pos.Domain.Products;
+using Pos.Application.Users.Access;
+using Pos.Domain.Users;
 
 namespace Pos.Application.Sales.FindProductsForSale;
 
@@ -14,17 +16,25 @@ public sealed class FindProductsForSaleHandler
 {
     public const int NameMatchLimit = 20;
 
+    private readonly IAccessControl _access;
     private readonly IProductRepository _products;
     private readonly IInventoryRepository _inventory;
 
-    public FindProductsForSaleHandler(IProductRepository products, IInventoryRepository inventory)
+    public FindProductsForSaleHandler(IAccessControl access, IProductRepository products, IInventoryRepository inventory)
     {
+        _access = access;
         _products = products;
         _inventory = inventory;
     }
 
     public async Task<Result<ProductLookup>> HandleAsync(FindProductsForSaleQuery query, CancellationToken cancellationToken)
     {
+        var access = await _access.CheckAsync(Permission.Sell, cancellationToken);
+        if (!access.Allowed)
+        {
+            return Result.Failure<ProductLookup>(access.Error!);
+        }
+
         ArgumentNullException.ThrowIfNull(query);
 
         var text = query.Text?.Trim();

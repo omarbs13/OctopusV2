@@ -3,6 +3,8 @@ using Pos.Application.Abstractions;
 using Pos.Application.Business;
 using Pos.Application.Printing.Ticket;
 using Pos.Application.Sales;
+using Pos.Application.Users.Access;
+using Pos.Domain.Users;
 
 namespace Pos.Application.Printing.PrintTicket;
 
@@ -12,6 +14,8 @@ namespace Pos.Application.Printing.PrintTicket;
 /// </summary>
 public sealed partial class PrintTicketHandler
 {
+    private readonly IAccessControl _access;
+    private readonly ICurrentUser _currentUser;
     private readonly ISaleRepository _sales;
     private readonly IBusinessProfileRepository _profiles;
     private readonly IPrintingSettingsStore _settings;
@@ -19,12 +23,16 @@ public sealed partial class PrintTicketHandler
     private readonly ILogger<PrintTicketHandler> _logger;
 
     public PrintTicketHandler(
+        IAccessControl access,
+        ICurrentUser currentUser,
         ISaleRepository sales,
         IBusinessProfileRepository profiles,
         IPrintingSettingsStore settings,
         ITicketPrinter printer,
         ILogger<PrintTicketHandler> logger)
     {
+        _access = access;
+        _currentUser = currentUser;
         _sales = sales;
         _profiles = profiles;
         _settings = settings;
@@ -35,6 +43,15 @@ public sealed partial class PrintTicketHandler
     public async Task<Result<PrintedTicket>> HandleAsync(PrintTicketCommand command, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(command);
+
+        // El ticket de una venta es de quien la hizo (o de quien ve todas); el de prueba es de configuración.
+        var access = await _access.CheckAsync(
+            command.Source is PrintSource.SaleSource ? Permission.ViewOwnSales : Permission.ManageSettings,
+            cancellationToken);
+        if (!access.Allowed)
+        {
+            return Result.Failure<PrintedTicket>(access.Error!);
+        }
 
         var settings = _settings.Load();
         var folio = TicketBuilder.SampleFolio;
@@ -50,6 +67,11 @@ public sealed partial class PrintTicketHandler
                 if (sale is null)
                 {
                     return Result.Failure<PrintedTicket>(new NotFound());
+                }
+
+                if (await SaleAccess.CheckOwnershipAsync(_access, _currentUser, sale.CreatedById, cancellationToken) is { } forbidden)
+                {
+                    return Result.Failure<PrintedTicket>(forbidden);
                 }
 
                 folio = sale.Folio;

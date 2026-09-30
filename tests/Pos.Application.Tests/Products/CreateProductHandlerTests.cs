@@ -11,7 +11,7 @@ public class CreateProductHandlerTests
 {
     private readonly InMemoryProductRepository _repository = new();
 
-    private CreateProductHandler Handler => new(_repository, new CreateProductValidator());
+    private CreateProductHandler Handler => new(new AllowAllAccessControl(), _repository, new CreateProductValidator());
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 

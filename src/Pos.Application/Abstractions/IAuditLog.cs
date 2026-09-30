@@ -6,7 +6,8 @@ namespace Pos.Application.Abstractions;
 /// </summary>
 public interface IAuditLog
 {
-    void Add(string action, string entityType, Guid entityId, string? details);
+    /// <summary>Agrega la entrada; <c>authorizedBy</c> es el administrador que autorizó la operación, si la hubo (007, FR-014).</summary>
+    void Add(string action, string entityType, Guid entityId, string? details, Guid? authorizedBy = null);
 
     /// <summary>
     /// Persiste lo agregado con <see cref="Add"/> cuando no hay otra escritura que lo lleve (por

@@ -25,3 +25,14 @@ public interface IDialogService
     /// <summary>Selector para abrir un archivo; devuelve nulo si se cancela.</summary>
     Task<FileSelection?> PickOpenFileAsync(string title, IReadOnlyList<FileTypeFilter> filters);
 }
+
+/// <summary>
+/// Oculta y restaura los diálogos abiertos sin cerrarlos: al bloquear la sesión por inactividad nadie
+/// debe poder terminar un cobro a nombre del usuario y no se pierde lo capturado (007, research §13).
+/// </summary>
+public interface IDialogVisibility
+{
+    void HideAll();
+
+    void ShowAll();
+}

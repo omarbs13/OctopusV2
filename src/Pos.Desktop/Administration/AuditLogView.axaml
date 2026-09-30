@@ -1,0 +1,114 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Pos.Desktop.Administration"
+             xmlns:res="using:Pos.Desktop.Resources"
+             x:Class="Pos.Desktop.Administration.AuditLogView"
+             x:DataType="vm:AuditLogViewModel">
+
+  <UserControl.KeyBindings>
+    <KeyBinding Gesture="Alt+Home" Command="{Binding FirstPageCommand}" />
+    <KeyBinding Gesture="Alt+PageUp" Command="{Binding PreviousPageCommand}" />
+    <KeyBinding Gesture="Alt+PageDown" Command="{Binding NextPageCommand}" />
+    <KeyBinding Gesture="Alt+End" Command="{Binding LastPageCommand}" />
+  </UserControl.KeyBindings>
+
+  <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
+    <!-- Filtros (solo lectura: la bitácora no se edita ni se borra) -->
+    <Grid Grid.Row="0" ColumnDefinitions="*,*,*,*" ColumnSpacing="12" Margin="0,0,0,12">
+      <StackPanel Grid.Column="0" Spacing="4">
+        <TextBlock Text="{x:Static res:Strings.Audit_From}" FontWeight="SemiBold" />
+        <CalendarDatePicker HorizontalAlignment="Stretch" SelectedDate="{Binding FromDate}" />
+      </StackPanel>
+      <StackPanel Grid.Column="1" Spacing="4">
+        <TextBlock Text="{x:Static res:Strings.Audit_To}" FontWeight="SemiBold" />
+        <CalendarDatePicker HorizontalAlignment="Stretch" SelectedDate="{Binding ToDate}" />
+      </StackPanel>
+      <StackPanel Grid.Column="2" Spacing="4">
+        <TextBlock Text="{x:Static res:Strings.Audit_User}" FontWeight="SemiBold" />
+        <ComboBox HorizontalAlignment="Stretch" ItemsSource="{Binding UserOptions}" SelectedItem="{Binding SelectedUser}"
+                  DisplayMemberBinding="{Binding Label, x:DataType=vm:AuditUserOption}" />
+      </StackPanel>
+      <StackPanel Grid.Column="3" Spacing="4">
+        <TextBlock Text="{x:Static res:Strings.Audit_Event}" FontWeight="SemiBold" />
+        <ComboBox HorizontalAlignment="Stretch" ItemsSource="{Binding EventOptions}" SelectedItem="{Binding SelectedEvent}"
+                  DisplayMemberBinding="{Binding Label, x:DataType=vm:AuditEventOption}" />
+      </StackPanel>
+    </Grid>
+
+    <TextBlock Grid.Row="1" Margin="0,0,0,8" Text="{Binding FilterError}"
+               Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+               IsVisible="{Binding FilterError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+
+    <!-- Encabezados -->
+    <Grid Grid.Row="2" Margin="12,0,12,4" ColumnDefinitions="160,220,160,160,*">
+      <Grid.Styles>
+        <Style Selector="TextBlock">
+          <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+      </Grid.Styles>
+      <TextBlock Grid.Column="0" Text="{x:Static res:Strings.Audit_ColDate}" />
+      <TextBlock Grid.Column="1" Text="{x:Static res:Strings.Audit_ColEvent}" />
+      <TextBlock Grid.Column="2" Text="{x:Static res:Strings.Audit_ColUser}" />
+      <TextBlock Grid.Column="3" Text="{x:Static res:Strings.Audit_ColAuthorizedBy}" />
+      <TextBlock Grid.Column="4" Text="{x:Static res:Strings.Audit_ColDetails}" />
+    </Grid>
+
+    <ListBox Grid.Row="3" ItemsSource="{Binding Rows}">
+      <ListBox.ItemTemplate>
+        <DataTemplate x:DataType="vm:AuditLogRow">
+          <Grid ColumnDefinitions="160,220,160,160,*" MinHeight="36">
+            <Grid.Styles>
+              <Style Selector="TextBlock">
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+              </Style>
+            </Grid.Styles>
+            <TextBlock Grid.Column="0" Text="{Binding DateText}" />
+            <TextBlock Grid.Column="1" Text="{Binding EventText}" />
+            <TextBlock Grid.Column="2" Text="{Binding UserName}" />
+            <TextBlock Grid.Column="3" Text="{Binding AuthorizedByName}" />
+            <TextBlock Grid.Column="4" Text="{Binding Details}" ToolTip.Tip="{Binding Details}" />
+          </Grid>
+        </DataTemplate>
+      </ListBox.ItemTemplate>
+    </ListBox>
+
+    <TextBlock Grid.Row="3" Margin="12" Text="{x:Static res:Strings.Audit_Empty}" TextWrapping="Wrap"
+               IsVisible="{Binding IsEmpty}" HorizontalAlignment="Center" VerticalAlignment="Top" />
+
+    <!-- Paginación -->
+    <Grid Grid.Row="4" Margin="0,8,0,0" ColumnDefinitions="*,Auto">
+      <Grid.Styles>
+        <Style Selector="Button.pager">
+          <Setter Property="MinWidth" Value="44" />
+          <Setter Property="MinHeight" Value="44" />
+          <Setter Property="HorizontalContentAlignment" Value="Center" />
+          <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+      </Grid.Styles>
+      <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="{Binding PageSummary}" />
+      <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+        <Button Classes="pager" Command="{Binding FirstPageCommand}"
+                ToolTip.Tip="{x:Static res:Strings.Products_FirstPage}"
+                AutomationProperties.Name="{x:Static res:Strings.Products_FirstPage}">
+          <PathIcon Data="{StaticResource Icon.PageFirst}" />
+        </Button>
+        <Button Classes="pager" Command="{Binding PreviousPageCommand}"
+                ToolTip.Tip="{x:Static res:Strings.Products_PreviousPage}"
+                AutomationProperties.Name="{x:Static res:Strings.Products_PreviousPage}">
+          <PathIcon Data="{StaticResource Icon.PagePrevious}" />
+        </Button>
+        <Button Classes="pager" Command="{Binding NextPageCommand}"
+                ToolTip.Tip="{x:Static res:Strings.Products_NextPage}"
+                AutomationProperties.Name="{x:Static res:Strings.Products_NextPage}">
+          <PathIcon Data="{StaticResource Icon.PageNext}" />
+        </Button>
+        <Button Classes="pager" Command="{Binding LastPageCommand}"
+                ToolTip.Tip="{x:Static res:Strings.Products_LastPage}"
+                AutomationProperties.Name="{x:Static res:Strings.Products_LastPage}">
+          <PathIcon Data="{StaticResource Icon.PageLast}" />
+        </Button>
+      </StackPanel>
+    </Grid>
+  </Grid>
+</UserControl>

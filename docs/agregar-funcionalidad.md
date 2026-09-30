@@ -53,6 +53,13 @@ src/Pos.Application/<Funcionalidad>/<CasoDeUso>/
 - Sin MediatR: el handler es una clase normal que se registra en DI.
 - Devuelve `Result` con errores de negocio explícitos (`ValidationFailed`, `Duplicate`,
   `NotFound`, `Conflict`). Las excepciones son solo para fallas inesperadas.
+- **Permisos (desde 0.5.0)**: toda operación restringida verifica su permiso al inicio del handler,
+  antes de validar o abrir la transacción: `await _access.CheckAsync(Permission.X, ct)` con
+  `IAccessControl` y devuelve `Forbidden` sin efectos. Un permiso nuevo se agrega al enum
+  `Permission` y se asigna a los roles en `RolePermissions` (único punto; ver
+  [usuarios-y-permisos.md](usuarios-y-permisos.md)). En Desktop, la opción de menú declara su
+  permiso en `AddPage(..., permission: ...)` y los botones usan `ICurrentPermissions`; eso solo oculta,
+  la protección real es la del caso de uso. Agrega el handler nuevo a `RestrictedOperationsTests`.
 - Los nombres de campo de los errores (`ProductFields`) coinciden con los controles de la UI.
 - Los mensajes para el operador están en español.
 - Escribe las pruebas con un repositorio en memoria (modelo:

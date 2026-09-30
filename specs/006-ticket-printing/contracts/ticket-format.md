@@ -11,14 +11,16 @@ CP858.
    ajustados por palabras.
 3. Leyendas, si aplican: `CANCELADA` y/o `REIMPRESIÓN` (centradas, negrita).
 4. Folio y fecha y hora locales (`dd/MM/yyyy HH:mm`).
-5. Separador de guiones.
-6. Una entrada por línea de venta (ver "Renglones").
-7. Separador.
-8. `TOTAL` alineado a la derecha, en negrita.
-9. Un renglón por forma de pago con su monto. El pago en efectivo muestra el recibido y, si
-   hubo, `CAMBIO`.
-10. Mensaje de pie, centrado y ajustado, si existe.
-11. Avance de papel y corte.
+5. `Cajero: <nombre completo>` bajo la fecha (desde 007; se recorta al ancho del papel; no sale
+   en el ticket de prueba).
+6. Separador de guiones.
+7. Una entrada por línea de venta (ver "Renglones").
+8. Separador.
+9. `TOTAL` alineado a la derecha, en negrita.
+10. Un renglón por forma de pago con su monto. El pago en efectivo muestra el recibido y, si
+    hubo, `CAMBIO`.
+11. Mensaje de pie, centrado y ajustado, si existe.
+12. Avance de papel y corte.
 
 ## Renglones
 
@@ -38,6 +40,7 @@ Ejemplo en 32 columnas:
 --------------------------------
 Folio: V-000123
 30/09/2026 14:05
+Cajero: Ana López
 --------------------------------
 2   Refresco cola 600 ml   $36.00
 1.250 Queso oaxaca de rancho

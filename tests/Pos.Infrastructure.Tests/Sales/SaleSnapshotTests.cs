@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Pos.Application.Abstractions;
 using Pos.Domain.Common;
 using Pos.Domain.Inventory;
-using Pos.Infrastructure.Platform;
 using Pos.Infrastructure.Tests.TestSupport;
 
 namespace Pos.Infrastructure.Tests.Sales;
@@ -67,7 +66,7 @@ public sealed class SaleSnapshotTests : IAsyncLifetime
     {
         var product = await SalesTestSupport.SeedProductAsync(_db, "SNP-4");
         await SalesTestSupport.StockAsync(_db, product, "5");
-        _db.User.UserId = new SystemCurrentUser().UserId;
+        _db.User.UserId = SystemUser.Id;
 
         await SalesTestSupport.SellOkAsync(_db, (product, 1000));
 

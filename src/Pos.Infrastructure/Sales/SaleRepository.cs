@@ -88,7 +88,16 @@ public sealed class SaleRepository : ISaleRepository
             .ThenByDescending(s => s.Id)
             .Skip((page - 1) * search.PageSize)
             .Take(search.PageSize)
-            .Select(s => new { s.Id, s.FolioNumber, s.CreatedAt, s.TotalCents, s.Status })
+            .Select(s => new
+            {
+                s.Id,
+                s.FolioNumber,
+                s.CreatedAt,
+                s.TotalCents,
+                s.Status,
+                s.CreatedBy,
+                CashierName = _context.Users.Where(u => u.Id == s.CreatedBy).Select(u => u.FullName).FirstOrDefault(),
+            })
             .ToListAsync(cancellationToken);
 
         var ids = rows.Select(r => r.Id).ToList();
@@ -106,7 +115,8 @@ public sealed class SaleRepository : ISaleRepository
                 r.CreatedAt,
                 r.TotalCents,
                 methods.GetValueOrDefault(r.Id) ?? [],
-                r.Status))
+                r.Status,
+                r.CashierName ?? SystemUser.NameOf(r.CreatedBy)))
             .ToList();
         return new SalePage(items, total, page, search.PageSize);
     }
@@ -123,17 +133,24 @@ public sealed class SaleRepository : ISaleRepository
             return null;
         }
 
+        // Nombres con LEFT JOIN a Users; si no aparece, el id abreviado (007, research §3).
+        var userIds = new[] { sale.CreatedBy, sale.CancelledBy ?? sale.CreatedBy };
+        var names = await _context.Users.AsNoTracking()
+            .Where(u => userIds.Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id, u => u.FullName, cancellationToken);
+        string NameOf(Guid userId) => names.GetValueOrDefault(userId) ?? SystemUser.NameOf(userId);
+
         return new SaleDetailDto(
             sale.Id,
             sale.Folio,
             sale.CreatedAt,
-            SystemUser.NameOf(sale.CreatedBy),
+            NameOf(sale.CreatedBy),
             sale.TotalCents,
             sale.Status,
             sale.Version,
             sale.CancellationReason,
             sale.CancelledAt,
-            sale.CancelledBy is { } by ? SystemUser.NameOf(by) : null,
+            sale.CancelledBy is { } by ? NameOf(by) : null,
             [.. sale.Lines.OrderBy(l => l.Position).Select(l => new SaleLineDto(
                 l.Position,
                 l.ProductId,
@@ -149,7 +166,8 @@ public sealed class SaleRepository : ISaleRepository
                 p.AmountCents,
                 p.ReceivedCents,
                 p.ChangeCents,
-                p.Reference))]);
+                p.Reference))],
+            sale.CreatedBy);
     }
 
     public async Task<SalesDashboard> GetDashboardAsync(IReadOnlyList<DayWindow> days, CancellationToken cancellationToken)
@@ -224,6 +242,11 @@ public sealed class SaleRepository : ISaleRepository
         if (search.Status is { } status)
         {
             sales = sales.Where(s => s.Status == status);
+        }
+
+        if (search.CashierId is { } cashier)
+        {
+            sales = sales.Where(s => s.CreatedBy == cashier);
         }
 
         return sales;

@@ -2,10 +2,14 @@ using Pos.Domain.Sales;
 
 namespace Pos.Application.Sales.SearchSales;
 
-/// <summary>Filtros de "Ventas realizadas"; el límite superior de fecha es exclusivo (UTC).</summary>
+/// <summary>
+/// Filtros de "Ventas realizadas"; el límite superior de fecha es exclusivo (UTC). <c>CashierId</c> solo
+/// lo puede pedir quien ve todas las ventas (007, FR-026).
+/// </summary>
 public sealed record SearchSalesQuery(
     DateTime? FromUtc,
     DateTime? ToUtcExclusive,
     string? FolioText,
     SaleStatus? Status,
-    int Page = 1);
+    int Page = 1,
+    Guid? CashierId = null);

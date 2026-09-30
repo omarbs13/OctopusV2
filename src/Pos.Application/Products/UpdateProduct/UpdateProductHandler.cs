@@ -3,22 +3,27 @@ using Pos.Application.Abstractions;
 using Pos.Application.Inventory;
 using Pos.Domain.Common;
 using Pos.Domain.Products;
+using Pos.Application.Users.Access;
+using Pos.Domain.Users;
 
 namespace Pos.Application.Products.UpdateProduct;
 
 public sealed class UpdateProductHandler
 {
+    private readonly IAccessControl _access;
     private readonly IProductRepository _products;
     private readonly IValidator<UpdateProductCommand> _validator;
     private readonly IInventoryRepository _inventory;
     private readonly IWriteTransactions _transactions;
 
     public UpdateProductHandler(
+        IAccessControl access,
         IProductRepository products,
         IValidator<UpdateProductCommand> validator,
         IInventoryRepository inventory,
         IWriteTransactions transactions)
     {
+        _access = access;
         _products = products;
         _validator = validator;
         _inventory = inventory;
@@ -27,6 +32,12 @@ public sealed class UpdateProductHandler
 
     public async Task<Result<ProductDto>> HandleAsync(UpdateProductCommand command, CancellationToken cancellationToken)
     {
+        var access = await _access.CheckAsync(Permission.ManageProducts, cancellationToken);
+        if (!access.Allowed)
+        {
+            return Result.Failure<ProductDto>(access.Error!);
+        }
+
         ArgumentNullException.ThrowIfNull(command);
 
         var validation = await _validator.ValidateAsync(command, cancellationToken);

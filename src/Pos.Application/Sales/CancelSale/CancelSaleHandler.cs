@@ -1,9 +1,12 @@
 using FluentValidation;
 using Microsoft.Extensions.Logging;
 using Pos.Application.Abstractions;
+using Pos.Application.Audit;
+using Pos.Application.Users.Access;
 using Pos.Application.Inventory;
 using Pos.Application.Products;
 using Pos.Domain.Sales;
+using Pos.Domain.Users;
 
 namespace Pos.Application.Sales.CancelSale;
 
@@ -13,8 +16,9 @@ namespace Pos.Application.Sales.CancelSale;
 /// </summary>
 public sealed partial class CancelSaleHandler
 {
-    public const string AuditAction = "SALE_CANCELLED";
+    public const string AuditAction = AuditActions.SaleCancelled;
 
+    private readonly IAccessControl _access;
     private readonly ISaleRepository _sales;
     private readonly IInventoryRepository _inventory;
     private readonly IAuditLog _audit;
@@ -25,6 +29,7 @@ public sealed partial class CancelSaleHandler
     private readonly ILogger<CancelSaleHandler> _logger;
 
     public CancelSaleHandler(
+        IAccessControl access,
         ISaleRepository sales,
         IInventoryRepository inventory,
         IAuditLog audit,
@@ -34,6 +39,7 @@ public sealed partial class CancelSaleHandler
         IValidator<CancelSaleCommand> validator,
         ILogger<CancelSaleHandler> logger)
     {
+        _access = access;
         _sales = sales;
         _inventory = inventory;
         _audit = audit;
@@ -47,6 +53,12 @@ public sealed partial class CancelSaleHandler
     public async Task<Result> HandleAsync(CancelSaleCommand command, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(command);
+
+        var access = await _access.CheckAsync(Permission.CancelSales, command.AuthorizationGrantId, cancellationToken);
+        if (!access.Allowed)
+        {
+            return Result.Failure(access.Error!);
+        }
 
         var validation = await _validator.ValidateAsync(command, cancellationToken);
         if (!validation.IsValid)
@@ -89,7 +101,7 @@ public sealed partial class CancelSaleHandler
             sale.LinkCancellationMovement(line.Id, movement.Id);
         }
 
-        _audit.Add(AuditAction, "Sale", sale.Id, $"Folio {sale.Folio}. Motivo: {reason}");
+        _audit.Add(AuditAction, "Sale", sale.Id, $"Folio {sale.Folio}. Motivo: {reason}", access.AuthorizedBy);
 
         var outcome = await _sales.SaveChangesAsync(cancellationToken);
         if (outcome.Status != SaveStatus.Saved)

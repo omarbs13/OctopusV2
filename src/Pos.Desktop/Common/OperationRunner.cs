@@ -84,6 +84,26 @@ public sealed class OperationRunner
         }
     }
 
+    /// <summary>Como <see cref="RunQuietlyAsync"/>, pero devuelve el valor de la operación.</summary>
+    public async Task<(bool Succeeded, T? Value)> RunQuietlyResultAsync<T>(
+        string operation,
+        Func<Task<T>> action,
+        IReadOnlyDictionary<string, object?>? context = null)
+    {
+        ArgumentNullException.ThrowIfNull(action);
+        try
+        {
+            return (true, await action());
+        }
+#pragma warning disable CA1031 // Toda falla inesperada se captura y se registra.
+        catch (Exception ex)
+#pragma warning restore CA1031
+        {
+            ForOperation(operation, context).Error(ex, "Error inesperado en la operación {Operation}", operation);
+            return (false, default);
+        }
+    }
+
     private ILogger ForOperation(string operation, IReadOnlyDictionary<string, object?>? context)
     {
         var log = _logger

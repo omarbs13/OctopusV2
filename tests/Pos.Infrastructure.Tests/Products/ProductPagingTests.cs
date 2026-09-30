@@ -32,7 +32,7 @@ public sealed class ProductPagingTests : IAsyncLifetime
     private async Task<ProductPage> SearchAsync(string? text = null, bool includeInactive = false, int page = 1, Guid? locate = null)
     {
         await using var context = _db.CreateDbContext();
-        var result = await new SearchProductsHandler(new ProductRepository(context))
+        var result = await new SearchProductsHandler(new AllowAllAccessControl(), new ProductRepository(context))
             .HandleAsync(new SearchProductsQuery(text, includeInactive, page, locate), Ct);
         return result.Value;
     }

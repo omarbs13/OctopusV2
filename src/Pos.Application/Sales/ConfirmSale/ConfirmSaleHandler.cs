@@ -7,6 +7,8 @@ using Pos.Domain.Common;
 using Pos.Domain.Inventory;
 using Pos.Domain.Products;
 using Pos.Domain.Sales;
+using Pos.Application.Users.Access;
+using Pos.Domain.Users;
 
 namespace Pos.Application.Sales.ConfirmSale;
 
@@ -17,6 +19,7 @@ namespace Pos.Application.Sales.ConfirmSale;
 /// </summary>
 public sealed partial class ConfirmSaleHandler
 {
+    private readonly IAccessControl _access;
     private readonly IProductRepository _products;
     private readonly IInventoryRepository _inventory;
     private readonly ISaleRepository _sales;
@@ -26,6 +29,7 @@ public sealed partial class ConfirmSaleHandler
     private readonly ILogger<ConfirmSaleHandler> _logger;
 
     public ConfirmSaleHandler(
+        IAccessControl access,
         IProductRepository products,
         IInventoryRepository inventory,
         ISaleRepository sales,
@@ -34,6 +38,7 @@ public sealed partial class ConfirmSaleHandler
         IValidator<ConfirmSaleCommand> validator,
         ILogger<ConfirmSaleHandler> logger)
     {
+        _access = access;
         _products = products;
         _inventory = inventory;
         _sales = sales;
@@ -45,6 +50,12 @@ public sealed partial class ConfirmSaleHandler
 
     public async Task<Result<ConfirmedSale>> HandleAsync(ConfirmSaleCommand command, CancellationToken cancellationToken)
     {
+        var access = await _access.CheckAsync(Permission.Sell, cancellationToken);
+        if (!access.Allowed)
+        {
+            return Result.Failure<ConfirmedSale>(access.Error!);
+        }
+
         ArgumentNullException.ThrowIfNull(command);
 
         var validation = await _validator.ValidateAsync(command, cancellationToken);

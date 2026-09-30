@@ -1,6 +1,8 @@
 using Pos.Application.Abstractions;
 using Pos.Domain.Common;
 using Pos.Domain.Products;
+using Pos.Application.Users.Access;
+using Pos.Domain.Users;
 
 namespace Pos.Application.Inventory.SearchStock;
 
@@ -11,12 +13,23 @@ namespace Pos.Application.Inventory.SearchStock;
 /// </summary>
 public sealed class SearchStockHandler
 {
+    private readonly IAccessControl _access;
     private readonly IInventoryRepository _inventory;
 
-    public SearchStockHandler(IInventoryRepository inventory) => _inventory = inventory;
+    public SearchStockHandler(IAccessControl access, IInventoryRepository inventory)
+    {
+        _access = access;
+        _inventory = inventory;
+    }
 
     public async Task<Result<StockPage>> HandleAsync(SearchStockQuery query, CancellationToken cancellationToken)
     {
+        var access = await _access.CheckAsync(Permission.ViewInventory, cancellationToken);
+        if (!access.Allowed)
+        {
+            return Result.Failure<StockPage>(access.Error!);
+        }
+
         ArgumentNullException.ThrowIfNull(query);
 
         var text = query.Text?.Trim();

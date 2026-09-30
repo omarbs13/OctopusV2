@@ -78,7 +78,7 @@ public sealed class StockStatusQueryTests : IAsyncLifetime
     private async Task<StockPage> SearchAsync(StockFilter filter, bool includeInactive = false, string? text = null)
     {
         await using var context = _db.CreateDbContext();
-        return (await new SearchStockHandler(new InventoryRepository(context))
+        return (await new SearchStockHandler(new AllowAllAccessControl(), new InventoryRepository(context))
             .HandleAsync(new SearchStockQuery(text, filter, includeInactive), Ct)).Value;
     }
 

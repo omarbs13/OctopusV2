@@ -11,9 +11,9 @@ public partial class MainWindow : Window
         // El menú se contrae solo en ventanas angostas (FR-018).
         PropertyChanged += (_, e) =>
         {
-            if (e.Property == BoundsProperty && DataContext is MainViewModel main)
+            if (e.Property == BoundsProperty && DataContext is RootViewModel root)
             {
-                main.Menu.SetWindowWidth(Bounds.Width);
+                root.SetWindowWidth(Bounds.Width);
             }
         };
     }

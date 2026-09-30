@@ -263,8 +263,8 @@
   <data name="Sales_Empty" xml:space="preserve"><value>No hay ventas que coincidan.</value></data>
   <data name="SaleDetail_Title" xml:space="preserve"><value>Detalle de la venta</value></data>
   <data name="SaleDetail_TitleWithFolio" xml:space="preserve"><value>Venta {0}</value></data>
-  <data name="SaleDetail_Header" xml:space="preserve"><value>{0} · {1} · Usuario: {2} · Estado: {3}</value></data>
-  <data name="SaleDetail_CancelledInfo" xml:space="preserve"><value>Cancelada. Motivo: {0} · {1} · Usuario: {2}</value></data>
+  <data name="SaleDetail_Header" xml:space="preserve"><value>{0} · {1} · Cajero: {2} · Estado: {3}</value></data>
+  <data name="SaleDetail_CancelledInfo" xml:space="preserve"><value>Cancelada por {2} · {1}. Motivo: {0}</value></data>
   <data name="SaleDetail_Lines" xml:space="preserve"><value>Productos</value></data>
   <data name="SaleDetail_Payments" xml:space="preserve"><value>Pagos</value></data>
   <data name="SaleDetail_Method" xml:space="preserve"><value>Forma de pago</value></data>
@@ -332,4 +332,107 @@
   <data name="Drawer_FailedSale" xml:space="preserve"><value>No se pudo abrir el cajón. Ábralo manualmente; la venta quedó registrada y no se ve afectada.</value></data>
   <data name="Sale_OpenDrawer" xml:space="preserve"><value>Abrir cajón</value></data>
   <data name="SaleDetail_Reprint" xml:space="preserve"><value>Reimprimir</value></data>
+  <data name="Common_Yes" xml:space="preserve"><value>Sí</value></data>
+  <data name="Common_No" xml:space="preserve"><value>No</value></data>
+  <data name="Common_Forbidden" xml:space="preserve"><value>No tienes permiso para realizar esta operación.</value></data>
+  <data name="Role_Admin" xml:space="preserve"><value>Administrador</value></data>
+  <data name="Role_Cashier" xml:space="preserve"><value>Cajero</value></data>
+  <data name="Nav_Administration" xml:space="preserve"><value>Administración</value></data>
+  <data name="Nav_Users" xml:space="preserve"><value>Usuarios</value></data>
+  <data name="Nav_AuditLog" xml:space="preserve"><value>Bitácora</value></data>
+  <data name="Nav_Security" xml:space="preserve"><value>Seguridad</value></data>
+  <data name="Auth_FullName" xml:space="preserve"><value>Nombre completo</value></data>
+  <data name="Auth_UserName" xml:space="preserve"><value>Usuario</value></data>
+  <data name="Auth_Password" xml:space="preserve"><value>Contraseña</value></data>
+  <data name="Auth_ConfirmPassword" xml:space="preserve"><value>Confirmar contraseña</value></data>
+  <data name="Auth_FirstAdminTitle" xml:space="preserve"><value>Crear administrador</value></data>
+  <data name="Auth_FirstAdminDescription" xml:space="preserve"><value>Es la primera vez que se usa el sistema. Crea la cuenta del administrador.</value></data>
+  <data name="Auth_CreateAndContinue" xml:space="preserve"><value>Crear y continuar</value></data>
+  <data name="Auth_LoginTitle" xml:space="preserve"><value>Iniciar sesión</value></data>
+  <data name="Auth_Login" xml:space="preserve"><value>Entrar</value></data>
+  <data name="Auth_ChangePasswordTitle" xml:space="preserve"><value>Cambiar contraseña</value></data>
+  <data name="Auth_ChangePasswordMandatory" xml:space="preserve"><value>Debes cambiar tu contraseña antes de continuar.</value></data>
+  <data name="Auth_CurrentPassword" xml:space="preserve"><value>Contraseña actual</value></data>
+  <data name="Auth_NewPassword" xml:space="preserve"><value>Nueva contraseña</value></data>
+  <data name="Auth_ConfirmNewPassword" xml:space="preserve"><value>Confirmar nueva contraseña</value></data>
+  <data name="Auth_SaveAndContinue" xml:space="preserve"><value>Guardar y continuar</value></data>
+  <data name="Auth_Exit" xml:space="preserve"><value>Salir</value></data>
+  <data name="Auth_Save" xml:space="preserve"><value>Guardar</value></data>
+  <data name="Auth_PasswordChanged" xml:space="preserve"><value>Contraseña cambiada.</value></data>
+  <data name="Auth_AuthorizeTitle" xml:space="preserve"><value>Autorización de administrador</value></data>
+  <data name="Auth_AuthorizeMessage" xml:space="preserve"><value>Esta operación requiere autorización de un administrador: {0}</value></data>
+  <data name="Auth_Authorize" xml:space="preserve"><value>Autorizar</value></data>
+  <data name="Auth_RequestAuthorization" xml:space="preserve"><value>Solicitar autorización</value></data>
+  <data name="Auth_RequestAuthorizationQuestion" xml:space="preserve"><value>No tienes permiso para esta operación. ¿Quieres solicitar la autorización de un administrador?</value></data>
+  <data name="Auth_OperationCancelSale" xml:space="preserve"><value>Cancelar venta</value></data>
+  <data name="Auth_OperationOpenDrawer" xml:space="preserve"><value>Abrir cajón sin venta</value></data>
+  <data name="Auth_AuthorizeFailed" xml:space="preserve"><value>Usuario o contraseña incorrectos, o el usuario no es administrador.</value></data>
+  <data name="Auth_AdminCredentialsMissing" xml:space="preserve"><value>Captura el usuario y la contraseña del administrador.</value></data>
+  <data name="Auth_SetupAlreadyDone" xml:space="preserve"><value>El sistema ya tiene usuarios. Inicia sesión.</value></data>
+  <data name="Lock_Title" xml:space="preserve"><value>Sesión bloqueada</value></data>
+  <data name="Lock_Description" xml:space="preserve"><value>La sesión se bloqueó por inactividad. Captura tu contraseña para continuar.</value></data>
+  <data name="Lock_Unlock" xml:space="preserve"><value>Desbloquear</value></data>
+  <data name="Lock_SwitchUser" xml:space="preserve"><value>Cambiar de usuario</value></data>
+  <data name="Session_ChangePassword" xml:space="preserve"><value>Cambiar contraseña</value></data>
+  <data name="Session_SwitchUser" xml:space="preserve"><value>Cambiar de usuario</value></data>
+  <data name="Session_Logout" xml:space="preserve"><value>Cerrar sesión</value></data>
+  <data name="Session_UserMenu" xml:space="preserve"><value>Menú de usuario</value></data>
+  <data name="Session_HeldSaleTitle" xml:space="preserve"><value>Venta en curso</value></data>
+  <data name="Session_HeldSaleConfirm" xml:space="preserve"><value>Hay una venta en curso. Se guardará y se te ofrecerá al volver a entrar. ¿Continuar?</value></data>
+  <data name="Users_Title" xml:space="preserve"><value>Usuarios</value></data>
+  <data name="Users_New" xml:space="preserve"><value>Nuevo usuario</value></data>
+  <data name="Users_Edit" xml:space="preserve"><value>Editar</value></data>
+  <data name="Users_ResetPassword" xml:space="preserve"><value>Restablecer contraseña</value></data>
+  <data name="Users_ShowInactive" xml:space="preserve"><value>Mostrar inactivos</value></data>
+  <data name="Users_SearchPlaceholder" xml:space="preserve"><value>Buscar por nombre o usuario</value></data>
+  <data name="Users_ColFullName" xml:space="preserve"><value>Nombre completo</value></data>
+  <data name="Users_ColUserName" xml:space="preserve"><value>Usuario</value></data>
+  <data name="Users_ColRole" xml:space="preserve"><value>Rol</value></data>
+  <data name="Users_ColStatus" xml:space="preserve"><value>Estado</value></data>
+  <data name="Users_Active" xml:space="preserve"><value>Activo</value></data>
+  <data name="Users_Inactive" xml:space="preserve"><value>Inactivo</value></data>
+  <data name="Users_Empty" xml:space="preserve"><value>No hay usuarios que coincidan.</value></data>
+  <data name="Users_PageSummary" xml:space="preserve"><value>{0} registros · Página {1} de {2}</value></data>
+  <data name="UserEditor_NewTitle" xml:space="preserve"><value>Nuevo usuario</value></data>
+  <data name="UserEditor_EditTitle" xml:space="preserve"><value>Editar usuario</value></data>
+  <data name="UserEditor_Role" xml:space="preserve"><value>Rol</value></data>
+  <data name="UserEditor_Active" xml:space="preserve"><value>Activo</value></data>
+  <data name="UserEditor_InitialPassword" xml:space="preserve"><value>Contraseña inicial</value></data>
+  <data name="UserEditor_InitialPasswordHint" xml:space="preserve"><value>El usuario deberá cambiarla al iniciar sesión.</value></data>
+  <data name="UserEditor_SelfLocked" xml:space="preserve"><value>No puedes cambiar tu propio rol ni desactivarte.</value></data>
+  <data name="UserEditor_DuplicateUserName" xml:space="preserve"><value>Ya existe un usuario con ese nombre.</value></data>
+  <data name="UserEditor_LastAdministrator" xml:space="preserve"><value>Debe quedar al menos un administrador activo; no puedes desactivarte ni quitarte el rol.</value></data>
+  <data name="UserEditor_DiscardHeldSale" xml:space="preserve"><value>Se descartará la venta en curso que {0} dejó guardada.</value></data>
+  <data name="UserEditor_DiscardHeldSaleTitle" xml:space="preserve"><value>Desactivar usuario</value></data>
+  <data name="UserEditor_DiscardHeldSaleConfirm" xml:space="preserve"><value>Desactivar</value></data>
+  <data name="UserEditor_Saved" xml:space="preserve"><value>Usuario guardado.</value></data>
+  <data name="Reset_Title" xml:space="preserve"><value>Restablecer contraseña</value></data>
+  <data name="Reset_Description" xml:space="preserve"><value>Captura una contraseña temporal para {0}.</value></data>
+  <data name="Reset_TemporaryPassword" xml:space="preserve"><value>Contraseña temporal</value></data>
+  <data name="Reset_Done" xml:space="preserve"><value>{0} deberá cambiarla al iniciar sesión.</value></data>
+  <data name="Reset_Confirm" xml:space="preserve"><value>Restablecer</value></data>
+  <data name="Audit_Title" xml:space="preserve"><value>Bitácora de auditoría</value></data>
+  <data name="Audit_From" xml:space="preserve"><value>Desde</value></data>
+  <data name="Audit_To" xml:space="preserve"><value>Hasta</value></data>
+  <data name="Audit_User" xml:space="preserve"><value>Usuario</value></data>
+  <data name="Audit_Event" xml:space="preserve"><value>Tipo de evento</value></data>
+  <data name="Audit_All" xml:space="preserve"><value>Todos</value></data>
+  <data name="Audit_Search" xml:space="preserve"><value>Buscar</value></data>
+  <data name="Audit_ColDate" xml:space="preserve"><value>Fecha y hora</value></data>
+  <data name="Audit_ColEvent" xml:space="preserve"><value>Evento</value></data>
+  <data name="Audit_ColUser" xml:space="preserve"><value>Usuario</value></data>
+  <data name="Audit_ColAuthorizedBy" xml:space="preserve"><value>Autorizó</value></data>
+  <data name="Audit_ColDetails" xml:space="preserve"><value>Detalle</value></data>
+  <data name="Audit_Empty" xml:space="preserve"><value>No hay eventos en la bitácora con esos filtros.</value></data>
+  <data name="Audit_PageSummary" xml:space="preserve"><value>{0} eventos · Página {1} de {2}</value></data>
+  <data name="SecuritySettings_Title" xml:space="preserve"><value>Seguridad</value></data>
+  <data name="SecuritySettings_IdleBefore" xml:space="preserve"><value>Bloquear la sesión tras</value></data>
+  <data name="SecuritySettings_IdleAfter" xml:space="preserve"><value>minutos sin actividad</value></data>
+  <data name="SecuritySettings_Enabled" xml:space="preserve"><value>Activado</value></data>
+  <data name="SecuritySettings_Saved" xml:space="preserve"><value>Configuración de seguridad guardada.</value></data>
+  <data name="SecuritySettings_Hint" xml:space="preserve"><value>Cuando la sesión se bloquea, se pide la contraseña del mismo usuario y se conserva la pantalla y la venta en curso.</value></data>
+  <data name="Sales_ColCashier" xml:space="preserve"><value>Cajero</value></data>
+  <data name="Sales_Cashier" xml:space="preserve"><value>Cajero</value></data>
+  <data name="Sales_CashierAll" xml:space="preserve"><value>Todos</value></data>
+  <data name="Auth_PasswordIncorrect" xml:space="preserve"><value>Contraseña incorrecta.</value></data>
 </root>

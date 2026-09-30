@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Pos.Domain.Users;
 
 namespace Pos.Desktop.Navigation;
 
@@ -8,7 +9,8 @@ public sealed record NavigationGroup(string Id, string Title, string Icon, int O
 /// <summary>
 /// Opción navegable; sin grupo aparece en el primer nivel del menú. <paramref name="Resolve"/> permite
 /// que varias opciones compartan el tipo de ViewModel con instancias propias; <paramref name="Shortcut"/>
-/// es el atajo global que se muestra junto a la opción (por ejemplo, "F9").
+/// es el atajo global que se muestra junto a la opción (por ejemplo, "F9"); <paramref name="Permission"/>
+/// es el permiso que exige la opción (007, FR-008): sin él no aparece en el menú ni se puede abrir.
 /// </summary>
 public sealed record NavigationEntry(
     string Id,
@@ -18,7 +20,8 @@ public sealed record NavigationEntry(
     string? GroupId,
     Type ViewModelType,
     Func<IServiceProvider, object>? Resolve = null,
-    string? Shortcut = null);
+    string? Shortcut = null,
+    Permission? Permission = null);
 
 /// <summary>Asociación de un tipo de ViewModel con la fábrica de su vista.</summary>
 public sealed record ViewRegistration(Type ViewModelType, Func<Control> CreateView);

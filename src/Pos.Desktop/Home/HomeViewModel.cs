@@ -10,10 +10,14 @@ public sealed partial class HomeViewModel : PageViewModel
 {
     private readonly Navigator _navigator;
 
-    public HomeViewModel(IEnumerable<DashboardCard> cards, Navigator navigator)
+    public HomeViewModel(IEnumerable<DashboardCard> cards, Navigator navigator, ICurrentPermissions? permissions = null)
     {
         _navigator = navigator;
-        Cards = [.. cards.OrderBy(c => c.Order)];
+
+        // Las tarjetas con permiso solo se muestran a quien lo tiene (los totales del negocio no son del cajero).
+        Cards = [.. cards
+            .Where(c => c.RequiredPermission is not { } required || permissions is null || permissions.Has(required))
+            .OrderBy(c => c.Order)];
         Metrics = [.. Cards.Where(c => c.Kind == DashboardCardKind.Metric)];
         Charts = [.. Cards.Where(c => c.Kind == DashboardCardKind.Chart)];
     }

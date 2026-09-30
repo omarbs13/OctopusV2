@@ -2,6 +2,8 @@ using FluentValidation;
 using Pos.Application.Abstractions;
 using Pos.Application.Products;
 using Pos.Domain.Business;
+using Pos.Application.Users.Access;
+using Pos.Domain.Users;
 
 namespace Pos.Application.Business.SaveBusinessProfile;
 
@@ -11,15 +13,18 @@ namespace Pos.Application.Business.SaveBusinessProfile;
 /// </summary>
 public sealed class SaveBusinessProfileHandler
 {
+    private readonly IAccessControl _access;
     private readonly IBusinessProfileRepository _profiles;
     private readonly IImageProcessor _imageProcessor;
     private readonly IValidator<SaveBusinessProfileCommand> _validator;
 
     public SaveBusinessProfileHandler(
+        IAccessControl access,
         IBusinessProfileRepository profiles,
         IImageProcessor imageProcessor,
         IValidator<SaveBusinessProfileCommand> validator)
     {
+        _access = access;
         _profiles = profiles;
         _imageProcessor = imageProcessor;
         _validator = validator;
@@ -27,6 +32,12 @@ public sealed class SaveBusinessProfileHandler
 
     public async Task<Result> HandleAsync(SaveBusinessProfileCommand command, CancellationToken cancellationToken)
     {
+        var access = await _access.CheckAsync(Permission.ManageSettings, cancellationToken);
+        if (!access.Allowed)
+        {
+            return Result.Failure(access.Error!);
+        }
+
         ArgumentNullException.ThrowIfNull(command);
 
         var validation = await _validator.ValidateAsync(command, cancellationToken);

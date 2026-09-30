@@ -14,8 +14,8 @@ public sealed class AuditLog : IAuditLog
 
     public AuditLog(PosDbContext context) => _context = context;
 
-    public void Add(string action, string entityType, Guid entityId, string? details) =>
-        _context.AuditEntries.Add(AuditEntry.Create(action, entityType, entityId, details));
+    public void Add(string action, string entityType, Guid entityId, string? details, Guid? authorizedBy = null) =>
+        _context.AuditEntries.Add(AuditEntry.Create(action, entityType, entityId, details, authorizedBy));
 
     public Task SaveAsync(CancellationToken cancellationToken) => _context.SaveChangesAsync(cancellationToken);
 }

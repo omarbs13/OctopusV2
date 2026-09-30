@@ -1,16 +1,44 @@
 using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
 using Pos.Desktop.Forms;
 using Pos.Desktop.Resources;
+using Pos.Desktop.Shell;
 
 namespace Pos.Desktop.Common;
 
-internal sealed class DialogService : IDialogService
+internal sealed class DialogService : IDialogService, IDialogVisibility
 {
     private readonly IClassicDesktopStyleApplicationLifetime _lifetime;
+    private readonly IdleMonitor? _idle;
+    private readonly List<DialogWindow> _open = [];
 
-    public DialogService(IClassicDesktopStyleApplicationLifetime lifetime) => _lifetime = lifetime;
+    public DialogService(IClassicDesktopStyleApplicationLifetime lifetime, IdleMonitor? idle = null)
+    {
+        _lifetime = lifetime;
+        _idle = idle;
+    }
+
+    /// <summary>Oculta los diálogos abiertos sin cerrarlos (bloqueo por inactividad).</summary>
+    public void HideAll()
+    {
+        foreach (var dialog in _open.ToList())
+        {
+            dialog.Hide();
+        }
+    }
+
+    /// <summary>Vuelve a mostrar los diálogos que se ocultaron.</summary>
+    public void ShowAll()
+    {
+        foreach (var dialog in _open.ToList())
+        {
+            dialog.Show();
+            dialog.Activate();
+        }
+    }
 
     public Task ShowMessageAsync(string title, string message) =>
         ShowAsync(new DialogWindow(title, message, [new DialogButton(Strings.Common_Accept, true, IsAccent: true)], true));
@@ -95,6 +123,7 @@ internal sealed class DialogService : IDialogService
 
     private async Task<object> ShowAsync(DialogWindow dialog)
     {
+        Track(dialog);
         var owner = FindOwner();
         if (owner is not null)
         {
@@ -109,6 +138,20 @@ internal sealed class DialogService : IDialogService
         dialog.Closed += (_, _) => closed.TrySetResult(dialog.Result);
         dialog.Show();
         return await closed.Task;
+    }
+
+    /// <summary>La actividad dentro de un diálogo cuenta como actividad de la sesión, y el diálogo se puede ocultar al bloquear.</summary>
+    private void Track(DialogWindow dialog)
+    {
+        _open.Add(dialog);
+        dialog.Closed += (_, _) => _open.Remove(dialog);
+        if (_idle is not null)
+        {
+            void OnActivity(object? sender, RoutedEventArgs e) => _idle.Touch();
+            dialog.AddHandler(InputElement.KeyDownEvent, OnActivity, RoutingStrategies.Tunnel, handledEventsToo: true);
+            dialog.AddHandler(InputElement.PointerPressedEvent, OnActivity, RoutingStrategies.Tunnel, handledEventsToo: true);
+            dialog.AddHandler(InputElement.PointerMovedEvent, OnActivity, RoutingStrategies.Tunnel, handledEventsToo: true);
+        }
     }
 
     private Window? FindOwner() =>

@@ -1,5 +1,6 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging.Abstractions;
+using Pos.Application.Abstractions;
 using Pos.Application.Startup;
 using Pos.Infrastructure.Startup;
 using Pos.Infrastructure.Tests.TestSupport;
@@ -71,6 +72,7 @@ public sealed class SampleDatabaseUpgradeTests
 
         AssertInventory(connection, sampleFile);
         AssertSales(connection, sampleFile);
+        AssertUsers(connection, sampleFile);
 
         foreach (var index in new[] { "IX_Products_Sku", "IX_Products_Barcode", "IX_Products_NameSearch" })
         {
@@ -98,7 +100,7 @@ public sealed class SampleDatabaseUpgradeTests
             Assert.Equal(SampleData.InventoryMovementCount, Scalar<long>(connection, "SELECT COUNT(*) FROM InventoryMovements"));
             Assert.Equal(4, Scalar<long>(connection, "SELECT COUNT(DISTINCT Type) FROM InventoryMovements"));
         }
-        else if (sampleFile == "v0.4.0.db")
+        else if (sampleFile is "v0.4.0.db" or "v0.5.0.db")
         {
             // 005: la existencia negativa, los movimientos de venta y las ventas se conservan tal cual.
             Assert.Equal(2, Scalar<long>(connection, "SELECT COUNT(*) FROM Products WHERE TracksInventory = 1"));
@@ -128,7 +130,7 @@ public sealed class SampleDatabaseUpgradeTests
     /// </summary>
     private static void AssertSales(SqliteConnection connection, string sampleFile)
     {
-        if (sampleFile != "v0.4.0.db")
+        if (sampleFile is not ("v0.4.0.db" or "v0.5.0.db"))
         {
             foreach (var table in new[] { "Sales", "SaleLines", "SalePayments", "SaleDrafts", "AuditEntries" })
             {
@@ -152,6 +154,38 @@ public sealed class SampleDatabaseUpgradeTests
                 WHERE s.TotalCents <> (SELECT SUM(AmountCents) FROM SaleLines WHERE SaleId = s.Id)
                    OR s.TotalCents <> (SELECT SUM(AmountCents) FROM SalePayments WHERE SaleId = s.Id)
                 """));
+    }
+
+    /// <summary>
+    /// 007: existe "Sistema" (sin contraseña, inactivo), los registros previos siguen a su nombre, el
+    /// borrador pasa a la fila de "Sistema" con sus líneas y la llave primaria ya no es <c>Slot</c>.
+    /// </summary>
+    private static void AssertUsers(SqliteConnection connection, string sampleFile)
+    {
+        Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM Users"));
+        Assert.Equal(
+            1,
+            Scalar<long>(connection, $"""
+                SELECT COUNT(*) FROM Users
+                WHERE Id = '{SystemUser.Id}' AND IsSystem = 1 AND IsActive = 0 AND PasswordHash IS NULL
+                  AND NormalizedUserName = 'SISTEMA'
+                """));
+
+        Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM pragma_table_info('SaleDrafts') WHERE name = 'Slot'"));
+        Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM sqlite_master WHERE sql LIKE '%CK_SaleDrafts_Slot%'"));
+
+        if (sampleFile is not ("v0.4.0.db" or "v0.5.0.db"))
+        {
+            return;
+        }
+
+        // Ventas y movimientos previos conservan su usuario ("Sistema") y sus totales.
+        Assert.Equal(SampleData.SaleCount, Scalar<long>(connection, $"SELECT COUNT(*) FROM Sales WHERE CreatedBy = '{SystemUser.Id}'"));
+        Assert.Equal(0, Scalar<long>(connection, $"SELECT COUNT(*) FROM Sales WHERE CreatedBy <> '{SystemUser.Id}'"));
+
+        // El borrador existente queda bajo "Sistema" con sus líneas (la reconstrucción de la tabla los copia).
+        Assert.Equal(1, Scalar<long>(connection, $"SELECT COUNT(*) FROM SaleDrafts WHERE UserId = '{SystemUser.Id}'"));
+        Assert.Contains("productId", Scalar<string>(connection, $"SELECT LinesJson FROM SaleDrafts WHERE UserId = '{SystemUser.Id}'"), StringComparison.Ordinal);
     }
 
     private static T Scalar<T>(SqliteConnection connection, string sql)

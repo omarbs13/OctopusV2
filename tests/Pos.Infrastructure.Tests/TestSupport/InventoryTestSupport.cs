@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Pos.Application.Inventory;
 using Pos.Application.Inventory.RegisterMovement;
+using Pos.Application.Users.Session;
 using Pos.Domain.Common;
 using Pos.Domain.Products;
 using Pos.Infrastructure.Inventory;
@@ -15,6 +16,8 @@ public static class InventoryTestSupport
     /// <summary>Manejador real sobre un contexto, como lo arma la composición (un ámbito por operación).</summary>
     public static RegisterMovementHandler Handler(PosDbContext context, IInventoryRepository? inventory = null) =>
         new(
+            new AllowAllAccessControl(),
+            new UserSession(),
             new ProductRepository(context),
             inventory ?? new InventoryRepository(context),
             new WriteTransactions(context),

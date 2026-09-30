@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Pos.Application.Abstractions;
 using Pos.Application.Printing;
 using Pos.Application.Printing.OpenCashDrawer;
+using Pos.Application.Tests.TestSupport;
 
 namespace Pos.Application.Tests.Printing;
 
@@ -14,7 +15,7 @@ public sealed class OpenCashDrawerHandlerTests
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     private OpenCashDrawerHandler Handler =>
-        new(_drawer, _settings, _audit, new OpenCashDrawerValidator(), NullLogger<OpenCashDrawerHandler>.Instance);
+        new(new AllowAllAccessControl(), _drawer, _settings, _audit, new OpenCashDrawerValidator(), NullLogger<OpenCashDrawerHandler>.Instance);
 
     [Theory]
     [InlineData("")]
@@ -141,7 +142,7 @@ public sealed class OpenCashDrawerHandlerTests
 
         public int Saves { get; private set; }
 
-        public void Add(string action, string entityType, Guid entityId, string? details) =>
+        public void Add(string action, string entityType, Guid entityId, string? details, Guid? authorizedBy = null) =>
             Entries.Add((action, entityType, entityId, details));
 
         public Task SaveAsync(CancellationToken cancellationToken)

@@ -122,6 +122,22 @@ migración `SalesModule` solo crea las 5 tablas nuevas (`Sales`, `SaleLines`, `S
 `SalesModuleMigrationTests` revisa el SQL generado y falla si aparece un `ALTER TABLE`, un
 `DROP TABLE` o la reconstrucción de una tabla existente.
 
+Desde 0.5.0 (usuarios y roles) la base de ejemplo `v0.5.0.db` se generó con el esquema de
+`BusinessProfile`, **antes** de crear la migración `UsersAndRoles`, y trae un borrador en `SaleDrafts`.
+La migración `UsersAndRoles`:
+
+- Crea `Users` y siembra con `HasData` al usuario "Sistema" con el id fijo que ya tienen todos los
+  registros previos (`00000000-0000-7000-8000-000000000001`): no actualiza datos.
+- Agrega `AuditEntries.AuthorizedBy` (columna nula) y los índices de la bitácora y de las ventas por
+  cajero: no reconstruyen tablas.
+- **Reconstruye `SaleDrafts`** (la llave primaria pasa de `Slot` a `UserId`). Igual que `Products.UnitCode`,
+  la columna nueva entra con un valor por defecto (el id de "Sistema") para que la fila existente se
+  copie a la tabla temporal y conserve su venta en curso. EF Core avisa de que una llave no debería
+  tener un valor por defecto; el aviso se ignora a propósito en `PosDbContext.OnConfiguring`.
+  `SampleDatabaseUpgradeTests` verifica que el borrador de `v0.5.0.db` quede bajo "Sistema" con sus
+  líneas y que desaparezca `CK_SaleDrafts_Slot`. Al crear el primer administrador en el asistente, la
+  venta conservada de "Sistema" se reasigna a ese administrador.
+
 Cuando una funcionalidad agregue tablas nuevas, amplía `SampleData` para que la base de ejemplo
 de la siguiente versión también tenga datos en ellas, y agrega verificaciones en
 `SampleDatabaseUpgradeTests`.

@@ -1,3 +1,5 @@
+using Pos.Domain.Users;
+
 namespace Pos.Desktop.Navigation;
 
 /// <summary>
@@ -9,7 +11,16 @@ public sealed class NavigationRegistry
     private readonly Dictionary<string, NavigationEntry> _entries;
     private readonly Dictionary<string, NavigationGroup> _groups;
 
-    public NavigationRegistry(IEnumerable<NavigationGroup> groups, IEnumerable<NavigationEntry> entries)
+    /// <param name="groups">Grupos registrados.</param>
+    /// <param name="entries">Opciones registradas.</param>
+    /// <param name="isAllowed">
+    /// Decide si el usuario conectado tiene un permiso; las opciones sin permiso permitido y los grupos
+    /// que se quedan vacíos no aparecen (FR-008). Nulo permite todo.
+    /// </param>
+    public NavigationRegistry(
+        IEnumerable<NavigationGroup> groups,
+        IEnumerable<NavigationEntry> entries,
+        Func<Permission, bool>? isAllowed = null)
     {
         ArgumentNullException.ThrowIfNull(groups);
         ArgumentNullException.ThrowIfNull(entries);
@@ -24,9 +35,10 @@ public sealed class NavigationRegistry
         }
 
         _entries = [];
+        var ids = new HashSet<string>(StringComparer.Ordinal);
         foreach (var entry in entries)
         {
-            if (!_entries.TryAdd(entry.Id, entry))
+            if (!ids.Add(entry.Id))
             {
                 throw new InvalidOperationException($"La opción de navegación '{entry.Id}' está registrada más de una vez.");
             }
@@ -35,6 +47,11 @@ public sealed class NavigationRegistry
             {
                 throw new InvalidOperationException(
                     $"La opción '{entry.Id}' pertenece al grupo '{entry.GroupId}', que no está registrado.");
+            }
+
+            if (entry.Permission is not { } required || isAllowed is null || isAllowed(required))
+            {
+                _entries.Add(entry.Id, entry);
             }
         }
 

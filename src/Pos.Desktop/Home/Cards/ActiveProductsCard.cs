@@ -4,6 +4,7 @@ using Pos.Application.Products.CountActiveProducts;
 using Pos.Desktop.Common;
 using Pos.Desktop.Products;
 using Pos.Desktop.Resources;
+using Pos.Domain.Users;
 
 namespace Pos.Desktop.Home.Cards;
 
@@ -17,6 +18,8 @@ public sealed class ActiveProductsCard(OperationRunner runner, UseCases useCases
     public override string Icon => "Icon.Product";
 
     public override int Order => 10;
+
+    public override Permission? RequiredPermission => Permission.ViewProducts;
 
     public override DashboardCardKind Kind => DashboardCardKind.Metric;
 

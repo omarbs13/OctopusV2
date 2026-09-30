@@ -1,6 +1,8 @@
 using Pos.Application.Abstractions;
 using Pos.Domain.Common;
 using Pos.Domain.Products;
+using Pos.Application.Users.Access;
+using Pos.Domain.Users;
 
 namespace Pos.Application.Products.SearchProducts;
 
@@ -11,12 +13,23 @@ namespace Pos.Application.Products.SearchProducts;
 /// </summary>
 public sealed class SearchProductsHandler
 {
+    private readonly IAccessControl _access;
     private readonly IProductRepository _products;
 
-    public SearchProductsHandler(IProductRepository products) => _products = products;
+    public SearchProductsHandler(IAccessControl access, IProductRepository products)
+    {
+        _access = access;
+        _products = products;
+    }
 
     public async Task<Result<ProductPage>> HandleAsync(SearchProductsQuery query, CancellationToken cancellationToken)
     {
+        var access = await _access.CheckAsync(Permission.ViewProducts, cancellationToken);
+        if (!access.Allowed)
+        {
+            return Result.Failure<ProductPage>(access.Error!);
+        }
+
         ArgumentNullException.ThrowIfNull(query);
 
         var text = query.Text?.Trim();

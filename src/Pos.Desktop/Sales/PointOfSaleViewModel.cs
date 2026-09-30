@@ -11,6 +11,7 @@ using Pos.Application.Sales.FindProductsForSale;
 using Pos.Application.Sales.GetSaleDraft;
 using Pos.Application.Sales.ReviewSale;
 using Pos.Application.Sales.SaveSaleDraft;
+using Pos.Desktop.Auth;
 using Pos.Desktop.Common;
 using Pos.Desktop.Resources;
 using Pos.Desktop.Settings;
@@ -73,6 +74,7 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
     private readonly DraftAutosaver _autosaver;
     private readonly ScanQueue _scans;
     private readonly TicketPrintingService _printing;
+    private readonly AdminAuthorizationService? _authorization;
 
     private CheckoutViewModel? _pendingCheckout;
     private bool _draftChecked;
@@ -83,8 +85,10 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
         OperationRunner runner,
         IDialogService dialogs,
         ILogger logger,
-        TicketPrintingService printing)
+        TicketPrintingService printing,
+        AdminAuthorizationService? authorization = null)
     {
+        _authorization = authorization;
         _printing = printing;
         _useCases = useCases;
         _runner = runner;
@@ -189,6 +193,9 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
         Chooser = null;
         return true;
     }
+
+    /// <summary>Espera a que termine la escritura pendiente del borrador (cambio de usuario, cierre de sesión).</summary>
+    public Task FlushDraftAsync() => _autosaver.FlushAsync();
 
     public void Dispose() => _scans.Dispose();
 
@@ -356,7 +363,9 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
         DrawerReason = new DrawerReasonViewModel(
             _printing,
             (message, warning) => ShowStatus(message, warning),
-            () => DrawerReason = null);
+            () => DrawerReason = null,
+            _authorization,
+            _dialogs);
     }
 
     /// <summary>F12: revisa precios y existencia y abre el cobro.</summary>

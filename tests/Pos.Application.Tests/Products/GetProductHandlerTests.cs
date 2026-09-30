@@ -10,7 +10,7 @@ public class GetProductHandlerTests
 {
     private readonly InMemoryProductRepository _repository = new();
 
-    private GetProductHandler Handler => new(_repository, new InMemoryInventoryRepository());
+    private GetProductHandler Handler => new(new AllowAllAccessControl(), _repository, new InMemoryInventoryRepository());
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 

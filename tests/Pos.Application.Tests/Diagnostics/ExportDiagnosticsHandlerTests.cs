@@ -1,6 +1,7 @@
 using Pos.Application.Abstractions;
 using Pos.Application.Diagnostics;
 using Pos.Application.Diagnostics.ExportDiagnostics;
+using Pos.Application.Tests.TestSupport;
 
 namespace Pos.Application.Tests.Diagnostics;
 
@@ -8,7 +9,7 @@ public class ExportDiagnosticsHandlerTests
 {
     private readonly FakeExporter _exporter = new();
 
-    private ExportDiagnosticsHandler Handler => new(_exporter);
+    private ExportDiagnosticsHandler Handler => new(new AllowAllAccessControl(), _exporter);
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 

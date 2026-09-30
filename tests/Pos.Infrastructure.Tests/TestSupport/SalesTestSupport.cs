@@ -22,17 +22,17 @@ namespace Pos.Infrastructure.Tests.TestSupport;
 public static class SalesTestSupport
 {
     public static ConfirmSaleHandler ConfirmHandler(TestDb db, PosDbContext context, ISaleRepository? sales = null) =>
-        new(
+        new(new AllowAllAccessControl(), 
             new ProductRepository(context),
             new InventoryRepository(context),
             sales ?? new SaleRepository(context),
-            new SqliteSaleDraftStore(context, db.Clock),
+            new SqliteSaleDraftStore(context, db.Clock, db.User),
             new WriteTransactions(context),
             new ConfirmSaleValidator(),
             NullLogger<ConfirmSaleHandler>.Instance);
 
     public static CancelSaleHandler CancelHandler(TestDb db, PosDbContext context, ISaleRepository? sales = null) =>
-        new(
+        new(new AllowAllAccessControl(), 
             sales ?? new SaleRepository(context),
             new InventoryRepository(context),
             new AuditLog(context),
@@ -43,7 +43,7 @@ public static class SalesTestSupport
             NullLogger<CancelSaleHandler>.Instance);
 
     public static SaveSaleDraftHandler SaveDraftHandler(TestDb db, PosDbContext context) =>
-        new(new SqliteSaleDraftStore(context, db.Clock), NullLogger<SaveSaleDraftHandler>.Instance);
+        new(new AllowAllAccessControl(), new SqliteSaleDraftStore(context, db.Clock, db.User), NullLogger<SaveSaleDraftHandler>.Instance);
 
     public static async Task<Product> SeedProductAsync(
         IDbContextFactory<PosDbContext> factory,

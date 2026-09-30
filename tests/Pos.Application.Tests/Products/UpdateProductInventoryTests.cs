@@ -14,7 +14,7 @@ public class UpdateProductInventoryTests
     private readonly InMemoryInventoryRepository _inventory = new();
     private readonly FakeWriteTransactions _transactions = new();
 
-    private UpdateProductHandler Handler => new(_products, new UpdateProductValidator(), _inventory, _transactions);
+    private UpdateProductHandler Handler => new(new AllowAllAccessControl(), _products, new UpdateProductValidator(), _inventory, _transactions);
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 

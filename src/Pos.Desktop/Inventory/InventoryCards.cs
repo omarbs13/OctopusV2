@@ -5,6 +5,7 @@ using Pos.Application.Inventory.GetStockAlerts;
 using Pos.Desktop.Common;
 using Pos.Desktop.Home;
 using Pos.Desktop.Resources;
+using Pos.Domain.Users;
 
 namespace Pos.Desktop.Inventory;
 
@@ -16,6 +17,8 @@ public sealed class LowStockCard(OperationRunner runner, UseCases useCases) : Da
     public override string Icon => "Icon.Warning";
 
     public override int Order => 20;
+
+    public override Permission? RequiredPermission => Permission.ViewInventory;
 
     public override DashboardCardKind Kind => DashboardCardKind.Metric;
 
@@ -38,6 +41,8 @@ public sealed class OutOfStockCard(OperationRunner runner, UseCases useCases) : 
     public override string Icon => "Icon.Stock";
 
     public override int Order => 30;
+
+    public override Permission? RequiredPermission => Permission.ViewInventory;
 
     public override DashboardCardKind Kind => DashboardCardKind.Metric;
 

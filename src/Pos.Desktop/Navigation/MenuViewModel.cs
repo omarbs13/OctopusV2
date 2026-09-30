@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Pos.Application.Abstractions;
+using Pos.Desktop.Auth;
 using Pos.Desktop.Common;
 
 namespace Pos.Desktop.Navigation;
@@ -91,12 +92,17 @@ public sealed partial class MenuViewModel : ViewModelBase
     private readonly IPreferencesStore _preferences;
     private readonly bool _hasSavedPreferences;
 
-    public MenuViewModel(NavigationRegistry registry, Navigator navigator, IPreferencesStore preferences)
+    public MenuViewModel(
+        NavigationRegistry registry,
+        Navigator navigator,
+        IPreferencesStore preferences,
+        UserSectionViewModel? userSection = null)
     {
         ArgumentNullException.ThrowIfNull(registry);
         ArgumentNullException.ThrowIfNull(navigator);
         _navigator = navigator;
         _preferences = preferences;
+        UserSection = userSection;
 
         Items = [.. registry.Roots.Select(node => node.Group is { } group
             ? new MenuItemViewModel(group.Id, group.Title, group.Icon, ActivateAsync, [.. node.Children.Select(ToItem)])
@@ -119,6 +125,9 @@ public sealed partial class MenuViewModel : ViewModelBase
     }
 
     public IReadOnlyList<MenuItemViewModel> Items { get; }
+
+    /// <summary>Sección del usuario conectado al pie del menú; nula si no hay sesión (pruebas).</summary>
+    public UserSectionViewModel? UserSection { get; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsCollapsed))]

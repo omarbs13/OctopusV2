@@ -18,7 +18,7 @@ vuelve a imprimir la misma venta; no crea otra.
 | **Datos del negocio** | **Configuración → Datos del negocio** | Nombre comercial, dirección, teléfono, RFC, logotipo y mensaje de pie del ticket. Se guardan en la base de datos. |
 | **Impresora** | **Configuración → Impresora** | Impresora (o impresora virtual), ancho de papel (58 u 80 mm), impresión automática, cajón automático e **Impresión de prueba**. Es local a cada computadora. |
 | **Reimprimir** | Detalle de una venta | Reimprime con la leyenda `REIMPRESIÓN`; las ventas canceladas llevan además `CANCELADA`. |
-| **Abrir cajón** | Punto de venta | Abre el cajón sin venta; pide un motivo obligatorio que queda en la bitácora. |
+| **Abrir cajón** | Punto de venta | Abre el cajón sin venta; pide un motivo obligatorio que queda en la bitácora. Un Cajero necesita la autorización de un administrador (solo Administrador puede abrirlo directamente). |
 
 ## Dónde se guarda cada cosa
 
@@ -27,7 +27,7 @@ vuelve a imprimir la misma venta; no crea otra.
 | Datos del negocio | Tabla `BusinessProfile` (una fila) en la base de datos; entra en los respaldos |
 | Configuración de impresión | `<carpeta de datos>/preferences/printing.json` (por computadora; no entra en la base) |
 | Tickets de la impresora virtual | `<carpeta de datos>/tickets/<aaaaMMdd-HHmmss>-<folio>.txt` |
-| Aperturas de cajón sin venta | Bitácora de auditoría: acción `DRAWER_OPENED`, entidad `CashDrawer`, con motivo y resultado (`OK` o `FALLO`) |
+| Aperturas de cajón sin venta | Bitácora de auditoría: acción `DRAWER_OPENED`, entidad `CashDrawer`, con motivo y resultado (`OK` o `FALLO`); `AuthorizedBy` si lo autorizó un administrador |
 | Fallas de impresión y cajón | Log de Serilog en la carpeta `logs/` (operación, folio e impresora; sin datos sensibles) |
 
 La ubicación de la carpeta de datos está en [carpeta-de-datos.md](carpeta-de-datos.md). Sin

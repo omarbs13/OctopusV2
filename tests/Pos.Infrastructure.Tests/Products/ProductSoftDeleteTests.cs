@@ -25,7 +25,7 @@ public sealed class ProductSoftDeleteTests : IAsyncLifetime
     private async Task<ProductDto> CreateAsync(string name, string sku, string? barcode)
     {
         await using var context = _db.CreateDbContext();
-        var result = await new CreateProductHandler(new ProductRepository(context), new CreateProductValidator())
+        var result = await new CreateProductHandler(new AllowAllAccessControl(), new ProductRepository(context), new CreateProductValidator())
             .HandleAsync(new CreateProductCommand(name, sku, barcode, "10.00", "H87"), Ct);
         Assert.True(result.IsSuccess, result.Error?.ToString());
         return result.Value;
@@ -34,7 +34,7 @@ public sealed class ProductSoftDeleteTests : IAsyncLifetime
     private async Task DeleteAsync(ProductDto product)
     {
         await using var context = _db.CreateDbContext();
-        var result = await new DeleteProductHandler(new ProductRepository(context), _db.Clock)
+        var result = await new DeleteProductHandler(new AllowAllAccessControl(), new ProductRepository(context), _db.Clock)
             .HandleAsync(new DeleteProductCommand(product.Id, product.Version), Ct);
         Assert.True(result.IsSuccess, result.Error?.ToString());
     }
@@ -54,7 +54,7 @@ public sealed class ProductSoftDeleteTests : IAsyncLifetime
         await using var context = _db.CreateDbContext();
         var repository = new ProductRepository(context);
         Assert.Null(await repository.GetAsync(product.Id, includeImage: false, Ct));
-        var search = await new SearchProductsHandler(repository).HandleAsync(new SearchProductsQuery(null, IncludeInactive: true), Ct);
+        var search = await new SearchProductsHandler(new AllowAllAccessControl(), repository).HandleAsync(new SearchProductsQuery(null, IncludeInactive: true), Ct);
         Assert.Empty(search.Value.Items);
     }
 

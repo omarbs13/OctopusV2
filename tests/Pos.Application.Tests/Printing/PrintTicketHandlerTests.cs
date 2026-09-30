@@ -8,6 +8,7 @@ using Pos.Application.Products;
 using Pos.Application.Sales;
 using Pos.Domain.Business;
 using Pos.Domain.Sales;
+using Pos.Application.Tests.TestSupport;
 
 namespace Pos.Application.Tests.Printing;
 
@@ -20,7 +21,7 @@ public sealed class PrintTicketHandlerTests
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     private PrintTicketHandler Handler =>
-        new(_sales, new FakeProfiles(), _settings, _printer, NullLogger<PrintTicketHandler>.Instance);
+        new(new AllowAllAccessControl(), new FakeCurrentUser(), _sales, new FakeProfiles(), _settings, _printer, NullLogger<PrintTicketHandler>.Instance);
 
     [Fact]
     public async Task Muestra_ImprimeElTicketDePruebaEnElAnchoConfigurado()
@@ -76,7 +77,8 @@ public sealed class PrintTicketHandlerTests
         _sales.Detail = new SaleDetailDto(
             saleId, "V-000001", DateTime.UtcNow, "Ana", 100, SaleStatus.Completed, 1, null, null, null,
             [new SaleLineDto(1, Guid.NewGuid(), "Producto", "P", "H87", 0, 100, 1000, 100)],
-            [new SalePaymentDto(PaymentMethod.Card, 100, null, null, null)]);
+            [new SalePaymentDto(PaymentMethod.Card, 100, null, null, null)],
+            Guid.NewGuid());
         _printer.Next = PrintOutcome.Ok("impresora");
 
         var ok = await Handler.HandleAsync(new PrintTicketCommand(PrintSource.Sale(saleId), IsReprint: true), Ct);

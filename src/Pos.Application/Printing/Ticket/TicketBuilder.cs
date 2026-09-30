@@ -45,6 +45,13 @@ public static class TicketBuilder
         var local = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(sale.CreatedAtUtc, DateTimeKind.Utc), timeZone ?? TimeZoneInfo.Local);
         lines.Add(new TicketLine($"Folio: {sale.Folio}"));
         lines.Add(new TicketLine(local.ToString(DateFormat, CultureInfo.InvariantCulture)));
+        if (!string.IsNullOrWhiteSpace(sale.CreatedByName))
+        {
+            // 007: el ticket muestra al cajero; el nombre largo se recorta al ancho del papel.
+            var cashier = $"Cajero: {sale.CreatedByName.Trim()}";
+            lines.Add(new TicketLine(cashier.Length > columns ? cashier[..columns] : cashier));
+        }
+
         lines.Add(Separator(columns));
 
         foreach (var line in sale.Lines.OrderBy(l => l.Position))
@@ -83,7 +90,8 @@ public static class TicketBuilder
                 new SaleLineDto(1, Guid.Empty, "Refresco cola 600 ml", "REF-600", "H87", 0, 1800, 2000, 3600),
                 new SaleLineDto(2, Guid.Empty, "Queso oaxaca de rancho tradicional", "QUE-001", "KGM", 3, 15000, 1250, 18750),
             ],
-            [new SalePaymentDto(PaymentMethod.Cash, 22350, 30000, 7650, null)]);
+            [new SalePaymentDto(PaymentMethod.Cash, 22350, 30000, 7650, null)],
+            Guid.Empty);
         return Build(profile, sale, columns, new TicketOptions(), timeZone);
     }
 

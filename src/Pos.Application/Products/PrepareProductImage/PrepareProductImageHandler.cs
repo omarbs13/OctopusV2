@@ -1,5 +1,7 @@
 using Pos.Application.Abstractions;
 using Pos.Domain.Products;
+using Pos.Application.Users.Access;
+using Pos.Domain.Users;
 
 namespace Pos.Application.Products.PrepareProductImage;
 
@@ -9,12 +11,23 @@ namespace Pos.Application.Products.PrepareProductImage;
 /// </summary>
 public sealed class PrepareProductImageHandler
 {
+    private readonly IAccessControl _access;
     private readonly IImageProcessor _processor;
 
-    public PrepareProductImageHandler(IImageProcessor processor) => _processor = processor;
+    public PrepareProductImageHandler(IAccessControl access, IImageProcessor processor)
+    {
+        _access = access;
+        _processor = processor;
+    }
 
     public async Task<Result<PreparedProductImage>> HandleAsync(PrepareProductImageCommand command, CancellationToken cancellationToken)
     {
+        var access = await _access.CheckAsync(Permission.ManageProducts, cancellationToken);
+        if (!access.Allowed)
+        {
+            return Result.Failure<PreparedProductImage>(access.Error!);
+        }
+
         ArgumentNullException.ThrowIfNull(command);
 
         // El tamaño se revisa antes de leer: un archivo enorme nunca se carga en memoria.

@@ -5,6 +5,7 @@ using Pos.Application.Sales.GetSalesDashboard;
 using Pos.Desktop.Common;
 using Pos.Desktop.Home;
 using Pos.Desktop.Resources;
+using Pos.Domain.Users;
 
 namespace Pos.Desktop.Sales;
 
@@ -64,6 +65,8 @@ public sealed class SalesTodayChart(OperationRunner runner, SalesDashboardSource
 
     public override int Order => 110;
 
+    public override Permission? RequiredPermission => Permission.ViewAllSales;
+
     public override string? NavigateTo => SalesModule.HistoryPageId;
 
     public override object? NavigationArgument => new SalesDateFilter(DateTime.Today, DateTime.Today);
@@ -92,6 +95,8 @@ public sealed class SalesLast7DaysChart(OperationRunner runner, SalesDashboardSo
 
     public override int Order => 120;
 
+    public override Permission? RequiredPermission => Permission.ViewAllSales;
+
     protected override async Task LoadCoreAsync()
     {
         var dashboard = await source.CurrentOrRefreshAsync();
@@ -119,6 +124,8 @@ public sealed class TopProductsChart(OperationRunner runner, SalesDashboardSourc
     public override string Icon => "Icon.Product";
 
     public override int Order => 130;
+
+    public override Permission? RequiredPermission => Permission.ViewAllSales;
 
     public override bool IsHorizontal => true;
 

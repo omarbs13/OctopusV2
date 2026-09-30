@@ -11,6 +11,7 @@ using Pos.Desktop.Forms;
 using Pos.Desktop.Inventory;
 using Pos.Desktop.Navigation;
 using Pos.Desktop.Resources;
+using Pos.Domain.Users;
 
 namespace Pos.Desktop.Products;
 
@@ -35,9 +36,11 @@ public sealed partial class ProductsViewModel : PageViewModel, IDisposable
         OperationRunner runner,
         IDialogService dialogs,
         Func<ProductEditorViewModel> editorFactory,
-        Navigator? navigator = null)
+        Navigator? navigator = null,
+        ICurrentPermissions? permissions = null)
     {
         _navigator = navigator;
+        CanManage = permissions?.Has(Permission.ManageProducts) ?? true;
         _useCases = useCases;
         _runner = runner;
         _dialogs = dialogs;
@@ -52,6 +55,9 @@ public sealed partial class ProductsViewModel : PageViewModel, IDisposable
     }
 
     public override string Title => Strings.Shell_NavProducts;
+
+    /// <summary>Puede crear, editar y borrar productos; el Cajero solo consulta (FR-010).</summary>
+    public bool CanManage { get; }
 
     public ObservableCollection<ProductListItemDto> Items { get; } = [];
 
@@ -143,12 +149,12 @@ public sealed partial class ProductsViewModel : PageViewModel, IDisposable
     private Task LastPageAsync() => GoToPageAsync(TotalPages);
 
     [RelayCommand]
-    private Task NewProductAsync() => OpenEditorAsync(_editorFactory());
+    private Task NewProductAsync() => CanManage ? OpenEditorAsync(_editorFactory()) : Task.CompletedTask;
 
     [RelayCommand(CanExecute = nameof(HasSelection))]
     private async Task EditAsync()
     {
-        if (SelectedItem is not { } selected)
+        if (!CanManage || SelectedItem is not { } selected)
         {
             return;
         }
@@ -167,7 +173,7 @@ public sealed partial class ProductsViewModel : PageViewModel, IDisposable
     [RelayCommand(CanExecute = nameof(HasSelection))]
     private async Task DeleteAsync()
     {
-        if (SelectedItem is not { } selected)
+        if (!CanManage || SelectedItem is not { } selected)
         {
             return;
         }

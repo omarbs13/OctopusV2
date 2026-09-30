@@ -21,7 +21,7 @@ public sealed class TicketBuilderTests
         IReadOnlyList<SalePaymentDto> payments,
         long total,
         SaleStatus status = SaleStatus.Completed) =>
-        new(Guid.NewGuid(), "V-000123", Created, "Ana", total, status, 1, null, null, null, lines, payments);
+        new(Guid.NewGuid(), "V-000123", Created, "Ana", total, status, 1, null, null, null, lines, payments, Guid.NewGuid());
 
     private static SaleDetailDto Simple() =>
         Sale(
@@ -184,6 +184,17 @@ public sealed class TicketBuilderTests
         Assert.Contains("30/09/2026 08:05", lines);
         Assert.Equal("Gracias por su compra", lines[^1]);
         Assert.Equal("V-000123", document.Folio);
+    }
+
+    [Fact]
+    public void Cajero_SaleBajoLaFechaYSeRecortaAlAnchoDelPapel()
+    {
+        var lines = Text(TicketBuilder.Build(Profile, Simple(), 32, timeZone: TimeZoneInfo.Utc));
+        Assert.Equal("Cajero: Ana", lines[lines.IndexOf("30/09/2026 14:05") + 1]);
+
+        var longName = Simple() with { CreatedByName = new string('M', 60) };
+        var narrow = Text(TicketBuilder.Build(Profile, longName, 32, timeZone: TimeZoneInfo.Utc));
+        Assert.Contains(narrow, l => l.StartsWith("Cajero: MMM", StringComparison.Ordinal) && l.Length == 32);
     }
 
     [Fact]

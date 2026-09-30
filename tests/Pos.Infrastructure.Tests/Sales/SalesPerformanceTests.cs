@@ -85,14 +85,14 @@ public sealed class SalesPerformanceTests : IAsyncLifetime
     private async Task<ProductLookup> FindAsync(string code)
     {
         await using var context = _db.CreateDbContext();
-        return (await new FindProductsForSaleHandler(new ProductRepository(context), new InventoryRepository(context))
+        return (await new FindProductsForSaleHandler(new AllowAllAccessControl(), new ProductRepository(context), new InventoryRepository(context))
             .HandleAsync(new FindProductsForSaleQuery(code), Ct)).Value;
     }
 
     private async Task<SalePage> SearchAsync(SearchSalesQuery query)
     {
         await using var context = _db.CreateDbContext();
-        return (await new SearchSalesHandler(new SaleRepository(context)).HandleAsync(query, Ct)).Value;
+        return (await new SearchSalesHandler(new AllowAllAccessControl(), _db.User, new SaleRepository(context)).HandleAsync(query, Ct)).Value;
     }
 
     private static async Task<(T Result, TimeSpan Elapsed)> MeasureAsync<T>(Func<Task<T>> action)

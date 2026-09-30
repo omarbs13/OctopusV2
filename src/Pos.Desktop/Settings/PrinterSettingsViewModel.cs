@@ -60,9 +60,10 @@ public sealed partial class PrinterSettingsViewModel : PageViewModel
     public override async Task OnActivatedAsync()
     {
         StatusMessage = null;
-        var (catalogOk, printers) = await _runner.RunAsync(
+        var (catalogOk, printersResult) = await _runner.RunAsync(
             "ListarImpresoras",
-            () => _useCases.RunAsync<ListPrintersHandler, IReadOnlyList<string>>(h => h.HandleAsync(CancellationToken.None)));
+            () => _useCases.RunAsync<ListPrintersHandler, Result<IReadOnlyList<string>>>(h => h.HandleAsync(CancellationToken.None)));
+        var printers = printersResult?.IsSuccess == true ? printersResult.Value : null;
         var (settingsOk, settings) = await _runner.RunAsync(
             "CargarConfiguracionImpresion",
             () => _useCases.RunAsync<GetPrintingSettingsHandler, PrintingSettings>(h => Task.FromResult(h.Handle())));
@@ -144,7 +145,7 @@ public sealed partial class PrinterSettingsViewModel : PageViewModel
             AutoOpenDrawer);
         var (completed, result) = await _runner.RunAsync(
             "GuardarConfiguracionImpresion",
-            () => _useCases.RunAsync<SavePrintingSettingsHandler, Result>(h => Task.FromResult(h.Handle(settings))));
+            () => _useCases.RunAsync<SavePrintingSettingsHandler, Result>(h => h.HandleAsync(settings, CancellationToken.None)));
         return completed && result is { IsSuccess: true };
     }
 }

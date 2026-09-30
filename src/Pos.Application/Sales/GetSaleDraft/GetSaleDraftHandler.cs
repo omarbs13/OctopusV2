@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Logging;
 using Pos.Application.Abstractions;
 using Pos.Application.Products;
+using Pos.Application.Users.Access;
+using Pos.Domain.Users;
 
 namespace Pos.Application.Sales.GetSaleDraft;
 
@@ -10,12 +12,14 @@ namespace Pos.Application.Sales.GetSaleDraft;
 /// </summary>
 public sealed partial class GetSaleDraftHandler
 {
+    private readonly IAccessControl _access;
     private readonly ISaleDraftStore _drafts;
     private readonly IProductRepository _products;
     private readonly ILogger<GetSaleDraftHandler> _logger;
 
-    public GetSaleDraftHandler(ISaleDraftStore drafts, IProductRepository products, ILogger<GetSaleDraftHandler> logger)
+    public GetSaleDraftHandler(IAccessControl access, ISaleDraftStore drafts, IProductRepository products, ILogger<GetSaleDraftHandler> logger)
     {
+        _access = access;
         _drafts = drafts;
         _products = products;
         _logger = logger;
@@ -23,6 +27,12 @@ public sealed partial class GetSaleDraftHandler
 
     public async Task<Result<RecoveredDraft?>> HandleAsync(CancellationToken cancellationToken)
     {
+        var access = await _access.CheckAsync(Permission.Sell, cancellationToken);
+        if (!access.Allowed)
+        {
+            return Result.Failure<RecoveredDraft?>(access.Error!);
+        }
+
         var stored = await _drafts.LoadAsync(cancellationToken);
         if (stored is null || stored.Lines.Count == 0)
         {

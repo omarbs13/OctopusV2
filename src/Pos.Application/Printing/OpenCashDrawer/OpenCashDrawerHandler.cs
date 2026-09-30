@@ -1,7 +1,10 @@
 using FluentValidation;
 using Microsoft.Extensions.Logging;
 using Pos.Application.Abstractions;
+using Pos.Application.Audit;
+using Pos.Application.Users.Access;
 using Pos.Application.Products;
+using Pos.Domain.Users;
 
 namespace Pos.Application.Printing.OpenCashDrawer;
 
@@ -11,9 +14,10 @@ namespace Pos.Application.Printing.OpenCashDrawer;
 /// </summary>
 public sealed partial class OpenCashDrawerHandler
 {
-    public const string AuditAction = "DRAWER_OPENED";
+    public const string AuditAction = AuditActions.DrawerOpened;
     public const string AuditEntityType = "CashDrawer";
 
+    private readonly IAccessControl _access;
     private readonly ICashDrawer _drawer;
     private readonly IPrintingSettingsStore _settings;
     private readonly IAuditLog _audit;
@@ -21,12 +25,14 @@ public sealed partial class OpenCashDrawerHandler
     private readonly ILogger<OpenCashDrawerHandler> _logger;
 
     public OpenCashDrawerHandler(
+        IAccessControl access,
         ICashDrawer drawer,
         IPrintingSettingsStore settings,
         IAuditLog audit,
         IValidator<OpenCashDrawerCommand> validator,
         ILogger<OpenCashDrawerHandler> logger)
     {
+        _access = access;
         _drawer = drawer;
         _settings = settings;
         _audit = audit;
@@ -37,6 +43,15 @@ public sealed partial class OpenCashDrawerHandler
     public async Task<Result> HandleAsync(OpenCashDrawerCommand command, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(command);
+
+        // La apertura al cobrar pertenece a la venta; la apertura sin venta se puede autorizar (FR-013).
+        var access = command.IsManual
+            ? await _access.CheckAsync(Permission.OpenDrawerWithoutSale, command.AuthorizationGrantId, cancellationToken)
+            : await _access.CheckAsync(Permission.Sell, cancellationToken);
+        if (!access.Allowed)
+        {
+            return Result.Failure(access.Error!);
+        }
 
         if (command.IsManual)
         {
@@ -53,7 +68,7 @@ public sealed partial class OpenCashDrawerHandler
         if (command.IsManual)
         {
             var reason = command.Reason!.Trim();
-            _audit.Add(AuditAction, AuditEntityType, Guid.CreateVersion7(), $"Motivo: {reason}; Resultado: {(outcome.Succeeded ? "OK" : "FALLO")}");
+            _audit.Add(AuditAction, AuditEntityType, Guid.CreateVersion7(), $"Motivo: {reason}; Resultado: {(outcome.Succeeded ? "OK" : "FALLO")}", access.AuthorizedBy);
             await _audit.SaveAsync(cancellationToken);
         }
 

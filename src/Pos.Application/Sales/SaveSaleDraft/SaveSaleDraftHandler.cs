@@ -1,5 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Pos.Application.Abstractions;
+using Pos.Application.Users.Access;
+using Pos.Domain.Users;
 
 namespace Pos.Application.Sales.SaveSaleDraft;
 
@@ -9,11 +11,13 @@ namespace Pos.Application.Sales.SaveSaleDraft;
 /// </summary>
 public sealed partial class SaveSaleDraftHandler
 {
+    private readonly IAccessControl _access;
     private readonly ISaleDraftStore _drafts;
     private readonly ILogger<SaveSaleDraftHandler> _logger;
 
-    public SaveSaleDraftHandler(ISaleDraftStore drafts, ILogger<SaveSaleDraftHandler> logger)
+    public SaveSaleDraftHandler(IAccessControl access, ISaleDraftStore drafts, ILogger<SaveSaleDraftHandler> logger)
     {
+        _access = access;
         _drafts = drafts;
         _logger = logger;
     }
@@ -21,6 +25,12 @@ public sealed partial class SaveSaleDraftHandler
     public async Task<Result> HandleAsync(SaveSaleDraftCommand command, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(command);
+
+        var access = await _access.CheckAsync(Permission.Sell, cancellationToken);
+        if (!access.Allowed)
+        {
+            return Result.Failure(access.Error!);
+        }
 
         try
         {

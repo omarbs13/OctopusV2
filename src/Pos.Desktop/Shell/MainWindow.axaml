@@ -1,29 +1,23 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:shell="using:Pos.Desktop.Shell"
-        xmlns:nav="using:Pos.Desktop.Navigation"
         x:Class="Pos.Desktop.Shell.MainWindow"
-        x:DataType="shell:MainViewModel"
+        x:DataType="shell:RootViewModel"
         Icon="/Assets/pos.ico"
         Title="{Binding WindowTitle}"
         Width="1200" Height="720"
         MinWidth="640" MinHeight="480"
         WindowStartupLocation="CenterScreen">
 
+  <!-- Los atajos no hacen nada sin sesión o con la sesión bloqueada (SC-001). -->
   <Window.KeyBindings>
-    <KeyBinding Gesture="Ctrl+B" Command="{Binding Menu.ToggleCommand}" />
+    <KeyBinding Gesture="Ctrl+B" Command="{Binding ToggleMenuCommand}" />
     <KeyBinding Gesture="F9" Command="{Binding OpenPointOfSaleCommand}" />
   </Window.KeyBindings>
 
-  <SplitView DisplayMode="CompactInline"
-             IsPaneOpen="{Binding !Menu.IsCollapsed}"
-             OpenPaneLength="240"
-             CompactPaneLength="56"
-             PaneBackground="{DynamicResource SystemControlBackgroundBaseLowBrush}">
-    <SplitView.Pane>
-      <nav:MenuView DataContext="{Binding Menu}" />
-    </SplitView.Pane>
-
-    <ContentControl Content="{Binding CurrentPage}" Margin="16" />
-  </SplitView>
+  <Grid>
+    <!-- Con la sesión bloqueada el contenido se deshabilita: nada del teclado o del lector llega a él. -->
+    <ContentControl Content="{Binding Content}" IsEnabled="{Binding !IsLocked}" />
+    <ContentControl Content="{Binding LockOverlay}" IsVisible="{Binding IsLocked}" />
+  </Grid>
 </Window>

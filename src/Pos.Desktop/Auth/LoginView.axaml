@@ -1,0 +1,51 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Pos.Desktop.Auth"
+             xmlns:res="using:Pos.Desktop.Resources"
+             xmlns:forms="using:Pos.Desktop.Forms"
+             x:Class="Pos.Desktop.Auth.LoginView"
+             x:DataType="vm:LoginViewModel">
+
+  <UserControl.Styles>
+    <Style Selector="TextBlock.error">
+      <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCriticalBrush}" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+      <Setter Property="FontSize" Value="12" />
+    </Style>
+  </UserControl.Styles>
+
+  <Border Padding="24" CornerRadius="8" BorderThickness="1" Width="380"
+          HorizontalAlignment="Center" VerticalAlignment="Center"
+          Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+          BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
+    <StackPanel Spacing="12">
+      <TextBlock Text="{x:Static res:Strings.Auth_LoginTitle}" FontSize="22" FontWeight="SemiBold" />
+
+      <StackPanel Spacing="4">
+        <forms:FieldLabel Text="{x:Static res:Strings.Auth_UserName}" IsRequired="True" />
+        <TextBox x:Name="UserNameBox" Text="{Binding UserName}" MaxLength="40" MinHeight="44">
+          <TextBox.KeyBindings>
+            <KeyBinding Gesture="Enter" Command="{Binding SignInCommand}" />
+          </TextBox.KeyBindings>
+        </TextBox>
+        <TextBlock Classes="error" Text="{Binding UserNameError}" IsVisible="{Binding UserNameError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+      </StackPanel>
+
+      <StackPanel Spacing="4">
+        <forms:FieldLabel Text="{x:Static res:Strings.Auth_Password}" IsRequired="True" />
+        <TextBox x:Name="PasswordBox" Text="{Binding Password}" PasswordChar="●" MinHeight="44">
+          <TextBox.KeyBindings>
+            <KeyBinding Gesture="Enter" Command="{Binding SignInCommand}" />
+          </TextBox.KeyBindings>
+        </TextBox>
+        <TextBlock Classes="error" Text="{Binding PasswordError}" IsVisible="{Binding PasswordError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+      </StackPanel>
+
+      <TextBlock Classes="error" FontSize="14" Text="{Binding ErrorMessage}"
+                 IsVisible="{Binding ErrorMessage, Converter={x:Static ObjectConverters.IsNotNull}}" />
+
+      <Button Classes="accent" MinHeight="44" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+              Content="{x:Static res:Strings.Auth_Login}" Command="{Binding SignInCommand}" />
+    </StackPanel>
+  </Border>
+</UserControl>

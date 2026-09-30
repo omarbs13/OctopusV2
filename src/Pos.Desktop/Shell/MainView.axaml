@@ -1,0 +1,26 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:shell="using:Pos.Desktop.Shell"
+             xmlns:nav="using:Pos.Desktop.Navigation"
+             x:Class="Pos.Desktop.Shell.MainView"
+             x:DataType="shell:MainViewModel">
+
+  <Grid>
+    <SplitView DisplayMode="CompactInline"
+               IsPaneOpen="{Binding !Menu.IsCollapsed}"
+               OpenPaneLength="240"
+               CompactPaneLength="56"
+               PaneBackground="{DynamicResource SystemControlBackgroundBaseLowBrush}">
+      <SplitView.Pane>
+        <nav:MenuView DataContext="{Binding Menu}" />
+      </SplitView.Pane>
+
+      <ContentControl Content="{Binding CurrentPage}" Margin="16" />
+    </SplitView>
+
+    <!-- Diálogos de la sesión: cambio de contraseña y autorización de administrador -->
+    <Border IsVisible="{Binding Modal.IsOpen}" Background="#88000000">
+      <ContentControl Content="{Binding Modal.Content}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+    </Border>
+  </Grid>
+</UserControl>

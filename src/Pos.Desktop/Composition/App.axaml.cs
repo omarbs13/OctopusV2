@@ -82,16 +82,17 @@ public partial class App : Avalonia.Application
 
         await splashViewModel.WaitMinimumAsync();
 
-        var main = services.GetRequiredService<MainViewModel>();
-        var window = new MainWindow { DataContext = main };
-        window.Closing += (_, e) => OnMainWindowClosing(window, main, e, services.GetRequiredService<IDatabaseStartup>());
+        var root = services.GetRequiredService<RootViewModel>();
+        var window = new MainWindow { DataContext = root };
+        services.GetRequiredService<IdleMonitor>().Attach(window);
+        window.Closing += (_, e) => OnMainWindowClosing(window, root, e, services.GetRequiredService<IDatabaseStartup>());
 
         if (context.Guard is not null)
         {
             context.Guard.ActivationRequested += (_, _) => Dispatcher.UIThread.Post(window.BringToFront);
         }
 
-        await main.StartAsync();
+        await root.StartAsync();
         desktop.MainWindow = window;
         window.Show();
         splash.Close();
@@ -100,9 +101,10 @@ public partial class App : Avalonia.Application
 
     /// <summary>
     /// Al cerrar: primero se confirma salir de un formulario con cambios (Seguir editando cancela
-    /// el cierre, sin respaldo); después, respaldo automático con límite de tiempo y cierre.
+    /// el cierre, sin respaldo); después se audita el cierre de sesión, respaldo automático con
+    /// límite de tiempo y cierre.
     /// </summary>
-    private void OnMainWindowClosing(Window window, MainViewModel main, WindowClosingEventArgs e, IDatabaseStartup startup)
+    private void OnMainWindowClosing(Window window, RootViewModel root, WindowClosingEventArgs e, IDatabaseStartup startup)
     {
         if (_closeBackupDone)
         {
@@ -118,13 +120,14 @@ public partial class App : Avalonia.Application
         _closing = true;
         Dispatcher.UIThread.Post(async () =>
         {
-            if (!await main.CanCloseAsync())
+            if (!await root.CanCloseAsync())
             {
                 _closing = false;
                 return;
             }
 
             window.IsEnabled = false;
+            await root.EndSessionOnCloseAsync();
             await Task.Run(startup.BackupOnCloseAsync);
             _closeBackupDone = true;
             window.Close();

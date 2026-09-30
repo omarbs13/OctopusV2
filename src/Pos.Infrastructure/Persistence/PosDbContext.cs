@@ -1,15 +1,20 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Pos.Domain.Audit;
 using Pos.Domain.Business;
 using Pos.Domain.Inventory;
 using Pos.Domain.Products;
 using Pos.Domain.Sales;
+using Pos.Domain.Users;
 using Pos.Infrastructure.Persistence.Configurations;
 
 namespace Pos.Infrastructure.Persistence;
 
 public class PosDbContext : DbContext
 {
+    /// <summary>Id del aviso de EF "ModelValidationKeyDefaultValueWarning".</summary>
+    private const int KeyDefaultValueWarningId = 20600;
+
     public PosDbContext(DbContextOptions options)
         : base(options)
     {
@@ -37,6 +42,8 @@ public class PosDbContext : DbContext
 
     public DbSet<BusinessProfile> BusinessProfiles => Set<BusinessProfile>();
 
+    public DbSet<User> Users => Set<User>();
+
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
         RejectMovementChanges();
@@ -47,6 +54,16 @@ public class PosDbContext : DbContext
     {
         RejectMovementChanges();
         return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+    }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        ArgumentNullException.ThrowIfNull(optionsBuilder);
+
+        // SaleDrafts.UserId lleva un valor por defecto constante (el id de "Sistema") solo para que la
+        // reconstrucción de la tabla en la migración UsersAndRoles conserve la fila anterior (docs/migraciones.md).
+        // EF avisa de que una llave no debería tener uno; aquí es intencional.
+        optionsBuilder.ConfigureWarnings(w => w.Ignore(new EventId(KeyDefaultValueWarningId, "ModelValidationKeyDefaultValueWarning")));
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -63,6 +80,7 @@ public class PosDbContext : DbContext
         modelBuilder.ApplyConfiguration(new SaleDraftConfiguration());
         modelBuilder.ApplyConfiguration(new AuditEntryConfiguration());
         modelBuilder.ApplyConfiguration(new BusinessProfileConfiguration());
+        modelBuilder.ApplyConfiguration(new UserConfiguration());
     }
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)

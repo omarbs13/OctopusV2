@@ -5,6 +5,7 @@ using Pos.Application.Abstractions;
 using Pos.Application.Printing.PrintTicket;
 using Pos.Application.Sales;
 using Pos.Application.Sales.GetSale;
+using Pos.Desktop.Auth;
 using Pos.Desktop.Common;
 using Pos.Desktop.Forms;
 using Pos.Desktop.Resources;
@@ -52,12 +53,19 @@ public sealed partial class SaleDetailViewModel : FormViewModel
     private readonly UseCases _useCases;
     private readonly OperationRunner _runner;
     private readonly TicketPrintingService _printing;
+    private readonly AdminAuthorizationService? _authorization;
 
     private Guid _saleId;
 
-    public SaleDetailViewModel(UseCases useCases, OperationRunner runner, IDialogService dialogs, TicketPrintingService printing)
+    public SaleDetailViewModel(
+        UseCases useCases,
+        OperationRunner runner,
+        IDialogService dialogs,
+        TicketPrintingService printing,
+        AdminAuthorizationService? authorization = null)
         : base(dialogs)
     {
+        _authorization = authorization;
         _printing = printing;
         _useCases = useCases;
         _runner = runner;
@@ -137,7 +145,7 @@ public sealed partial class SaleDetailViewModel : FormViewModel
             return;
         }
 
-        CancelForm = new CancelSaleViewModel(_useCases, _runner, Dialogs, detail, OnCancelFinishedAsync, CloseCancelForm);
+        CancelForm = new CancelSaleViewModel(_useCases, _runner, Dialogs, detail, OnCancelFinishedAsync, CloseCancelForm, _authorization);
         OnPropertyChanged(nameof(CanCancel));
     }
 

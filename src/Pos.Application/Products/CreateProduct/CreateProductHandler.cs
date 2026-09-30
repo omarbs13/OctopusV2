@@ -2,22 +2,32 @@ using FluentValidation;
 using Pos.Application.Abstractions;
 using Pos.Domain.Common;
 using Pos.Domain.Products;
+using Pos.Application.Users.Access;
+using Pos.Domain.Users;
 
 namespace Pos.Application.Products.CreateProduct;
 
 public sealed class CreateProductHandler
 {
+    private readonly IAccessControl _access;
     private readonly IProductRepository _products;
     private readonly IValidator<CreateProductCommand> _validator;
 
-    public CreateProductHandler(IProductRepository products, IValidator<CreateProductCommand> validator)
+    public CreateProductHandler(IAccessControl access, IProductRepository products, IValidator<CreateProductCommand> validator)
     {
+        _access = access;
         _products = products;
         _validator = validator;
     }
 
     public async Task<Result<ProductDto>> HandleAsync(CreateProductCommand command, CancellationToken cancellationToken)
     {
+        var access = await _access.CheckAsync(Permission.ManageProducts, cancellationToken);
+        if (!access.Allowed)
+        {
+            return Result.Failure<ProductDto>(access.Error!);
+        }
+
         ArgumentNullException.ThrowIfNull(command);
 
         var validation = await _validator.ValidateAsync(command, cancellationToken);

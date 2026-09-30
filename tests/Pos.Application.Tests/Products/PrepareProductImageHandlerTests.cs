@@ -2,6 +2,7 @@ using Pos.Application.Abstractions;
 using Pos.Application.Products;
 using Pos.Application.Products.PrepareProductImage;
 using Pos.Domain.Products;
+using Pos.Application.Tests.TestSupport;
 
 namespace Pos.Application.Tests.Products;
 
@@ -11,7 +12,7 @@ public sealed class PrepareProductImageHandlerTests
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    private PrepareProductImageHandler Handler => new(_processor);
+    private PrepareProductImageHandler Handler => new(new AllowAllAccessControl(), _processor);
 
     [Fact]
     public async Task ArchivoMayorA5MB_TooLargeSinLeerNiProcesar()

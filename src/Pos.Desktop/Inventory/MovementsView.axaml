@@ -42,6 +42,7 @@
 
         <StackPanel Grid.Row="1" Spacing="6" Margin="0,0,0,8">
           <Button HorizontalAlignment="Left" Classes="accent"
+                  IsVisible="{Binding CanRegisterMovements}"
                   Content="{x:Static res:Strings.Movements_Register}"
                   Command="{Binding RegisterMovementCommand}" />
           <TextBlock Text="{Binding DateRangeError}" Foreground="{DynamicResource SystemFillColorCriticalBrush}"

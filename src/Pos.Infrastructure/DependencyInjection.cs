@@ -7,7 +7,10 @@ using Pos.Application.Inventory;
 using Pos.Application.Printing;
 using Pos.Application.Products;
 using Pos.Application.Sales;
+using Pos.Application.Audit;
+using Pos.Application.Security;
 using Pos.Application.Startup;
+using Pos.Application.Users;
 using Pos.Infrastructure.Audit;
 using Pos.Infrastructure.Business;
 using Pos.Infrastructure.Diagnostics;
@@ -18,6 +21,8 @@ using Pos.Infrastructure.Printing.Linux;
 using Pos.Infrastructure.Printing.Windows;
 using Pos.Infrastructure.Platform;
 using Pos.Infrastructure.Products;
+using Pos.Infrastructure.Security;
+using Pos.Infrastructure.Users;
 using Pos.Infrastructure.Sales;
 using Pos.Infrastructure.Startup;
 
@@ -32,10 +37,11 @@ public static class DependencyInjection
         services.AddSingleton(paths);
         services.AddSingleton<IAppPaths>(paths);
         services.AddSingleton<IClock, SystemClock>();
-        services.AddSingleton<ICurrentUser, SystemCurrentUser>();
         services.AddSingleton<IAppInfo, AssemblyAppInfo>();
         services.AddSingleton<IPreferencesStore, JsonFilePreferencesStore>();
         services.AddSingleton<IPrintingSettingsStore, PreferencesPrintingSettingsStore>();
+        services.AddSingleton<ISecuritySettingsStore, PreferencesSecuritySettingsStore>();
+        services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddSingleton<AuditingInterceptor>();
 
         // Impresión: el transporte se elige por sistema operativo; el resto no conoce la plataforma.
@@ -64,6 +70,8 @@ public static class DependencyInjection
         services.AddScoped<ISaleDraftStore, SqliteSaleDraftStore>();
         services.AddScoped<IWriteTransactions, WriteTransactions>();
         services.AddScoped<IAuditLog, AuditLog>();
+        services.AddScoped<IAuditLogReader, AuditLogReader>();
+        services.AddScoped<IUserRepository, UserRepository>();
         services.AddSingleton<IImageProcessor, SkiaImageProcessor>();
         services.AddSingleton<IDatabaseMaintenance, SqliteDatabaseMaintenance>();
         services.AddSingleton<IBackupService, SqliteBackupService>();

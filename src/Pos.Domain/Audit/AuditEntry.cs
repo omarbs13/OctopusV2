@@ -32,7 +32,10 @@ public sealed class AuditEntry
 
     public Guid CreatedBy { get; private set; }
 
-    public static AuditEntry Create(string action, string entityType, Guid entityId, string? details)
+    /// <summary>Administrador que autorizó la operación, si la hubo (FR-014).</summary>
+    public Guid? AuthorizedBy { get; private set; }
+
+    public static AuditEntry Create(string action, string entityType, Guid entityId, string? details, Guid? authorizedBy = null)
     {
         if (string.IsNullOrWhiteSpace(action) || action.Length > ActionMaxLength
             || string.IsNullOrWhiteSpace(entityType) || entityType.Length > EntityTypeMaxLength)
@@ -53,6 +56,7 @@ public sealed class AuditEntry
             EntityType = entityType,
             EntityId = entityId,
             Details = text,
+            AuthorizedBy = authorizedBy,
         };
     }
 }

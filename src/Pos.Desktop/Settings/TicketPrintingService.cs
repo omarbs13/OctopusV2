@@ -1,19 +1,18 @@
-using Microsoft.Extensions.DependencyInjection;
 using Pos.Application.Abstractions;
 using Pos.Application.Printing;
 using Pos.Application.Printing.GetPrintingSettings;
 using Pos.Application.Printing.OpenCashDrawer;
 using Pos.Application.Printing.PrintTicket;
 using Pos.Desktop.Common;
-using Pos.Desktop.Navigation;
 using Pos.Desktop.Resources;
+using Pos.Desktop.Shell;
 using Pos.Desktop.Sales;
 using Serilog;
 
 namespace Pos.Desktop.Settings;
 
 /// <summary>Resultado de abrir el cajón sin venta: el error de motivo deja abierto el diálogo.</summary>
-public sealed record DrawerAttempt(string? ReasonError, string? Message, bool Succeeded);
+public sealed record DrawerAttempt(string? ReasonError, string? Message, bool Succeeded, bool CanAuthorize = false);
 
 /// <summary>
 /// Orquesta la impresión y el cajón desde la interfaz (006): tras el cobro los trabajos van a una cola
@@ -25,7 +24,7 @@ public sealed class TicketPrintingService : IDisposable
     private readonly UseCases _useCases;
     private readonly OperationRunner _runner;
     private readonly IDialogService _dialogs;
-    private readonly IServiceProvider _services;
+    private readonly ISessionNavigation _navigation;
     private readonly ILogger _logger;
     private readonly PrintJobQueue _queue;
 
@@ -35,13 +34,13 @@ public sealed class TicketPrintingService : IDisposable
         UseCases useCases,
         OperationRunner runner,
         IDialogService dialogs,
-        IServiceProvider services,
+        ISessionNavigation navigation,
         ILogger logger)
     {
         _useCases = useCases;
         _runner = runner;
         _dialogs = dialogs;
-        _services = services;
+        _navigation = navigation;
         _logger = logger;
         _queue = new PrintJobQueue(ex => logger.Error(ex, "Error al atender un trabajo de impresión o cajón"));
     }
@@ -156,12 +155,13 @@ public sealed class TicketPrintingService : IDisposable
     }
 
     /// <summary>Apertura sin venta con motivo obligatorio; queda en la bitácora aun si falla.</summary>
-    public async Task<DrawerAttempt> OpenDrawerManualAsync(string reason)
+    public async Task<DrawerAttempt> OpenDrawerManualAsync(string reason, Guid? authorizationGrantId = null)
     {
         var (completed, result) = await _runner.RunAsync(
             "AbrirCajonManual",
             () => _useCases.RunAsync<OpenCashDrawerHandler, Result>(
-                h => h.HandleAsync(OpenCashDrawerCommand.Manual(reason), CancellationToken.None)));
+                h => h.HandleAsync(OpenCashDrawerCommand.Manual(reason, authorizationGrantId), CancellationToken.None)),
+            new Dictionary<string, object?> { ["Authorized"] = authorizationGrantId is not null });
 
         if (!completed || result is null)
         {
@@ -173,6 +173,8 @@ public sealed class TicketPrintingService : IDisposable
             null => new DrawerAttempt(null, Strings.Drawer_Opened, true),
             ValidationFailed validation => new DrawerAttempt(validation.Errors is [{ } first, ..] ? first.Message : Strings.Drawer_ReasonRequired, null, false),
             NotConfigured => new DrawerAttempt(null, Strings.Drawer_NotConfigured, false),
+            Forbidden { CanBeAuthorized: true } => new DrawerAttempt(null, null, false, CanAuthorize: true),
+            Forbidden => new DrawerAttempt(null, Strings.Common_Forbidden, false),
             _ => new DrawerAttempt(null, Strings.Drawer_Failed, false),
         };
     }
@@ -206,7 +208,7 @@ public sealed class TicketPrintingService : IDisposable
             Strings.Print_Continue);
         if (open)
         {
-            await _services.GetRequiredService<Navigator>().NavigateAsync(SettingsModule.PrinterPageId);
+            await _navigation.NavigateAsync(SettingsModule.PrinterPageId);
         }
     }
 }

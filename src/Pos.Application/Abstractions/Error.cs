@@ -47,3 +47,15 @@ public sealed record InvalidState(string Message) : Error;
 
 /// <summary>La exportación de diagnóstico no pudo completarse.</summary>
 public sealed record ExportFailed(string Message) : Error;
+
+/// <summary>El usuario conectado no tiene el permiso; <c>CanBeAuthorized</c> indica si un administrador puede autorizarlo (007, FR-013).</summary>
+public sealed record Forbidden(Pos.Domain.Users.Permission Permission, bool CanBeAuthorized) : Error;
+
+/// <summary>Mensaje genérico "Usuario o contraseña incorrectos": no indica cuál dato falló (007, FR-004).</summary>
+public sealed record InvalidCredentials : Error;
+
+/// <summary>Bloqueo temporal por intentos fallidos hasta <c>UntilUtc</c> (007, FR-005).</summary>
+public sealed record LockedOut(DateTime UntilUtc) : Error;
+
+/// <summary>La operación dejaría el sistema sin administrador activo, o un administrador intenta desactivarse o quitarse el rol (007, FR-018).</summary>
+public sealed record LastAdministrator : Error;

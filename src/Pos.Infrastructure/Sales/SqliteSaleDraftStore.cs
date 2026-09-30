@@ -9,9 +9,10 @@ using Pos.Infrastructure.Persistence;
 namespace Pos.Infrastructure.Sales;
 
 /// <summary>
-/// Borrador durable de la venta en curso: una sola fila en SQLite (research §7). Al guardarlo toma el
-/// candado de escritura (<c>BEGIN IMMEDIATE</c>), así que espera a una confirmación en curso en lugar
-/// de fallar con <c>SQLITE_BUSY</c>, y no revive el borrador de una venta ya registrada.
+/// Borrador durable de la venta en curso: una fila por usuario en SQLite (005 research §7; 007
+/// Historia 8). Opera sobre el usuario conectado. Al guardarlo toma el candado de escritura
+/// (<c>BEGIN IMMEDIATE</c>), así que espera a una confirmación en curso en lugar de fallar con
+/// <c>SQLITE_BUSY</c>, y no revive el borrador de una venta ya registrada.
 /// </summary>
 public sealed class SqliteSaleDraftStore : ISaleDraftStore
 {
@@ -19,16 +20,19 @@ public sealed class SqliteSaleDraftStore : ISaleDraftStore
 
     private readonly PosDbContext _context;
     private readonly IClock _clock;
+    private readonly ICurrentUser _currentUser;
 
-    public SqliteSaleDraftStore(PosDbContext context, IClock clock)
+    public SqliteSaleDraftStore(PosDbContext context, IClock clock, ICurrentUser currentUser)
     {
         _context = context;
         _clock = clock;
+        _currentUser = currentUser;
     }
 
     public async Task<StoredDraft?> LoadAsync(CancellationToken cancellationToken)
     {
-        var draft = await _context.SaleDrafts.AsNoTracking().SingleOrDefaultAsync(cancellationToken);
+        var userId = _currentUser.UserId;
+        var draft = await _context.SaleDrafts.AsNoTracking().SingleOrDefaultAsync(d => d.UserId == userId, cancellationToken);
         if (draft is null)
         {
             return null;
@@ -50,6 +54,7 @@ public sealed class SqliteSaleDraftStore : ISaleDraftStore
     {
         ArgumentNullException.ThrowIfNull(lines);
 
+        var userId = _currentUser.UserId;
         await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
 
         if (await _context.Sales.AnyAsync(s => s.DraftId == draftId, cancellationToken))
@@ -58,10 +63,10 @@ public sealed class SqliteSaleDraftStore : ISaleDraftStore
         }
 
         var json = JsonSerializer.Serialize(lines, Json);
-        var existing = await _context.SaleDrafts.SingleOrDefaultAsync(cancellationToken);
+        var existing = await _context.SaleDrafts.SingleOrDefaultAsync(d => d.UserId == userId, cancellationToken);
         if (existing is null)
         {
-            _context.SaleDrafts.Add(SaleDraft.Create(draftId, json, _clock.UtcNow));
+            _context.SaleDrafts.Add(SaleDraft.Create(userId, draftId, json, _clock.UtcNow));
         }
         else
         {
@@ -74,13 +79,43 @@ public sealed class SqliteSaleDraftStore : ISaleDraftStore
 
     public void Remove()
     {
-        var draft = _context.SaleDrafts.Find(SaleDraft.SingleSlot);
+        var draft = _context.SaleDrafts.Find(_currentUser.UserId);
         if (draft is not null)
         {
             _context.SaleDrafts.Remove(draft);
         }
     }
 
-    public async Task DiscardAsync(CancellationToken cancellationToken) =>
-        await _context.SaleDrafts.ExecuteDeleteAsync(cancellationToken);
+    public async Task DiscardAsync(CancellationToken cancellationToken)
+    {
+        var userId = _currentUser.UserId;
+        await _context.SaleDrafts.Where(d => d.UserId == userId).ExecuteDeleteAsync(cancellationToken);
+    }
+
+    public Task<bool> HasForAsync(Guid userId, CancellationToken cancellationToken) =>
+        _context.SaleDrafts.AsNoTracking().AnyAsync(d => d.UserId == userId, cancellationToken);
+
+    public async Task<bool> RemoveForAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var draft = await _context.SaleDrafts.SingleOrDefaultAsync(d => d.UserId == userId, cancellationToken);
+        if (draft is null)
+        {
+            return false;
+        }
+
+        _context.SaleDrafts.Remove(draft);
+        return true;
+    }
+
+    public async Task ReassignAsync(Guid fromUserId, Guid toUserId, CancellationToken cancellationToken)
+    {
+        var source = await _context.SaleDrafts.SingleOrDefaultAsync(d => d.UserId == fromUserId, cancellationToken);
+        if (source is null || await _context.SaleDrafts.AnyAsync(d => d.UserId == toUserId, cancellationToken))
+        {
+            return;
+        }
+
+        _context.SaleDrafts.Remove(source);
+        _context.SaleDrafts.Add(SaleDraft.Create(toUserId, source.DraftId, source.LinesJson, source.UpdatedAt));
+    }
 }

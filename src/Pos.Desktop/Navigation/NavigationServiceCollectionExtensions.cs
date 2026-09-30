@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Microsoft.Extensions.DependencyInjection;
 using Pos.Desktop.Common;
 using Pos.Desktop.Home;
+using Pos.Domain.Users;
 
 namespace Pos.Desktop.Navigation;
 
@@ -10,10 +11,15 @@ public static class NavigationServiceCollectionExtensions
 {
     public static IServiceCollection AddNavigationCore(this IServiceCollection services)
     {
-        services.AddSingleton<NavigationRegistry>();
-        services.AddSingleton<Navigator>();
+        // Todo lo que pertenece a una sesión es scoped: al cerrar sesión se desecha el ámbito y la
+        // siguiente sesión empieza con pantallas limpias y el menú de su rol (007, research §12).
+        services.AddScoped(sp => new NavigationRegistry(
+            sp.GetServices<NavigationGroup>(),
+            sp.GetServices<NavigationEntry>(),
+            sp.GetService<ICurrentPermissions>() is { } permissions ? permissions.Has : null));
+        services.AddScoped<Navigator>();
         services.AddSingleton<RegisteredViewLocator>();
-        services.AddSingleton<MenuViewModel>();
+        services.AddScoped<MenuViewModel>();
         return services;
     }
 
@@ -21,7 +27,7 @@ public static class NavigationServiceCollectionExtensions
         this IServiceCollection services, string id, string title, string icon, int order) =>
         services.AddSingleton(new NavigationGroup(id, title, icon, order));
 
-    /// <summary>Pantalla navegable: ViewModel singleton (conserva su estado en la sesión), opción de menú y vista.</summary>
+    /// <summary>Pantalla navegable: ViewModel de la sesión (conserva su estado mientras dura), opción de menú y vista.</summary>
     public static IServiceCollection AddPage<TViewModel, TView>(
         this IServiceCollection services,
         string id,
@@ -29,12 +35,13 @@ public static class NavigationServiceCollectionExtensions
         string icon,
         int order,
         string? groupId = null,
-        string? shortcut = null)
+        string? shortcut = null,
+        Permission? permission = null)
         where TViewModel : PageViewModel
         where TView : Control, new()
     {
-        services.AddSingleton<TViewModel>();
-        services.AddSingleton(new NavigationEntry(id, title, icon, order, groupId, typeof(TViewModel), Shortcut: shortcut));
+        services.AddScoped<TViewModel>();
+        services.AddSingleton(new NavigationEntry(id, title, icon, order, groupId, typeof(TViewModel), Shortcut: shortcut, Permission: permission));
         return services.AddComponentView<TViewModel, TView>();
     }
 
@@ -47,10 +54,10 @@ public static class NavigationServiceCollectionExtensions
         return services.AddComponentView<ComingSoonViewModel, ComingSoonView>();
     }
 
-    /// <summary>Tarjeta de Inicio de un módulo (singleton).</summary>
+    /// <summary>Tarjeta de Inicio de un módulo (de la sesión).</summary>
     public static IServiceCollection AddDashboardCard<TCard>(this IServiceCollection services)
         where TCard : DashboardCard =>
-        services.AddSingleton<DashboardCard, TCard>();
+        services.AddScoped<DashboardCard, TCard>();
 
     /// <summary>Solo la vista, para ViewModels que no son pantallas (por ejemplo, un formulario).</summary>
     public static IServiceCollection AddComponentView<TViewModel, TView>(this IServiceCollection services)

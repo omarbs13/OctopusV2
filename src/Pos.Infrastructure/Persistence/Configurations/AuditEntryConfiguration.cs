@@ -19,7 +19,12 @@ internal sealed class AuditEntryConfiguration : IEntityTypeConfiguration<AuditEn
         builder.Property(a => a.Details).HasMaxLength(AuditEntry.DetailsMaxLength);
         builder.Property(a => a.CreatedAt).IsRequired();
         builder.Property(a => a.CreatedBy).IsRequired();
+        builder.Property(a => a.AuthorizedBy);
 
         builder.HasIndex(a => new { a.EntityType, a.EntityId }).HasDatabaseName("IX_AuditEntries_Entity");
+
+        // Consulta de la bitácora (007, FR-027): orden por fecha y filtro por usuario.
+        builder.HasIndex(a => a.CreatedAt).HasDatabaseName("IX_AuditEntries_CreatedAt");
+        builder.HasIndex(a => a.CreatedBy).HasDatabaseName("IX_AuditEntries_CreatedBy");
     }
 }

@@ -73,17 +73,27 @@ pone el monto exacto y **1 a 6** los billetes de $20, $50, $100, $200, $500 y $1
 
 ## Consultar la bitácora de auditoría (`AuditEntries`)
 
-La bitácora es inmutable (la aplicación rechaza modificarla o borrarla) y no tiene pantalla. Cada
-cancelación deja una entrada `SALE_CANCELLED` con el usuario, la fecha (UTC), el folio y el motivo.
-Para consultarla, trabaja siempre sobre una **copia** o un respaldo de la base, nunca sobre la base
-abierta:
+La bitácora es inmutable (la aplicación rechaza modificarla o borrarla). Desde 0.5.0 el
+Administrador la consulta en **Administración → Bitácora** (ver [usuarios-y-permisos.md](usuarios-y-permisos.md)).
+Cada cancelación deja una entrada `SALE_CANCELLED` con el usuario, la fecha (UTC), el folio y el
+motivo; si la autorizó un administrador, `AuthorizedBy` trae su id. Para consultarla desde la base,
+trabaja siempre sobre una **copia** o un respaldo, nunca sobre la base abierta:
 
 ```bash
-sqlite3 respaldo.db "SELECT CreatedAt, CreatedBy, EntityId, Details FROM AuditEntries ORDER BY CreatedAt DESC;"
+sqlite3 respaldo.db "SELECT CreatedAt, CreatedBy, AuthorizedBy, EntityId, Details FROM AuditEntries ORDER BY CreatedAt DESC;"
 ```
 
-Mientras no exista el módulo de usuarios, `CreatedBy` es el usuario de sistema
-(`00000000-0000-7000-8000-000000000001`).
+`CreatedBy` es el usuario que realizó la operación (tabla `Users`). Los registros anteriores a 0.5.0
+pertenecen al usuario "Sistema" (`00000000-0000-7000-8000-000000000001`).
+
+## Ventas por usuario
+
+- Cada venta queda a nombre del cajero que la hizo (`Sales.CreatedBy`) y el ticket lo muestra en la
+  línea `Cajero:`.
+- Un **Cajero** solo consulta y reimprime **sus propias** ventas; el **Administrador** ve todas y puede
+  filtrar por cajero.
+- El borrador de la venta en curso es **uno por usuario** (`SaleDrafts.UserId`): al cerrar sesión o
+  cambiar de usuario se conserva y se ofrece al volver a entrar con el mismo usuario.
 
 ## Diagnóstico rápido
 

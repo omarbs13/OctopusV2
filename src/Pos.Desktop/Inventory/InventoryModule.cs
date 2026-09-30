@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Pos.Desktop.Navigation;
 using Pos.Desktop.Resources;
+using Pos.Domain.Users;
 
 namespace Pos.Desktop.Inventory;
 
@@ -14,11 +15,11 @@ public static class InventoryModule
     public static IServiceCollection AddInventoryModule(this IServiceCollection services)
     {
         services.AddNavigationGroup(GroupId, Strings.Nav_Inventory, "Icon.Inventory", 20);
-        services.AddPage<StockViewModel, StockView>(StockPageId, Strings.Nav_Stock, "Icon.Stock", 0, GroupId);
-        services.AddPage<MovementsViewModel, MovementsView>(MovementsPageId, Strings.Nav_Movements, "Icon.Movements", 10, GroupId);
+        services.AddPage<StockViewModel, StockView>(StockPageId, Strings.Nav_Stock, "Icon.Stock", 0, GroupId, permission: Permission.ViewInventory);
+        services.AddPage<MovementsViewModel, MovementsView>(MovementsPageId, Strings.Nav_Movements, "Icon.Movements", 10, GroupId, permission: Permission.ViewInventory);
 
         services.AddTransient<MovementEditorViewModel>();
-        services.AddSingleton<Func<MovementEditorViewModel>>(sp => sp.GetRequiredService<MovementEditorViewModel>);
+        services.AddScoped<Func<MovementEditorViewModel>>(sp => sp.GetRequiredService<MovementEditorViewModel>);
         services.AddComponentView<MovementEditorViewModel, MovementEditorView>();
 
         services.AddDashboardCard<LowStockCard>();

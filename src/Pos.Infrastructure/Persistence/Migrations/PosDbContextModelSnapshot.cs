@@ -27,6 +27,9 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         .HasMaxLength(40)
                         .HasColumnType("TEXT");
 
+                    b.Property<Guid?>("AuthorizedBy")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
@@ -46,6 +49,12 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("IX_AuditEntries_CreatedAt");
+
+                    b.HasIndex("CreatedBy")
+                        .HasDatabaseName("IX_AuditEntries_CreatedBy");
 
                     b.HasIndex("EntityType", "EntityId")
                         .HasDatabaseName("IX_AuditEntries_Entity");
@@ -466,6 +475,9 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.HasIndex("CreatedAt", "Id")
                         .HasDatabaseName("IX_Sales_CreatedAt");
 
+                    b.HasIndex("CreatedBy", "CreatedAt")
+                        .HasDatabaseName("IX_Sales_CreatedBy_CreatedAt");
+
                     b.HasIndex("Status", "CreatedAt")
                         .HasDatabaseName("IX_Sales_Status_CreatedAt");
 
@@ -474,8 +486,9 @@ namespace Pos.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Pos.Domain.Sales.SaleDraft", b =>
                 {
-                    b.Property<int>("Slot")
-                        .HasColumnType("INTEGER");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue(new Guid("00000000-0000-7000-8000-000000000001"));
 
                     b.Property<Guid>("DraftId")
                         .HasColumnType("TEXT");
@@ -487,12 +500,9 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("TEXT");
 
-                    b.HasKey("Slot");
+                    b.HasKey("UserId");
 
-                    b.ToTable("SaleDrafts", null, t =>
-                        {
-                            t.HasCheckConstraint("CK_SaleDrafts_Slot", "\"Slot\" = 1");
-                        });
+                    b.ToTable("SaleDrafts", (string)null);
                 });
 
             modelBuilder.Entity("Pos.Domain.Sales.SaleLine", b =>
@@ -589,6 +599,100 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.HasIndex("SaleId");
 
                     b.ToTable("SalePayments", (string)null);
+                });
+
+            modelBuilder.Entity("Pos.Domain.Users.User", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("FailedLoginCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsSystem")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("LastLoginAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LockoutEndsAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("MustChangePassword")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("NormalizedUserName")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PasswordHash")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserName")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedUserName")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Users_NormalizedUserName");
+
+                    b.ToTable("Users", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("00000000-0000-7000-8000-000000000001"),
+                            CreatedAt = new DateTime(2026, 9, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = new Guid("00000000-0000-7000-8000-000000000001"),
+                            FailedLoginCount = 0,
+                            FullName = "Sistema",
+                            IsActive = false,
+                            IsSystem = true,
+                            MustChangePassword = false,
+                            NormalizedUserName = "SISTEMA",
+                            Role = "ADMIN",
+                            UpdatedAt = new DateTime(2026, 9, 30, 0, 0, 0, 0, DateTimeKind.Utc),
+                            UpdatedBy = new Guid("00000000-0000-7000-8000-000000000001"),
+                            UserName = "Sistema",
+                            Version = 1
+                        });
                 });
 
             modelBuilder.Entity("Pos.Domain.Inventory.InventoryMovement", b =>

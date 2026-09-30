@@ -32,7 +32,7 @@ public sealed class ProductSearchTests : IAsyncLifetime
     private async Task<ProductPage> SearchAsync(string? text, bool includeInactive = false)
     {
         await using var context = _db.CreateDbContext();
-        var result = await new SearchProductsHandler(new ProductRepository(context))
+        var result = await new SearchProductsHandler(new AllowAllAccessControl(), new ProductRepository(context))
             .HandleAsync(new SearchProductsQuery(text, includeInactive), Ct);
         return result.Value;
     }

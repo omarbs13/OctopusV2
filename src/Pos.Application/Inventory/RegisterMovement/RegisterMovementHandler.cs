@@ -5,6 +5,9 @@ using Pos.Application.Products;
 using Pos.Domain.Common;
 using Pos.Domain.Inventory;
 using Pos.Domain.Products;
+using Pos.Application.Users.Access;
+using Pos.Application.Users.Session;
+using Pos.Domain.Users;
 
 namespace Pos.Application.Inventory.RegisterMovement;
 
@@ -14,6 +17,8 @@ namespace Pos.Application.Inventory.RegisterMovement;
 /// </summary>
 public sealed partial class RegisterMovementHandler
 {
+    private readonly IAccessControl _access;
+    private readonly IUserSession _session;
     private readonly IProductRepository _products;
     private readonly IInventoryRepository _inventory;
     private readonly IWriteTransactions _transactions;
@@ -21,12 +26,16 @@ public sealed partial class RegisterMovementHandler
     private readonly ILogger<RegisterMovementHandler> _logger;
 
     public RegisterMovementHandler(
+        IAccessControl access,
+        IUserSession session,
         IProductRepository products,
         IInventoryRepository inventory,
         IWriteTransactions transactions,
         IValidator<RegisterMovementCommand> validator,
         ILogger<RegisterMovementHandler> logger)
     {
+        _access = access;
+        _session = session;
         _products = products;
         _inventory = inventory;
         _transactions = transactions;
@@ -36,6 +45,12 @@ public sealed partial class RegisterMovementHandler
 
     public async Task<Result<MovementDto>> HandleAsync(RegisterMovementCommand command, CancellationToken cancellationToken)
     {
+        var access = await _access.CheckAsync(Permission.RegisterMovements, cancellationToken);
+        if (!access.Allowed)
+        {
+            return Result.Failure<MovementDto>(access.Error!);
+        }
+
         ArgumentNullException.ThrowIfNull(command);
 
         var validation = await _validator.ValidateAsync(command, cancellationToken);
@@ -95,7 +110,7 @@ public sealed partial class RegisterMovementHandler
             movement.Reason,
             movement.Reference,
             movement.CreatedBy,
-            SystemUser.NameOf(movement.CreatedBy)));
+            _session.User?.FullName ?? SystemUser.NameOf(movement.CreatedBy)));
     }
 
     private static List<FieldError> Validate(

@@ -1,5 +1,6 @@
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
+using Pos.Application.Abstractions;
 using Pos.Application.Business.GetBusinessProfile;
 using Pos.Application.Business.SaveBusinessProfile;
 using Pos.Application.Diagnostics.ExportDiagnostics;
@@ -32,6 +33,25 @@ using Pos.Application.Sales.ReviewSale;
 using Pos.Application.Sales.SaveSaleDraft;
 using Pos.Application.Sales.SearchSales;
 using Pos.Application.Startup;
+using Pos.Application.Audit.SearchAuditLog;
+using Pos.Application.Security.GetSecuritySettings;
+using Pos.Application.Security.SaveSecuritySettings;
+using Pos.Application.Users.AuthorizeAdmin;
+using Pos.Application.Users.ChangeOwnPassword;
+using Pos.Application.Users.CreateFirstAdmin;
+using Pos.Application.Users.CreateUser;
+using Pos.Application.Users.EndSession;
+using Pos.Application.Users.GetSetupState;
+using Pos.Application.Users.GetUser;
+using Pos.Application.Users.ListCashiers;
+using Pos.Application.Users.ResetUserPassword;
+using Pos.Application.Users.SearchUsers;
+using Pos.Application.Users.SignIn;
+using Pos.Application.Users.StartSession;
+using Pos.Application.Users.UpdateUser;
+using Pos.Application.Users.VerifySessionPassword;
+using Pos.Application.Users.Access;
+using Pos.Application.Users.Session;
 
 namespace Pos.Application;
 
@@ -41,6 +61,43 @@ public static class DependencyInjection
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         services.AddSingleton<IDatabaseStartup, DatabaseStartup>();
+
+        // Usuarios y permisos (007): la sesión es el punto único del usuario conectado (Principio IV).
+        services.AddSingleton<UserSession>();
+        services.AddSingleton<IUserSession>(sp => sp.GetRequiredService<UserSession>());
+        services.AddSingleton<ICurrentUser>(sp => sp.GetRequiredService<UserSession>());
+        services.AddSingleton<IAuthorizationGrants, AuthorizationGrants>();
+        services.AddSingleton<LoginThrottle>();
+        services.AddScoped<IAccessControl, AccessControl>();
+        services.AddScoped<CredentialVerifier>();
+
+        services.AddScoped<GetSetupStateHandler>();
+        services.AddSingleton<IValidator<CreateFirstAdminCommand>, CreateFirstAdminValidator>();
+        services.AddScoped<CreateFirstAdminHandler>();
+        services.AddSingleton<IValidator<SignInCommand>, SignInValidator>();
+        services.AddScoped<SignInHandler>();
+        services.AddScoped<StartSessionHandler>();
+        services.AddScoped<EndSessionHandler>();
+        services.AddScoped<VerifySessionPasswordHandler>();
+        services.AddSingleton<IValidator<ChangeOwnPasswordCommand>, ChangeOwnPasswordValidator>();
+        services.AddScoped<ChangeOwnPasswordHandler>();
+        services.AddSingleton<IValidator<AuthorizeAdminCommand>, AuthorizeAdminValidator>();
+        services.AddScoped<AuthorizeAdminHandler>();
+        services.AddScoped<SearchUsersHandler>();
+        services.AddScoped<GetUserHandler>();
+        services.AddSingleton<IValidator<CreateUserCommand>, CreateUserValidator>();
+        services.AddScoped<CreateUserHandler>();
+        services.AddSingleton<IValidator<UpdateUserCommand>, UpdateUserValidator>();
+        services.AddScoped<UpdateUserHandler>();
+        services.AddSingleton<IValidator<ResetUserPasswordCommand>, ResetUserPasswordValidator>();
+        services.AddScoped<ResetUserPasswordHandler>();
+        services.AddScoped<ListCashiersHandler>();
+
+        // Bitácora y seguridad
+        services.AddSingleton<IValidator<SearchAuditLogQuery>, SearchAuditLogValidator>();
+        services.AddScoped<SearchAuditLogHandler>();
+        services.AddSingleton<GetSecuritySettingsHandler>();
+        services.AddScoped<SaveSecuritySettingsHandler>();
 
         // Productos: un ámbito por operación (ver Pos.Desktop.Common.UseCases).
         services.AddSingleton<IValidator<CreateProductCommand>, CreateProductValidator>();
@@ -82,7 +139,7 @@ public static class DependencyInjection
 
         // Impresión y cajón
         services.AddSingleton<GetPrintingSettingsHandler>();
-        services.AddSingleton<SavePrintingSettingsHandler>();
+        services.AddScoped<SavePrintingSettingsHandler>();
         services.AddScoped<ListPrintersHandler>();
         services.AddScoped<PrintTicketHandler>();
         services.AddSingleton<IValidator<OpenCashDrawerCommand>, OpenCashDrawerValidator>();

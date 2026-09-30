@@ -11,9 +11,15 @@ public sealed partial class MainViewModel : ViewModelBase
 {
     public const string HomeEntryId = "home";
 
-    public MainViewModel(Navigator navigator, NavigationRegistry registry, MenuViewModel menu, IAppInfo appInfo)
+    public MainViewModel(
+        Navigator navigator,
+        NavigationRegistry registry,
+        MenuViewModel menu,
+        IAppInfo appInfo,
+        ModalHost? modal = null)
     {
         Menu = menu;
+        Modal = modal ?? new ModalHost();
         ArgumentNullException.ThrowIfNull(navigator);
         ArgumentNullException.ThrowIfNull(appInfo);
         Navigator = navigator;
@@ -29,6 +35,20 @@ public sealed partial class MainViewModel : ViewModelBase
     public NavigationRegistry Registry { get; }
 
     public MenuViewModel Menu { get; }
+
+    /// <summary>Diálogo sobre la sesión (cambio de contraseña, autorización de administrador).</summary>
+    public ModalHost Modal { get; }
+
+    /// <summary>
+    /// Hay una venta en curso en el Punto de venta de esta sesión. Solo consulta la pantalla si ya se
+    /// abrió: no la crea.
+    /// </summary>
+    public bool HasSaleInProgress =>
+        Navigator.Resolved<PointOfSaleViewModel>(SalesModule.PointOfSalePageId)?.HasLines == true;
+
+    /// <summary>Espera a que termine el guardado del borrador antes de cerrar la sesión (Principio I).</summary>
+    public Task FlushDraftAsync() =>
+        Navigator.Resolved<PointOfSaleViewModel>(SalesModule.PointOfSalePageId)?.FlushDraftAsync() ?? Task.CompletedTask;
 
     public PageViewModel? CurrentPage => Navigator.CurrentPage;
 

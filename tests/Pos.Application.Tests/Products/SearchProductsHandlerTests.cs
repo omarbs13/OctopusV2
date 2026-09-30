@@ -8,7 +8,7 @@ public class SearchProductsHandlerTests
 {
     private readonly InMemoryProductRepository _repository = new();
 
-    private SearchProductsHandler Handler => new(_repository);
+    private SearchProductsHandler Handler => new(new AllowAllAccessControl(), _repository);
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 

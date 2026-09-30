@@ -42,8 +42,8 @@ public sealed class SaleDraftTests : IAsyncLifetime
 
         await using var context = _db.CreateDbContext();
         Assert.Equal(1, await context.SaleDrafts.CountAsync(Ct));
-        var recovered = (await new GetSaleDraftHandler(
-                new SqliteSaleDraftStore(context, _db.Clock),
+        var recovered = (await new GetSaleDraftHandler(new AllowAllAccessControl(), 
+                new SqliteSaleDraftStore(context, _db.Clock, _db.User),
                 new ProductRepository(context),
                 NullLogger<GetSaleDraftHandler>.Instance)
             .HandleAsync(Ct)).Value;
@@ -96,8 +96,8 @@ public sealed class SaleDraftTests : IAsyncLifetime
         await SaveAsync(Guid.CreateVersion7(), new DraftLineDto(product.Id, 1000, 1000), new DraftLineDto(Guid.CreateVersion7(), 1000, 1000));
 
         await using var context = _db.CreateDbContext();
-        var recovered = (await new GetSaleDraftHandler(
-                new SqliteSaleDraftStore(context, _db.Clock),
+        var recovered = (await new GetSaleDraftHandler(new AllowAllAccessControl(), 
+                new SqliteSaleDraftStore(context, _db.Clock, _db.User),
                 new ProductRepository(context),
                 NullLogger<GetSaleDraftHandler>.Instance)
             .HandleAsync(Ct)).Value;

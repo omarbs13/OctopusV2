@@ -40,12 +40,13 @@ public sealed class ModuleRegistrationTests
 
         var roots = host.Get<NavigationRegistry>().Roots;
 
-        Assert.Equal(["home", "sales", "catalogs", "inventory", "settings", "help"], roots.Select(r => r.Id));
+        Assert.Equal(["home", "sales", "catalogs", "inventory", "administration", "settings", "help"], roots.Select(r => r.Id));
         Assert.Equal(["sales.pos", "sales.history"], roots[1].Children.Select(c => c.Id));
         Assert.Equal(["catalogs.products"], roots[2].Children.Select(c => c.Id));
         Assert.Equal(["inventory.stock", "inventory.movements"], roots[3].Children.Select(c => c.Id));
-        Assert.Equal(["settings.business", "settings.printer"], roots[4].Children.Select(c => c.Id));
-        Assert.Equal(["help.about"], roots[5].Children.Select(c => c.Id));
+        Assert.Equal(["administration.users", "administration.audit"], roots[4].Children.Select(c => c.Id));
+        Assert.Equal(["settings.business", "settings.printer", "settings.security"], roots[5].Children.Select(c => c.Id));
+        Assert.Equal(["help.about"], roots[6].Children.Select(c => c.Id));
     }
 
     public sealed class TestCard(OperationRunner runner) : DashboardCard(runner)

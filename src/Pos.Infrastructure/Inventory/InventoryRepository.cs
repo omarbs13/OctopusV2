@@ -153,7 +153,9 @@ public sealed class InventoryRepository : IInventoryRepository
             from m in movements
             join p in _context.Products on m.ProductId equals p.Id
             join u in _context.UnitsOfMeasure on p.UnitCode equals u.Code
-            select new { Movement = m, Product = p, Unit = u };
+            join author in _context.Users on m.CreatedBy equals author.Id into authors
+            from author in authors.DefaultIfEmpty()
+            select new { Movement = m, Product = p, Unit = u, AuthorName = author == null ? null : author.FullName };
 
         // El kárdex de un producto se ordena por su secuencia, que es exacta; el historial general,
         // por fecha (research §6).
@@ -178,7 +180,7 @@ public sealed class InventoryRepository : IInventoryRepository
                 x.Movement.Reason,
                 x.Movement.Reference,
                 x.Movement.CreatedBy,
-                string.Empty))
+                x.AuthorName ?? string.Empty))
             .ToListAsync(cancellationToken);
 
         return new MovementPage(items, total, page, search.PageSize);

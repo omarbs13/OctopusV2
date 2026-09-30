@@ -10,6 +10,7 @@ using Pos.Desktop.Forms;
 using Pos.Desktop.Navigation;
 using Pos.Desktop.Resources;
 using Pos.Domain.Inventory;
+using Pos.Domain.Users;
 
 namespace Pos.Desktop.Inventory;
 
@@ -46,8 +47,13 @@ public sealed partial class MovementsViewModel : PageViewModel, INavigationArgum
     private int _searchVersion;
     private bool _suppressAutoSearch;
 
-    public MovementsViewModel(UseCases useCases, OperationRunner runner, Func<MovementEditorViewModel> editorFactory)
+    public MovementsViewModel(
+        UseCases useCases,
+        OperationRunner runner,
+        Func<MovementEditorViewModel> editorFactory,
+        ICurrentPermissions? permissions = null)
     {
+        CanRegisterMovements = permissions?.Has(Permission.RegisterMovements) ?? true;
         _useCases = useCases;
         _runner = runner;
         _editorFactory = editorFactory;
@@ -65,6 +71,9 @@ public sealed partial class MovementsViewModel : PageViewModel, INavigationArgum
     }
 
     public override string Title => Strings.Nav_Movements;
+
+    /// <summary>Puede registrar movimientos de inventario; el Cajero solo consulta (FR-010).</summary>
+    public bool CanRegisterMovements { get; }
 
     public override FormHost Forms { get; } = new();
 
@@ -169,6 +178,11 @@ public sealed partial class MovementsViewModel : PageViewModel, INavigationArgum
     [RelayCommand]
     private async Task RegisterMovementAsync()
     {
+        if (!CanRegisterMovements)
+        {
+            return;
+        }
+
         var editor = _editorFactory();
         await editor.InitializeWithPickerAsync();
         editor.Saved += (_, movement) => _ = OnMovementSavedAsync(movement);

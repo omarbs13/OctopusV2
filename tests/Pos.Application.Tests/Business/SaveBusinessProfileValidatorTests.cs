@@ -3,6 +3,7 @@ using Pos.Application.Business;
 using Pos.Application.Business.SaveBusinessProfile;
 using Pos.Application.Products;
 using Pos.Domain.Business;
+using Pos.Application.Tests.TestSupport;
 
 namespace Pos.Application.Tests.Business;
 
@@ -55,7 +56,7 @@ public sealed class SaveBusinessProfileValidatorTests
         existing.SetLogo([1, 2, 3]);
         repository.Current = existing;
         var processor = new FakeProcessor { Next = ImageProcessingResult.Failure(InvalidImageReason.UnsupportedFormat) };
-        var handler = new SaveBusinessProfileHandler(repository, processor, Validator);
+        var handler = new SaveBusinessProfileHandler(new AllowAllAccessControl(), repository, processor, Validator);
 
         var result = await handler.HandleAsync(Valid() with { Logo = new LogoChange.Replace(new MemoryStream([9]), 1) }, Ct);
 
@@ -70,7 +71,7 @@ public sealed class SaveBusinessProfileValidatorTests
     {
         var repository = new FakeRepository();
         var processor = new FakeProcessor();
-        var handler = new SaveBusinessProfileHandler(repository, processor, Validator);
+        var handler = new SaveBusinessProfileHandler(new AllowAllAccessControl(), repository, processor, Validator);
 
         var result = await handler.HandleAsync(
             Valid() with { Logo = new LogoChange.Replace(new MemoryStream([9]), BusinessProfile.LogoMaxBytes + 1) },
@@ -87,7 +88,7 @@ public sealed class SaveBusinessProfileValidatorTests
     {
         var repository = new FakeRepository();
         var processor = new FakeProcessor { Next = ImageProcessingResult.Success([7, 7], [1], 10, 10) };
-        var handler = new SaveBusinessProfileHandler(repository, processor, Validator);
+        var handler = new SaveBusinessProfileHandler(new AllowAllAccessControl(), repository, processor, Validator);
 
         Assert.True((await handler.HandleAsync(Valid() with { Logo = new LogoChange.Replace(new MemoryStream([9]), 1) }, Ct)).IsSuccess);
         var created = repository.Current!;
@@ -108,7 +109,7 @@ public sealed class SaveBusinessProfileValidatorTests
         var existing = BusinessProfile.Create("Tienda", "Dirección", "555", null, null);
         existing.SetLogo([1, 2, 3]);
         repository.Current = existing;
-        var handler = new SaveBusinessProfileHandler(repository, new FakeProcessor(), Validator);
+        var handler = new SaveBusinessProfileHandler(new AllowAllAccessControl(), repository, new FakeProcessor(), Validator);
 
         Assert.True((await handler.HandleAsync(Valid(), Ct)).IsSuccess);
 

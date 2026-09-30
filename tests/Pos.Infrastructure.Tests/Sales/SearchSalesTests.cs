@@ -26,7 +26,7 @@ public sealed class SearchSalesTests : IAsyncLifetime
     private async Task<Result<Pos.Application.Sales.SalePage>> SearchAsync(SearchSalesQuery query)
     {
         await using var context = _db.CreateDbContext();
-        return await new SearchSalesHandler(new SaleRepository(context)).HandleAsync(query, Ct);
+        return await new SearchSalesHandler(new AllowAllAccessControl(), _db.User, new SaleRepository(context)).HandleAsync(query, Ct);
     }
 
     private async Task SeedAsync()
@@ -83,7 +83,7 @@ public sealed class SearchSalesTests : IAsyncLifetime
         var sale = await SalesTestSupport.SellOkAsync(_db, (product, 2000));
 
         await using var context = _db.CreateDbContext();
-        var handler = new GetSaleHandler(new SaleRepository(context));
+        var handler = new GetSaleHandler(new AllowAllAccessControl(), _db.User, new SaleRepository(context));
         var detail = (await handler.HandleAsync(new GetSaleQuery(sale.SaleId), Ct)).Value;
 
         Assert.Equal(sale.Folio, detail.Folio);

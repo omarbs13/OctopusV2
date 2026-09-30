@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:nav="using:Pos.Desktop.Navigation"
+             xmlns:auth="using:Pos.Desktop.Auth"
              xmlns:common="using:Pos.Desktop.Common"
              xmlns:res="using:Pos.Desktop.Resources"
              x:Class="Pos.Desktop.Navigation.MenuView"
@@ -56,6 +57,34 @@
             AutomationProperties.Name="{x:Static res:Strings.Menu_Toggle}"
             Margin="4,8,4,8">
       <PathIcon Classes="menuIcon" Data="{StaticResource Icon.Menu}" />
+    </Button>
+
+    <!-- Usuario conectado: nombre y rol, o iniciales con tooltip si el menú está contraído (FR-009) -->
+    <Button DockPanel.Dock="Bottom" Classes="menuItem" Margin="4,4,4,8"
+            IsVisible="{Binding UserSection, Converter={x:Static ObjectConverters.IsNotNull}}"
+            ToolTip.Tip="{Binding UserSection.Tooltip}"
+            AutomationProperties.Name="{x:Static res:Strings.Session_UserMenu}">
+      <Button.Flyout>
+        <MenuFlyout Placement="RightEdgeAlignedBottom" ItemsSource="{Binding UserSection.Actions}">
+          <MenuFlyout.ItemContainerTheme>
+            <ControlTheme TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}" x:DataType="auth:UserMenuAction">
+              <Setter Property="Header" Value="{Binding Title}" />
+              <Setter Property="Command" Value="{Binding Command}" />
+              <Setter Property="MinHeight" Value="44" />
+            </ControlTheme>
+          </MenuFlyout.ItemContainerTheme>
+        </MenuFlyout>
+      </Button.Flyout>
+      <StackPanel Orientation="Horizontal" Spacing="12">
+        <Border Width="32" Height="32" CornerRadius="16" Background="{DynamicResource SystemAccentColor}">
+          <TextBlock Text="{Binding UserSection.Initials}" Foreground="White" FontWeight="SemiBold"
+                     HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Border>
+        <StackPanel VerticalAlignment="Center" IsVisible="{Binding !IsCollapsed}">
+          <TextBlock Text="{Binding UserSection.DisplayName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" MaxWidth="150" />
+          <TextBlock Text="{Binding UserSection.RoleText}" FontSize="12" Opacity="0.75" />
+        </StackPanel>
+      </StackPanel>
     </Button>
 
     <ScrollViewer HorizontalScrollBarVisibility="Disabled">

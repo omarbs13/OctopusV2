@@ -10,6 +10,7 @@ using Pos.Desktop.Forms;
 using Pos.Desktop.Navigation;
 using Pos.Desktop.Resources;
 using Pos.Domain.Inventory;
+using Pos.Domain.Users;
 
 namespace Pos.Desktop.Inventory;
 
@@ -57,8 +58,13 @@ public sealed partial class StockViewModel : PageViewModel, INavigationArgumentR
     private int _searchVersion;
     private bool _suppressAutoSearch;
 
-    public StockViewModel(UseCases useCases, OperationRunner runner, Func<MovementEditorViewModel> editorFactory)
+    public StockViewModel(
+        UseCases useCases,
+        OperationRunner runner,
+        Func<MovementEditorViewModel> editorFactory,
+        ICurrentPermissions? permissions = null)
     {
+        CanRegisterMovements = permissions?.Has(Permission.RegisterMovements) ?? true;
         _useCases = useCases;
         _runner = runner;
         _editorFactory = editorFactory;
@@ -75,6 +81,9 @@ public sealed partial class StockViewModel : PageViewModel, INavigationArgumentR
     }
 
     public override string Title => Strings.Nav_Stock;
+
+    /// <summary>Puede registrar movimientos de inventario; el Cajero solo consulta (FR-010).</summary>
+    public bool CanRegisterMovements { get; }
 
     public IReadOnlyList<StockFilterOption> FilterOptions { get; }
 
@@ -195,7 +204,7 @@ public sealed partial class StockViewModel : PageViewModel, INavigationArgumentR
     [RelayCommand(CanExecute = nameof(HasSelection))]
     private async Task RegisterMovementAsync()
     {
-        if (SelectedRow is not { } row)
+        if (!CanRegisterMovements || SelectedRow is not { } row)
         {
             return;
         }

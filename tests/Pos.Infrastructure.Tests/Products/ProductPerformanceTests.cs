@@ -50,7 +50,7 @@ public sealed class ProductPerformanceTests : IAsyncLifetime
     private async Task<ProductPage> SearchAsync(string? text, bool includeInactive = false, int page = 1)
     {
         await using var context = _db.CreateDbContext();
-        return (await new SearchProductsHandler(new ProductRepository(context))
+        return (await new SearchProductsHandler(new AllowAllAccessControl(), new ProductRepository(context))
             .HandleAsync(new SearchProductsQuery(text, includeInactive, page), Ct)).Value;
     }
 
@@ -109,7 +109,7 @@ public sealed class ProductPerformanceTests : IAsyncLifetime
         var watch = Stopwatch.StartNew();
         await using (var context = _db.CreateDbContext())
         {
-            var created = await new CreateProductHandler(new ProductRepository(context), new CreateProductValidator())
+            var created = await new CreateProductHandler(new AllowAllAccessControl(), new ProductRepository(context), new CreateProductValidator())
                 .HandleAsync(new CreateProductCommand("Nuevo producto", "NUEVO-1", null, "10.00", "H87"), Ct);
             Assert.True(created.IsSuccess);
         }
