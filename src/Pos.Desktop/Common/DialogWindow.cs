@@ -16,7 +16,13 @@ internal sealed class DialogWindow : Window
     /// <param name="message">Mensaje.</param>
     /// <param name="buttons">Botones, en orden de izquierda a derecha.</param>
     /// <param name="defaultResult">Valor de la opción segura: recibe el foco y se usa con Esc o al cerrar la ventana.</param>
-    public DialogWindow(string title, string message, IReadOnlyList<DialogButton> buttons, object defaultResult)
+    /// <param name="escapeResult">Valor con Esc y al cerrar la ventana, si es distinto de <paramref name="defaultResult"/>.</param>
+    public DialogWindow(
+        string title,
+        string message,
+        IReadOnlyList<DialogButton> buttons,
+        object defaultResult,
+        object? escapeResult = null)
     {
         ArgumentNullException.ThrowIfNull(buttons);
         Title = title;
@@ -25,7 +31,7 @@ internal sealed class DialogWindow : Window
         CanResize = false;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         ShowInTaskbar = false;
-        Result = defaultResult;
+        Result = escapeResult ?? defaultResult;
 
         var panel = new StackPanel
         {
@@ -73,7 +79,7 @@ internal sealed class DialogWindow : Window
         {
             if (e.Key == Key.Escape)
             {
-                Finish(defaultResult);
+                Finish(escapeResult ?? defaultResult);
             }
         };
     }

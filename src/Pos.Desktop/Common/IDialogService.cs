@@ -10,6 +10,12 @@ public interface IDialogService
     /// <summary>Pide confirmación. La opción predeterminada (Enter o Esc) es cancelar.</summary>
     Task<bool> ConfirmAsync(string title, string message, string confirmText);
 
+    /// <summary>
+    /// Pregunta con dos opciones; la primaria es la predeterminada (Enter) y devuelve verdadero. Esc
+    /// elige la secundaria. Sirve para decisiones sin riesgo, como recuperar la venta en curso.
+    /// </summary>
+    Task<bool> AskAsync(string title, string message, string primaryText, string secondaryText);
+
     /// <summary>Cambios sin guardar: Guardar, Descartar o Seguir editando (la opción predeterminada).</summary>
     Task<UnsavedChangesChoice> AskUnsavedChangesAsync();
 

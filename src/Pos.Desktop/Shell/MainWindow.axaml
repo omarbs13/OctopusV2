@@ -12,6 +12,7 @@
 
   <Window.KeyBindings>
     <KeyBinding Gesture="Ctrl+B" Command="{Binding Menu.ToggleCommand}" />
+    <KeyBinding Gesture="F9" Command="{Binding OpenPointOfSaleCommand}" />
   </Window.KeyBindings>
 
   <SplitView DisplayMode="CompactInline"

@@ -12,6 +12,11 @@ public interface IInventoryRepository
     /// <summary>Existencia con seguimiento de cambios, o nula si el producto no tiene movimientos.</summary>
     Task<ProductStock?> GetStockAsync(Guid productId, CancellationToken cancellationToken);
 
+    /// <summary>Existencias con seguimiento de cambios de los productos indicados; sin fila, no aparecen.</summary>
+    Task<IReadOnlyDictionary<Guid, ProductStock>> GetStocksAsync(
+        IReadOnlyCollection<Guid> productIds,
+        CancellationToken cancellationToken);
+
     /// <summary>Indica si el producto tiene movimientos (existe su fila de existencia).</summary>
     Task<bool> HasMovementsAsync(Guid productId, CancellationToken cancellationToken);
 

@@ -1,0 +1,157 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Pos.Desktop.Sales"
+             xmlns:res="using:Pos.Desktop.Resources"
+             x:Class="Pos.Desktop.Sales.PointOfSaleView"
+             x:DataType="vm:PointOfSaleViewModel">
+
+  <UserControl.Styles>
+    <!-- Botones táctiles: alto mínimo de 48 px (FR-008). -->
+    <Style Selector="Button.touch">
+      <Setter Property="MinHeight" Value="48" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.pay">
+      <Setter Property="MinHeight" Value="72" />
+      <Setter Property="FontSize" Value="22" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="Border.unavailable">
+      <Setter Property="Background" Value="#40F5A623" />
+    </Style>
+    <Style Selector="TextBlock.warning">
+      <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCriticalBrush}" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+    <Style Selector="TextBlock.error">
+      <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCriticalBrush}" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+      <Setter Property="FontSize" Value="12" />
+    </Style>
+  </UserControl.Styles>
+
+  <Grid>
+    <Grid RowDefinitions="*,Auto" ColumnDefinitions="*,300">
+      <!-- Captura y líneas -->
+      <DockPanel Grid.Row="0" Grid.Column="0" Margin="0,0,16,0">
+        <TextBox x:Name="CaptureBox" DockPanel.Dock="Top" MinHeight="52" FontSize="20" Margin="0,0,0,8"
+                 Text="{Binding CaptureText}"
+                 PlaceholderText="{x:Static res:Strings.Sale_CapturePlaceholder}"
+                 AutomationProperties.Name="{x:Static res:Strings.Sale_CapturePlaceholder}">
+          <TextBox.KeyBindings>
+            <KeyBinding Gesture="Enter" Command="{Binding CaptureCommand}" />
+          </TextBox.KeyBindings>
+        </TextBox>
+
+        <!-- Resultado de la última venta -->
+        <Border DockPanel.Dock="Top" Margin="0,0,0,8" Padding="16" CornerRadius="6"
+                Background="#3327AE60"
+                IsVisible="{Binding HasLastSale}">
+          <StackPanel Spacing="4">
+            <TextBlock Text="{Binding LastSaleText}" FontSize="18" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding LastChangeText}" FontSize="36" FontWeight="Bold" />
+          </StackPanel>
+        </Border>
+
+        <!-- Cantidad de la línea seleccionada -->
+        <Border DockPanel.Dock="Top" Margin="0,0,0,8" Padding="12" CornerRadius="6" BorderThickness="1"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                IsVisible="{Binding IsEditingQuantity}">
+          <StackPanel Spacing="4">
+            <TextBlock Text="{x:Static res:Strings.Sale_QuantityPrompt}" FontWeight="SemiBold" />
+            <TextBox x:Name="QuantityBox" MinHeight="44" MaxWidth="240" HorizontalAlignment="Left"
+                     Text="{Binding QuantityEditText}">
+              <TextBox.KeyBindings>
+                <KeyBinding Gesture="Enter" Command="{Binding ApplyQuantityCommand}" />
+                <KeyBinding Gesture="Escape" Command="{Binding CancelQuantityEditCommand}" />
+              </TextBox.KeyBindings>
+            </TextBox>
+            <TextBlock Classes="error" Text="{Binding QuantityEditError}"
+                       IsVisible="{Binding QuantityEditError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+          </StackPanel>
+        </Border>
+
+        <!-- Encabezados -->
+        <Grid DockPanel.Dock="Top" Margin="12,0,12,4" ColumnDefinitions="*,110,110,110,120">
+          <Grid.Styles>
+            <Style Selector="TextBlock">
+              <Setter Property="FontWeight" Value="SemiBold" />
+            </Style>
+          </Grid.Styles>
+          <TextBlock Grid.Column="0" Text="{x:Static res:Strings.Sale_ColName}" />
+          <TextBlock Grid.Column="1" Text="{x:Static res:Strings.Sale_ColSku}" />
+          <TextBlock Grid.Column="2" Text="{x:Static res:Strings.Sale_ColQuantity}" TextAlignment="Right" />
+          <TextBlock Grid.Column="3" Text="{x:Static res:Strings.Sale_ColPrice}" TextAlignment="Right" />
+          <TextBlock Grid.Column="4" Text="{x:Static res:Strings.Sale_ColAmount}" TextAlignment="Right" />
+        </Grid>
+
+        <Panel>
+          <ListBox x:Name="LinesList" ItemsSource="{Binding Lines}" SelectedItem="{Binding SelectedLine}">
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="vm:CartLineRow">
+                <Border Classes.unavailable="{Binding IsUnavailable}" MinHeight="44" Padding="0,4">
+                  <Grid ColumnDefinitions="*,110,110,110,120">
+                    <Grid.Styles>
+                      <Style Selector="TextBlock">
+                        <Setter Property="VerticalAlignment" Value="Center" />
+                      </Style>
+                    </Grid.Styles>
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                      <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                      <TextBlock Text="{Binding UnavailableText}" FontSize="12" Classes="warning"
+                                 IsVisible="{Binding IsUnavailable}" />
+                    </StackPanel>
+                    <TextBlock Grid.Column="1" Text="{Binding Sku}" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Grid.Column="2" Text="{Binding QuantityText}" TextAlignment="Right" />
+                    <TextBlock Grid.Column="3" Text="{Binding PriceText}" TextAlignment="Right" />
+                    <TextBlock Grid.Column="4" Text="{Binding AmountText}" TextAlignment="Right" FontWeight="SemiBold" />
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+          <TextBlock Text="{x:Static res:Strings.Sale_Empty}" Margin="12" Opacity="0.7" TextWrapping="Wrap"
+                     HorizontalAlignment="Center" VerticalAlignment="Top"
+                     IsVisible="{Binding !HasLines}" />
+        </Panel>
+      </DockPanel>
+
+      <!-- Total y acciones -->
+      <StackPanel Grid.Row="0" Grid.Column="1" Spacing="10">
+        <TextBlock Text="{x:Static res:Strings.Sale_Total}" FontSize="16" FontWeight="SemiBold" />
+        <TextBlock Text="{Binding TotalText}" FontSize="52" FontWeight="Bold" TextWrapping="Wrap" />
+        <TextBlock Text="{Binding ItemsText}" Opacity="0.8" />
+        <TextBlock Classes="warning" Text="{x:Static res:Strings.Sale_RemoveMarkedLines}"
+                   IsVisible="{Binding HasUnavailableLines}" />
+
+        <Button Classes="touch pay accent" Content="{x:Static res:Strings.Sale_Pay}"
+                Command="{Binding CheckoutCommand}" Margin="0,8,0,0" />
+        <Button Classes="touch" Content="{x:Static res:Strings.Sale_Search}" Command="{Binding SearchCommand}" />
+        <Button Classes="touch" Content="{x:Static res:Strings.Sale_Quantity}" Command="{Binding ChangeQuantityCommand}" />
+        <Button Classes="touch" Content="{x:Static res:Strings.Sale_Remove}" Command="{Binding RemoveLineCommand}" />
+        <Button Classes="touch" Content="{x:Static res:Strings.Sale_CancelSale}" Command="{Binding CancelSaleCommand}" />
+      </StackPanel>
+
+      <!-- Barra inferior: aviso y atajos (FR-008) -->
+      <Grid Grid.Row="1" Grid.ColumnSpan="2" Margin="0,8,0,0" ColumnDefinitions="*,Auto">
+        <TextBlock Grid.Column="0" Text="{Binding StatusMessage}" Classes.warning="{Binding StatusIsWarning}"
+                   VerticalAlignment="Center" TextWrapping="Wrap" />
+        <TextBlock Grid.Column="1" Text="{x:Static res:Strings.Sale_Shortcuts}" Opacity="0.7" VerticalAlignment="Center" />
+      </Grid>
+    </Grid>
+
+    <!-- Selector de productos (búsqueda por nombre) -->
+    <Grid Background="#99000000" IsVisible="{Binding Chooser, Converter={x:Static ObjectConverters.IsNotNull}}">
+      <ContentControl Content="{Binding Chooser}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+    </Grid>
+
+    <!-- Cobro -->
+    <Grid Background="#99000000" IsVisible="{Binding Checkout, Converter={x:Static ObjectConverters.IsNotNull}}">
+      <ScrollViewer HorizontalAlignment="Center" VerticalAlignment="Center">
+        <ContentControl Content="{Binding Checkout}" />
+      </ScrollViewer>
+    </Grid>
+  </Grid>
+</UserControl>

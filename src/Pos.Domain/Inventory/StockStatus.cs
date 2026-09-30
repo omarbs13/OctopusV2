@@ -13,12 +13,12 @@ public enum StockStatus
 public static class StockStatusRule
 {
     /// <summary>
-    /// Sin existencia si es 0; baja si es mayor que 0 y no supera el mínimo definido; normal en otro
+    /// Sin existencia si es 0 o menor (las ventas pueden dejarla negativa); baja si es mayor que 0 y no supera el mínimo definido; normal en otro
     /// caso. Infrastructure replica este predicado en SQL (research §8).
     /// </summary>
-    public static StockStatus Evaluate(Quantity onHand, Quantity? minimum)
+    public static StockStatus Evaluate(StockLevel onHand, Quantity? minimum)
     {
-        if (onHand == Quantity.Zero)
+        if (onHand <= StockLevel.Zero)
         {
             return StockStatus.Out;
         }

@@ -1,0 +1,117 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Pos.Desktop.Sales"
+             xmlns:res="using:Pos.Desktop.Resources"
+             xmlns:dom="using:Pos.Domain.Sales"
+             x:Class="Pos.Desktop.Sales.CheckoutView"
+             x:DataType="vm:CheckoutViewModel">
+
+  <UserControl.Styles>
+    <Style Selector="Button.touch">
+      <Setter Property="MinHeight" Value="48" />
+      <Setter Property="MinWidth" Value="72" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="TextBlock.section">
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Margin" Value="0,4,0,0" />
+    </Style>
+    <Style Selector="TextBlock.error">
+      <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCriticalBrush}" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+    <Style Selector="TextBlock.shortfall">
+      <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCriticalBrush}" />
+    </Style>
+  </UserControl.Styles>
+
+  <Border Width="560" Padding="20" CornerRadius="8" BorderThickness="1"
+          Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+          BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
+    <StackPanel Spacing="10">
+      <!-- Encabezado: total, pagado y pendiente o cambio -->
+      <Grid ColumnDefinitions="*,Auto">
+        <StackPanel>
+          <TextBlock Text="{x:Static res:Strings.Checkout_Title}" FontSize="16" FontWeight="SemiBold" />
+          <TextBlock Text="{Binding TotalText}" FontSize="40" FontWeight="Bold" />
+        </StackPanel>
+        <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+          <TextBlock Text="{x:Static res:Strings.Checkout_Paid}" FontSize="12" HorizontalAlignment="Right" />
+          <TextBlock Text="{Binding PaidText}" FontSize="20" HorizontalAlignment="Right" />
+        </StackPanel>
+      </Grid>
+      <TextBlock Text="{Binding ShortfallText}" Classes="shortfall" FontSize="28" FontWeight="Bold"
+                 IsVisible="{Binding HasShortfall}" />
+      <TextBlock Text="{Binding ChangeText}" FontSize="28" FontWeight="Bold"
+                 IsVisible="{Binding !HasShortfall}" />
+
+      <!-- Efectivo -->
+      <TextBlock Classes="section" Text="{x:Static res:Strings.Checkout_Cash}" />
+      <TextBox x:Name="ReceivedBox" Text="{Binding ReceivedText}" MinHeight="48" FontSize="20"
+               PlaceholderText="{x:Static res:Strings.Checkout_Received}" />
+      <WrapPanel>
+        <Button Classes="touch" Margin="0,0,6,6" Content="{x:Static res:Strings.Checkout_Exact}"
+                Command="{Binding QuickAmountCommand}" CommandParameter="exact" />
+        <ItemsControl ItemsSource="{x:Static dom:Checkout.Bills}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <WrapPanel />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="x:Int32">
+              <Button Classes="touch" Margin="0,0,6,6"
+                      Content="{Binding StringFormat='${0:N0}'}"
+                      Command="{Binding $parent[UserControl].((vm:CheckoutViewModel)DataContext).QuickAmountCommand}"
+                      CommandParameter="{Binding}" />
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </WrapPanel>
+
+      <!-- Tarjeta o transferencia -->
+      <TextBlock Classes="section" Text="{x:Static res:Strings.Checkout_NonCash}" />
+      <Grid ColumnDefinitions="150,*,*,Auto" ColumnSpacing="8">
+        <ComboBox x:Name="MethodBox" Grid.Column="0" HorizontalAlignment="Stretch" MinHeight="48"
+                  ItemsSource="{Binding MethodOptions}"
+                  SelectedItem="{Binding SelectedMethod}"
+                  DisplayMemberBinding="{Binding Label, x:DataType=vm:PaymentMethodOption}" />
+        <TextBox x:Name="AmountBox" Grid.Column="1" Text="{Binding NonCashAmountText}" MinHeight="48"
+                 PlaceholderText="{x:Static res:Strings.Checkout_Amount}" />
+        <TextBox x:Name="ReferenceBox" Grid.Column="2" Text="{Binding NonCashReference}" MinHeight="48" MaxLength="50"
+                 PlaceholderText="{x:Static res:Strings.Checkout_Reference}" />
+        <Button Grid.Column="3" Classes="touch" Content="{x:Static res:Strings.Checkout_AddPayment}"
+                Command="{Binding AddPaymentCommand}" />
+      </Grid>
+
+      <ListBox x:Name="PaymentsList" MaxHeight="120"
+               ItemsSource="{Binding Payments}"
+               SelectedItem="{Binding SelectedPayment}">
+        <ListBox.ItemTemplate>
+          <DataTemplate x:DataType="vm:CheckoutPaymentRow">
+            <Grid ColumnDefinitions="120,120,*" MinHeight="32">
+              <TextBlock Text="{Binding MethodText}" VerticalAlignment="Center" />
+              <TextBlock Grid.Column="1" Text="{Binding AmountText}" VerticalAlignment="Center" />
+              <TextBlock Grid.Column="2" Text="{Binding ReferenceText}" VerticalAlignment="Center" Opacity="0.7" />
+            </Grid>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+      <Button Classes="touch" HorizontalAlignment="Left" Content="{x:Static res:Strings.Checkout_RemovePayment}"
+              Command="{Binding RemovePaymentCommand}" IsVisible="{Binding SelectedPayment, Converter={x:Static ObjectConverters.IsNotNull}}" />
+
+      <TextBlock Classes="error" Text="{Binding ErrorMessage}"
+                 IsVisible="{Binding ErrorMessage, Converter={x:Static ObjectConverters.IsNotNull}}" />
+
+      <TextBlock Text="{x:Static res:Strings.Checkout_Hint}" FontSize="12" Opacity="0.7" TextWrapping="Wrap" />
+
+      <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+        <Button Classes="touch accent" MinWidth="160" Content="{x:Static res:Strings.Checkout_Confirm}"
+                Command="{Binding ConfirmCommand}" />
+        <Button Classes="touch" MinWidth="110" Content="{x:Static res:Strings.Common_Cancel}"
+                Command="{Binding CancelCommand}" />
+      </StackPanel>
+    </StackPanel>
+  </Border>
+</UserControl>

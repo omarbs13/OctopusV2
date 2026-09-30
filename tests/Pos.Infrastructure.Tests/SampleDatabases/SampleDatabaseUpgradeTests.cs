@@ -70,6 +70,7 @@ public sealed class SampleDatabaseUpgradeTests
         }
 
         AssertInventory(connection, sampleFile);
+        AssertSales(connection, sampleFile);
 
         foreach (var index in new[] { "IX_Products_Sku", "IX_Products_Barcode", "IX_Products_NameSearch" })
         {
@@ -97,12 +98,60 @@ public sealed class SampleDatabaseUpgradeTests
             Assert.Equal(SampleData.InventoryMovementCount, Scalar<long>(connection, "SELECT COUNT(*) FROM InventoryMovements"));
             Assert.Equal(4, Scalar<long>(connection, "SELECT COUNT(DISTINCT Type) FROM InventoryMovements"));
         }
+        else if (sampleFile == "v0.4.0.db")
+        {
+            // 005: la existencia negativa, los movimientos de venta y las ventas se conservan tal cual.
+            Assert.Equal(2, Scalar<long>(connection, "SELECT COUNT(*) FROM Products WHERE TracksInventory = 1"));
+            Assert.Equal(SampleData.NegativeStockThousandths, Scalar<long>(connection, $"SELECT s.OnHand FROM ProductStocks s JOIN Products p ON p.Id = s.ProductId WHERE p.Sku = '{SampleData.NegativeStockSku}'"));
+            Assert.Equal(SampleData.InventoryOnHandAfterSalesThousandths, Scalar<long>(connection, $"SELECT s.OnHand FROM ProductStocks s JOIN Products p ON p.Id = s.ProductId WHERE p.Sku = '{SampleData.InventorySku}'"));
+            Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM InventoryMovements WHERE Type = 'SALE_CANCEL'"));
+            Assert.Equal(3, Scalar<long>(connection, "SELECT COUNT(*) FROM InventoryMovements WHERE Type = 'SALE'"));
+            Assert.Equal(
+                0,
+                Scalar<long>(connection, """
+                    SELECT COUNT(*) FROM ProductStocks s
+                    WHERE s.OnHand <> (SELECT IFNULL(SUM(CASE WHEN m.Type IN ('ADJUST_OUT', 'SALE') THEN -m.Quantity ELSE m.Quantity END), 0)
+                                       FROM InventoryMovements m WHERE m.ProductId = s.ProductId)
+                    """));
+        }
         else
         {
             Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM Products WHERE TracksInventory <> 0 OR MinimumStock IS NOT NULL"));
             Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM ProductStocks"));
             Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM InventoryMovements"));
         }
+    }
+
+    /// <summary>
+    /// 005: las bases anteriores quedan con las tablas de ventas vacías; la de 0.4.0 conserva sus
+    /// ventas, pagos, borrador y bitácora, y las ventas cuadran con sus líneas y pagos.
+    /// </summary>
+    private static void AssertSales(SqliteConnection connection, string sampleFile)
+    {
+        if (sampleFile != "v0.4.0.db")
+        {
+            foreach (var table in new[] { "Sales", "SaleLines", "SalePayments", "SaleDrafts", "AuditEntries" })
+            {
+                Assert.Equal(0, Scalar<long>(connection, $"SELECT COUNT(*) FROM {table}"));
+            }
+
+            return;
+        }
+
+        Assert.Equal(SampleData.SaleCount, Scalar<long>(connection, "SELECT COUNT(*) FROM Sales"));
+        Assert.Equal("1,2,3", Scalar<string>(connection, "SELECT group_concat(FolioNumber) FROM (SELECT FolioNumber FROM Sales ORDER BY FolioNumber)"));
+        Assert.Equal(1, Scalar<long>(connection, $"SELECT COUNT(*) FROM Sales WHERE Status = 'CANCELLED' AND CancellationReason = '{SampleData.CancellationReason}' AND CancelledAt IS NOT NULL"));
+        Assert.Equal(4, Scalar<long>(connection, "SELECT COUNT(*) FROM SaleLines"));
+        Assert.Equal(3, Scalar<long>(connection, "SELECT COUNT(*) FROM SalePayments"));
+        Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM SaleDrafts"));
+        Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM AuditEntries WHERE Action = 'SALE_CANCELLED' AND EntityType = 'Sale'"));
+        Assert.Equal(
+            0,
+            Scalar<long>(connection, """
+                SELECT COUNT(*) FROM Sales s
+                WHERE s.TotalCents <> (SELECT SUM(AmountCents) FROM SaleLines WHERE SaleId = s.Id)
+                   OR s.TotalCents <> (SELECT SUM(AmountCents) FROM SalePayments WHERE SaleId = s.Id)
+                """));
     }
 
     private static T Scalar<T>(SqliteConnection connection, string sql)

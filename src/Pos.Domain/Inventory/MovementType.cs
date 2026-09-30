@@ -9,11 +9,14 @@ public enum MovementType
     Receipt,
     AdjustIn,
     AdjustOut,
+    Sale,
+    SaleCancellation,
 }
 
 public static class MovementTypeExtensions
 {
-    public static bool IsIncrease(this MovementType type) => type != MovementType.AdjustOut;
+    public static bool IsIncrease(this MovementType type) =>
+        type is not (MovementType.AdjustOut or MovementType.Sale);
 
     public static bool RequiresReason(this MovementType type) =>
         type is MovementType.AdjustIn or MovementType.AdjustOut;
@@ -25,6 +28,8 @@ public static class MovementTypeExtensions
         MovementType.Receipt => "RECEIPT",
         MovementType.AdjustIn => "ADJUST_IN",
         MovementType.AdjustOut => "ADJUST_OUT",
+        MovementType.Sale => "SALE",
+        MovementType.SaleCancellation => "SALE_CANCEL",
         _ => throw new DomainException("El tipo de movimiento no es válido."),
     };
 
@@ -34,6 +39,8 @@ public static class MovementTypeExtensions
         "RECEIPT" => MovementType.Receipt,
         "ADJUST_IN" => MovementType.AdjustIn,
         "ADJUST_OUT" => MovementType.AdjustOut,
+        "SALE" => MovementType.Sale,
+        "SALE_CANCEL" => MovementType.SaleCancellation,
         _ => throw new DomainException("El tipo de movimiento no es válido."),
     };
 }

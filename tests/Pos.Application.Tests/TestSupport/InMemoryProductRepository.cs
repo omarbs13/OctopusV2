@@ -114,6 +114,48 @@ public sealed class InMemoryProductRepository : IProductRepository
         return Task.FromResult<int?>(index < 0 ? null : (index / search.PageSize) + 1);
     }
 
+    public Task<IReadOnlyList<Product>> FindForSaleAsync(string code, CancellationToken cancellationToken)
+    {
+        ThrowIfFailing();
+        var barcode = Product.NormalizeBarcode(code);
+        var sku = Product.NormalizeSku(code);
+        IReadOnlyList<Product> found = _stored.Values
+            .Where(p => p.Sku == sku || (barcode is not null && p.Barcode == barcode))
+            .Select(Clone)
+            .ToList();
+        return Task.FromResult(found);
+    }
+
+    public Task<IReadOnlyList<Product>> SearchForSaleAsync(string nameText, int limit, CancellationToken cancellationToken)
+    {
+        ThrowIfFailing();
+        IReadOnlyList<Product> found = _stored.Values
+            .Where(p => !p.IsDeleted
+                && (p.NameSearch.Contains(nameText, StringComparison.Ordinal)
+                    || p.Sku.Contains(nameText.ToUpperInvariant(), StringComparison.Ordinal)
+                    || (p.Barcode is not null && p.Barcode.Contains(nameText, StringComparison.Ordinal))))
+            .OrderByDescending(p => p.IsActive)
+            .ThenBy(p => p.NameSearch, StringComparer.Ordinal)
+            .ThenBy(p => p.Sku, StringComparer.Ordinal)
+            .Take(limit)
+            .Select(Clone)
+            .ToList();
+        return Task.FromResult(found);
+    }
+
+    public Task<IReadOnlyList<Product>> GetManyAsync(
+        IReadOnlyCollection<Guid> ids,
+        bool includeDeleted,
+        CancellationToken cancellationToken)
+    {
+        ThrowIfFailing();
+        IReadOnlyList<Product> found = _stored.Values
+            .Where(p => ids.Contains(p.Id) && (includeDeleted || !p.IsDeleted))
+            .Select(Clone)
+            .ToList();
+        return Task.FromResult(found);
+    }
+
     public void Add(Product product)
     {
         ThrowIfFailing();

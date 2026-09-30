@@ -36,6 +36,12 @@ public abstract partial class DashboardCard : ViewModelBase
 
     public abstract DashboardCardKind Kind { get; }
 
+    /// <summary>Barras de la gráfica; vacío en las tarjetas que no son gráficas (<see cref="ChartCard"/>).</summary>
+    public virtual IReadOnlyList<ChartBar> Bars => [];
+
+    /// <summary>Las barras se dibujan en horizontal (ranking) en lugar de en vertical (serie por día).</summary>
+    public virtual bool IsHorizontal => false;
+
     /// <summary>Id de la opción de menú a la que lleva la tarjeta, si tiene.</summary>
     public virtual string? NavigateTo => null;
 
@@ -46,7 +52,7 @@ public abstract partial class DashboardCard : ViewModelBase
     [NotifyPropertyChangedFor(nameof(IsNavigable), nameof(IsReady), nameof(IsEmpty), nameof(IsError), nameof(IsLoading))]
     public partial DashboardCardState State { get; private set; } = DashboardCardState.Loading;
 
-    /// <summary>Valor ya formateado; solo en <see cref="DashboardCardState.Ready"/>.</summary>
+    /// <summary>Valor ya formateado; solo en <see cref="DashboardCardState.Ready"/>. Puede faltar en una gráfica.</summary>
     [ObservableProperty]
     public partial string? Value { get; private set; }
 
@@ -86,7 +92,7 @@ public abstract partial class DashboardCard : ViewModelBase
     /// <summary>Obtiene los datos y llama a <see cref="SetReady"/> o <see cref="SetEmpty"/>.</summary>
     protected abstract Task LoadCoreAsync();
 
-    protected void SetReady(string value)
+    protected void SetReady(string? value)
     {
         Value = value;
         Message = null;

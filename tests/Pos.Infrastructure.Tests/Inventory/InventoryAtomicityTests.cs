@@ -63,6 +63,9 @@ public sealed class InventoryAtomicityTests : IAsyncLifetime
     {
         public Task<ProductStock?> GetStockAsync(Guid productId, CancellationToken ct) => inner.GetStockAsync(productId, ct);
 
+        public Task<IReadOnlyDictionary<Guid, ProductStock>> GetStocksAsync(IReadOnlyCollection<Guid> productIds, CancellationToken ct) =>
+            inner.GetStocksAsync(productIds, ct);
+
         public Task<bool> HasMovementsAsync(Guid productId, CancellationToken ct) => inner.HasMovementsAsync(productId, ct);
 
         public void AddStock(ProductStock stock) => inner.AddStock(stock);

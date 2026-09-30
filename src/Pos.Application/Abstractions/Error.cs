@@ -33,5 +33,17 @@ public enum InvalidImageReason
     DimensionsTooLarge,
 }
 
+/// <summary>
+/// Al confirmar la venta, un precio cambió o una línea dejó de ser vendible; no se guardó nada
+/// (005, research §5). Trae la revisión vigente de cada línea.
+/// </summary>
+public sealed record SaleChanged(IReadOnlyList<Pos.Application.Sales.SaleLineReview> Lines) : Error;
+
+/// <summary>El borrador ya tiene una venta registrada; la interfaz lo trata como éxito (005, FR-020).</summary>
+public sealed record AlreadyRegistered(Guid SaleId, string Folio) : Error;
+
+/// <summary>La operación no aplica al estado actual del registro, por ejemplo cancelar una venta cancelada.</summary>
+public sealed record InvalidState(string Message) : Error;
+
 /// <summary>La exportación de diagnóstico no pudo completarse.</summary>
 public sealed record ExportFailed(string Message) : Error;

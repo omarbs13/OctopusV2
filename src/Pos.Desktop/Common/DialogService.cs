@@ -23,6 +23,15 @@ internal sealed class DialogService : IDialogService
             [new DialogButton(confirmText, true), new DialogButton(Strings.Common_Cancel, false)],
             false));
 
+    /// <summary>La primaria es la opción predeterminada (Enter); Esc elige la secundaria.</summary>
+    public async Task<bool> AskAsync(string title, string message, string primaryText, string secondaryText) =>
+        (bool)await ShowAsync(new DialogWindow(
+            title,
+            message,
+            [new DialogButton(primaryText, true, IsAccent: true), new DialogButton(secondaryText, false)],
+            true,
+            escapeResult: false));
+
     /// <summary>La opción predeterminada (Enter y Esc) es la segura: seguir editando.</summary>
     public async Task<UnsavedChangesChoice> AskUnsavedChangesAsync() =>
         (UnsavedChangesChoice)await ShowAsync(new DialogWindow(

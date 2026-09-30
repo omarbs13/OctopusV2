@@ -29,6 +29,24 @@ public interface IProductRepository
     /// </summary>
     Task<int?> LocatePageAsync(ProductSearch search, Guid productId, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Productos cuyo código de barras es exactamente <paramref name="code"/> o cuyo SKU normalizado
+    /// lo es. Incluye inactivos y borrados, sin seguimiento, para poder informar el motivo (005, §8).
+    /// </summary>
+    Task<IReadOnlyList<Product>> FindForSaleAsync(string code, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Búsqueda por nombre, SKU o código de barras para vender: activos primero, sin borrados, hasta
+    /// <paramref name="limit"/> resultados y sin seguimiento. <paramref name="nameText"/> ya viene normalizado.
+    /// </summary>
+    Task<IReadOnlyList<Product>> SearchForSaleAsync(string nameText, int limit, CancellationToken cancellationToken);
+
+    /// <summary>Productos por id, sin seguimiento; los borrados solo con <paramref name="includeDeleted"/>.</summary>
+    Task<IReadOnlyList<Product>> GetManyAsync(
+        IReadOnlyCollection<Guid> ids,
+        bool includeDeleted,
+        CancellationToken cancellationToken);
+
     void Add(Product product);
 
     /// <summary>

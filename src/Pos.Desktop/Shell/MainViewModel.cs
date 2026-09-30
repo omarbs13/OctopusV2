@@ -1,7 +1,9 @@
+using CommunityToolkit.Mvvm.Input;
 using Pos.Application.Abstractions;
 using Pos.Desktop.Common;
 using Pos.Desktop.Navigation;
 using Pos.Desktop.Resources;
+using Pos.Desktop.Sales;
 
 namespace Pos.Desktop.Shell;
 
@@ -36,6 +38,10 @@ public sealed partial class MainViewModel : ViewModelBase
         var first = Registry.FindEntry(HomeEntryId) ?? (Registry.Entries.Count > 0 ? Registry.Entries[0] : null);
         return first is null ? Task.FromResult(false) : Navigator.NavigateAsync(first.Id);
     }
+
+    /// <summary>F9: abre el Punto de venta desde cualquier pantalla.</summary>
+    [RelayCommand]
+    private Task<bool> OpenPointOfSaleAsync() => Navigator.NavigateAsync(SalesModule.PointOfSalePageId);
 
     /// <summary>La ventana se puede cerrar si la pantalla actual lo permite (cambios sin guardar).</summary>
     public Task<bool> CanCloseAsync() => Navigator.CanLeaveCurrentAsync();

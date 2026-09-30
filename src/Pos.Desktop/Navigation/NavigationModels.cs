@@ -7,7 +7,8 @@ public sealed record NavigationGroup(string Id, string Title, string Icon, int O
 
 /// <summary>
 /// Opción navegable; sin grupo aparece en el primer nivel del menú. <paramref name="Resolve"/> permite
-/// que varias opciones compartan el tipo de ViewModel con instancias propias.
+/// que varias opciones compartan el tipo de ViewModel con instancias propias; <paramref name="Shortcut"/>
+/// es el atajo global que se muestra junto a la opción (por ejemplo, "F9").
 /// </summary>
 public sealed record NavigationEntry(
     string Id,
@@ -16,7 +17,8 @@ public sealed record NavigationEntry(
     int Order,
     string? GroupId,
     Type ViewModelType,
-    Func<IServiceProvider, object>? Resolve = null);
+    Func<IServiceProvider, object>? Resolve = null,
+    string? Shortcut = null);
 
 /// <summary>Asociación de un tipo de ViewModel con la fábrica de su vista.</summary>
 public sealed record ViewRegistration(Type ViewModelType, Func<Control> CreateView);

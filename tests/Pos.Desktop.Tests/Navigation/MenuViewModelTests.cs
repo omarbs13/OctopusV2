@@ -29,8 +29,10 @@ public sealed class MenuViewModelTests : IDisposable
     {
         var menu = CreateMenu();
 
-        Assert.Equal(["home", "catalogs", "inventory", "help"], menu.Items.Select(i => i.Id));
+        Assert.Equal(["home", "sales", "catalogs", "inventory", "help"], menu.Items.Select(i => i.Id));
         Assert.False(menu.Items[0].IsGroup);
+        Assert.Equal(["sales.pos", "sales.history"], Group(menu, "sales").Children.Select(c => c.Id));
+        Assert.Equal("F9", Group(menu, "sales").Children[0].Shortcut);
         Assert.Equal(["catalogs.products"], Group(menu, "catalogs").Children.Select(c => c.Id));
         Assert.Equal(["inventory.stock", "inventory.movements"], Group(menu, "inventory").Children.Select(c => c.Id));
         Assert.Equal(["help.about"], Group(menu, "help").Children.Select(c => c.Id));

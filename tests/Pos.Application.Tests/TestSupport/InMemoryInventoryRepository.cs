@@ -24,6 +24,12 @@ public sealed class InMemoryInventoryRepository : IInventoryRepository
     public Task<ProductStock?> GetStockAsync(Guid productId, CancellationToken cancellationToken) =>
         Task.FromResult(_stocks.GetValueOrDefault(productId));
 
+    public Task<IReadOnlyDictionary<Guid, ProductStock>> GetStocksAsync(
+        IReadOnlyCollection<Guid> productIds,
+        CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyDictionary<Guid, ProductStock>>(
+            _stocks.Where(s => productIds.Contains(s.Key)).ToDictionary(s => s.Key, s => s.Value));
+
     public Task<bool> HasMovementsAsync(Guid productId, CancellationToken cancellationToken) =>
         Task.FromResult(_stocks.ContainsKey(productId));
 

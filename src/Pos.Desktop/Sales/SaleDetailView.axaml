@@ -1,0 +1,88 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Pos.Desktop.Sales"
+             xmlns:res="using:Pos.Desktop.Resources"
+             x:Class="Pos.Desktop.Sales.SaleDetailView"
+             x:DataType="vm:SaleDetailViewModel">
+
+  <UserControl.KeyBindings>
+    <KeyBinding Gesture="Escape" Command="{Binding CancelCommand}" />
+  </UserControl.KeyBindings>
+
+  <UserControl.Styles>
+    <Style Selector="TextBlock.heading">
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+  </UserControl.Styles>
+
+  <StackPanel Spacing="12" MaxWidth="900" HorizontalAlignment="Left">
+    <TextBlock Text="{Binding Title}" FontSize="22" FontWeight="SemiBold" />
+    <TextBlock Text="{Binding HeaderText}" />
+    <TextBlock Text="{Binding CancellationText}" Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+               TextWrapping="Wrap" IsVisible="{Binding IsCancelled}" />
+
+    <!-- Líneas -->
+    <TextBlock Classes="heading" Text="{x:Static res:Strings.SaleDetail_Lines}" />
+    <Grid ColumnDefinitions="*,120,120,120,130" Margin="12,0,12,0">
+      <Grid.Styles>
+        <Style Selector="TextBlock">
+          <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+      </Grid.Styles>
+      <TextBlock Grid.Column="0" Text="{x:Static res:Strings.Sale_ColName}" />
+      <TextBlock Grid.Column="1" Text="{x:Static res:Strings.Sale_ColSku}" />
+      <TextBlock Grid.Column="2" Text="{x:Static res:Strings.Sale_ColQuantity}" TextAlignment="Right" />
+      <TextBlock Grid.Column="3" Text="{x:Static res:Strings.Sale_ColPrice}" TextAlignment="Right" />
+      <TextBlock Grid.Column="4" Text="{x:Static res:Strings.Sale_ColAmount}" TextAlignment="Right" />
+    </Grid>
+    <ItemsControl ItemsSource="{Binding Lines}">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate x:DataType="vm:SaleLineRow">
+          <Grid ColumnDefinitions="*,120,120,120,130" Margin="12,2">
+            <TextBlock Grid.Column="0" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+            <TextBlock Grid.Column="1" Text="{Binding Sku}" TextTrimming="CharacterEllipsis" />
+            <TextBlock Grid.Column="2" Text="{Binding QuantityText}" TextAlignment="Right" />
+            <TextBlock Grid.Column="3" Text="{Binding PriceText}" TextAlignment="Right" />
+            <TextBlock Grid.Column="4" Text="{Binding AmountText}" TextAlignment="Right" />
+          </Grid>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+    <TextBlock Text="{Binding TotalText}" FontSize="26" FontWeight="Bold" HorizontalAlignment="Right" Margin="0,0,12,0" />
+
+    <!-- Pagos -->
+    <TextBlock Classes="heading" Text="{x:Static res:Strings.SaleDetail_Payments}" />
+    <Grid ColumnDefinitions="140,130,130,130,*" Margin="12,0,12,0">
+      <Grid.Styles>
+        <Style Selector="TextBlock">
+          <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+      </Grid.Styles>
+      <TextBlock Grid.Column="0" Text="{x:Static res:Strings.SaleDetail_Method}" />
+      <TextBlock Grid.Column="1" Text="{x:Static res:Strings.SaleDetail_Amount}" TextAlignment="Right" />
+      <TextBlock Grid.Column="2" Text="{x:Static res:Strings.SaleDetail_Received}" TextAlignment="Right" />
+      <TextBlock Grid.Column="3" Text="{x:Static res:Strings.SaleDetail_Change}" TextAlignment="Right" />
+      <TextBlock Grid.Column="4" Text="{x:Static res:Strings.Checkout_Reference}" Margin="12,0,0,0" />
+    </Grid>
+    <ItemsControl ItemsSource="{Binding Payments}">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate x:DataType="vm:SalePaymentRow">
+          <Grid ColumnDefinitions="140,130,130,130,*" Margin="12,2">
+            <TextBlock Grid.Column="0" Text="{Binding MethodText}" />
+            <TextBlock Grid.Column="1" Text="{Binding AmountText}" TextAlignment="Right" />
+            <TextBlock Grid.Column="2" Text="{Binding ReceivedText}" TextAlignment="Right" />
+            <TextBlock Grid.Column="3" Text="{Binding ChangeText}" TextAlignment="Right" />
+            <TextBlock Grid.Column="4" Text="{Binding ReferenceText}" Margin="12,0,0,0" TextTrimming="CharacterEllipsis" />
+          </Grid>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+
+    <!-- Cancelación -->
+    <Button Classes="accent" HorizontalAlignment="Left" MinHeight="44"
+            Content="{x:Static res:Strings.SaleDetail_CancelSale}"
+            Command="{Binding CancelSaleCommand}"
+            IsVisible="{Binding CanCancel}" />
+    <ContentControl Content="{Binding CancelForm}" />
+  </StackPanel>
+</UserControl>

@@ -96,6 +96,47 @@ public sealed class ProductRepository : IProductRepository
         return (int)(before / search.PageSize) + 1;
     }
 
+    public async Task<IReadOnlyList<Product>> FindForSaleAsync(string code, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(code);
+        var barcode = Product.NormalizeBarcode(code);
+        var sku = Product.NormalizeSku(code);
+        return await _context.Products.AsNoTracking()
+            .Where(p => p.Sku == sku || (barcode != null && p.Barcode == barcode))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<Product>> SearchForSaleAsync(
+        string nameText,
+        int limit,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(nameText);
+        var products = _context.Products.AsNoTracking().Where(p => p.DeletedAt == null);
+        products = ProductTextFilter.Apply(products, nameText, nameText.ToUpperInvariant(), nameText, barcodeExact: false);
+        return await products
+            .OrderByDescending(p => p.IsActive)
+            .ThenBy(p => p.NameSearch)
+            .ThenBy(p => p.Sku)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<Product>> GetManyAsync(
+        IReadOnlyCollection<Guid> ids,
+        bool includeDeleted,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(ids);
+        var products = _context.Products.AsNoTracking().Where(p => ids.Contains(p.Id));
+        if (!includeDeleted)
+        {
+            products = products.Where(p => p.DeletedAt == null);
+        }
+
+        return await products.ToListAsync(cancellationToken);
+    }
+
     public void Add(Product product) => _context.Products.Add(product);
 
     public async Task<SaveOutcome> SaveChangesAsync(Product product, int? expectedVersion, CancellationToken cancellationToken)

@@ -34,6 +34,15 @@ public sealed class FakeDialogService : IDialogService
         return Task.CompletedTask;
     }
 
+    /// <summary>Respuesta que dará AskAsync.</summary>
+    public bool AskResult { get; set; } = true;
+
+    public Task<bool> AskAsync(string title, string message, string primaryText, string secondaryText)
+    {
+        Confirmations.Add(message);
+        return Task.FromResult(AskResult);
+    }
+
     public Task<bool> ConfirmAsync(string title, string message, string confirmText)
     {
         Confirmations.Add(message);

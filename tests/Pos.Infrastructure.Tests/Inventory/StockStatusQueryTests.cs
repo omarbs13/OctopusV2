@@ -29,6 +29,7 @@ public sealed class StockStatusQueryTests : IAsyncLifetime
         await SeedAsync("ST-NORMAL-ABOVE", minimum: 5000, initial: "6");
         await SeedAsync("ST-OUT-INACTIVE", minimum: null, initial: null, active: false);
         await SeedAsync("ST-NOTRACK", minimum: null, initial: null, tracks: false);
+        await SeedNegativeAsync("ST-NEG", minimum: 5000);
     }
 
     public ValueTask DisposeAsync()
@@ -66,6 +67,14 @@ public sealed class StockStatusQueryTests : IAsyncLifetime
         }
     }
 
+    /// <summary>Existencia 3 y una venta de 5: queda en -2.</summary>
+    private async Task SeedNegativeAsync(string sku, long minimum)
+    {
+        var product = await InventoryTestSupport.SeedProductAsync(_db, sku, "H87", true, minimum);
+        await SalesTestSupport.StockAsync(_db, product, "3");
+        await SalesTestSupport.SellOkAsync(_db, (product, 5000));
+    }
+
     private async Task<StockPage> SearchAsync(StockFilter filter, bool includeInactive = false, string? text = null)
     {
         await using var context = _db.CreateDbContext();
@@ -75,9 +84,9 @@ public sealed class StockStatusQueryTests : IAsyncLifetime
 
     [Theory]
     [InlineData(StockFilter.Low, new[] { "ST-LOW" })]
-    [InlineData(StockFilter.Out, new[] { "ST-OUT-MIN", "ST-OUT-NOROW" })]
+    [InlineData(StockFilter.Out, new[] { "ST-NEG", "ST-OUT-MIN", "ST-OUT-NOROW" })]
     [InlineData(StockFilter.Normal, new[] { "ST-NORMAL-ABOVE", "ST-NORMAL-NOMIN" })]
-    [InlineData(StockFilter.All, new[] { "ST-LOW", "ST-NORMAL-ABOVE", "ST-NORMAL-NOMIN", "ST-OUT-MIN", "ST-OUT-NOROW" })]
+    [InlineData(StockFilter.All, new[] { "ST-LOW", "ST-NEG", "ST-NORMAL-ABOVE", "ST-NORMAL-NOMIN", "ST-OUT-MIN", "ST-OUT-NOROW" })]
     public async Task Filter_returns_only_the_products_in_that_status(StockFilter filter, string[] expectedSkus)
     {
         var page = await SearchAsync(filter);
@@ -91,11 +100,11 @@ public sealed class StockStatusQueryTests : IAsyncLifetime
     {
         var page = await SearchAsync(StockFilter.All, includeInactive: true);
 
-        Assert.Equal(6, page.TotalCount);
+        Assert.Equal(7, page.TotalCount);
         foreach (var item in page.Items)
         {
             var expected = StockStatusRule.Evaluate(
-                Quantity.FromThousandths(item.OnHandThousandths),
+                StockLevel.FromThousandths(item.OnHandThousandths),
                 item.MinimumThousandths is { } m ? Quantity.FromThousandths(m) : null);
             Assert.Equal(expected, item.Status);
 
@@ -111,13 +120,24 @@ public sealed class StockStatusQueryTests : IAsyncLifetime
         var counts = await new InventoryRepository(context).CountAlertsAsync(Ct);
 
         Assert.Equal(1, counts.Low);
-        Assert.Equal(2, counts.Out);
+        Assert.Equal(3, counts.Out);
         Assert.Equal((await SearchAsync(StockFilter.Low)).TotalCount, counts.Low);
         Assert.Equal((await SearchAsync(StockFilter.Out)).TotalCount, counts.Out);
 
         var withInactive = await SearchAsync(StockFilter.Out, includeInactive: true);
-        Assert.Equal(3, withInactive.TotalCount);
+        Assert.Equal(4, withInactive.TotalCount);
         Assert.False(withInactive.Items.Single(i => i.Sku == "ST-OUT-INACTIVE").IsActive);
+    }
+
+    [Fact]
+    public async Task Negative_stock_is_out_of_stock_in_sql_and_in_the_domain_rule()
+    {
+        var page = await SearchAsync(StockFilter.Out);
+
+        var negative = page.Items.Single(i => i.Sku == "ST-NEG");
+        Assert.Equal(-2000, negative.OnHandThousandths);
+        Assert.Equal(StockStatus.Out, negative.Status);
+        Assert.DoesNotContain((await SearchAsync(StockFilter.Low)).Items, i => i.Sku == "ST-NEG");
     }
 
     [Fact]

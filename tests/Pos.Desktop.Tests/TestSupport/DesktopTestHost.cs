@@ -4,6 +4,7 @@ using Pos.Application.Abstractions;
 using Pos.Application.Diagnostics;
 using Pos.Application.Inventory;
 using Pos.Application.Products;
+using Pos.Application.Sales;
 using Pos.Application.Tests.TestSupport;
 using Pos.Desktop.Common;
 
@@ -23,6 +24,7 @@ public sealed class DesktopTestHost : IDisposable
         services.AddApplication();
         services.AddSingleton<IProductRepository>(Repository);
         services.AddSingleton<IInventoryRepository>(Inventory);
+        services.AddSingleton<ISaleRepository>(Sales);
         services.AddSingleton<IWriteTransactions>(new FakeWriteTransactions());
         services.AddSingleton<ICurrentUser, FixedCurrentUser>();
         services.AddSingleton<IClock>(Clock);
@@ -41,6 +43,8 @@ public sealed class DesktopTestHost : IDisposable
     public InMemoryProductRepository Repository { get; } = new();
 
     public InMemoryInventoryRepository Inventory { get; } = new();
+
+    public FakeSaleRepository Sales { get; } = new();
 
     public FakeDialogService Dialogs { get; } = new();
 

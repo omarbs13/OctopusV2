@@ -120,10 +120,12 @@
                             Command="{Binding ActivateCommand}"
                             ToolTip.Tip="{Binding Title}"
                             AutomationProperties.Name="{Binding Title}">
-                      <StackPanel Orientation="Horizontal" Spacing="12">
+                      <Grid ColumnDefinitions="Auto,*,Auto">
                         <PathIcon Classes="menuIcon" Data="{Binding Icon, Converter={x:Static common:IconConverter.Instance}}" />
-                        <TextBlock Text="{Binding Title}" VerticalAlignment="Center" />
-                      </StackPanel>
+                        <TextBlock Grid.Column="1" Text="{Binding Title}" Margin="12,0,0,0" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="2" Text="{Binding Shortcut}" FontSize="12" Opacity="0.7" VerticalAlignment="Center"
+                                   IsVisible="{Binding Shortcut, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                      </Grid>
                     </Button>
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>

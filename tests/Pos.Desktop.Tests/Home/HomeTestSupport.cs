@@ -5,6 +5,7 @@ using Pos.Desktop.Home;
 using Pos.Desktop.Inventory;
 using Pos.Desktop.Navigation;
 using Pos.Desktop.Products;
+using Pos.Desktop.Sales;
 using Pos.Desktop.Tests.TestSupport;
 
 namespace Pos.Desktop.Tests.Home;
@@ -19,7 +20,7 @@ public static class HomeTestSupport
             services.AddHomeModule();
             services.AddProductsModule();
             services.AddInventoryModule();
-            services.AddSalesPlaceholders();
+            services.AddSalesModule();
             services.AddHelpModule();
             extra?.Invoke(services);
         });

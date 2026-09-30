@@ -13,6 +13,8 @@ internal static class MovementTypeLabels
         MovementType.Initial => Strings.MovementType_Initial,
         MovementType.Receipt => Strings.MovementType_Receipt,
         MovementType.AdjustIn => Strings.MovementType_AdjustIn,
+        MovementType.Sale => Strings.MovementType_Sale,
+        MovementType.SaleCancellation => Strings.MovementType_SaleCancellation,
         _ => Strings.MovementType_AdjustOut,
     };
 }

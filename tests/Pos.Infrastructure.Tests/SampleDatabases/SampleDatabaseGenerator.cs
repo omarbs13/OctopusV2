@@ -1,5 +1,8 @@
 using System.Reflection;
 using Microsoft.Data.Sqlite;
+using Pos.Application.Abstractions;
+using Pos.Application.Sales;
+using Pos.Application.Sales.SaveSaleDraft;
 using Pos.Domain.Common;
 using Pos.Domain.Inventory;
 using Pos.Domain.Products;
@@ -62,10 +65,51 @@ public sealed class SampleDatabaseGenerator
             await context.SaveChangesAsync(TestContext.Current.CancellationToken);
         }
 
+        // Desde 0.4.0: ventas completadas y canceladas, una existencia negativa y un borrador.
+        await SeedSalesAsync(db);
+
         // Un solo archivo autocontenido: sin WAL pendiente. Primero se liberan las conexiones del pool.
         SqliteConnection.ClearAllPools();
         DatabaseTestHelpers.Execute(db.Directory.Paths.DatabaseFile, "PRAGMA wal_checkpoint(TRUNCATE); PRAGMA journal_mode=DELETE; VACUUM;");
         File.Copy(db.Directory.Paths.DatabaseFile, target);
+    }
+
+    private static async Task SeedSalesAsync(TestDb db)
+    {
+        var ct = TestContext.Current.CancellationToken;
+        db.User.UserId = SystemUser.Id;
+
+        // La pieza con inventario arranca con 3 y se venden 5: queda en -2.
+        await using (var context = db.CreateDbContext())
+        {
+            var piece = context.Products.Single(p => p.Sku == SampleData.NegativeStockSku);
+            piece.Update(piece.Name, piece.Sku, piece.Barcode, piece.Price, piece.UnitCode, piece.IsActive, tracksInventory: true, minimumStock: null);
+            await context.SaveChangesAsync(ct);
+        }
+
+        var negative = await FindProductAsync(db, SampleData.NegativeStockSku);
+        var kilogram = await FindProductAsync(db, SampleData.InventorySku);
+        var service = await FindProductAsync(db, SampleData.SaleWithoutInventorySku);
+        await SalesTestSupport.StockAsync(db, negative, "3");
+
+        db.Clock.UtcNow = new DateTime(2026, 9, 30, 12, 0, 0, DateTimeKind.Utc);
+        await SalesTestSupport.SellOkAsync(db, (kilogram, 2000), (service, 1000));
+        db.Clock.UtcNow = new DateTime(2026, 9, 30, 12, 30, 0, DateTimeKind.Utc);
+        var cancelled = await SalesTestSupport.SellOkAsync(db, (kilogram, 1500));
+        Assert.True((await SalesTestSupport.CancelAsync(db, cancelled.SaleId, SampleData.CancellationReason)).IsSuccess);
+        db.Clock.UtcNow = new DateTime(2026, 9, 30, 13, 0, 0, DateTimeKind.Utc);
+        await SalesTestSupport.SellOkAsync(db, (negative, 5000));
+
+        var draftLine = await FindProductAsync(db, SampleData.ImageSku);
+        await using var draftContext = db.CreateDbContext();
+        await SalesTestSupport.SaveDraftHandler(db, draftContext).HandleAsync(
+            new SaveSaleDraftCommand(Guid.CreateVersion7(), [new DraftLineDto(draftLine.Id, 2000, draftLine.Price.Cents)]), ct);
+    }
+
+    private static async Task<Product> FindProductAsync(TestDb db, string sku)
+    {
+        await using var context = db.CreateDbContext();
+        return context.Products.Single(p => p.Sku == sku);
     }
 
     private static async Task<Guid> FindIdAsync(TestDb db, string sku)
@@ -115,6 +159,20 @@ public static class SampleData
     public const long InventoryOnHandThousandths = 10_000;
 
     public const int InventoryMovementCount = 4;
+
+    /// <summary>Desde 0.4.0: pieza con inventario que una venta dejó en -2.</summary>
+    public const string NegativeStockSku = "MUE-001";
+    public const long NegativeStockThousandths = -2_000;
+
+    /// <summary>Desde 0.4.0: producto vendido sin control de inventario.</summary>
+    public const string SaleWithoutInventorySku = "MUE-005";
+
+    /// <summary>Desde 0.4.0: existencia final del producto en kilo (10.000 − 2 − 1.5 + 1.5 de la cancelación).</summary>
+    public const long InventoryOnHandAfterSalesThousandths = 8_000;
+
+    /// <summary>Desde 0.4.0: 3 ventas (una cancelada), 4 líneas, 3 pagos, un borrador y una entrada de bitácora.</summary>
+    public const int SaleCount = 3;
+    public const string CancellationReason = "Error de captura";
 
     public static IEnumerable<Product> Products(DateTime utcNow)
     {

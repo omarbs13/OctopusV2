@@ -9,7 +9,8 @@ public sealed class RegisterMovementValidator : AbstractValidator<RegisterMoveme
     public RegisterMovementValidator()
     {
         RuleFor(c => c.Type)
-            .IsInEnum().WithMessage(InventoryMessages.TypeInvalid)
+            .Must(t => t is MovementType.Initial or MovementType.Receipt or MovementType.AdjustIn or MovementType.AdjustOut)
+            .WithMessage(InventoryMessages.TypeInvalid)
             .OverridePropertyName(InventoryFields.Type);
 
         RuleFor(c => c.QuantityText)

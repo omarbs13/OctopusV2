@@ -113,7 +113,6 @@
   <data name="Chart_SalesLast7Days" xml:space="preserve"><value>Ventas de los últimos 7 días</value></data>
   <data name="Chart_TopProducts" xml:space="preserve"><value>Productos más vendidos</value></data>
   <data name="Card_InventoryPending" xml:space="preserve"><value>Disponible con el módulo de Inventario</value></data>
-  <data name="Card_SalesPending" xml:space="preserve"><value>Disponible con el módulo de Ventas</value></data>
   <data name="Card_Unavailable" xml:space="preserve"><value>No disponible por el momento</value></data>
   <data name="Form_BackToList" xml:space="preserve"><value>Regresar al listado</value></data>
   <data name="Form_Required" xml:space="preserve"><value>obligatorio</value></data>
@@ -172,6 +171,8 @@
   <data name="MovementType_Receipt" xml:space="preserve"><value>Entrada</value></data>
   <data name="MovementType_AdjustIn" xml:space="preserve"><value>Ajuste positivo</value></data>
   <data name="MovementType_AdjustOut" xml:space="preserve"><value>Ajuste negativo</value></data>
+  <data name="MovementType_Sale" xml:space="preserve"><value>Salida por venta</value></data>
+  <data name="MovementType_SaleCancellation" xml:space="preserve"><value>Cancelación de venta</value></data>
   <data name="MovementEditor_Title" xml:space="preserve"><value>Registrar movimiento</value></data>
   <data name="MovementEditor_Product" xml:space="preserve"><value>Producto</value></data>
   <data name="MovementEditor_OnHand" xml:space="preserve"><value>Existencia actual</value></data>
@@ -186,4 +187,99 @@
   <data name="MovementEditor_ProductRequired" xml:space="preserve"><value>Elija un producto.</value></data>
   <data name="MovementEditor_Changed" xml:space="preserve"><value>La existencia cambió mientras capturaba; revise y vuelva a intentar.</value></data>
   <data name="MovementEditor_Registered" xml:space="preserve"><value>Movimiento registrado. Existencia: {0} {1}.</value></data>
+  <data name="Nav_Sales" xml:space="preserve"><value>Ventas</value></data>
+  <data name="Nav_PointOfSale" xml:space="preserve"><value>Punto de venta</value></data>
+  <data name="Nav_SalesHistory" xml:space="preserve"><value>Ventas realizadas</value></data>
+  <data name="Payment_Cash" xml:space="preserve"><value>Efectivo</value></data>
+  <data name="Payment_Card" xml:space="preserve"><value>Tarjeta</value></data>
+  <data name="Payment_Transfer" xml:space="preserve"><value>Transferencia</value></data>
+  <data name="Sale_CapturePlaceholder" xml:space="preserve"><value>Escanee o escriba un código, SKU o nombre y presione Enter</value></data>
+  <data name="Sale_Empty" xml:space="preserve"><value>La venta está vacía. Escanee un producto o busque por nombre.</value></data>
+  <data name="Sale_ColName" xml:space="preserve"><value>Producto</value></data>
+  <data name="Sale_ColSku" xml:space="preserve"><value>SKU</value></data>
+  <data name="Sale_ColQuantity" xml:space="preserve"><value>Cantidad</value></data>
+  <data name="Sale_ColPrice" xml:space="preserve"><value>Precio</value></data>
+  <data name="Sale_ColAmount" xml:space="preserve"><value>Importe</value></data>
+  <data name="Sale_Total" xml:space="preserve"><value>Total</value></data>
+  <data name="Sale_Items" xml:space="preserve"><value>Artículos: {0}</value></data>
+  <data name="Sale_Pay" xml:space="preserve"><value>Cobrar (F12)</value></data>
+  <data name="Sale_Search" xml:space="preserve"><value>Buscar (F2)</value></data>
+  <data name="Sale_Quantity" xml:space="preserve"><value>Cantidad (F4)</value></data>
+  <data name="Sale_Remove" xml:space="preserve"><value>Quitar (Supr)</value></data>
+  <data name="Sale_CancelSale" xml:space="preserve"><value>Cancelar venta (F8)</value></data>
+  <data name="Sale_Shortcuts" xml:space="preserve"><value>F2 Buscar · F4 Cantidad · Supr Quitar · F12 Cobrar · F8 Cancelar</value></data>
+  <data name="Sale_QuantityPrompt" xml:space="preserve"><value>Nueva cantidad</value></data>
+  <data name="Sale_LineInactive" xml:space="preserve"><value>Producto inactivo</value></data>
+  <data name="Sale_LineDeleted" xml:space="preserve"><value>Producto eliminado</value></data>
+  <data name="Sale_ProductInactive" xml:space="preserve"><value>Inactivo</value></data>
+  <data name="Sale_ProductDeleted" xml:space="preserve"><value>Eliminado</value></data>
+  <data name="Sale_ProductNotFound" xml:space="preserve"><value>No se encontró ningún producto con el código {0}</value></data>
+  <data name="Sale_RemoveMarkedLines" xml:space="preserve"><value>Quite las líneas señaladas para cobrar</value></data>
+  <data name="Sale_CancelTitle" xml:space="preserve"><value>Cancelar venta</value></data>
+  <data name="Sale_CancelQuestion" xml:space="preserve"><value>¿Cancelar la venta en curso?</value></data>
+  <data name="Sale_CancelConfirm" xml:space="preserve"><value>Sí, cancelar</value></data>
+  <data name="Sale_Cancelled" xml:space="preserve"><value>Venta cancelada.</value></data>
+  <data name="Sale_StockWarningTitle" xml:space="preserve"><value>Existencia insuficiente</value></data>
+  <data name="Sale_StockWarning" xml:space="preserve"><value>La existencia no alcanza para: {0}. La venta se puede registrar y la existencia quedará en negativo. ¿Desea continuar?</value></data>
+  <data name="Sale_StockWarningConfirm" xml:space="preserve"><value>Continuar</value></data>
+  <data name="Sale_Registered" xml:space="preserve"><value>Venta {0} registrada</value></data>
+  <data name="Sale_ChangeGiven" xml:space="preserve"><value>Cambio {0}</value></data>
+  <data name="Sale_Changed" xml:space="preserve"><value>Los precios o la disponibilidad cambiaron; revise el total antes de cobrar</value></data>
+  <data name="Sale_NotRegistered" xml:space="preserve"><value>No se pudo registrar la venta. La venta se conservó; intente de nuevo.</value></data>
+  <data name="Sale_RecoverTitle" xml:space="preserve"><value>Venta sin terminar</value></data>
+  <data name="Sale_RecoverQuestion" xml:space="preserve"><value>Hay una venta sin terminar con {0} artículos por {1}. ¿Desea recuperarla?</value></data>
+  <data name="Sale_Recover" xml:space="preserve"><value>Recuperar</value></data>
+  <data name="Sale_Discard" xml:space="preserve"><value>Descartar</value></data>
+  <data name="Chooser_Title" xml:space="preserve"><value>Elija un producto</value></data>
+  <data name="Chooser_Hint" xml:space="preserve"><value>↑/↓ para moverse · Enter para elegir · Esc para cerrar</value></data>
+  <data name="Chooser_Choose" xml:space="preserve"><value>Elegir</value></data>
+  <data name="Checkout_Title" xml:space="preserve"><value>Cobro</value></data>
+  <data name="Checkout_Paid" xml:space="preserve"><value>Pagado</value></data>
+  <data name="Checkout_Shortfall" xml:space="preserve"><value>Faltan {0}</value></data>
+  <data name="Checkout_Change" xml:space="preserve"><value>Cambio {0}</value></data>
+  <data name="Checkout_Cash" xml:space="preserve"><value>Efectivo</value></data>
+  <data name="Checkout_Received" xml:space="preserve"><value>Recibido</value></data>
+  <data name="Checkout_ReceivedInvalid" xml:space="preserve"><value>Capture el efectivo recibido como un importe, por ejemplo 100 o 100.50.</value></data>
+  <data name="Checkout_AmountInvalid" xml:space="preserve"><value>Capture el monto como un importe, por ejemplo 150 o 150.50.</value></data>
+  <data name="Checkout_Exact" xml:space="preserve"><value>Exacto</value></data>
+  <data name="Checkout_NonCash" xml:space="preserve"><value>Tarjeta o transferencia</value></data>
+  <data name="Checkout_Amount" xml:space="preserve"><value>Monto</value></data>
+  <data name="Checkout_Reference" xml:space="preserve"><value>Referencia (opcional)</value></data>
+  <data name="Checkout_AddPayment" xml:space="preserve"><value>Agregar pago</value></data>
+  <data name="Checkout_RemovePayment" xml:space="preserve"><value>Quitar pago (Supr)</value></data>
+  <data name="Checkout_Hint" xml:space="preserve"><value>Enter o F12 confirman el cobro · Esc regresa a la venta · F5 exacto · 1 a 6 billetes</value></data>
+  <data name="Checkout_Confirm" xml:space="preserve"><value>Confirmar cobro</value></data>
+  <data name="Sales_Folio" xml:space="preserve"><value>Folio</value></data>
+  <data name="Sales_Status" xml:space="preserve"><value>Estado</value></data>
+  <data name="Sales_StatusAll" xml:space="preserve"><value>Todas</value></data>
+  <data name="Sales_StatusCompleted" xml:space="preserve"><value>Completada</value></data>
+  <data name="Sales_StatusCancelled" xml:space="preserve"><value>Cancelada</value></data>
+  <data name="Sales_StatusCompletedPlural" xml:space="preserve"><value>Completadas</value></data>
+  <data name="Sales_StatusCancelledPlural" xml:space="preserve"><value>Canceladas</value></data>
+  <data name="Sales_ColFolio" xml:space="preserve"><value>Folio</value></data>
+  <data name="Sales_ColDate" xml:space="preserve"><value>Fecha y hora</value></data>
+  <data name="Sales_ColTotal" xml:space="preserve"><value>Total</value></data>
+  <data name="Sales_ColPayments" xml:space="preserve"><value>Formas de pago</value></data>
+  <data name="Sales_Empty" xml:space="preserve"><value>No hay ventas que coincidan.</value></data>
+  <data name="SaleDetail_Title" xml:space="preserve"><value>Detalle de la venta</value></data>
+  <data name="SaleDetail_TitleWithFolio" xml:space="preserve"><value>Venta {0}</value></data>
+  <data name="SaleDetail_Header" xml:space="preserve"><value>{0} · {1} · Usuario: {2} · Estado: {3}</value></data>
+  <data name="SaleDetail_CancelledInfo" xml:space="preserve"><value>Cancelada. Motivo: {0} · {1} · Usuario: {2}</value></data>
+  <data name="SaleDetail_Lines" xml:space="preserve"><value>Productos</value></data>
+  <data name="SaleDetail_Payments" xml:space="preserve"><value>Pagos</value></data>
+  <data name="SaleDetail_Method" xml:space="preserve"><value>Forma de pago</value></data>
+  <data name="SaleDetail_Amount" xml:space="preserve"><value>Monto</value></data>
+  <data name="SaleDetail_Received" xml:space="preserve"><value>Recibido</value></data>
+  <data name="SaleDetail_Change" xml:space="preserve"><value>Cambio</value></data>
+  <data name="SaleDetail_CancelSale" xml:space="preserve"><value>Cancelar venta</value></data>
+  <data name="CancelSale_Title" xml:space="preserve"><value>Cancelar venta</value></data>
+  <data name="CancelSale_Warning" xml:space="preserve"><value>Se regresarán las existencias y la venta quedará cancelada.</value></data>
+  <data name="CancelSale_Reason" xml:space="preserve"><value>Motivo</value></data>
+  <data name="CancelSale_Confirm" xml:space="preserve"><value>Cancelar la venta</value></data>
+  <data name="CancelSale_Keep" xml:space="preserve"><value>Conservar</value></data>
+  <data name="CancelSale_Changed" xml:space="preserve"><value>La venta cambió; vuelva a abrirla.</value></data>
+  <data name="Card_SalesToday" xml:space="preserve"><value>{0} · {1} ventas</value></data>
+  <data name="Card_SalesTodayOne" xml:space="preserve"><value>{0} · {1} venta</value></data>
+  <data name="Card_SalesWeekEmpty" xml:space="preserve"><value>Sin ventas en los últimos 7 días</value></data>
+  <data name="Card_TopProductsEmpty" xml:space="preserve"><value>Aún no hay ventas</value></data>
 </root>

@@ -18,9 +18,11 @@ public sealed partial class MenuItemViewModel : ViewModelBase
         string title,
         string icon,
         Func<MenuItemViewModel, Task> activate,
-        IReadOnlyList<MenuItemViewModel>? children = null)
+        IReadOnlyList<MenuItemViewModel>? children = null,
+        string? shortcut = null)
     {
         Id = id;
+        Shortcut = shortcut;
         Title = title;
         Icon = icon;
         _activate = activate;
@@ -32,6 +34,9 @@ public sealed partial class MenuItemViewModel : ViewModelBase
     public string Title { get; }
 
     public string Icon { get; }
+
+    /// <summary>Atajo global de la opción, por ejemplo "F9"; nulo si no tiene.</summary>
+    public string? Shortcut { get; }
 
     public IReadOnlyList<MenuItemViewModel> Children { get; }
 
@@ -157,7 +162,8 @@ public sealed partial class MenuViewModel : ViewModelBase
         }
     }
 
-    private MenuItemViewModel ToItem(NavigationEntry entry) => new(entry.Id, entry.Title, entry.Icon, ActivateAsync);
+    private MenuItemViewModel ToItem(NavigationEntry entry) =>
+        new(entry.Id, entry.Title, entry.Icon, ActivateAsync, shortcut: entry.Shortcut);
 
     private Task ActivateAsync(MenuItemViewModel item)
     {

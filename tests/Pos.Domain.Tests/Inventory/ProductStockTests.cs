@@ -106,4 +106,77 @@ public class ProductStockTests
 
         Assert.Throws<DomainException>(() => stock.Record(MovementType.Receipt, big, Kilo, true, true, null, null));
     }
+
+    private static ProductStock StockWith(string quantity)
+    {
+        var stock = ProductStock.Start(Guid.NewGuid());
+        Record(stock, MovementType.Initial, quantity);
+        return stock;
+    }
+
+    [Fact]
+    public void RecordSale_can_leave_the_stock_negative()
+    {
+        var stock = StockWith("3");
+
+        var movement = stock.RecordSale(Q("5", 0), Piece, "V-000001");
+
+        Assert.Equal(-2000, stock.OnHand.Thousandths);
+        Assert.Equal(-2000, movement.ResultingStock.Thousandths);
+        Assert.Equal(MovementType.Sale, movement.Type);
+        Assert.Equal("V-000001", movement.Reference);
+        Assert.Equal(2, stock.MovementCount);
+    }
+
+    [Fact]
+    public void AdjustOut_is_rejected_when_the_stock_is_negative()
+    {
+        var stock = StockWith("3");
+        stock.RecordSale(Q("5", 0), Piece, "V-000001");
+
+        Assert.Throws<DomainException>(() => Record(stock, MovementType.AdjustOut, "1", reason: "x"));
+        Assert.Equal(-2000, stock.OnHand.Thousandths);
+    }
+
+    [Fact]
+    public void Record_rejects_the_sale_movement_types()
+    {
+        var stock = StockWith("3");
+
+        Assert.Throws<DomainException>(() => Record(stock, MovementType.Sale, "1"));
+        Assert.Throws<DomainException>(() => Record(stock, MovementType.SaleCancellation, "1"));
+    }
+
+    [Fact]
+    public void RecordSale_validates_quantity_and_decimals()
+    {
+        var stock = StockWith("3");
+
+        Assert.Throws<DomainException>(() => stock.RecordSale(Quantity.Zero, Piece, "V-000001"));
+        Assert.Throws<DomainException>(() => stock.RecordSale(Quantity.FromThousandths(1500), Piece, "V-000001"));
+        stock.RecordSale(Quantity.FromThousandths(1500), Kilo, "V-000001");
+    }
+
+    [Fact]
+    public void RecordSaleCancellation_restores_stock_without_checking_the_product_state()
+    {
+        var stock = StockWith("3");
+        stock.RecordSale(Q("5", 0), Piece, "V-000001");
+
+        var movement = stock.RecordSaleCancellation(Q("5", 0), "V-000001");
+
+        Assert.Equal(3000, stock.OnHand.Thousandths);
+        Assert.Equal(MovementType.SaleCancellation, movement.Type);
+        Assert.Equal(3, stock.MovementCount);
+    }
+
+    [Fact]
+    public void IsShort_is_false_at_the_boundary()
+    {
+        var onHand = StockLevel.FromThousandths(3000);
+
+        Assert.False(ProductStock.IsShort(onHand, Q("3", 0)));
+        Assert.True(ProductStock.IsShort(onHand, Quantity.FromThousandths(3001)));
+        Assert.True(ProductStock.IsShort(StockLevel.FromThousandths(-1000), Q("1", 0)));
+    }
 }

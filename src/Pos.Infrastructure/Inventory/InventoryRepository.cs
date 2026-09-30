@@ -23,6 +23,17 @@ public sealed class InventoryRepository : IInventoryRepository
     public Task<ProductStock?> GetStockAsync(Guid productId, CancellationToken cancellationToken) =>
         _context.ProductStocks.SingleOrDefaultAsync(s => s.ProductId == productId, cancellationToken);
 
+    public async Task<IReadOnlyDictionary<Guid, ProductStock>> GetStocksAsync(
+        IReadOnlyCollection<Guid> productIds,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(productIds);
+        var stocks = await _context.ProductStocks
+            .Where(s => productIds.Contains(s.ProductId))
+            .ToListAsync(cancellationToken);
+        return stocks.ToDictionary(s => s.ProductId);
+    }
+
     public Task<bool> HasMovementsAsync(Guid productId, CancellationToken cancellationToken) =>
         _context.ProductStocks.AnyAsync(s => s.ProductId == productId, cancellationToken);
 
@@ -94,7 +105,7 @@ public sealed class InventoryRepository : IInventoryRepository
                 i.OnHand,
                 i.Minimum,
                 StockStatusRule.Evaluate(
-                    Quantity.FromThousandths(i.OnHand),
+                    StockLevel.FromThousandths(i.OnHand),
                     i.Minimum is { } m ? Quantity.FromThousandths(m) : null),
                 i.IsActive,
                 i.HasMovements))
@@ -204,7 +215,7 @@ public sealed class InventoryRepository : IInventoryRepository
     /// <summary>Predicado de estado en SQL; replica <see cref="StockStatusRule"/> (research §8).</summary>
     private static IQueryable<StockRow> FilterByStatus(IQueryable<StockRow> rows, StockFilter filter) => filter switch
     {
-        StockFilter.Out => rows.Where(r => r.OnHand == 0),
+        StockFilter.Out => rows.Where(r => r.OnHand <= 0),
         StockFilter.Low => rows.Where(r => r.OnHand > 0
             && r.Product.MinimumStockThousandths != null
             && r.OnHand <= r.Product.MinimumStockThousandths),

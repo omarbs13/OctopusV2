@@ -51,6 +51,9 @@ public static class InventoryMessages
     };
 
     /// <summary>Formatea una cantidad en milésimas con los decimales de su unidad, para mensajes.</summary>
-    public static string Format(long thousandths, int decimalPlaces) =>
-        Quantity.FromThousandths(thousandths).ToEditableString(decimalPlaces);
+    public static string Format(long thousandths, int decimalPlaces)
+    {
+        var text = Quantity.FromThousandths(Math.Abs(thousandths)).ToEditableString(decimalPlaces);
+        return thousandths < 0 ? "-" + text : text;
+    }
 }

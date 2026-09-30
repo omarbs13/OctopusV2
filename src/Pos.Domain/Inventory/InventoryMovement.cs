@@ -21,7 +21,7 @@ public sealed class InventoryMovement
         int sequence,
         MovementType type,
         Quantity quantity,
-        Quantity resultingStock,
+        StockLevel resultingStock,
         string? reason,
         string? reference)
     {
@@ -46,12 +46,12 @@ public sealed class InventoryMovement
     /// <summary>Cantidad en milésimas, siempre positiva; el signo lo da el tipo.</summary>
     public long QuantityThousandths { get; private set; }
 
-    /// <summary>Existencia después del movimiento, en milésimas.</summary>
+    /// <summary>Existencia después del movimiento, en milésimas (puede ser negativa por ventas).</summary>
     public long ResultingStockThousandths { get; private set; }
 
     public Quantity Quantity => Quantity.FromThousandths(QuantityThousandths);
 
-    public Quantity ResultingStock => Quantity.FromThousandths(ResultingStockThousandths);
+    public StockLevel ResultingStock => StockLevel.FromThousandths(ResultingStockThousandths);
 
     public string? Reason { get; private set; }
 

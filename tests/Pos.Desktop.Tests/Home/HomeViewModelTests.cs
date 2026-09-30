@@ -3,6 +3,7 @@ using Pos.Desktop.Home.Cards;
 using Pos.Desktop.Inventory;
 using Pos.Desktop.Navigation;
 using Pos.Desktop.Resources;
+using Pos.Desktop.Sales;
 using Pos.Desktop.Tests.TestSupport;
 using Pos.Domain.Common;
 using Pos.Domain.Products;
@@ -59,17 +60,22 @@ public sealed class HomeViewModelTests : IDisposable
     }
 
     [Fact]
-    public async Task Ventas_EstadoVacioSinNumeros_EInventarioMuestraConteoNavegable()
+    public async Task Ventas_SinVentas_MuestraCeroEnElDiaYEstadoVacioEnLasGraficas_EInventarioMuestraConteoNavegable()
     {
         await Home.OnActivatedAsync();
 
-        Assert.All(Home.Charts, c =>
-        {
-            Assert.Equal(DashboardCardState.Empty, c.State);
-            Assert.Null(c.Value);
-            Assert.False(c.IsNavigable);
-            Assert.Equal(Strings.Card_SalesPending, c.Message);
-        });
+        var today = Home.Cards.OfType<SalesTodayChart>().Single();
+        Assert.Equal(DashboardCardState.Ready, today.State);
+        Assert.Equal("$0.00 · 0 ventas", today.Value);
+        Assert.True(today.IsNavigable);
+
+        var week = Home.Cards.OfType<SalesLast7DaysChart>().Single();
+        Assert.Equal(DashboardCardState.Empty, week.State);
+        Assert.Equal(Strings.Card_SalesWeekEmpty, week.Message);
+
+        var top = Home.Cards.OfType<TopProductsChart>().Single();
+        Assert.Equal(DashboardCardState.Empty, top.State);
+        Assert.Equal(Strings.Card_TopProductsEmpty, top.Message);
 
         var inventory = Home.Cards.Where(c => c is LowStockCard or OutOfStockCard).ToList();
         Assert.Equal(2, inventory.Count);
@@ -106,7 +112,7 @@ public sealed class HomeViewModelTests : IDisposable
         await navigator.NavigateAsync("home");
         var home = (HomeViewModel)navigator.CurrentPage!;
 
-        await home.ActivateCardCommand.ExecuteAsync(home.Cards.OfType<SalesTodayChart>().Single());
+        await home.ActivateCardCommand.ExecuteAsync(home.Cards.OfType<SalesLast7DaysChart>().Single());
         Assert.Equal("home", navigator.CurrentEntryId);
 
         await home.ActivateCardCommand.ExecuteAsync(home.Cards.OfType<ActiveProductsCard>().Single());

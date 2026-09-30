@@ -4,12 +4,15 @@ using Pos.Application.Abstractions;
 using Pos.Application.Diagnostics;
 using Pos.Application.Inventory;
 using Pos.Application.Products;
+using Pos.Application.Sales;
 using Pos.Application.Startup;
+using Pos.Infrastructure.Audit;
 using Pos.Infrastructure.Diagnostics;
 using Pos.Infrastructure.Inventory;
 using Pos.Infrastructure.Persistence;
 using Pos.Infrastructure.Platform;
 using Pos.Infrastructure.Products;
+using Pos.Infrastructure.Sales;
 using Pos.Infrastructure.Startup;
 
 namespace Pos.Infrastructure;
@@ -38,7 +41,10 @@ public static class DependencyInjection
 
         services.AddScoped<IProductRepository, ProductRepository>();
         services.AddScoped<IInventoryRepository, InventoryRepository>();
+        services.AddScoped<ISaleRepository, SaleRepository>();
+        services.AddScoped<ISaleDraftStore, SqliteSaleDraftStore>();
         services.AddScoped<IWriteTransactions, WriteTransactions>();
+        services.AddScoped<IAuditLog, AuditLog>();
         services.AddSingleton<IImageProcessor, SkiaImageProcessor>();
         services.AddSingleton<IDatabaseMaintenance, SqliteDatabaseMaintenance>();
         services.AddSingleton<IBackupService, SqliteBackupService>();

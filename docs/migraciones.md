@@ -114,6 +114,14 @@ después.
 real de arranque y verifica la integridad y los datos. Si una migración nueva rompe una base
 antigua, esta prueba falla.
 
+Desde 0.4.0 la base de ejemplo también trae 3 ventas (una cancelada, con su movimiento de regreso y
+su entrada de bitácora), una pieza con inventario en −2 por una venta y un borrador de venta. La
+migración `SalesModule` solo crea las 5 tablas nuevas (`Sales`, `SaleLines`, `SalePayments`,
+`SaleDrafts` y `AuditEntries`) con sus índices: la liga entre venta y movimiento vive en
+`SaleLines`, así que **no** reconstruye `Products`, `ProductStocks` ni `InventoryMovements`.
+`SalesModuleMigrationTests` revisa el SQL generado y falla si aparece un `ALTER TABLE`, un
+`DROP TABLE` o la reconstrucción de una tabla existente.
+
 Cuando una funcionalidad agregue tablas nuevas, amplía `SampleData` para que la base de ejemplo
 de la siguiente versión también tenga datos en ellas, y agrega verificaciones en
 `SampleDatabaseUpgradeTests`.

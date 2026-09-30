@@ -23,12 +23,18 @@ public static class NavigationServiceCollectionExtensions
 
     /// <summary>Pantalla navegable: ViewModel singleton (conserva su estado en la sesión), opción de menú y vista.</summary>
     public static IServiceCollection AddPage<TViewModel, TView>(
-        this IServiceCollection services, string id, string title, string icon, int order, string? groupId = null)
+        this IServiceCollection services,
+        string id,
+        string title,
+        string icon,
+        int order,
+        string? groupId = null,
+        string? shortcut = null)
         where TViewModel : PageViewModel
         where TView : Control, new()
     {
         services.AddSingleton<TViewModel>();
-        services.AddSingleton(new NavigationEntry(id, title, icon, order, groupId, typeof(TViewModel)));
+        services.AddSingleton(new NavigationEntry(id, title, icon, order, groupId, typeof(TViewModel), Shortcut: shortcut));
         return services.AddComponentView<TViewModel, TView>();
     }
 
