@@ -73,7 +73,7 @@ public sealed class ProductEditorViewModelCreateTests : IDisposable
     public async Task DatosInvalidos_MuestraErroresPorCampoYConservaLoCapturado()
     {
         var editor = CreateEditor();
-        Fill(editor, name: "", sku: "A B", barcode: "12", price: "1,234.50");
+        Fill(editor, name: "", sku: "A B", barcode: "12", price: "12,50");
         var savedRaised = false;
         editor.Saved += (_, _) => savedRaised = true;
 
@@ -85,7 +85,7 @@ public sealed class ProductEditorViewModelCreateTests : IDisposable
         Assert.Equal(ProductMessages.BarcodeFormat, editor.BarcodeError);
         Assert.Equal(ProductMessages.PriceFormat, editor.PriceError);
         Assert.Equal(ProductFields.Name, editor.FocusField);
-        Assert.Equal(("", "A B", "12", "1,234.50"), (editor.Name, editor.Sku, editor.Barcode, editor.PriceText));
+        Assert.Equal(("", "A B", "12", "12,50"), (editor.Name, editor.Sku, editor.Barcode, editor.PriceText));
     }
 
     [Fact]
@@ -105,7 +105,7 @@ public sealed class ProductEditorViewModelCreateTests : IDisposable
     [Fact]
     public async Task SkuDuplicado_MuestraElMensajeEnElCampoSku()
     {
-        _host.Repository.Seed(Product.Create("Otro", "CAF-001", null, Money.FromCents(100)));
+        _host.Repository.Seed(Product.Create("Otro", "CAF-001", null, Money.FromCents(100), "H87"));
         var editor = CreateEditor();
         Fill(editor);
 
@@ -118,7 +118,7 @@ public sealed class ProductEditorViewModelCreateTests : IDisposable
     [Fact]
     public async Task CodigoDeBarrasDuplicado_MuestraElMensajeEnSuCampo()
     {
-        _host.Repository.Seed(Product.Create("Otro", "OTRO-1", "7501234567890", Money.FromCents(100)));
+        _host.Repository.Seed(Product.Create("Otro", "OTRO-1", "7501234567890", Money.FromCents(100), "H87"));
         var editor = CreateEditor();
         Fill(editor, barcode: "7501234567890");
 

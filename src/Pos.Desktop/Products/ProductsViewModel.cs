@@ -59,8 +59,29 @@ public sealed partial class ProductsViewModel : PageViewModel, IDisposable
     [ObservableProperty]
     public partial bool IsEmpty { get; private set; }
 
+    /// <summary>Página mostrada, base 1 (FR-007).</summary>
     [ObservableProperty]
-    public partial bool HasMore { get; private set; }
+    [NotifyPropertyChangedFor(nameof(PageSummary))]
+    [NotifyCanExecuteChangedFor(nameof(FirstPageCommand))]
+    [NotifyCanExecuteChangedFor(nameof(PreviousPageCommand))]
+    [NotifyCanExecuteChangedFor(nameof(NextPageCommand))]
+    [NotifyCanExecuteChangedFor(nameof(LastPageCommand))]
+    public partial int CurrentPage { get; set; } = 1;
+
+    /// <summary>Productos que cumplen la búsqueda y el filtro, en todas las páginas.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PageSummary))]
+    public partial long TotalCount { get; private set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PageSummary))]
+    [NotifyCanExecuteChangedFor(nameof(NextPageCommand))]
+    [NotifyCanExecuteChangedFor(nameof(LastPageCommand))]
+    public partial int TotalPages { get; private set; } = 1;
+
+    /// <summary>Por ejemplo "250 registros · Página 2 de 3".</summary>
+    public string PageSummary =>
+        string.Format(CultureInfo.CurrentCulture, Strings.Products_PageSummary, TotalCount, CurrentPage, TotalPages);
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(EditCommand))]
@@ -83,13 +104,19 @@ public sealed partial class ProductsViewModel : PageViewModel, IDisposable
 
     partial void OnSearchTextChanged(string value)
     {
+        // Una búsqueda nueva siempre empieza en la primera página (FR-009).
+        CurrentPage = 1;
         if (!_suppressAutoSearch)
         {
             _ = SearchAfterDelayAsync();
         }
     }
 
-    partial void OnIncludeInactiveChanged(bool value) => _ = SearchNowAsync();
+    partial void OnIncludeInactiveChanged(bool value)
+    {
+        CurrentPage = 1;
+        _ = SearchNowAsync();
+    }
 
     [RelayCommand]
     private Task SearchNowAsync()
@@ -97,6 +124,18 @@ public sealed partial class ProductsViewModel : PageViewModel, IDisposable
         CancelPendingSearch();
         return SearchAsync();
     }
+
+    [RelayCommand(CanExecute = nameof(HasPreviousPage))]
+    private Task FirstPageAsync() => GoToPageAsync(1);
+
+    [RelayCommand(CanExecute = nameof(HasPreviousPage))]
+    private Task PreviousPageAsync() => GoToPageAsync(CurrentPage - 1);
+
+    [RelayCommand(CanExecute = nameof(HasNextPage))]
+    private Task NextPageAsync() => GoToPageAsync(CurrentPage + 1);
+
+    [RelayCommand(CanExecute = nameof(HasNextPage))]
+    private Task LastPageAsync() => GoToPageAsync(TotalPages);
 
     [RelayCommand]
     private Task NewProductAsync() => OpenEditorAsync(_editorFactory());
@@ -151,6 +190,17 @@ public sealed partial class ProductsViewModel : PageViewModel, IDisposable
 
     private bool HasSelection() => SelectedItem is not null;
 
+    private bool HasPreviousPage() => CurrentPage > 1;
+
+    private bool HasNextPage() => CurrentPage < TotalPages;
+
+    private Task GoToPageAsync(int page)
+    {
+        CancelPendingSearch();
+        CurrentPage = page;
+        return SearchAsync();
+    }
+
     private async Task OpenEditorAsync(ProductEditorViewModel editor)
     {
         editor.Saved += (_, product) => _ = OnEditorSavedAsync(product);
@@ -160,17 +210,19 @@ public sealed partial class ProductsViewModel : PageViewModel, IDisposable
 
     private async Task OnEditorSavedAsync(ProductDto product)
     {
-        await SearchAsync();
+        // Se muestra la página donde quedó el producto guardado (003, FR-012).
+        await SearchAsync(product.Id);
 
         var visibleByStatus = product.IsActive || IncludeInactive;
         if (visibleByStatus && !Items.Any(i => i.Id == product.Id))
         {
             // El producto no coincide con el texto buscado: se limpia la búsqueda para mostrarlo.
-            // Un producto que se marcó como inactivo sale del listado por defecto (FR-016).
+            // Un producto que se marcó como inactivo sale del listado por defecto (FR-016 de 001).
             _suppressAutoSearch = true;
             SearchText = string.Empty;
             _suppressAutoSearch = false;
-            await SearchNowAsync();
+            CancelPendingSearch();
+            await SearchAsync(product.Id);
         }
 
         SelectedItem = Items.FirstOrDefault(i => i.Id == product.Id);
@@ -199,16 +251,21 @@ public sealed partial class ProductsViewModel : PageViewModel, IDisposable
         _pendingSearch = null;
     }
 
-    private async Task SearchAsync()
+    private async Task SearchAsync(Guid? locateProductId = null)
     {
         var version = Interlocked.Increment(ref _searchVersion);
-        var query = new SearchProductsQuery(SearchText, IncludeInactive);
+        var query = new SearchProductsQuery(SearchText, IncludeInactive, CurrentPage, locateProductId);
 
         var (completed, result) = await _runner.RunAsync(
             "BuscarProductos",
-            () => _useCases.RunAsync<SearchProductsHandler, Result<SearchProductsResult>>(
+            () => _useCases.RunAsync<SearchProductsHandler, Result<ProductPage>>(
                 h => h.HandleAsync(query, CancellationToken.None)),
-            new Dictionary<string, object?> { ["SearchText"] = query.Text, ["IncludeInactive"] = query.IncludeInactive });
+            new Dictionary<string, object?>
+            {
+                ["SearchText"] = query.Text,
+                ["IncludeInactive"] = query.IncludeInactive,
+                ["Page"] = query.Page,
+            });
 
         // Se descartan resultados de búsquedas que ya fueron reemplazadas por otra más reciente.
         if (!completed || result is not { IsSuccess: true } || version != _searchVersion)
@@ -223,7 +280,10 @@ public sealed partial class ProductsViewModel : PageViewModel, IDisposable
             Items.Add(item);
         }
 
-        HasMore = result.Value.HasMore;
+        var page = result.Value;
+        TotalCount = page.TotalCount;
+        TotalPages = page.TotalPages;
+        CurrentPage = page.Page;
         IsEmpty = Items.Count == 0;
         SelectedItem = Items.FirstOrDefault(i => i.Id == selectedId);
     }

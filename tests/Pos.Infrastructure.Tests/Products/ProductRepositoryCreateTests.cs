@@ -32,12 +32,12 @@ public sealed class ProductRepositoryCreateTests : IAsyncLifetime
     [Fact]
     public async Task Alta_GuardaYLeeConAuditoriaEnUtc()
     {
-        var product = Product.Create("Café Molido", "CAF-001", "7501234567890", Money.FromCents(8950));
+        var product = Product.Create("Café Molido", "CAF-001", "7501234567890", Money.FromCents(8950), "H87");
 
         Assert.Equal(SaveOutcome.Saved, await AddAsync(product));
 
         await using var context = _db.CreateDbContext();
-        var loaded = await new ProductRepository(context).GetAsync(product.Id, Ct);
+        var loaded = await new ProductRepository(context).GetAsync(product.Id, includeImage: false, Ct);
         Assert.NotNull(loaded);
         Assert.Equal("Café Molido", loaded.Name);
         Assert.Equal("cafe molido", loaded.NameSearch);
@@ -53,7 +53,7 @@ public sealed class ProductRepositoryCreateTests : IAsyncLifetime
     [Fact]
     public async Task Precio_SeGuardaComoEnteroEnCentavos()
     {
-        var product = Product.Create("Leche", "LEC-001", null, Money.FromCents(123405));
+        var product = Product.Create("Leche", "LEC-001", null, Money.FromCents(123405), "H87");
         await AddAsync(product);
 
         using var connection = new SqliteConnection($"Data Source={_db.Directory.Paths.DatabaseFile};Pooling=False");
@@ -69,9 +69,9 @@ public sealed class ProductRepositoryCreateTests : IAsyncLifetime
     [Fact]
     public async Task SkuDuplicadoEntreNoBorrados_SeTraduceADuplicateSku()
     {
-        await AddAsync(Product.Create("Uno", "DUP-1", null, Money.FromCents(100)));
+        await AddAsync(Product.Create("Uno", "DUP-1", null, Money.FromCents(100), "H87"));
 
-        var outcome = await AddAsync(Product.Create("Dos", "DUP-1", null, Money.FromCents(100)));
+        var outcome = await AddAsync(Product.Create("Dos", "DUP-1", null, Money.FromCents(100), "H87"));
 
         Assert.Equal(SaveOutcome.Duplicate(ProductFields.Sku), outcome);
     }
@@ -79,9 +79,9 @@ public sealed class ProductRepositoryCreateTests : IAsyncLifetime
     [Fact]
     public async Task CodigoDeBarrasDuplicado_SeTraduceADuplicateBarcode()
     {
-        await AddAsync(Product.Create("Uno", "A-1", "7501234567890", Money.FromCents(100)));
+        await AddAsync(Product.Create("Uno", "A-1", "7501234567890", Money.FromCents(100), "H87"));
 
-        var outcome = await AddAsync(Product.Create("Dos", "B-1", "7501234567890", Money.FromCents(100)));
+        var outcome = await AddAsync(Product.Create("Dos", "B-1", "7501234567890", Money.FromCents(100), "H87"));
 
         Assert.Equal(SaveOutcome.Duplicate(ProductFields.Barcode), outcome);
     }
@@ -89,14 +89,14 @@ public sealed class ProductRepositoryCreateTests : IAsyncLifetime
     [Fact]
     public async Task VariosProductosSinCodigoDeBarras_NoChocan()
     {
-        Assert.Equal(SaveOutcome.Saved, await AddAsync(Product.Create("Uno", "A-1", null, Money.FromCents(100))));
-        Assert.Equal(SaveOutcome.Saved, await AddAsync(Product.Create("Dos", "B-1", null, Money.FromCents(100))));
+        Assert.Equal(SaveOutcome.Saved, await AddAsync(Product.Create("Uno", "A-1", null, Money.FromCents(100), "H87")));
+        Assert.Equal(SaveOutcome.Saved, await AddAsync(Product.Create("Dos", "B-1", null, Money.FromCents(100), "H87")));
     }
 
     [Fact]
     public async Task ExisteSkuYCodigo_ExcluyenAlPropioProducto()
     {
-        var product = Product.Create("Uno", "A-1", "7501234567890", Money.FromCents(100));
+        var product = Product.Create("Uno", "A-1", "7501234567890", Money.FromCents(100), "H87");
         await AddAsync(product);
 
         await using var context = _db.CreateDbContext();
@@ -112,11 +112,11 @@ public sealed class ProductRepositoryCreateTests : IAsyncLifetime
     public async Task NombreConAcentosYCaracteresEspeciales_SeConservaSinAlteraciones()
     {
         const string name = "Jalapeño «Extra» 100% & más 'ñ' \"x\"";
-        var product = Product.Create(name, "JAL-1", null, Money.FromCents(100));
+        var product = Product.Create(name, "JAL-1", null, Money.FromCents(100), "H87");
         await AddAsync(product);
 
         await using var context = _db.CreateDbContext();
-        var loaded = await new ProductRepository(context).GetAsync(product.Id, Ct);
+        var loaded = await new ProductRepository(context).GetAsync(product.Id, includeImage: false, Ct);
 
         Assert.Equal(name, loaded!.Name);
     }

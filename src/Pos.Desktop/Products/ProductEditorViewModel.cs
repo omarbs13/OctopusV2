@@ -1,8 +1,11 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Pos.Application.Abstractions;
 using Pos.Application.Products;
 using Pos.Application.Products.CreateProduct;
 using Pos.Application.Products.GetProduct;
+using Pos.Application.Products.ListUnitsOfMeasure;
+using Pos.Application.Products.PrepareProductImage;
 using Pos.Application.Products.UpdateProduct;
 using Pos.Desktop.Common;
 using Pos.Desktop.Forms;
@@ -21,8 +24,14 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
     private readonly UseCases _useCases;
     private readonly OperationRunner _runner;
 
+    private static readonly IReadOnlyList<FileTypeFilter> ImageFilters =
+        [new(Strings.Editor_ImageFilter, ["*.jpg", "*.jpeg", "*.png", "*.webp"])];
+
     private Guid? _productId;
     private int _expectedVersion;
+
+    /// <summary>Cambio de imagen pendiente; se aplica solo al guardar (003, FR-025).</summary>
+    private ProductImageChange _imageChange = ProductImageChange.KeepCurrent;
 
     public ProductEditorViewModel(UseCases useCases, OperationRunner runner, IDialogService dialogs)
         : base(dialogs)
@@ -44,6 +53,10 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
     [ObservableProperty]
     public partial string PriceText { get; set; } = string.Empty;
 
+    /// <summary>Clave de la unidad de medida; "Pieza" por defecto en alta (003, FR-017).</summary>
+    [ObservableProperty]
+    public partial string UnitCode { get; set; } = UnitOfMeasure.Default.Code;
+
     [ObservableProperty]
     public partial bool IsActive { get; set; } = true;
 
@@ -60,6 +73,25 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
     public partial string? PriceError { get; set; }
 
     [ObservableProperty]
+    public partial string? UnitCodeError { get; set; }
+
+    /// <summary>Imagen que se muestra en la vista previa: la actual o la recién seleccionada.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasImage))]
+    [NotifyCanExecuteChangedFor(nameof(RemoveImageCommand))]
+    public partial byte[]? PreviewImage { get; private set; }
+
+    [ObservableProperty]
+    public partial string? ImageError { get; private set; }
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(SelectImageCommand))]
+    [NotifyCanExecuteChangedFor(nameof(RemoveImageCommand))]
+    public partial bool IsProcessingImage { get; private set; }
+
+    public bool HasImage => PreviewImage is not null;
+
+    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(Title))]
     public partial bool IsEditMode { get; private set; }
 
@@ -72,6 +104,11 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
     public bool IsBarcodeRequired { get; }
 
     public bool IsPriceRequired { get; } = true;
+
+    public bool IsUnitRequired { get; } = true;
+
+    /// <summary>Catálogo fijo; no depende de la base, así que se obtiene sin ámbito de caso de uso.</summary>
+    public IReadOnlyList<UnitOfMeasureDto> Units { get; } = new ListUnitsOfMeasureHandler().Handle();
 
     /// <summary>Carga un producto para editarlo. Devuelve falso si ya no existe (y lo informa).</summary>
     public async Task<bool> LoadAsync(Guid productId)
@@ -99,15 +136,20 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
 
     protected override async Task<bool> SaveCoreAsync()
     {
+        if (IsProcessingImage)
+        {
+            return false;
+        }
+
         ClearErrors();
         var (completed, result) = await _runner.RunAsync(
             "GuardarProducto",
             () => _productId is { } id
                 ? _useCases.RunAsync<UpdateProductHandler, Result<ProductDto>>(h => h.HandleAsync(
-                    new UpdateProductCommand(id, _expectedVersion, Name, Sku, Barcode, PriceText, IsActive),
+                    new UpdateProductCommand(id, _expectedVersion, Name, Sku, Barcode, PriceText, UnitCode, IsActive, _imageChange),
                     CancellationToken.None))
                 : _useCases.RunAsync<CreateProductHandler, Result<ProductDto>>(h => h.HandleAsync(
-                    new CreateProductCommand(Name, Sku, Barcode, PriceText),
+                    new CreateProductCommand(Name, Sku, Barcode, PriceText, UnitCode, _imageChange),
                     CancellationToken.None)),
             new Dictionary<string, object?> { ["ProductId"] = _productId, ["Sku"] = Sku });
 
@@ -132,7 +174,66 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
         Product.NormalizeSku(Sku),
         Product.NormalizeBarcode(Barcode),
         Money.TryParse(PriceText, out var price) ? price.Cents.ToString(System.Globalization.CultureInfo.InvariantCulture) : PriceText.Trim(),
-        IsActive);
+        UnitCode,
+        IsActive,
+        _imageChange);
+
+    [RelayCommand(CanExecute = nameof(CanChangeImage))]
+    private async Task SelectImageAsync()
+    {
+        var file = await Dialogs.PickOpenFileAsync(Strings.Editor_SelectImage, ImageFilters);
+        if (file is null)
+        {
+            return;
+        }
+
+        IsProcessingImage = true;
+        try
+        {
+            var (completed, result) = await _runner.RunAsync(
+                "PrepararImagenProducto",
+                async () =>
+                {
+                    await using var content = await file.OpenAsync();
+                    return await _useCases.RunAsync<PrepareProductImageHandler, Result<PreparedProductImage>>(
+                        h => h.HandleAsync(new PrepareProductImageCommand(content, file.Length), CancellationToken.None));
+                },
+                new Dictionary<string, object?> { ["ProductId"] = _productId, ["FileName"] = file.Name, ["Length"] = file.Length });
+
+            if (!completed || result is null)
+            {
+                return;
+            }
+
+            if (result.IsSuccess)
+            {
+                _imageChange = new ProductImageChange.Replace(result.Value);
+                PreviewImage = result.Value.Content;
+                ImageError = null;
+            }
+            else if (result.Error is InvalidImage invalid)
+            {
+                // La imagen anterior no cambia (003, FR-023).
+                ImageError = PrepareProductImageHandler.MessageFor(invalid.Reason);
+            }
+        }
+        finally
+        {
+            IsProcessingImage = false;
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanRemoveImage))]
+    private void RemoveImage()
+    {
+        _imageChange = _productId is null ? ProductImageChange.KeepCurrent : new ProductImageChange.Remove();
+        PreviewImage = null;
+        ImageError = null;
+    }
+
+    private bool CanChangeImage() => !IsProcessingImage;
+
+    private bool CanRemoveImage() => !IsProcessingImage && HasImage;
 
     private async Task ShowErrorAsync(Error error)
     {
@@ -182,7 +283,11 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
         Sku = product.Sku;
         Barcode = product.Barcode ?? string.Empty;
         PriceText = Money.FromCents(product.PriceCents).ToEditableString();
+        UnitCode = product.UnitCode;
         IsActive = product.IsActive;
+        PreviewImage = product.Image;
+        ImageError = null;
+        _imageChange = ProductImageChange.KeepCurrent;
         ClearErrors();
         ResetOriginalState();
     }
@@ -203,15 +308,26 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
             case ProductFields.Price:
                 PriceError = message;
                 break;
+            case ProductFields.UnitCode:
+                UnitCodeError = message;
+                break;
         }
     }
 
     private void ClearErrors()
     {
-        NameError = SkuError = BarcodeError = PriceError = null;
+        NameError = SkuError = BarcodeError = PriceError = UnitCodeError = null;
         FocusField = null;
     }
 }
 
 /// <summary>Estado normalizado del formulario de producto, para detectar cambios.</summary>
-internal sealed record ProductFormState(string Name, string Sku, string? Barcode, string Price, bool IsActive);
+/// <remarks>El cambio de imagen se compara por instancia: elegir otra imagen siempre cuenta como cambio.</remarks>
+internal sealed record ProductFormState(
+    string Name,
+    string Sku,
+    string? Barcode,
+    string Price,
+    string UnitCode,
+    bool IsActive,
+    ProductImageChange Image);

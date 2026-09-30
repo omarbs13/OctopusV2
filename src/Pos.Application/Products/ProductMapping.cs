@@ -13,9 +13,11 @@ public static class ProductMapping
             product.Sku,
             product.Barcode,
             product.Price.Cents,
+            product.UnitCode,
             product.IsActive,
             product.Version,
             product.CreatedAt,
-            product.UpdatedAt);
+            product.UpdatedAt,
+            product.Image?.Content);
     }
 }

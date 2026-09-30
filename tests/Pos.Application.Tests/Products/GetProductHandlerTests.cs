@@ -17,7 +17,7 @@ public class GetProductHandlerTests
     [Fact]
     public async Task ProductoExistente_DevuelveTodosSusDatosYVersionActual()
     {
-        var product = _repository.Seed(Product.Create("Café", "CAF-001", "7501234567890", Money.FromCents(8950)));
+        var product = _repository.Seed(Product.Create("Café", "CAF-001", "7501234567890", Money.FromCents(8950), "H87"));
         _repository.BumpVersion(product.Id);
 
         var result = await Handler.HandleAsync(new GetProductQuery(product.Id), Ct);
@@ -38,7 +38,7 @@ public class GetProductHandlerTests
     [Fact]
     public async Task ProductoBorrado_DevuelveNotFound()
     {
-        var product = Product.Create("Café", "CAF-001", null, Money.FromCents(100));
+        var product = Product.Create("Café", "CAF-001", null, Money.FromCents(100), "H87");
         product.Delete(DateTime.UtcNow);
         _repository.Seed(product);
 

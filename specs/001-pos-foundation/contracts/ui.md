@@ -4,6 +4,11 @@
 > lateral o pantalla completa, con confirmación de cambios sin guardar) se rigen ahora por
 > `specs/002-navigation-forms/contracts/`. Este contrato sigue vigente para el comportamiento
 > propio de Productos y de Acerca de.
+>
+> **Nota (003)**: el listado de Productos (paginación, filas inactivas, miniaturas y unidad) y el
+> editor (unidad de medida, imagen y formatos de precio) se rigen ahora por
+> `specs/003-product-catalog-improvements/contracts/ui.md`. Ya no existe el aviso de "primeros
+> 200 resultados".
 
 Pantallas y comportamiento visibles para el operador. Todos los textos están en español y viven
 en archivos de recursos (`Resources/Strings.resx`), no en cadenas fijas en las vistas.

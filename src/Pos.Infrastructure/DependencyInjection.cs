@@ -35,6 +35,7 @@ public static class DependencyInjection
         services.AddScoped(sp => sp.GetRequiredService<IDbContextFactory<PosDbContext>>().CreateDbContext());
 
         services.AddScoped<IProductRepository, ProductRepository>();
+        services.AddSingleton<IImageProcessor, SkiaImageProcessor>();
         services.AddSingleton<IDatabaseMaintenance, SqliteDatabaseMaintenance>();
         services.AddSingleton<IBackupService, SqliteBackupService>();
         services.AddSingleton<IDiagnosticsExporter>(sp => new ZipDiagnosticsExporter(

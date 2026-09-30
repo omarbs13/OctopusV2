@@ -57,6 +57,13 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("UnitCode")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(3)
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("H87");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("TEXT");
 
@@ -74,16 +81,151 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("IX_Products_Barcode")
                         .HasFilter("\"DeletedAt\" IS NULL AND \"Barcode\" IS NOT NULL");
 
-                    b.HasIndex("NameSearch")
-                        .HasDatabaseName("IX_Products_NameSearch")
-                        .HasFilter("\"DeletedAt\" IS NULL");
-
                     b.HasIndex("Sku")
                         .IsUnique()
                         .HasDatabaseName("IX_Products_Sku")
                         .HasFilter("\"DeletedAt\" IS NULL");
 
+                    b.HasIndex("UnitCode");
+
+                    b.HasIndex("NameSearch", "Sku")
+                        .HasDatabaseName("IX_Products_NameSearch")
+                        .HasFilter("\"DeletedAt\" IS NULL");
+
                     b.ToTable("Products", (string)null);
+                });
+
+            modelBuilder.Entity("Pos.Domain.Products.ProductImage", b =>
+                {
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<byte[]>("Content")
+                        .IsRequired()
+                        .HasColumnType("BLOB");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Height")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<byte[]>("Thumbnail")
+                        .IsRequired()
+                        .HasColumnType("BLOB");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Width")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("ProductId");
+
+                    b.ToTable("ProductImages", (string)null);
+                });
+
+            modelBuilder.Entity("Pos.Domain.Products.UnitOfMeasure", b =>
+                {
+                    b.Property<string>("Code")
+                        .HasMaxLength(3)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Code");
+
+                    b.ToTable("UnitsOfMeasure", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Code = "H87",
+                            Name = "Pieza",
+                            SortOrder = 1
+                        },
+                        new
+                        {
+                            Code = "KGM",
+                            Name = "Kilogramo",
+                            SortOrder = 2
+                        },
+                        new
+                        {
+                            Code = "GRM",
+                            Name = "Gramo",
+                            SortOrder = 3
+                        },
+                        new
+                        {
+                            Code = "LTR",
+                            Name = "Litro",
+                            SortOrder = 4
+                        },
+                        new
+                        {
+                            Code = "MLT",
+                            Name = "Mililitro",
+                            SortOrder = 5
+                        },
+                        new
+                        {
+                            Code = "MTR",
+                            Name = "Metro",
+                            SortOrder = 6
+                        },
+                        new
+                        {
+                            Code = "XBX",
+                            Name = "Caja",
+                            SortOrder = 7
+                        },
+                        new
+                        {
+                            Code = "XPK",
+                            Name = "Paquete",
+                            SortOrder = 8
+                        });
+                });
+
+            modelBuilder.Entity("Pos.Domain.Products.Product", b =>
+                {
+                    b.HasOne("Pos.Domain.Products.UnitOfMeasure", null)
+                        .WithMany()
+                        .HasForeignKey("UnitCode")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Pos.Domain.Products.ProductImage", b =>
+                {
+                    b.HasOne("Pos.Domain.Products.Product", null)
+                        .WithOne("Image")
+                        .HasForeignKey("Pos.Domain.Products.ProductImage", "ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Pos.Domain.Products.Product", b =>
+                {
+                    b.Navigation("Image");
                 });
 #pragma warning restore 612, 618
         }

@@ -105,6 +105,21 @@ public sealed class SqliteBackupServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task RestaurarRespaldoAutomatico_RecuperaLaImagenDelProducto()
+    {
+        using var db = await TestDb.CreateAsync(_dir);
+        var product = (await DatabaseTestHelpers.SeedProductsAsync(db, 1))[0];
+        await DatabaseTestHelpers.SetImageAsync(db, product.Id, seed: 7);
+        var service = CreateService(db.Clock);
+        var backup = await service.CreateAsync(BackupKind.Automatic, Ct);
+        await DatabaseTestHelpers.SetImageAsync(db, product.Id, seed: 9);
+
+        await service.RestoreAsync(backup, Ct);
+
+        Assert.Equal([7, 7, 7], DatabaseTestHelpers.ReadImage(_dir.Paths.DatabaseFile, product.Id));
+    }
+
+    [Fact]
     public async Task Quarantine_MueveLaBaseASuCarpetaConFecha()
     {
         using var db = await TestDb.CreateAsync(_dir);

@@ -15,7 +15,7 @@ public class DeleteProductHandlerTests
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    private Product Seed() => _repository.Seed(Product.Create("Café", "CAF-001", null, Money.FromCents(100)));
+    private Product Seed() => _repository.Seed(Product.Create("Café", "CAF-001", null, Money.FromCents(100), "H87"));
 
     [Fact]
     public async Task Borrar_AsignaLaFechaDeBorradoDelReloj()

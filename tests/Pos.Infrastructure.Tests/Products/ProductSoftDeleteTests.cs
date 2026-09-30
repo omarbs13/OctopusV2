@@ -26,7 +26,7 @@ public sealed class ProductSoftDeleteTests : IAsyncLifetime
     {
         await using var context = _db.CreateDbContext();
         var result = await new CreateProductHandler(new ProductRepository(context), new CreateProductValidator())
-            .HandleAsync(new CreateProductCommand(name, sku, barcode, "10.00"), Ct);
+            .HandleAsync(new CreateProductCommand(name, sku, barcode, "10.00", "H87"), Ct);
         Assert.True(result.IsSuccess, result.Error?.ToString());
         return result.Value;
     }
@@ -53,7 +53,7 @@ public sealed class ProductSoftDeleteTests : IAsyncLifetime
 
         await using var context = _db.CreateDbContext();
         var repository = new ProductRepository(context);
-        Assert.Null(await repository.GetAsync(product.Id, Ct));
+        Assert.Null(await repository.GetAsync(product.Id, includeImage: false, Ct));
         var search = await new SearchProductsHandler(repository).HandleAsync(new SearchProductsQuery(null, IncludeInactive: true), Ct);
         Assert.Empty(search.Value.Items);
     }

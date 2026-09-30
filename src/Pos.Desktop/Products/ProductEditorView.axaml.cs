@@ -39,6 +39,12 @@ public partial class ProductEditorView : UserControl
             return;
         }
 
+        if (field == ProductFields.UnitCode)
+        {
+            UnitBox.Focus();
+            return;
+        }
+
         TextBox target = field switch
         {
             ProductFields.Sku => SkuBox,

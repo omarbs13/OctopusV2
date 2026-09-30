@@ -39,8 +39,9 @@ public sealed class CreateProductHandler
             return Result.Failure<ProductDto>(new Duplicate(ProductFields.Barcode));
         }
 
-        _ = Money.TryParse(command.PriceText, out var price);
-        var product = Product.Create(command.Name, sku, barcode, price);
+        var price = Money.Parse(command.PriceText).Value!.Value;
+        var product = Product.Create(command.Name, sku, barcode, price, command.UnitCode);
+        ProductImages.Apply(product, command.Image);
         _products.Add(product);
 
         var outcome = await _products.SaveChangesAsync(product, expectedVersion: null, cancellationToken);

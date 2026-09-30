@@ -1,3 +1,4 @@
+using Pos.Application.Products;
 using Pos.Application.Products.SearchProducts;
 using Pos.Domain.Common;
 using Pos.Domain.Products;
@@ -28,7 +29,7 @@ public sealed class ProductSearchTests : IAsyncLifetime
         await context.SaveChangesAsync(Ct);
     }
 
-    private async Task<SearchProductsResult> SearchAsync(string? text, bool includeInactive = false)
+    private async Task<ProductPage> SearchAsync(string? text, bool includeInactive = false)
     {
         await using var context = _db.CreateDbContext();
         var result = await new SearchProductsHandler(new ProductRepository(context))
@@ -37,7 +38,7 @@ public sealed class ProductSearchTests : IAsyncLifetime
     }
 
     private static Product P(string name, string sku, string? barcode = null) =>
-        Product.Create(name, sku, barcode, Money.FromCents(100));
+        Product.Create(name, sku, barcode, Money.FromCents(100), "H87");
 
     [Fact]
     public async Task NombreSinAcentosNiMayusculas_EncuentraElProducto()
@@ -89,7 +90,7 @@ public sealed class ProductSearchTests : IAsyncLifetime
     public async Task Inactivos_SoloAparecenConElFiltro()
     {
         var inactive = P("Inactivo", "INA-1");
-        inactive.Update(inactive.Name, inactive.Sku, null, inactive.Price, isActive: false);
+        inactive.Update(inactive.Name, inactive.Sku, null, inactive.Price, "H87", isActive: false);
         await SeedAsync(inactive, P("Activo", "ACT-1"));
 
         Assert.Equal(["ACT-1"], (await SearchAsync(null)).Items.Select(i => i.Sku));
@@ -118,15 +119,16 @@ public sealed class ProductSearchTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task MasDe200Coincidencias_DevuelveLas200PrimerasYHasMore()
+    public async Task MasDe100Coincidencias_DevuelveLaPrimeraPaginaYElTotal()
     {
         await SeedAsync([.. Enumerable.Range(1, 205).Select(i => P($"Producto {i:000}", $"P-{i:000}"))]);
 
         var result = await SearchAsync("producto");
 
-        Assert.Equal(200, result.Items.Count);
-        Assert.True(result.HasMore);
-        Assert.False((await SearchAsync("producto 001")).HasMore);
+        Assert.Equal(100, result.Items.Count);
+        Assert.Equal(205, result.TotalCount);
+        Assert.Equal(3, result.TotalPages);
+        Assert.Equal(1, (await SearchAsync("producto 001")).TotalPages);
     }
 
     [Fact]
@@ -137,6 +139,7 @@ public sealed class ProductSearchTests : IAsyncLifetime
         var result = await SearchAsync("inexistente");
 
         Assert.Empty(result.Items);
-        Assert.False(result.HasMore);
+        Assert.Equal(0, result.TotalCount);
+        Assert.Equal(1, result.TotalPages);
     }
 }

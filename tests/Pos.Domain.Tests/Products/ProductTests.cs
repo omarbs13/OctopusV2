@@ -10,7 +10,7 @@ public class ProductTests
     [Fact]
     public void Create_DatosValidos_CreaProductoActivoVersionUnoConIdV7()
     {
-        var product = Product.Create("  Café Molido ", "caf-001", "7501234567890", Price);
+        var product = Product.Create("  Café Molido ", "caf-001", "7501234567890", Price, "H87");
 
         Assert.Equal("Café Molido", product.Name);
         Assert.Equal("cafe molido", product.NameSearch);
@@ -29,21 +29,21 @@ public class ProductTests
     [InlineData("   ")]
     public void Create_NombreVacio_Lanza(string name)
     {
-        Assert.Throws<DomainException>(() => Product.Create(name, "SKU1", null, Price));
+        Assert.Throws<DomainException>(() => Product.Create(name, "SKU1", null, Price, "H87"));
     }
 
     [Fact]
     public void Create_Nombre200Caracteres_EsValido_Y201Lanza()
     {
-        Product.Create(new string('a', 200), "SKU1", null, Price);
+        Product.Create(new string('a', 200), "SKU1", null, Price, "H87");
 
-        Assert.Throws<DomainException>(() => Product.Create(new string('a', 201), "SKU1", null, Price));
+        Assert.Throws<DomainException>(() => Product.Create(new string('a', 201), "SKU1", null, Price, "H87"));
     }
 
     [Fact]
     public void Create_NombreConEspaciosExtremos_SeRecortaAntesDeMedir()
     {
-        var product = Product.Create("  " + new string('a', 200) + "  ", "SKU1", null, Price);
+        var product = Product.Create("  " + new string('a', 200) + "  ", "SKU1", null, Price, "H87");
 
         Assert.Equal(200, product.Name.Length);
     }
@@ -55,21 +55,21 @@ public class ProductTests
     [InlineData("AB\tC")]
     public void Create_SkuVacioOConEspacios_Lanza(string sku)
     {
-        Assert.Throws<DomainException>(() => Product.Create("Nombre", sku, null, Price));
+        Assert.Throws<DomainException>(() => Product.Create("Nombre", sku, null, Price, "H87"));
     }
 
     [Fact]
     public void Create_Sku50Caracteres_EsValido_Y51Lanza()
     {
-        Product.Create("Nombre", new string('A', 50), null, Price);
+        Product.Create("Nombre", new string('A', 50), null, Price, "H87");
 
-        Assert.Throws<DomainException>(() => Product.Create("Nombre", new string('A', 51), null, Price));
+        Assert.Throws<DomainException>(() => Product.Create("Nombre", new string('A', 51), null, Price, "H87"));
     }
 
     [Fact]
     public void Create_SkuEnMinusculas_SeGuardaEnMayusculas()
     {
-        Assert.Equal("ABC-1", Product.Create("Nombre", "abc-1", null, Price).Sku);
+        Assert.Equal("ABC-1", Product.Create("Nombre", "abc-1", null, Price, "H87").Sku);
     }
 
     [Theory]
@@ -77,7 +77,7 @@ public class ProductTests
     [InlineData("12345678901234")]
     public void Create_CodigoDeBarrasDe8a14Digitos_EsValido(string barcode)
     {
-        Assert.Equal(barcode, Product.Create("Nombre", "SKU1", barcode, Price).Barcode);
+        Assert.Equal(barcode, Product.Create("Nombre", "SKU1", barcode, Price, "H87").Barcode);
     }
 
     [Theory]
@@ -88,7 +88,7 @@ public class ProductTests
     [InlineData("١٢٣٤٥٦٧٨")]
     public void Create_CodigoDeBarrasInvalido_Lanza(string barcode)
     {
-        Assert.Throws<DomainException>(() => Product.Create("Nombre", "SKU1", barcode, Price));
+        Assert.Throws<DomainException>(() => Product.Create("Nombre", "SKU1", barcode, Price, "H87"));
     }
 
     [Theory]
@@ -97,15 +97,15 @@ public class ProductTests
     [InlineData("   ")]
     public void Create_CodigoDeBarrasVacio_QuedaNulo(string? barcode)
     {
-        Assert.Null(Product.Create("Nombre", "SKU1", barcode, Price).Barcode);
+        Assert.Null(Product.Create("Nombre", "SKU1", barcode, Price, "H87").Barcode);
     }
 
     [Fact]
     public void Update_CambiaDatosYRecalculaNombreDeBusqueda()
     {
-        var product = Product.Create("Café", "SKU1", null, Price);
+        var product = Product.Create("Café", "SKU1", null, Price, "H87");
 
-        product.Update("Té Verde", "sku2", "12345678", Money.FromCents(100), isActive: false);
+        product.Update("Té Verde", "sku2", "12345678", Money.FromCents(100), "H87", isActive: false);
 
         Assert.Equal("Té Verde", product.Name);
         Assert.Equal("te verde", product.NameSearch);
@@ -118,16 +118,16 @@ public class ProductTests
     [Fact]
     public void Update_DatosInvalidos_LanzaYNoModifica()
     {
-        var product = Product.Create("Café", "SKU1", null, Price);
+        var product = Product.Create("Café", "SKU1", null, Price, "H87");
 
-        Assert.Throws<DomainException>(() => product.Update("", "SKU1", null, Price, isActive: true));
+        Assert.Throws<DomainException>(() => product.Update("", "SKU1", null, Price, "H87", isActive: true));
         Assert.Equal("Café", product.Name);
     }
 
     [Fact]
     public void Delete_AsignaFechaDeBorradoYEsIdempotente()
     {
-        var product = Product.Create("Café", "SKU1", null, Price);
+        var product = Product.Create("Café", "SKU1", null, Price, "H87");
         var first = new DateTime(2026, 9, 29, 12, 0, 0, DateTimeKind.Utc);
 
         product.Delete(first);
@@ -140,8 +140,45 @@ public class ProductTests
     [Fact]
     public void Delete_FechaNoUtc_Lanza()
     {
-        var product = Product.Create("Café", "SKU1", null, Price);
+        var product = Product.Create("Café", "SKU1", null, Price, "H87");
 
         Assert.Throws<DomainException>(() => product.Delete(new DateTime(2026, 9, 29, 12, 0, 0, DateTimeKind.Local)));
+    }
+    [Fact]
+    public void Create_PrecioCero_Lanza_YUnCentavoEsValido()
+    {
+        Assert.Throws<DomainException>(() => Product.Create("Café", "SKU1", null, Money.Zero, "H87"));
+
+        Assert.Equal(1, Product.Create("Café", "SKU1", null, Money.FromCents(1), "H87").Price.Cents);
+    }
+
+    [Fact]
+    public void Update_PrecioCero_Lanza()
+    {
+        var product = Product.Create("Café", "SKU1", null, Price, "H87");
+
+        Assert.Throws<DomainException>(() => product.Update("Café", "SKU1", null, Money.Zero, "H87", isActive: true));
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("XX")]
+    [InlineData("h87")]
+    public void UnidadInexistente_Lanza(string unitCode)
+    {
+        Assert.Throws<DomainException>(() => Product.Create("Café", "SKU1", null, Price, unitCode));
+
+        var product = Product.Create("Café", "SKU1", null, Price, "H87");
+        Assert.Throws<DomainException>(() => product.Update("Café", "SKU1", null, Price, unitCode, isActive: true));
+    }
+
+    [Fact]
+    public void Update_CambiaLaUnidad()
+    {
+        var product = Product.Create("Café", "SKU1", null, Price, "H87");
+
+        product.Update("Café", "SKU1", null, Price, "KGM", isActive: true);
+
+        Assert.Equal("KGM", product.UnitCode);
     }
 }

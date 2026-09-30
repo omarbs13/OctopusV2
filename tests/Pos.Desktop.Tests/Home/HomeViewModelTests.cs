@@ -21,7 +21,7 @@ public sealed class HomeViewModelTests : IDisposable
     {
         for (var i = 0; i < count; i++)
         {
-            _host.Repository.Seed(Product.Create($"Producto {i}", $"P-{Guid.NewGuid():N}"[..20], null, Money.FromCents(100)));
+            _host.Repository.Seed(Product.Create($"Producto {i}", $"P-{Guid.NewGuid():N}"[..20], null, Money.FromCents(100), "H87"));
         }
     }
 
@@ -45,8 +45,8 @@ public sealed class HomeViewModelTests : IDisposable
     public async Task ProductosActivos_MuestraElConteoReal()
     {
         SeedActive(12);
-        var inactive = Product.Create("Inactivo", "INA-1", null, Money.FromCents(100));
-        inactive.Update(inactive.Name, inactive.Sku, null, inactive.Price, isActive: false);
+        var inactive = Product.Create("Inactivo", "INA-1", null, Money.FromCents(100), "H87");
+        inactive.Update(inactive.Name, inactive.Sku, null, inactive.Price, "H87", isActive: false);
         _host.Repository.Seed(inactive);
 
         await Home.OnActivatedAsync();

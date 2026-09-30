@@ -53,9 +53,13 @@ public sealed class InMemoryProductRepository : IProductRepository
         VersionProperty.SetValue(stored, stored.Version + 1);
     }
 
-    public Task<Product?> GetAsync(Guid id, CancellationToken cancellationToken)
+    /// <summary>Últimos valores de includeImage recibidos por GetAsync.</summary>
+    public List<bool> ImageLoads { get; } = [];
+
+    public Task<Product?> GetAsync(Guid id, bool includeImage, CancellationToken cancellationToken)
     {
         ThrowIfFailing();
+        ImageLoads.Add(includeImage);
         return Task.FromResult(_stored.TryGetValue(id, out var p) && !p.IsDeleted ? Clone(p) : null);
     }
 
@@ -77,23 +81,37 @@ public sealed class InMemoryProductRepository : IProductRepository
         return Task.FromResult(_stored.Values.Any(p => !p.IsDeleted && p.Id != excludingId && p.Barcode == barcode));
     }
 
-    public Task<ProductSearchPage> SearchAsync(ProductSearch search, CancellationToken cancellationToken)
+    public Task<ProductPage> SearchAsync(ProductSearch search, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(search);
         ThrowIfFailing();
         LastSearch = search;
-        var matches = _stored.Values
-            .Where(p => !p.IsDeleted && (search.IncludeInactive || p.IsActive))
-            .Where(p => search.NameText is null
-                || p.NameSearch.Contains(search.NameText, StringComparison.Ordinal)
-                || p.Sku.Contains(search.SkuText!, StringComparison.Ordinal)
-                || (p.Barcode is not null && (search.BarcodeExact
-                    ? p.Barcode == search.BarcodeText
-                    : p.Barcode.Contains(search.BarcodeText!, StringComparison.Ordinal))))
-            .OrderBy(p => p.NameSearch, StringComparer.Ordinal)
-            .Select(p => new ProductListItemDto(p.Id, p.Name, p.Sku, p.Barcode, p.Price.Cents, p.IsActive, p.Version))
+        var matches = Visible(search).ToList();
+        var page = Math.Clamp(search.Page, 1, ProductPage.PageCount(matches.Count, search.PageSize));
+        var items = matches
+            .Skip((page - 1) * search.PageSize)
+            .Take(search.PageSize)
+            .Select(p => new ProductListItemDto(
+                p.Id,
+                p.Name,
+                p.Sku,
+                p.Barcode,
+                p.Price.Cents,
+                p.UnitCode,
+                UnitOfMeasure.All.Single(u => u.Code == p.UnitCode).Name,
+                p.IsActive,
+                p.Version,
+                p.Image?.Thumbnail))
             .ToList();
-        return Task.FromResult(new ProductSearchPage(matches.Take(search.Limit).ToList(), matches.Count > search.Limit));
+        return Task.FromResult(new ProductPage(items, matches.Count, page, search.PageSize));
+    }
+
+    public Task<int?> LocatePageAsync(ProductSearch search, Guid productId, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(search);
+        ThrowIfFailing();
+        var index = Visible(search).Select(p => p.Id).ToList().IndexOf(productId);
+        return Task.FromResult<int?>(index < 0 ? null : (index / search.PageSize) + 1);
     }
 
     public void Add(Product product)
@@ -152,6 +170,19 @@ public sealed class InMemoryProductRepository : IProductRepository
         _stored[product.Id] = Clone(product);
         return SaveOutcome.Saved;
     }
+
+    /// <summary>Mismo filtro y orden que el repositorio real: (NameSearch, Sku) ordinal.</summary>
+    private IEnumerable<Product> Visible(ProductSearch search) =>
+        _stored.Values
+            .Where(p => !p.IsDeleted && (search.IncludeInactive || p.IsActive))
+            .Where(p => search.NameText is null
+                || p.NameSearch.Contains(search.NameText, StringComparison.Ordinal)
+                || p.Sku.Contains(search.SkuText!, StringComparison.Ordinal)
+                || (p.Barcode is not null && (search.BarcodeExact
+                    ? p.Barcode == search.BarcodeText
+                    : p.Barcode.Contains(search.BarcodeText!, StringComparison.Ordinal))))
+            .OrderBy(p => p.NameSearch, StringComparer.Ordinal)
+            .ThenBy(p => p.Sku, StringComparer.Ordinal);
 
     private static Product Clone(Product product) => (Product)CloneMethod.Invoke(product, null)!;
 

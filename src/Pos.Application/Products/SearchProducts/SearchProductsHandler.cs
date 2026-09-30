@@ -5,33 +5,40 @@ using Pos.Domain.Products;
 namespace Pos.Application.Products.SearchProducts;
 
 /// <summary>
-/// Busca productos visibles (FR-016 y FR-017): nombre sin acentos ni mayúsculas y SKU por
-/// coincidencia parcial; código de barras exacto si el texto es un código completo.
+/// Busca productos visibles por páginas (FR-006 a FR-012 de 003; FR-016 y FR-017 de 001): nombre
+/// sin acentos ni mayúsculas y SKU por coincidencia parcial; código de barras exacto si el texto
+/// es un código completo.
 /// </summary>
 public sealed class SearchProductsHandler
 {
-    public const int Limit = 200;
-
     private readonly IProductRepository _products;
 
     public SearchProductsHandler(IProductRepository products) => _products = products;
 
-    public async Task<Result<SearchProductsResult>> HandleAsync(SearchProductsQuery query, CancellationToken cancellationToken)
+    public async Task<Result<ProductPage>> HandleAsync(SearchProductsQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query);
 
         var text = query.Text?.Trim();
+        var page = Math.Max(query.Page, 1);
+        var pageSize = ProductPage.DefaultPageSize;
         var search = string.IsNullOrEmpty(text)
-            ? new ProductSearch(null, null, null, BarcodeExact: false, query.IncludeInactive, Limit)
+            ? new ProductSearch(null, null, null, BarcodeExact: false, query.IncludeInactive, page, pageSize)
             : new ProductSearch(
                 TextNormalizer.ForSearch(text),
                 text.ToUpperInvariant(),
                 text,
                 Product.LooksLikeFullBarcode(text),
                 query.IncludeInactive,
-                Limit);
+                page,
+                pageSize);
 
-        var page = await _products.SearchAsync(search, cancellationToken);
-        return Result.Success(new SearchProductsResult(page.Items, page.HasMore));
+        if (query.LocateProductId is { } productId
+            && await _products.LocatePageAsync(search, productId, cancellationToken) is { } located)
+        {
+            search = search with { Page = located };
+        }
+
+        return Result.Success(await _products.SearchAsync(search, cancellationToken));
     }
 }

@@ -56,6 +56,29 @@ Qué revisar:
    loss of data". No lo ignores: ajusta la migración (con una migración nueva) o documenta por
    qué es seguro.
 
+### Ejemplo: reconstrucción de `Products` en `ProductCatalogImprovements`
+
+Agregar `Products.UnitCode` con clave foránea a `UnitsOfMeasure` obliga a EF Core a reconstruir
+`Products`. En el SQL generado se verificó:
+
+- La columna nueva se agrega primero con `NOT NULL DEFAULT 'H87'` (`HasDefaultValue` en el
+  modelo), así los productos existentes quedan con "Pieza" antes de copiarse.
+- Las 8 unidades se insertan (`HasData`) antes de crear la tabla con la clave foránea.
+- El `INSERT INTO "ef_temp_Products" ... SELECT ... FROM "Products"` copia **todas** las
+  columnas, incluidas `Version` y `DeletedAt`, y todas las filas, incluidas las borradas.
+- Los índices `IX_Products_Sku`, `IX_Products_Barcode` e `IX_Products_NameSearch` se recrean
+  con su filtro `WHERE "DeletedAt" IS NULL`.
+- `ProductImages` referencia a `Products`; la llave foránea sigue siendo válida porque la tabla
+  reconstruida conserva su nombre.
+
+`SampleDatabaseUpgradeTests` lo comprueba sobre `v0.1.0.db`: unidad asignada, índices con su
+filtro y `PRAGMA foreign_key_check` sin violaciones.
+
+Al aplicarla, EF Core registra la advertencia `NonTransactionalMigrationOperationWarning` porque
+`PRAGMA foreign_keys = 0` no puede ir dentro de una transacción. Es esperado en toda
+reconstrucción de tabla en SQLite; la protección es el orden de arranque: respaldo previo y
+restauración automática si la migración falla.
+
 ## Cómo se aplican las migraciones
 
 Al arrancar, la aplicación sigue este orden obligatorio (ver
@@ -79,7 +102,8 @@ POS_GENERATE_SAMPLE_DB=1 dotnet test --project tests/Pos.Infrastructure.Tests --
 ```
 
 Esto crea `tests/Pos.Infrastructure.Tests/SampleDatabases/v<versión>.db` con los datos de
-`SampleData`: 20 productos, incluidos inactivos, uno borrado y uno con acentos. El generador se
+`SampleData`: 20 productos, incluidos inactivos, uno borrado y uno con acentos. Desde 0.2.0
+también hay uno por kilo, uno con imagen y uno con precio 0 (permitido antes de 0.2.0). El generador se
 niega a sobrescribir un archivo existente. Agrega el `.db` al commit; nunca lo modifiques
 después.
 

@@ -58,6 +58,32 @@ internal sealed class DialogService : IDialogService
         return file?.TryGetLocalPath();
     }
 
+    public async Task<FileSelection?> PickOpenFileAsync(string title, IReadOnlyList<FileTypeFilter> filters)
+    {
+        ArgumentNullException.ThrowIfNull(filters);
+        var owner = FindOwner();
+        if (owner is null)
+        {
+            return null;
+        }
+
+        var files = await owner.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = title,
+            AllowMultiple = false,
+            FileTypeFilter = [.. filters.Select(f => new FilePickerFileType(f.Name) { Patterns = [.. f.Patterns] })],
+        });
+
+        if (files.Count == 0)
+        {
+            return null;
+        }
+
+        var file = files[0];
+        var properties = await file.GetBasicPropertiesAsync();
+        return new FileSelection(file.Name, (long)(properties.Size ?? 0), file.OpenReadAsync);
+    }
+
     private async Task<object> ShowAsync(DialogWindow dialog)
     {
         var owner = FindOwner();

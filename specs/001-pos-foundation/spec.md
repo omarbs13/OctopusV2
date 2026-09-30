@@ -287,6 +287,9 @@ abrir.
   un punto decimal opcional (por ejemplo "1234.50"); cualquier coma, símbolo de moneda u otro
   carácter se rechaza. Los valores con más de 2 decimales se rechazan; nunca se redondean en
   silencio.
+  > **Nota (003)**: reemplazada por FR-015 y FR-016 de
+  > `specs/003-product-catalog-improvements/spec.md`: el precio debe ser mayor que 0 y la captura
+  > acepta el separador de miles ("1,234.50").
 - **FR-014**: Ante datos inválidos, el sistema MUST indicar el error junto a cada campo afectado
   y conservar lo capturado.
 - **FR-015**: El sistema MUST evitar registros duplicados cuando se envía el mismo guardado más de

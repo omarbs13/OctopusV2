@@ -18,7 +18,7 @@ public class SearchProductsHandlerTests
         await Handler.HandleAsync(new SearchProductsQuery("  Café Molido ", IncludeInactive: false), Ct);
 
         Assert.Equal(
-            new ProductSearch("cafe molido", "CAFÉ MOLIDO", "Café Molido", BarcodeExact: false, IncludeInactive: false, SearchProductsHandler.Limit),
+            new ProductSearch("cafe molido", "CAFÉ MOLIDO", "Café Molido", BarcodeExact: false, IncludeInactive: false, Page: 1, ProductPage.DefaultPageSize),
             _repository.LastSearch);
     }
 
@@ -45,13 +45,13 @@ public class SearchProductsHandlerTests
         await Handler.HandleAsync(new SearchProductsQuery(text, IncludeInactive: true), Ct);
 
         Assert.Equal(
-            new ProductSearch(null, null, null, BarcodeExact: false, IncludeInactive: true, SearchProductsHandler.Limit),
+            new ProductSearch(null, null, null, BarcodeExact: false, IncludeInactive: true, Page: 1, ProductPage.DefaultPageSize),
             _repository.LastSearch);
     }
 
     [Fact]
-    public void Limite_EsDe200Resultados()
+    public void Paginas_SonDe100Registros()
     {
-        Assert.Equal(200, SearchProductsHandler.Limit);
+        Assert.Equal(100, ProductPage.DefaultPageSize);
     }
 }

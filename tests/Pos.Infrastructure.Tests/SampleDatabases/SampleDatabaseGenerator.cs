@@ -36,10 +36,24 @@ public sealed class SampleDatabaseGenerator
             await context.SaveChangesAsync(TestContext.Current.CancellationToken);
         }
 
+        // Desde 0.2.0: un producto con imagen y uno con precio 0, que la fundación permitía y que las
+        // versiones nuevas deben conservar (003, clarificación 2).
+        var withImage = await FindIdAsync(db, SampleData.ImageSku);
+        await DatabaseTestHelpers.SetImageAsync(db, withImage, SampleData.ImageSeed);
+        DatabaseTestHelpers.Execute(
+            db.Directory.Paths.DatabaseFile,
+            $"UPDATE Products SET PriceCents = 0 WHERE Sku = '{SampleData.ZeroPriceSku}';");
+
         // Un solo archivo autocontenido: sin WAL pendiente. Primero se liberan las conexiones del pool.
         SqliteConnection.ClearAllPools();
         DatabaseTestHelpers.Execute(db.Directory.Paths.DatabaseFile, "PRAGMA wal_checkpoint(TRUNCATE); PRAGMA journal_mode=DELETE; VACUUM;");
         File.Copy(db.Directory.Paths.DatabaseFile, target);
+    }
+
+    private static async Task<Guid> FindIdAsync(TestDb db, string sku)
+    {
+        await using var context = db.CreateDbContext();
+        return context.Products.Single(p => p.Sku == sku).Id;
     }
 
     private static string FindSampleDirectory()
@@ -66,21 +80,33 @@ public static class SampleData
     public const string AccentedSku = "JAL-010";
     public const long AccentedPriceCents = 123450;
 
+    /// <summary>Desde 0.2.0: producto vendido por kilo.</summary>
+    public const string KilogramSku = "MUE-002";
+
+    /// <summary>Desde 0.2.0: producto con imagen (bytes arbitrarios <see cref="ImageSeed"/>).</summary>
+    public const string ImageSku = "MUE-003";
+    public const byte ImageSeed = 42;
+
+    /// <summary>Desde 0.2.0: producto con precio 0, permitido antes de 003.</summary>
+    public const string ZeroPriceSku = "MUE-004";
+
     public static IEnumerable<Product> Products(DateTime utcNow)
     {
         for (var i = 1; i <= 16; i++)
         {
-            yield return Product.Create($"Producto de muestra {i:00}", $"MUE-{i:000}", $"7500000000{i:000}", Money.FromCents(i * 1000));
+            var sku = $"MUE-{i:000}";
+            var unit = sku == KilogramSku ? "KGM" : "H87";
+            yield return Product.Create($"Producto de muestra {i:00}", sku, $"7500000000{i:000}", Money.FromCents(i * 1000), unit);
         }
 
-        yield return Product.Create(AccentedName, AccentedSku, null, Money.FromCents(AccentedPriceCents));
-        yield return Product.Create("Pan sin código", "PAN-001", null, Money.FromCents(5200));
+        yield return Product.Create(AccentedName, AccentedSku, null, Money.FromCents(AccentedPriceCents), "H87");
+        yield return Product.Create("Pan sin código", "PAN-001", null, Money.FromCents(5200), "H87");
 
-        var inactive = Product.Create("Refresco descontinuado", "REF-001", "7501055300075", Money.FromCents(1800));
-        inactive.Update(inactive.Name, inactive.Sku, inactive.Barcode, inactive.Price, isActive: false);
+        var inactive = Product.Create("Refresco descontinuado", "REF-001", "7501055300075", Money.FromCents(1800), "H87");
+        inactive.Update(inactive.Name, inactive.Sku, inactive.Barcode, inactive.Price, "H87", isActive: false);
         yield return inactive;
 
-        var deleted = Product.Create("Producto borrado", DeletedSku, "7501234567890", Money.FromCents(100));
+        var deleted = Product.Create("Producto borrado", DeletedSku, "7501234567890", Money.FromCents(100), "H87");
         deleted.Delete(utcNow);
         yield return deleted;
     }

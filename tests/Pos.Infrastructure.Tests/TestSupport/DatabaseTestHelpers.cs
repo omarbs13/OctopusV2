@@ -16,11 +16,32 @@ public static class DatabaseTestHelpers
     {
         await using var context = factory.CreateDbContext();
         var products = Enumerable.Range(1, count)
-            .Select(i => Product.Create($"Producto {prefix}{i} Café", $"{prefix}-{i:000}", null, Money.FromCents(i * 100)))
+            .Select(i => Product.Create($"Producto {prefix}{i} Café", $"{prefix}-{i:000}", null, Money.FromCents(i * 100), "H87"))
             .ToList();
         context.Products.AddRange(products);
         await context.SaveChangesAsync();
         return products;
+    }
+
+    /// <summary>Asigna una imagen (bytes arbitrarios, sin decodificar) a un producto existente y la guarda.</summary>
+    public static async Task SetImageAsync(IDbContextFactory<PosDbContext> factory, Guid productId, byte seed)
+    {
+        await using var context = factory.CreateDbContext();
+        var product = await context.Products.Include(p => p.Image).SingleAsync(p => p.Id == productId);
+        product.SetImage([seed, seed, seed], [seed], 3, 1);
+        context.Entry(product).State = EntityState.Modified;
+        await context.SaveChangesAsync();
+    }
+
+    /// <summary>Contenido de la imagen de un producto leído directamente, o nulo si no tiene.</summary>
+    public static byte[]? ReadImage(string databaseFile, Guid productId)
+    {
+        using var connection = new SqliteConnection($"Data Source={databaseFile};Mode=ReadOnly;Pooling=False");
+        connection.Open();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT Content FROM ProductImages WHERE ProductId = $id";
+        command.Parameters.AddWithValue("$id", productId.ToString().ToUpperInvariant());
+        return command.ExecuteScalar() as byte[];
     }
 
     /// <summary>Filas de Products leídas directamente, para comparar contenidos.</summary>

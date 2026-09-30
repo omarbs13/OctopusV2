@@ -8,4 +8,6 @@ public sealed record UpdateProductCommand(
     string Sku,
     string? Barcode,
     string PriceText,
-    bool IsActive);
+    string UnitCode,
+    bool IsActive,
+    ProductImageChange? Image = null);

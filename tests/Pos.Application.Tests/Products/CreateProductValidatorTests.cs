@@ -7,7 +7,7 @@ public class CreateProductValidatorTests
 {
     private static readonly CreateProductValidator Validator = new();
 
-    private static CreateProductCommand Valid() => new("Café Molido", "CAF-001", "7501234567890", "89.50");
+    private static CreateProductCommand Valid() => new("Café Molido", "CAF-001", "7501234567890", "89.50", "H87");
 
     private static IEnumerable<(string Field, string Message)> Errors(CreateProductCommand command) =>
         Validator.Validate(command).Errors.Select(e => (e.PropertyName, e.ErrorMessage));
@@ -67,14 +67,30 @@ public class CreateProductValidatorTests
     }
 
     [Theory]
-    [InlineData("1,234.50")]
-    [InlineData("12.345")]
-    [InlineData("-1")]
-    [InlineData("1000000")]
-    [InlineData("$10")]
-    public void PrecioConFormatoInvalido_SeRechazaSinRedondear(string price)
+    [InlineData("12,50", ProductMessages.PriceFormat)]
+    [InlineData("1,23.45", ProductMessages.PriceFormat)]
+    [InlineData("-1", ProductMessages.PriceFormat)]
+    [InlineData("$10", ProductMessages.PriceFormat)]
+    [InlineData("12.345", ProductMessages.PriceTooManyDecimals)]
+    [InlineData("999999.991", ProductMessages.PriceTooManyDecimals)]
+    [InlineData("1000000", ProductMessages.PriceTooLarge)]
+    [InlineData("1,000,000.00", ProductMessages.PriceTooLarge)]
+    [InlineData("0", ProductMessages.PriceNotPositive)]
+    [InlineData("0.00", ProductMessages.PriceNotPositive)]
+    public void PrecioInvalido_MensajeEspecificoSinRedondear(string price, string message)
     {
-        Assert.Equal([(ProductFields.Price, ProductMessages.PriceFormat)], Errors(Valid() with { PriceText = price }));
+        Assert.Equal([(ProductFields.Price, message)], Errors(Valid() with { PriceText = price }));
+    }
+
+    [Theory]
+    [InlineData("0.01")]
+    [InlineData("999999.99")]
+    [InlineData("999,999.99")]
+    [InlineData("1,234.50")]
+    [InlineData("1234.50")]
+    public void PrecioEnLosLimites_EsValido(string price)
+    {
+        Assert.Empty(Errors(Valid() with { PriceText = price }));
     }
 
     [Fact]
@@ -83,11 +99,20 @@ public class CreateProductValidatorTests
         Assert.Equal([(ProductFields.Price, ProductMessages.PriceRequired)], Errors(Valid() with { PriceText = " " }));
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData("XX")]
+    [InlineData("h87")]
+    public void UnidadFaltanteOInexistente_EsObligatoria(string unitCode)
+    {
+        Assert.Equal([(ProductFields.UnitCode, ProductMessages.UnitRequired)], Errors(Valid() with { UnitCode = unitCode }));
+    }
+
     [Fact]
     public void VariosCamposInvalidos_ReportaUnErrorPorCampo()
     {
-        var errors = Errors(new CreateProductCommand("", "", "12", "abc")).Select(e => e.Field);
+        var errors = Errors(new CreateProductCommand("", "", "12", "abc", "")).Select(e => e.Field);
 
-        Assert.Equal([ProductFields.Name, ProductFields.Sku, ProductFields.Barcode, ProductFields.Price], errors);
+        Assert.Equal([ProductFields.Name, ProductFields.Sku, ProductFields.Barcode, ProductFields.Price, ProductFields.UnitCode], errors);
     }
 }

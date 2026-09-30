@@ -20,7 +20,7 @@ public sealed class ProductFormPatternTests : IDisposable
     [Fact]
     public async Task AltaYEdicion_SeAbrenEnPanelLateral()
     {
-        _host.Repository.Seed(Product.Create("Café", "CAF-1", null, Money.FromCents(100)));
+        _host.Repository.Seed(Product.Create("Café", "CAF-1", null, Money.FromCents(100), "H87"));
         var page = CreatePage();
         await page.OnActivatedAsync();
 

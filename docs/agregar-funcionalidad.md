@@ -111,6 +111,29 @@ Modelo: `src/Pos.Desktop/Products/ProductEditorViewModel.cs` y `ProductsViewMode
 - Pruebas: `tests/Pos.Desktop.Tests/` con `DesktopTestHost` (casos de uso reales y un
   repositorio en memoria). `HomeTestSupport.CreateHostWithModules()` agrega los módulos reales.
 
+### Listados paginados
+
+Modelo: `ProductsViewModel` con `SearchProductsHandler` y `ProductRepository.SearchAsync`
+(`specs/003-product-catalog-improvements`). Todo catálogo que pueda crecer a miles de registros
+se lista por páginas:
+
+- El caso de uso recibe `Page` y devuelve una página (`ProductPage`: `Items`, `TotalCount`,
+  `Page`, `PageSize` y `TotalPages`). La paginación ocurre en la base con `COUNT` y
+  `LIMIT/OFFSET`; nunca se carga el catálogo completo.
+- El orden es estable: el criterio principal más un desempate único (por ejemplo,
+  `NameSearch, Sku`), así un registro no cambia de página al navegar.
+- Una página fuera de rango devuelve la última válida (por ejemplo, tras borrar el último
+  registro), y 0 resultados devuelven la página 1 de 1.
+- Para mostrar un registro recién guardado, el caso de uso acepta `LocateProductId` y devuelve la
+  página que lo contiene (`LocatePageAsync` cuenta los registros visibles que van antes).
+- El ViewModel expone `CurrentPage`, `TotalCount`, `TotalPages`, un resumen ("250 registros ·
+  Página 2 de 3") y los comandos Primera, Anterior, Siguiente y Última con su `CanExecute`.
+  Buscar o cambiar un filtro vuelve a la página 1.
+- La vista pone la barra de paginación debajo de la lista, con atajos Alt+Inicio, Alt+RePág,
+  Alt+AvPág y Alt+Fin.
+- Pruebas: paginación y filtros con SQLite real (`ProductPagingTests`) y tiempos con 10,000
+  registros (`ProductPerformanceTests`).
+
 ### Formularios
 
 Modelo: `src/Pos.Desktop/Products/ProductEditorViewModel.cs`. Todo formulario hereda de

@@ -1,16 +1,29 @@
 <!--
 Sync Impact Report
-- Version change: 1.0.0 -> 1.1.0 (MINOR: amplía materialmente las obligaciones del
-	Principio IV).
-- Principios modificados: IV. Integridad de datos (mismo título). Se añaden reglas sobre
-	gestión del esquema Code First, orden obligatorio de migración al arrancar, inmutabilidad
-	de migraciones publicadas, revisión del SQL generado, bases de ejemplo por versión con
-	prueba de migración, y siembra de datos (HasData frente al asistente de primer arranque).
-- Motivo: proteger las bases de clientes en producción durante las actualizaciones.
-- Impacto en el código existente: ninguno; aún no hay código de aplicación.
-- Plan de migración: no aplica.
-- Secciones añadidas: ninguna. Secciones eliminadas: ninguna.
-- Pendientes: ninguno.
+- Version change: 1.1.0 -> 1.2.0 (MINOR, según lo pidió el responsable del proyecto). Nota: la
+	enmienda reduce obligaciones del Principio VI; por la regla de versionado de esta
+	constitución ("redefinir principios" es MAJOR) podría considerarse 2.0.0. Confirmar antes
+	del commit.
+- Principios modificados: VI. Calidad verificable (mismo título). Se reemplaza la obligación de
+	probar cada caso de uso y cada regla de dominio con todos sus casos límite por una política
+	de pruebas mínimas: solo reglas de negocio con cálculos, validaciones que protegen la
+	integridad de datos y el defecto corregido; una prueba por regla (caso válido y caso límite
+	más importante); sin pruebas de interfaz, ViewModels ni código sin lógica. Siempre
+	obligatorias: arranque y migraciones, consistencia de inventario y reglas de arquitectura.
+	Al implementar se ejecutan solo las pruebas del proyecto modificado; la integración continua
+	sigue ejecutando la suite completa. Se mantienen la compilación sin errores ni advertencias
+	y la persistencia probada con SQLite real.
+- Motivo (inferido): reducir el costo de escribir y mantener pruebas de bajo valor sin perder
+	la protección de dinero, integridad de datos, arranque y migraciones.
+- Impacto en el código existente: las pruebas actuales que exceden la política (ViewModels,
+	mapeos, formularios, navegación) pueden conservarse; no es obligatorio borrarlas. Las
+	funcionalidades nuevas aplican la política desde esta versión.
+- Plan de migración: no aplica (no afecta datos ni esquema).
+- Secciones añadidas: ninguna. Secciones eliminadas: ninguna. Flujo de desarrollo: se agrega la
+	regla de ejecutar solo las pruebas del proyecto modificado al implementar.
+- Plantillas: plan-template, spec-template y tasks-template leen la constitución al ejecutarse;
+	no requieren cambios. La nota "Tests are OPTIONAL" de tasks-template es compatible.
+- Pendientes: confirmar MINOR frente a MAJOR.
 Este informe es temporal y debe retirarse antes de confirmar la constitución en un commit.
 -->
 # Constitución de POS
@@ -118,13 +131,26 @@ verifica de forma continua en ambos.
 ### VI. Calidad verificable
 - `dotnet build` y `dotnet test` ejecutados desde la raíz terminan sin errores ni
 	advertencias; las advertencias se tratan como errores.
-- Cada caso de uso tiene pruebas unitarias; cada regla de dominio tiene pruebas que cubren sus
-	casos límite.
+- Política de pruebas mínimas. Por cada funcionalidad solo se escriben pruebas unitarias para:
+	- Reglas de negocio con cálculos (dinero, precios, inventario).
+	- Validaciones que protegen la integridad de datos.
+	- El defecto corregido, si lo hay: todo defecto corregido incluye una prueba que lo
+		reproduce.
+- Cada regla tiene una prueba que cubre el caso válido y el caso límite más importante; no se
+	prueban todas las combinaciones.
+- No se escriben pruebas de interfaz, de ViewModels ni de código sin lógica (mapeos,
+	configuraciones, DTOs).
+- Siempre son obligatorias, sin excepción: las pruebas de arranque y migraciones (incluida la
+	migración de las bases de ejemplo del Principio IV), las de consistencia de inventario y las
+	pruebas de arquitectura del Principio II.
 - La persistencia se prueba contra SQLite real (conexión en memoria o archivo temporal), nunca
 	con el proveedor InMemory de EF Core.
-- Todo defecto corregido incluye una prueba que lo reproduce.
+- Al implementar, se ejecutan solo las pruebas del proyecto modificado. La integración continua
+	ejecuta la suite completa en Windows y Linux (Principio V).
 
-**Justificación**: el proveedor InMemory no reproduce transacciones, restricciones ni
+**Justificación**: las pruebas se concentran donde un error cuesta dinero o datos al cliente
+(importes, inventario, integridad, arranque y migraciones), y se evita el costo de mantener
+pruebas de bajo valor. El proveedor InMemory no reproduce transacciones, restricciones ni
 concurrencia de SQLite. Las pruebas de regresión evitan que un defecto corregido vuelva a
 aparecer.
 
@@ -181,8 +207,8 @@ sensible y protección de las credenciales de los operadores.
 	implementación.
 - El plan de cada funcionalidad debe incluir una verificación explícita de cumplimiento de
 	esta constitución; cualquier desviación se justifica por escrito en el plan.
-- Cada funcionalidad se entrega con sus pruebas y con la documentación necesaria para operarla
-	o darle soporte.
+- Cada funcionalidad se entrega con las pruebas que exige el Principio VI y con la
+	documentación necesaria para operarla o darle soporte.
 
 ## Governance
 
@@ -196,4 +222,4 @@ sensible y protección de las credenciales de los operadores.
 - El cumplimiento se verifica en la revisión de cada plan, según la verificación exigida en
 	"Flujo de desarrollo".
 
-**Version**: 1.1.0 | **Ratified**: 2026-09-29 | **Last Amended**: 2026-09-29
+**Version**: 1.2.0 | **Ratified**: 2026-09-29 | **Last Amended**: 2026-09-29

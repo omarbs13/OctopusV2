@@ -40,6 +40,12 @@ public sealed class FakeDialogService : IDialogService
         return Task.FromResult(ConfirmResult);
     }
 
+    /// <summary>Archivo que devolverá PickOpenFileAsync; nulo simula que el operador canceló.</summary>
+    public FileSelection? OpenFile { get; set; }
+
+    public Task<FileSelection?> PickOpenFileAsync(string title, IReadOnlyList<FileTypeFilter> filters) =>
+        Task.FromResult(OpenFile);
+
     public Task<string?> PickSaveFileAsync(string title, string suggestedFileName, string extension)
     {
         LastSuggestedFileName = suggestedFileName;

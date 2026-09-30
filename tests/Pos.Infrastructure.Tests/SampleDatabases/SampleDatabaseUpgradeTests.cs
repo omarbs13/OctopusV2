@@ -49,6 +49,36 @@ public sealed class SampleDatabaseUpgradeTests
         Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM Products WHERE IsActive = 0 AND DeletedAt IS NULL"));
         Assert.Equal(SampleData.AccentedName, Scalar<string>(connection, $"SELECT Name FROM Products WHERE Sku = '{SampleData.AccentedSku}'"));
         Assert.Equal(SampleData.AccentedPriceCents, Scalar<long>(connection, $"SELECT PriceCents FROM Products WHERE Sku = '{SampleData.AccentedSku}'"));
+
+        // 003: unidad de medida (clarificación 1) e índices filtrados tras reconstruir Products.
+        Assert.Equal(8, Scalar<long>(connection, "SELECT COUNT(*) FROM UnitsOfMeasure"));
+        Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM Products WHERE UnitCode IS NULL OR UnitCode NOT IN (SELECT Code FROM UnitsOfMeasure)"));
+        if (sampleFile == "v0.1.0.db")
+        {
+            Assert.Equal(SampleData.ProductCount, Scalar<long>(connection, "SELECT COUNT(*) FROM Products WHERE UnitCode = 'H87'"));
+            Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM ProductImages"));
+        }
+        else
+        {
+            // Desde 0.2.0: unidad, imagen y precio 0 se conservan al migrar.
+            Assert.Equal("KGM", Scalar<string>(connection, $"SELECT UnitCode FROM Products WHERE Sku = '{SampleData.KilogramSku}'"));
+            Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM ProductImages"));
+            Assert.Equal(
+                [SampleData.ImageSeed, SampleData.ImageSeed, SampleData.ImageSeed],
+                Scalar<byte[]>(connection, $"SELECT i.Content FROM ProductImages i JOIN Products p ON p.Id = i.ProductId WHERE p.Sku = '{SampleData.ImageSku}'"));
+            Assert.Equal(0, Scalar<long>(connection, $"SELECT PriceCents FROM Products WHERE Sku = '{SampleData.ZeroPriceSku}'"));
+        }
+
+        foreach (var index in new[] { "IX_Products_Sku", "IX_Products_Barcode", "IX_Products_NameSearch" })
+        {
+            var sql = Scalar<string>(connection, $"SELECT sql FROM sqlite_master WHERE type = 'index' AND name = '{index}'");
+            Assert.Contains("WHERE \"DeletedAt\" IS NULL", sql, StringComparison.Ordinal);
+        }
+
+        using var foreignKeys = connection.CreateCommand();
+        foreignKeys.CommandText = "PRAGMA foreign_key_check";
+        using var violations = foreignKeys.ExecuteReader();
+        Assert.False(violations.Read());
     }
 
     private static T Scalar<T>(SqliteConnection connection, string sql)

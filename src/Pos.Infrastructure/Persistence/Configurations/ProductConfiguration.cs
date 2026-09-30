@@ -26,6 +26,17 @@ internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasConversion(money => money.Cents, cents => Money.FromCents(cents))
             .IsRequired();
 
+        // El valor por defecto solo sirve para que la migración asigne "Pieza" a los productos
+        // anteriores a 003 (clarificación 1); el dominio siempre asigna la unidad.
+        builder.Property(p => p.UnitCode)
+            .HasMaxLength(UnitOfMeasure.CodeMaxLength)
+            .IsRequired()
+            .HasDefaultValue(UnitOfMeasure.Default.Code);
+        builder.HasOne<UnitOfMeasure>()
+            .WithMany()
+            .HasForeignKey(p => p.UnitCode)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.Property(p => p.IsActive).IsRequired();
         builder.Property(p => p.CreatedAt).IsRequired();
         builder.Property(p => p.CreatedBy).IsRequired();
@@ -34,6 +45,14 @@ internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.Property(p => p.Version).IsConcurrencyToken().IsRequired();
 
         builder.Ignore(p => p.IsDeleted);
+        builder.Ignore(p => p.ImageChanged);
+
+        // 0 o 1 imagen por producto; la fila se borra al quitar la imagen (003, FR-030).
+        builder.HasOne(p => p.Image)
+            .WithOne()
+            .HasForeignKey<ProductImage>(i => i.ProductId)
+            .OnDelete(DeleteBehavior.Cascade);
+        builder.Navigation(p => p.Image).AutoInclude(false);
 
         // Unicidad solo entre productos no borrados: permite reutilizar SKU y código de barras.
         builder.HasIndex(p => p.Sku)
@@ -46,7 +65,8 @@ internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
             .IsUnique()
             .HasFilter("\"DeletedAt\" IS NULL AND \"Barcode\" IS NOT NULL");
 
-        builder.HasIndex(p => p.NameSearch)
+        // Compuesto para que el orden del listado paginado salga del índice (003, research §2).
+        builder.HasIndex(p => new { p.NameSearch, p.Sku })
             .HasDatabaseName("IX_Products_NameSearch")
             .HasFilter("\"DeletedAt\" IS NULL");
     }

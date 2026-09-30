@@ -17,7 +17,7 @@ public sealed class ProductConcurrencyTests : IAsyncLifetime
     public async ValueTask InitializeAsync()
     {
         _db = await TestDb.CreateAsync();
-        var product = Product.Create("Café", "CAF-001", null, Money.FromCents(8950));
+        var product = Product.Create("Café", "CAF-001", null, Money.FromCents(8950), "H87");
         await using var context = _db.CreateDbContext();
         context.Products.Add(product);
         await context.SaveChangesAsync(Ct);
@@ -37,19 +37,19 @@ public sealed class ProductConcurrencyTests : IAsyncLifetime
         await using var second = _db.CreateDbContext();
         var firstRepository = new ProductRepository(first);
         var secondRepository = new ProductRepository(second);
-        var firstCopy = (await firstRepository.GetAsync(_productId, Ct))!;
-        var secondCopy = (await secondRepository.GetAsync(_productId, Ct))!;
+        var firstCopy = (await firstRepository.GetAsync(_productId, includeImage: false, Ct))!;
+        var secondCopy = (await secondRepository.GetAsync(_productId, includeImage: false, Ct))!;
         var seenVersion = secondCopy.Version;
 
-        firstCopy.Update("Primero", firstCopy.Sku, null, firstCopy.Price, isActive: true);
+        firstCopy.Update("Primero", firstCopy.Sku, null, firstCopy.Price, "H87", isActive: true);
         Assert.Equal(SaveOutcome.Saved, await firstRepository.SaveChangesAsync(firstCopy, seenVersion, Ct));
 
-        secondCopy.Update("Segundo", secondCopy.Sku, null, secondCopy.Price, isActive: true);
+        secondCopy.Update("Segundo", secondCopy.Sku, null, secondCopy.Price, "H87", isActive: true);
         var outcome = await secondRepository.SaveChangesAsync(secondCopy, seenVersion, Ct);
 
         Assert.Equal(SaveOutcome.Conflict, outcome);
         await using var check = _db.CreateDbContext();
-        var stored = (await new ProductRepository(check).GetAsync(_productId, Ct))!;
+        var stored = (await new ProductRepository(check).GetAsync(_productId, includeImage: false, Ct))!;
         Assert.Equal("Primero", stored.Name);
         Assert.Equal(2, stored.Version);
     }
@@ -59,8 +59,8 @@ public sealed class ProductConcurrencyTests : IAsyncLifetime
     {
         await using var context = _db.CreateDbContext();
         var repository = new ProductRepository(context);
-        var product = (await repository.GetAsync(_productId, Ct))!;
-        product.Update("Cambio", product.Sku, null, product.Price, isActive: true);
+        var product = (await repository.GetAsync(_productId, includeImage: false, Ct))!;
+        product.Update("Cambio", product.Sku, null, product.Price, "H87", isActive: true);
 
         // El operador vio la versión 0 (ya no vigente), aunque el contexto cargó la versión 1.
         var outcome = await repository.SaveChangesAsync(product, expectedVersion: 0, Ct);
@@ -74,13 +74,13 @@ public sealed class ProductConcurrencyTests : IAsyncLifetime
         _db.Clock.Advance(TimeSpan.FromHours(1));
         await using var context = _db.CreateDbContext();
         var repository = new ProductRepository(context);
-        var product = (await repository.GetAsync(_productId, Ct))!;
-        product.Update("Cambio", product.Sku, null, product.Price, isActive: false);
+        var product = (await repository.GetAsync(_productId, includeImage: false, Ct))!;
+        product.Update("Cambio", product.Sku, null, product.Price, "H87", isActive: false);
 
         Assert.Equal(SaveOutcome.Saved, await repository.SaveChangesAsync(product, 1, Ct));
 
         await using var check = _db.CreateDbContext();
-        var stored = (await new ProductRepository(check).GetAsync(_productId, Ct))!;
+        var stored = (await new ProductRepository(check).GetAsync(_productId, includeImage: false, Ct))!;
         Assert.Equal(2, stored.Version);
         Assert.Equal(_db.Clock.UtcNow, stored.UpdatedAt);
         Assert.NotEqual(stored.CreatedAt, stored.UpdatedAt);

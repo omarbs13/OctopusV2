@@ -20,15 +20,15 @@ public sealed class ProductCountTests : IAsyncLifetime
     [Fact]
     public async Task CountActive_CuentaSoloActivosNoBorrados()
     {
-        var inactive = Product.Create("Inactivo", "I-1", null, Money.FromCents(100));
-        inactive.Update(inactive.Name, inactive.Sku, null, inactive.Price, isActive: false);
-        var deleted = Product.Create("Borrado", "B-1", null, Money.FromCents(100));
+        var inactive = Product.Create("Inactivo", "I-1", null, Money.FromCents(100), "H87");
+        inactive.Update(inactive.Name, inactive.Sku, null, inactive.Price, "H87", isActive: false);
+        var deleted = Product.Create("Borrado", "B-1", null, Money.FromCents(100), "H87");
         deleted.Delete(_db.Clock.UtcNow);
         await using (var context = _db.CreateDbContext())
         {
             context.Products.AddRange(
-                Product.Create("Activo 1", "A-1", null, Money.FromCents(100)),
-                Product.Create("Activo 2", "A-2", null, Money.FromCents(100)),
+                Product.Create("Activo 1", "A-1", null, Money.FromCents(100), "H87"),
+                Product.Create("Activo 2", "A-2", null, Money.FromCents(100), "H87"),
                 inactive,
                 deleted);
             await context.SaveChangesAsync(TestContext.Current.CancellationToken);

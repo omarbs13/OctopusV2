@@ -18,10 +18,10 @@ public sealed class PageStateRetentionTests : IDisposable
 
     private Product Seed(string name, string sku, bool active = true)
     {
-        var product = Product.Create(name, sku, null, Money.FromCents(100));
+        var product = Product.Create(name, sku, null, Money.FromCents(100), "H87");
         if (!active)
         {
-            product.Update(name, sku, null, product.Price, isActive: false);
+            product.Update(name, sku, null, product.Price, "H87", isActive: false);
         }
 
         return _host.Repository.Seed(product);

@@ -16,10 +16,10 @@ public sealed class ProductsViewModelSearchTests : IDisposable
 
     private Product Seed(string name, string sku, bool active = true)
     {
-        var product = Product.Create(name, sku, null, Money.FromCents(12345));
+        var product = Product.Create(name, sku, null, Money.FromCents(12345), "H87");
         if (!active)
         {
-            product.Update(name, sku, null, product.Price, isActive: false);
+            product.Update(name, sku, null, product.Price, "H87", isActive: false);
         }
 
         return _host.Repository.Seed(product);
@@ -84,7 +84,7 @@ public sealed class ProductsViewModelSearchTests : IDisposable
     }
 
     [Fact]
-    public async Task MasDe200Resultados_AvisaQueHayMas()
+    public async Task MasDe100Resultados_MuestraLaPrimeraPaginaYElTotal()
     {
         for (var i = 0; i < 201; i++)
         {
@@ -94,8 +94,10 @@ public sealed class ProductsViewModelSearchTests : IDisposable
         var page = CreatePage();
         await page.OnActivatedAsync();
 
-        Assert.Equal(200, page.Items.Count);
-        Assert.True(page.HasMore);
+        Assert.Equal(100, page.Items.Count);
+        Assert.Equal(201, page.TotalCount);
+        Assert.Equal(1, page.CurrentPage);
+        Assert.Equal(3, page.TotalPages);
     }
 
     [Fact]

@@ -12,7 +12,7 @@ public sealed class GetProductHandler
     public async Task<Result<ProductDto>> HandleAsync(GetProductQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query);
-        var product = await _products.GetAsync(query.Id, cancellationToken);
+        var product = await _products.GetAsync(query.Id, includeImage: true, cancellationToken);
         return product is null
             ? Result.Failure<ProductDto>(new NotFound())
             : Result.Success(product.ToDto());

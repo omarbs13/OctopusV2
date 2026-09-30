@@ -6,6 +6,8 @@ using Pos.Application.Products.CountActiveProducts;
 using Pos.Application.Products.CreateProduct;
 using Pos.Application.Products.DeleteProduct;
 using Pos.Application.Products.GetProduct;
+using Pos.Application.Products.ListUnitsOfMeasure;
+using Pos.Application.Products.PrepareProductImage;
 using Pos.Application.Products.SearchProducts;
 using Pos.Application.Products.UpdateProduct;
 using Pos.Application.Startup;
@@ -28,6 +30,8 @@ public static class DependencyInjection
         services.AddScoped<UpdateProductHandler>();
         services.AddScoped<DeleteProductHandler>();
         services.AddScoped<CountActiveProductsHandler>();
+        services.AddSingleton<ListUnitsOfMeasureHandler>();
+        services.AddScoped<PrepareProductImageHandler>();
 
         // Diagnóstico
         services.AddScoped<GetAppInfoHandler>();

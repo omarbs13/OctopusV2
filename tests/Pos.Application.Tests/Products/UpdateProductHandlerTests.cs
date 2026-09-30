@@ -16,10 +16,10 @@ public class UpdateProductHandlerTests
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     private Product Seed(string sku = "CAF-001", string? barcode = null) =>
-        _repository.Seed(Product.Create("Café", sku, barcode, Money.FromCents(8950)));
+        _repository.Seed(Product.Create("Café", sku, barcode, Money.FromCents(8950), "H87"));
 
     private static UpdateProductCommand Command(Product p, string? sku = null, string? barcode = null, string name = "Café Molido", string price = "95.00", bool active = true, int? version = null) =>
-        new(p.Id, version ?? p.Version, name, sku ?? p.Sku, barcode ?? p.Barcode, price, active);
+        new(p.Id, version ?? p.Version, name, sku ?? p.Sku, barcode ?? p.Barcode, price, "H87", active);
 
     [Fact]
     public async Task DatosValidos_ActualizaEIncrementaLaVersion()
@@ -40,7 +40,7 @@ public class UpdateProductHandlerTests
     {
         var product = Seed();
 
-        var result = await Handler.HandleAsync(Command(product, name: "", price: "1,000"), Ct);
+        var result = await Handler.HandleAsync(Command(product, name: "", price: "12,50"), Ct);
 
         var error = Assert.IsType<ValidationFailed>(result.Error);
         Assert.Equal([ProductFields.Name, ProductFields.Price], error.Errors.Select(e => e.Field));
@@ -81,7 +81,7 @@ public class UpdateProductHandlerTests
     [Fact]
     public async Task ProductoInexistente_DevuelveNotFound()
     {
-        var command = new UpdateProductCommand(Guid.CreateVersion7(), 1, "Nombre", "SKU1", null, "1", true);
+        var command = new UpdateProductCommand(Guid.CreateVersion7(), 1, "Nombre", "SKU1", null, "1", "H87", true);
 
         var result = await Handler.HandleAsync(command, Ct);
 
@@ -91,7 +91,7 @@ public class UpdateProductHandlerTests
     [Fact]
     public async Task ProductoBorrado_DevuelveNotFound()
     {
-        var product = Product.Create("Café", "CAF-001", null, Money.FromCents(100));
+        var product = Product.Create("Café", "CAF-001", null, Money.FromCents(100), "H87");
         product.Delete(DateTime.UtcNow);
         _repository.Seed(product);
 

@@ -26,7 +26,9 @@ public sealed class UpdateProductHandler
             return Result.Failure<ProductDto>(ProductRules.ToError(validation));
         }
 
-        var product = await _products.GetAsync(command.Id, cancellationToken);
+        // La imagen solo se carga si va a cambiar (003, FR-027).
+        var imageChanges = command.Image is not null and not ProductImageChange.Keep;
+        var product = await _products.GetAsync(command.Id, includeImage: imageChanges, cancellationToken);
         if (product is null)
         {
             return Result.Failure<ProductDto>(new NotFound());
@@ -50,8 +52,9 @@ public sealed class UpdateProductHandler
             return Result.Failure<ProductDto>(new Duplicate(ProductFields.Barcode));
         }
 
-        _ = Money.TryParse(command.PriceText, out var price);
-        product.Update(command.Name, sku, barcode, price, command.IsActive);
+        var price = Money.Parse(command.PriceText).Value!.Value;
+        product.Update(command.Name, sku, barcode, price, command.UnitCode, command.IsActive);
+        ProductImages.Apply(product, command.Image);
 
         var outcome = await _products.SaveChangesAsync(product, command.ExpectedVersion, cancellationToken);
         return outcome.Status switch

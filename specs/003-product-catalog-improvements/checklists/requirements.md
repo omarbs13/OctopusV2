@@ -35,4 +35,4 @@
   separador de miles aceptado); ver "Cambios respecto a la fundación" en spec.md.
 - Decisiones tomadas por defecto que conviene confirmar en `/speckit-clarify`: el catálogo fijo de
   unidades de medida con "Pieza" como valor por defecto y para productos existentes; qué pasa con los
-  productos existentes con precio 0; y la imagen optimizada a 1024 px en su lado mayor.
+  productos existentes con precio 0; y la imagen optimizada a 800 px en su lado mayor (clarificación 3).

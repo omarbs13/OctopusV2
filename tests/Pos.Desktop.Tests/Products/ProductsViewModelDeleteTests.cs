@@ -14,7 +14,7 @@ public sealed class ProductsViewModelDeleteTests : IDisposable
 
     private async Task<ProductsViewModel> CreatePageWithSelectionAsync()
     {
-        _host.Repository.Seed(Product.Create("Café Molido", "CAF-001", null, Money.FromCents(100)));
+        _host.Repository.Seed(Product.Create("Café Molido", "CAF-001", null, Money.FromCents(100), "H87"));
         var page = new ProductsViewModel(_host.UseCases, _host.Runner, _host.Dialogs, () => new ProductEditorViewModel(_host.UseCases, _host.Runner, _host.Dialogs));
         await page.OnActivatedAsync();
         page.SelectedItem = page.Items.Single();

@@ -14,7 +14,8 @@ internal static class ProductRules
         Func<T, string?> name,
         Func<T, string?> sku,
         Func<T, string?> barcode,
-        Func<T, string?> priceText)
+        Func<T, string?> priceText,
+        Func<T, string?> unitCode)
     {
         validator.RuleFor(x => Product.NormalizeName(name(x)))
             .Cascade(CascadeMode.Stop)
@@ -33,11 +34,18 @@ internal static class ProductRules
             .Must(Product.IsValidBarcode).WithMessage(ProductMessages.BarcodeFormat)
             .OverridePropertyName(ProductFields.Barcode);
 
-        validator.RuleFor(x => priceText(x))
+        validator.RuleFor(x => Money.Parse(priceText(x)))
             .Cascade(CascadeMode.Stop)
-            .Must(p => !string.IsNullOrWhiteSpace(p)).WithMessage(ProductMessages.PriceRequired)
-            .Must(p => Money.TryParse(p, out _)).WithMessage(ProductMessages.PriceFormat)
+            .Must(r => r.Error != MoneyParseError.Empty).WithMessage(ProductMessages.PriceRequired)
+            .Must(r => r.Error != MoneyParseError.Format).WithMessage(ProductMessages.PriceFormat)
+            .Must(r => r.Error != MoneyParseError.TooManyDecimals).WithMessage(ProductMessages.PriceTooManyDecimals)
+            .Must(r => r.Error != MoneyParseError.TooLarge).WithMessage(ProductMessages.PriceTooLarge)
+            .Must(r => r.Value is { } price && Product.IsValidPrice(price)).WithMessage(ProductMessages.PriceNotPositive)
             .OverridePropertyName(ProductFields.Price);
+
+        validator.RuleFor(x => unitCode(x))
+            .Must(UnitOfMeasure.IsValidCode).WithMessage(ProductMessages.UnitRequired)
+            .OverridePropertyName(ProductFields.UnitCode);
     }
 
     public static ValidationFailed ToError(FluentValidation.Results.ValidationResult result) =>

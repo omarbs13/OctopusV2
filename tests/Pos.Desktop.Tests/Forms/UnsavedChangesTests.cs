@@ -82,7 +82,7 @@ public sealed class UnsavedChangesTests : IDisposable
     public async Task Cancelar_Guardar_ConErrores_SigueAbiertoConLosErrores()
     {
         var (page, editor) = await OpenNewProductWithChangesAsync();
-        editor.PriceText = "1,000";
+        editor.PriceText = "12,50";
         Dialogs.UnsavedChoice = UnsavedChangesChoice.Save;
 
         await editor.CancelCommand.ExecuteAsync(null);
@@ -95,7 +95,7 @@ public sealed class UnsavedChangesTests : IDisposable
     [Fact]
     public async Task Cancelar_Guardar_RechazadoPorDuplicado_SigueAbiertoConElError()
     {
-        _host.Repository.Seed(Product.Create("Otro", "CAF-1", null, Money.FromCents(100)));
+        _host.Repository.Seed(Product.Create("Otro", "CAF-1", null, Money.FromCents(100), "H87"));
         var (page, editor) = await OpenNewProductWithChangesAsync();
         Dialogs.UnsavedChoice = UnsavedChangesChoice.Save;
 
@@ -172,7 +172,7 @@ public sealed class UnsavedChangesTests : IDisposable
     [Fact]
     public async Task AbrirOtroProducto_ConCambios_Pregunta()
     {
-        _host.Repository.Seed(Product.Create("Leche", "LEC-1", null, Money.FromCents(100)));
+        _host.Repository.Seed(Product.Create("Leche", "LEC-1", null, Money.FromCents(100), "H87"));
         var (page, editor) = await OpenNewProductWithChangesAsync();
         page.SelectedItem = page.Items.Single();
         Dialogs.UnsavedChoice = UnsavedChangesChoice.KeepEditing;
@@ -211,7 +211,7 @@ public sealed class UnsavedChangesTests : IDisposable
     [Fact]
     public async Task SinCambiosOConCambiosRevertidos_NingunDisparadorPregunta()
     {
-        _host.Repository.Seed(Product.Create("Leche", "LEC-1", null, Money.FromCents(1000)));
+        _host.Repository.Seed(Product.Create("Leche", "LEC-1", null, Money.FromCents(1000), "H87"));
         await Navigator.NavigateAsync("catalogs.products");
         var page = (ProductsViewModel)Navigator.CurrentPage!;
         page.SelectedItem = page.Items.Single();

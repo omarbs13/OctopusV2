@@ -26,7 +26,7 @@ public sealed class UnexpectedErrorTests : IDisposable
     private ProductsViewModel CreatePage() => new(_host.UseCases, _host.Runner, _host.Dialogs, CreateEditor);
 
     private Product Seed() =>
-        _host.Repository.Seed(Product.Create("Café", "CAF-001", null, Money.FromCents(100)));
+        _host.Repository.Seed(Product.Create("Café", "CAF-001", null, Money.FromCents(100), "H87"));
 
     private void AssertLoggedAndNotified(string operation)
     {

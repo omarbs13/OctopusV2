@@ -32,6 +32,19 @@ estos puntos):
 - El producto gana dos datos: **unidad de medida** (obligatoria) e **imagen** (opcional).
 - El listado deja de mostrar un número máximo de resultados y pasa a mostrarse **por páginas**.
 
+## Clarifications
+
+### Session 2026-09-29
+
+- Q: ¿De dónde sale la lista de unidades de medida que el operador puede elegir para un producto?
+  → A: Lista fija incluida en la aplicación (Pieza, Kilogramo, Gramo, Litro, Mililitro, Metro,
+  Caja, Paquete); "Pieza" es el valor inicial y el que reciben los productos existentes.
+- Q: ¿Qué debe pasar con los productos que ya tienen precio 0, ahora que el precio debe ser mayor
+  que 0? → A: Se conservan sin cambios y se ven con normalidad; al editarlos no se pueden guardar
+  hasta capturar un precio mayor que 0.
+- Q: ¿A qué tamaño máximo se debe reducir la imagen de un producto al guardarla? → A: 800 px en
+  el lado mayor.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Corrección: mostrar inactivos (Priority: P1)
@@ -96,8 +109,8 @@ indicadores de página.
    **Then** el resultado aparece en menos de 1 segundo.
 6. **Given** una búsqueda sin coincidencias, **When** se ejecuta, **Then** se indica explícitamente
    que no hay resultados, con 0 registros y sin navegación disponible.
-7. **Given** el operador en la página 2, **When** edita un producto y guarda, **Then** el listado se
-   actualiza y permanece en la página 2 si sigue existiendo.
+7. **Given** el operador en la página 2, **When** edita un producto y guarda, **Then** el listado
+   muestra la página donde queda el producto según su nombre y lo deja seleccionado.
 
 ---
 
@@ -172,8 +185,9 @@ restaura un respaldo que contiene un producto con imagen.
 
 - Productos existentes sin unidad de medida: al actualizar la aplicación se les asigna la unidad
   "Pieza" automáticamente, sin intervención del operador.
-- Productos existentes con precio 0 (válidos en la fundación): siguen apareciendo y pueden
-  consultarse, pero al editarlos no se pueden guardar hasta capturar un precio mayor que 0.
+- Productos existentes con precio 0 (válidos en la fundación): la actualización no los modifica,
+  siguen apareciendo sin marca especial y pueden consultarse, pero al editarlos no se pueden
+  guardar hasta capturar un precio mayor que 0.
 - El operador está en la última página y borra su único registro: el listado pasa a la nueva
   última página válida.
 - Otra operación agrega o borra productos mientras el operador navega: los totales y páginas se
@@ -224,9 +238,11 @@ restaura un respaldo que contiene un producto con imagen.
   acentos, con un criterio de desempate estable para nombres iguales.
 - **FR-011**: El sistema MUST obtener solo los registros de la página solicitada y el conteo total,
   sin cargar el catálogo completo en memoria.
-- **FR-012**: Tras registrar, editar o borrar un producto, el listado MUST permanecer en la página
-  actual si sigue existiendo; si deja de existir, MUST mostrar la última página válida. Se
-  mantiene el comportamiento de la fundación de mostrar y seleccionar el producto recién guardado.
+- **FR-012**: Tras registrar o editar un producto, el listado MUST mostrar la página que contiene el
+  producto guardado y seleccionarlo, si es visible con el filtro y la búsqueda actuales. Si no es
+  visible por la búsqueda, se limpia la búsqueda para mostrarlo, como en la fundación. Tras
+  borrar, el listado MUST permanecer en la página actual o, si deja de existir, mostrar la última
+  página válida.
 - **FR-013**: Las reglas de búsqueda de la fundación (coincidencias por nombre, SKU y código de
   barras) MUST mantenerse sin cambios.
 
@@ -236,12 +252,16 @@ restaura un respaldo que contiene un producto con imagen.
   visualmente como tales en el formulario.
 - **FR-015**: El precio de venta MUST ser mayor que 0, con máximo 2 decimales y máximo 999,999.99,
   en pesos mexicanos. Valores fuera de estas reglas se rechazan; nunca se redondean en silencio.
+  Los productos existentes con precio 0 MUST conservarse sin cambios al actualizar y mostrarse con
+  normalidad; la regla se aplica solo al guardarlos.
 - **FR-016**: La captura del precio MUST aceptar dígitos con un punto decimal opcional, con o sin
   separador de miles con coma en grupos de 3 (por ejemplo "1234.50" y "1,234.50"). MUST rechazar la
   coma como separador decimal, los separadores mal agrupados, los símbolos de moneda y cualquier
   otro carácter.
-- **FR-017**: La unidad de medida MUST elegirse de un catálogo fijo: Pieza, Kilogramo, Gramo,
-  Litro, Mililitro, Metro, Caja y Paquete. Un producto nuevo propone "Pieza" como valor inicial.
+- **FR-017**: La unidad de medida MUST elegirse de un catálogo fijo incluido en la aplicación y no
+  editable por el operador: Pieza, Kilogramo, Gramo, Litro, Mililitro, Metro, Caja y Paquete. Un
+  producto nuevo propone "Pieza" como valor inicial y los productos existentes reciben "Pieza" al
+  actualizar la aplicación.
 - **FR-018**: Las reglas de nombre, SKU y código de barras de la fundación (FR-010 a FR-012 de
   `001-pos-foundation`) MUST mantenerse sin cambios.
 - **FR-019**: Cada mensaje de validación MUST estar en español, indicar la regla específica
@@ -258,7 +278,7 @@ restaura un respaldo que contiene un producto con imagen.
 - **FR-023**: El sistema MUST rechazar un archivo inválido, dañado, de otro formato o mayor a 5 MB
   con un mensaje claro que indique el motivo, sin modificar el producto.
 - **FR-024**: Al guardar, el sistema MUST optimizar la imagen reduciéndola, si excede, a un máximo
-  de 1024 píxeles en su lado mayor sin deformarla, y MUST generar una miniatura para el listado.
+  de 800 píxeles en su lado mayor sin deformarla, y MUST generar una miniatura para el listado.
 - **FR-025**: El formulario MUST mostrar una vista previa de la imagen actual o seleccionada y
   permitir reemplazarla y quitarla. Los cambios de imagen se aplican solo al guardar el producto;
   cancelar los descarta.
@@ -279,8 +299,8 @@ restaura un respaldo que contiene un producto con imagen.
 
 - **Producto** (ampliado): se agregan la unidad de medida (obligatoria) y una referencia opcional a
   su imagen. Mantiene los atributos y la auditoría de la fundación.
-- **Unidad de medida**: catálogo fijo con las unidades de FR-017; cada producto tiene exactamente
-  una.
+- **Unidad de medida**: catálogo fijo de 8 unidades (FR-017), incluido en la aplicación y no
+  editable por el operador; cada producto tiene exactamente una.
 - **Imagen de producto**: imagen optimizada y su miniatura, asociadas a un solo producto. Se
   conserva mientras el producto la tenga asignada, incluso si el producto está borrado.
 - **Página de productos**: resultado de una consulta con número de página, tamaño (100), total de
@@ -318,10 +338,9 @@ restaura un respaldo que contiene un producto con imagen.
   alcance.
 - La página actual forma parte del estado de pantalla que `002-navigation-forms` conserva durante
   la sesión al salir y regresar; no se conserva entre reinicios.
-- El catálogo de unidades de medida es fijo y no editable por el operador en esta funcionalidad;
-  la relación de la unidad con ventas por peso o báscula se definirá con Ventas.
-- Tamaños de imagen: máximo 1024 px en el lado mayor para la imagen optimizada; la miniatura tiene
-  un tamaño adecuado para una fila del listado (alrededor de 64 px).
+- Agregar o editar unidades de medida queda fuera de alcance; la relación de la unidad con ventas por peso o báscula se definirá con Ventas.
+- Tamaños de imagen: máximo 800 px en el lado mayor para la imagen optimizada; la miniatura tiene
+  un máximo de 128 px en su lado mayor y se muestra a 40 × 40 px en el listado.
 - Las imágenes aumentan el tamaño de los respaldos automáticos; con imágenes optimizadas se
   considera aceptable para catálogos de algunos miles de productos.
 - Fuera de alcance: captura desde cámara, varias imágenes por producto, edición de imágenes

@@ -3,6 +3,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Pos.Infrastructure.Tests.TestSupport.MigrationScenarios;
 
+/// <summary>
+/// Esquema mínimo de Products compatible con el modelo actual (para sembrar con EF Core). Cuando el
+/// modelo agrega columnas obligatorias, se agregan aquí con un valor por defecto.
+/// </summary>
 internal static class ScenarioSql
 {
     public const string CreateProducts = """
@@ -13,6 +17,7 @@ internal static class ScenarioSql
             "Sku" TEXT NOT NULL,
             "Barcode" TEXT NULL,
             "PriceCents" INTEGER NOT NULL,
+            "UnitCode" TEXT NOT NULL DEFAULT 'H87',
             "IsActive" INTEGER NOT NULL,
             "CreatedAt" TEXT NOT NULL,
             "CreatedBy" TEXT NOT NULL,

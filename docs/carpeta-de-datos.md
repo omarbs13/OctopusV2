@@ -60,6 +60,23 @@ Se puede borrar sin riesgo para restablecer el menú. Si está dañado, la aplic
 muestra el menú expandido y registra una advertencia. La contracción automática en ventanas de
 menos de 1000 px de ancho no se guarda.
 
+## Imágenes de productos
+
+Las imágenes de productos se guardan **dentro de la base** (`data/pos.db`, tabla
+`ProductImages`), no como archivos sueltos. Por eso:
+
+- Se guardan en la misma transacción que el producto: nunca queda un producto con una imagen a
+  medias.
+- Los respaldos automáticos y los previos a migración las incluyen, y restaurar un respaldo
+  devuelve a cada producto la imagen que tenía en ese momento.
+- Al reemplazar o quitar una imagen se actualiza o borra su fila. SQLite reutiliza ese espacio,
+  así que no se acumulan archivos huérfanos.
+
+Cada imagen se guarda optimizada en WEBP, con un máximo de 800 px por lado (de 40 a 90 KB) más
+una miniatura de 128 px (de 3 a 6 KB). Con unas 5,000 imágenes, la base y **cada** respaldo
+automático crecen de 300 a 450 MB. Como se conservan 7 respaldos, prevé ese espacio en disco. El
+respaldo diario al arrancar puede tardar unos segundos más en ese escenario.
+
 ## Respaldos automáticos
 
 - Se crea uno al arrancar y otro al cerrar, pero solo si el último tiene más de 24 horas.
@@ -105,7 +122,8 @@ En **Acerca de → Exportar diagnóstico…** se genera un único `.zip` con:
 
 - `info.json`: versión, sistema operativo, carpeta de datos y fecha de exportación.
 - `logs/`: los logs de los últimos 7 días.
-- `pos.db`: un respaldo consistente de la base.
+- `pos.db`: un respaldo consistente de la base, **sin las imágenes de productos**: se borran de
+  la copia y se compacta antes de comprimirla, porque pesan mucho y no aportan al diagnóstico.
 
 El archivo se arma en una carpeta temporal y solo al final se mueve al destino, así que nunca
 queda un zip incompleto.

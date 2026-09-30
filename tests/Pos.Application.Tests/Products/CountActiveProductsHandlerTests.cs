@@ -16,19 +16,19 @@ public class CountActiveProductsHandlerTests
     {
         for (var i = 0; i < 12; i++)
         {
-            _repository.Seed(Product.Create($"Activo {i}", $"A-{i}", null, Money.FromCents(100)));
+            _repository.Seed(Product.Create($"Activo {i}", $"A-{i}", null, Money.FromCents(100), "H87"));
         }
 
         for (var i = 0; i < 3; i++)
         {
-            var inactive = Product.Create($"Inactivo {i}", $"I-{i}", null, Money.FromCents(100));
-            inactive.Update(inactive.Name, inactive.Sku, null, inactive.Price, isActive: false);
+            var inactive = Product.Create($"Inactivo {i}", $"I-{i}", null, Money.FromCents(100), "H87");
+            inactive.Update(inactive.Name, inactive.Sku, null, inactive.Price, "H87", isActive: false);
             _repository.Seed(inactive);
         }
 
         for (var i = 0; i < 2; i++)
         {
-            var deleted = Product.Create($"Borrado {i}", $"B-{i}", null, Money.FromCents(100));
+            var deleted = Product.Create($"Borrado {i}", $"B-{i}", null, Money.FromCents(100), "H87");
             deleted.Delete(DateTime.UtcNow);
             _repository.Seed(deleted);
         }

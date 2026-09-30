@@ -7,4 +7,5 @@ public static class ProductFields
     public const string Sku = "Sku";
     public const string Barcode = "Barcode";
     public const string Price = "Price";
+    public const string UnitCode = "UnitCode";
 }

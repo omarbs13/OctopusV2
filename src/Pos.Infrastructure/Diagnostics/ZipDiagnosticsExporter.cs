@@ -1,5 +1,6 @@
 using System.IO.Compression;
 using System.Text.Json;
+using Microsoft.Data.Sqlite;
 using Pos.Application.Abstractions;
 using Pos.Application.Diagnostics;
 using Pos.Application.Startup;
@@ -46,7 +47,9 @@ public sealed class ZipDiagnosticsExporter : IDiagnosticsExporter
         try
         {
             databaseCopy = await _backups.CreateTemporaryCopyAsync(cancellationToken);
-            await Task.Run(() => BuildZip(workZip, databaseCopy), cancellationToken);
+            var copy = databaseCopy;
+            await Task.Run(() => RemoveProductImages(copy), cancellationToken);
+            await Task.Run(() => BuildZip(workZip, copy), cancellationToken);
 
             File.Copy(workZip, destinationTemp, overwrite: true);
             File.Move(destinationTemp, destinationFile, overwrite: true);
@@ -64,6 +67,31 @@ public sealed class ZipDiagnosticsExporter : IDiagnosticsExporter
                 TryDelete(databaseCopy);
             }
         }
+    }
+
+    /// <summary>
+    /// Quita las imágenes de productos de la copia y la compacta, para que no queden ni en páginas
+    /// libres (003, FR-029): pesan mucho y no aportan al diagnóstico.
+    /// </summary>
+    private static void RemoveProductImages(string databaseFile)
+    {
+        using var connection = new SqliteConnection(new SqliteConnectionStringBuilder
+        {
+            DataSource = databaseFile,
+            Pooling = false,
+        }.ToString());
+        connection.Open();
+
+        using var exists = connection.CreateCommand();
+        exists.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'ProductImages'";
+        if ((long)exists.ExecuteScalar()! == 0)
+        {
+            return;
+        }
+
+        using var command = connection.CreateCommand();
+        command.CommandText = "DELETE FROM \"ProductImages\"; VACUUM;";
+        command.ExecuteNonQuery();
     }
 
     private static void TryDelete(string file)

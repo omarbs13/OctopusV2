@@ -77,6 +77,24 @@ public sealed class ZipDiagnosticsExporterTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Exportar_NoIncluyeImagenesDeProductos()
+    {
+        var product = (await DatabaseTestHelpers.SeedProductsAsync(_db, 1, prefix: "Img"))[0];
+        await DatabaseTestHelpers.SetImageAsync(_db, product.Id, seed: 5);
+        var destination = Path.Combine(_work, "destino", "diag.zip");
+
+        await CreateExporter().ExportAsync(destination, Ct);
+
+        using var zip = ZipFile.OpenRead(destination);
+        var extracted = Path.Combine(_work, "sin-imagenes.db");
+        zip.GetEntry("pos.db")!.ExtractToFile(extracted);
+        Assert.Equal("ok", DatabaseTestHelpers.QuickCheck(extracted));
+        Assert.Equal(4, DatabaseTestHelpers.ReadProductRows(extracted).Count);
+        Assert.Null(DatabaseTestHelpers.ReadImage(extracted, product.Id));
+        Assert.NotNull(DatabaseTestHelpers.ReadImage(_db.Directory.Paths.DatabaseFile, product.Id));
+    }
+
+    [Fact]
     public async Task LogAbiertoParaEscritura_SeIncluyeIgual()
     {
         var log = WriteLog("pos-20260929.log", TimeSpan.Zero);

@@ -5,8 +5,11 @@ namespace Pos.Application.Products;
 /// <summary>Persistencia del agregado Producto. Específico del agregado; no hay repositorios genéricos.</summary>
 public interface IProductRepository
 {
-    /// <summary>Producto no borrado, o nulo.</summary>
-    Task<Product?> GetAsync(Guid id, CancellationToken cancellationToken);
+    /// <summary>
+    /// Producto no borrado, o nulo. Con <paramref name="includeImage"/> carga también su imagen;
+    /// sin ella, <see cref="Product.Image"/> queda nula aunque el producto tenga imagen.
+    /// </summary>
+    Task<Product?> GetAsync(Guid id, bool includeImage, CancellationToken cancellationToken);
 
     /// <summary>Productos activos y no borrados.</summary>
     Task<long> CountActiveAsync(CancellationToken cancellationToken);
@@ -17,7 +20,14 @@ public interface IProductRepository
     /// <summary>Indica si otro producto no borrado usa el código de barras.</summary>
     Task<bool> BarcodeExistsAsync(string barcode, Guid? excludingId, CancellationToken cancellationToken);
 
-    Task<ProductSearchPage> SearchAsync(ProductSearch search, CancellationToken cancellationToken);
+    /// <summary>Página de productos visibles según los criterios, ordenada por nombre y SKU.</summary>
+    Task<ProductPage> SearchAsync(ProductSearch search, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Página (base 1) que contiene al producto con los criterios dados, o nulo si el producto no
+    /// es visible con esos criterios.
+    /// </summary>
+    Task<int?> LocatePageAsync(ProductSearch search, Guid productId, CancellationToken cancellationToken);
 
     void Add(Product product);
 
@@ -37,16 +47,32 @@ public interface IProductRepository
 /// <param name="BarcodeText">Texto para buscar en el código de barras.</param>
 /// <param name="BarcodeExact">Verdadero si el texto es un código de barras completo (8 a 14 dígitos).</param>
 /// <param name="IncludeInactive">Incluir productos inactivos; los borrados nunca se incluyen.</param>
-/// <param name="Limit">Máximo de filas a devolver.</param>
+/// <param name="Page">Página solicitada, base 1; si excede el total se devuelve la última.</param>
+/// <param name="PageSize">Registros por página.</param>
 public sealed record ProductSearch(
     string? NameText,
     string? SkuText,
     string? BarcodeText,
     bool BarcodeExact,
     bool IncludeInactive,
-    int Limit);
+    int Page,
+    int PageSize);
 
-public sealed record ProductSearchPage(IReadOnlyList<ProductListItemDto> Items, bool HasMore);
+/// <summary>Página del listado de productos (FR-006 y FR-007).</summary>
+/// <param name="Items">Productos de la página, ordenados por nombre y SKU.</param>
+/// <param name="TotalCount">Productos que cumplen los criterios; nunca incluye borrados.</param>
+/// <param name="Page">Página devuelta, base 1, ya ajustada al rango válido.</param>
+/// <param name="PageSize">Registros por página.</param>
+public sealed record ProductPage(IReadOnlyList<ProductListItemDto> Items, long TotalCount, int Page, int PageSize)
+{
+    public const int DefaultPageSize = 100;
+
+    /// <summary>Total de páginas; al menos 1 aunque no haya registros.</summary>
+    public int TotalPages => PageCount(TotalCount, PageSize);
+
+    public static int PageCount(long totalCount, int pageSize) =>
+        totalCount <= 0 ? 1 : (int)((totalCount + pageSize - 1) / pageSize);
+}
 
 public enum SaveStatus
 {

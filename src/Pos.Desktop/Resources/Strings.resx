@@ -37,7 +37,15 @@
   <data name="Editor_Sku" xml:space="preserve"><value>SKU</value></data>
   <data name="Editor_Barcode" xml:space="preserve"><value>Código de barras (opcional)</value></data>
   <data name="Editor_Price" xml:space="preserve"><value>Precio</value></data>
-  <data name="Editor_PriceHint" xml:space="preserve"><value>Ejemplo: 1234.50</value></data>
+  <data name="Editor_PriceHint" xml:space="preserve"><value>Ejemplo: 1234.50 o 1,234.50</value></data>
+  <data name="Editor_Unit" xml:space="preserve"><value>Unidad de medida</value></data>
+  <data name="Editor_Image" xml:space="preserve"><value>Imagen</value></data>
+  <data name="Editor_SelectImage" xml:space="preserve"><value>Seleccionar imagen…</value></data>
+  <data name="Editor_ChangeImage" xml:space="preserve"><value>Cambiar imagen…</value></data>
+  <data name="Editor_RemoveImage" xml:space="preserve"><value>Quitar imagen</value></data>
+  <data name="Editor_NoImage" xml:space="preserve"><value>Sin imagen</value></data>
+  <data name="Editor_ImageFilter" xml:space="preserve"><value>Imágenes (*.jpg, *.jpeg, *.png, *.webp)</value></data>
+  <data name="Editor_ProcessingImage" xml:space="preserve"><value>Procesando imagen…</value></data>
   <data name="Editor_Active" xml:space="preserve"><value>Activo</value></data>
   <data name="Editor_Save" xml:space="preserve"><value>Guardar</value></data>
   <data name="Editor_DuplicateSku" xml:space="preserve"><value>Ya existe un producto con este SKU.</value></data>
@@ -52,10 +60,16 @@
   <data name="Products_Edit" xml:space="preserve"><value>Editar (F2)</value></data>
   <data name="Products_Delete" xml:space="preserve"><value>Borrar (Supr)</value></data>
   <data name="Products_Empty" xml:space="preserve"><value>No se encontraron productos.</value></data>
-  <data name="Products_HasMore" xml:space="preserve"><value>Se muestran los primeros 200 resultados; refine la búsqueda.</value></data>
+  <data name="Products_PageSummary" xml:space="preserve"><value>{0:N0} registros · Página {1} de {2}</value></data>
+  <data name="Products_FirstPage" xml:space="preserve"><value>Primera página (Alt+Inicio)</value></data>
+  <data name="Products_PreviousPage" xml:space="preserve"><value>Página anterior (Alt+RePág)</value></data>
+  <data name="Products_NextPage" xml:space="preserve"><value>Página siguiente (Alt+AvPág)</value></data>
+  <data name="Products_LastPage" xml:space="preserve"><value>Última página (Alt+Fin)</value></data>
+  <data name="Products_ColImage" xml:space="preserve"><value>Imagen</value></data>
   <data name="Products_ColName" xml:space="preserve"><value>Nombre</value></data>
   <data name="Products_ColSku" xml:space="preserve"><value>SKU</value></data>
   <data name="Products_ColBarcode" xml:space="preserve"><value>Código de barras</value></data>
+  <data name="Products_ColUnit" xml:space="preserve"><value>Unidad</value></data>
   <data name="Products_ColPrice" xml:space="preserve"><value>Precio</value></data>
   <data name="Products_ColStatus" xml:space="preserve"><value>Estado</value></data>
   <data name="Products_Active" xml:space="preserve"><value>Activo</value></data>

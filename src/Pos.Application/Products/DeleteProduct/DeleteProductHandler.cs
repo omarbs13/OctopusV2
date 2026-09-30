@@ -18,7 +18,7 @@ public sealed class DeleteProductHandler
     {
         ArgumentNullException.ThrowIfNull(command);
 
-        var product = await _products.GetAsync(command.Id, cancellationToken);
+        var product = await _products.GetAsync(command.Id, includeImage: false, cancellationToken);
         if (product is null)
         {
             return Result.Failure(new NotFound());

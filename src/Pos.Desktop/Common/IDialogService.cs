@@ -15,4 +15,7 @@ public interface IDialogService
 
     /// <summary>Selector para guardar un archivo; devuelve la ruta local o nulo si se cancela.</summary>
     Task<string?> PickSaveFileAsync(string title, string suggestedFileName, string extension);
+
+    /// <summary>Selector para abrir un archivo; devuelve nulo si se cancela.</summary>
+    Task<FileSelection?> PickOpenFileAsync(string title, IReadOnlyList<FileTypeFilter> filters);
 }

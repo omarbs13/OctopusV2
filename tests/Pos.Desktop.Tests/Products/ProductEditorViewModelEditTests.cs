@@ -17,7 +17,7 @@ public sealed class ProductEditorViewModelEditTests : IDisposable
     private ProductsViewModel CreatePage() => new(_host.UseCases, _host.Runner, _host.Dialogs, CreateEditor);
 
     private Product Seed() =>
-        _host.Repository.Seed(Product.Create("Café Molido", "CAF-001", "7501234567890", Money.FromCents(123450)));
+        _host.Repository.Seed(Product.Create("Café Molido", "CAF-001", "7501234567890", Money.FromCents(123450), "H87"));
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
