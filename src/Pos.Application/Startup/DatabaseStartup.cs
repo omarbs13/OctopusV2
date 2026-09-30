@@ -43,17 +43,18 @@ public sealed partial class DatabaseStartup : IDatabaseStartup
         _closeBackupTimeout = closeBackupTimeout;
     }
 
-    public async Task<StartupResult> RunAsync(CancellationToken cancellationToken)
+    public async Task<StartupResult> RunAsync(CancellationToken cancellationToken, IProgress<StartupStep>? progress = null)
     {
         var watch = Stopwatch.StartNew();
-        var result = await RunStepsAsync(cancellationToken);
+        var result = await RunStepsAsync(cancellationToken, progress);
         LogStartupFinished(result.GetType().Name, watch.ElapsedMilliseconds);
         return result;
     }
 
-    public async Task RecoverFromBackupAsync(BackupInfo backup, CancellationToken cancellationToken)
+    public async Task RecoverFromBackupAsync(BackupInfo backup, CancellationToken cancellationToken, IProgress<StartupStep>? progress = null)
     {
         ArgumentNullException.ThrowIfNull(backup);
+        progress?.Report(StartupStep.Restoring);
         LogRecovering(backup.Path, backup.CreatedAtUtc);
         await _backups.QuarantineCurrentDatabaseAsync(cancellationToken);
         await _backups.RestoreAsync(backup, cancellationToken);
@@ -62,7 +63,7 @@ public sealed partial class DatabaseStartup : IDatabaseStartup
     public async Task BackupOnCloseAsync()
     {
         using var timeout = new CancellationTokenSource(_closeBackupTimeout);
-        var backup = TryAutomaticBackupAsync(timeout.Token);
+        var backup = TryAutomaticBackupAsync(timeout.Token, progress: null);
         var finished = await Task.WhenAny(backup, Task.Delay(_closeBackupTimeout, CancellationToken.None));
         if (finished != backup)
         {
@@ -70,18 +71,20 @@ public sealed partial class DatabaseStartup : IDatabaseStartup
         }
     }
 
-    private async Task<StartupResult> RunStepsAsync(CancellationToken cancellationToken)
+    private async Task<StartupResult> RunStepsAsync(CancellationToken cancellationToken, IProgress<StartupStep>? progress)
     {
         try
         {
+            progress?.Report(StartupStep.CheckingDatabase);
             if (!_database.DatabaseExists())
             {
                 LogCreatingDatabase();
+                progress?.Report(StartupStep.Migrating);
                 await _database.MigrateAsync(cancellationToken);
             }
             else
             {
-                var problem = await CheckExistingDatabaseAsync(cancellationToken);
+                var problem = await CheckExistingDatabaseAsync(cancellationToken, progress);
                 if (problem is not null)
                 {
                     return problem;
@@ -89,7 +92,8 @@ public sealed partial class DatabaseStartup : IDatabaseStartup
             }
 
             await _database.EnableWalAsync(cancellationToken);
-            await TryAutomaticBackupAsync(cancellationToken);
+            await TryAutomaticBackupAsync(cancellationToken, progress);
+            progress?.Report(StartupStep.Finishing);
             return new StartupResult.Ready();
         }
         catch (DatabaseAccessException ex)
@@ -99,7 +103,7 @@ public sealed partial class DatabaseStartup : IDatabaseStartup
         }
     }
 
-    private async Task<StartupResult?> CheckExistingDatabaseAsync(CancellationToken cancellationToken)
+    private async Task<StartupResult?> CheckExistingDatabaseAsync(CancellationToken cancellationToken, IProgress<StartupStep>? progress)
     {
         var integrity = await _database.CheckIntegrityAsync(cancellationToken);
         LogIntegrity(integrity);
@@ -118,12 +122,12 @@ public sealed partial class DatabaseStartup : IDatabaseStartup
         return migrations.Status switch
         {
             MigrationStatus.Newer => new StartupResult.NewerDatabase(),
-            MigrationStatus.Pending => await MigrateWithBackupAsync(cancellationToken),
+            MigrationStatus.Pending => await MigrateWithBackupAsync(cancellationToken, progress),
             _ => null,
         };
     }
 
-    private async Task<StartupResult?> MigrateWithBackupAsync(CancellationToken cancellationToken)
+    private async Task<StartupResult?> MigrateWithBackupAsync(CancellationToken cancellationToken, IProgress<StartupStep>? progress)
     {
         var required = 2 * _database.DatabaseSizeBytes();
         var available = _database.AvailableFreeSpaceBytes();
@@ -133,11 +137,13 @@ public sealed partial class DatabaseStartup : IDatabaseStartup
             return new StartupResult.InsufficientSpace();
         }
 
+        progress?.Report(StartupStep.BackingUp);
         var backup = await _backups.CreateAsync(BackupKind.PreMigration, cancellationToken);
         LogStep("Respaldo previo a migrar", backup.Path);
 
         try
         {
+            progress?.Report(StartupStep.Migrating);
             await _database.MigrateAsync(cancellationToken);
             LogStep("Migración", "aplicada");
             return null;
@@ -147,6 +153,7 @@ public sealed partial class DatabaseStartup : IDatabaseStartup
 #pragma warning restore CA1031
         {
             LogMigrationFailed(ex, backup.Path);
+            progress?.Report(StartupStep.Restoring);
             try
             {
                 await _backups.RestoreAsync(backup, CancellationToken.None);
@@ -163,7 +170,7 @@ public sealed partial class DatabaseStartup : IDatabaseStartup
         }
     }
 
-    private async Task TryAutomaticBackupAsync(CancellationToken cancellationToken)
+    private async Task TryAutomaticBackupAsync(CancellationToken cancellationToken, IProgress<StartupStep>? progress)
     {
         try
         {
@@ -173,6 +180,7 @@ public sealed partial class DatabaseStartup : IDatabaseStartup
                 return;
             }
 
+            progress?.Report(StartupStep.BackingUp);
             var backup = await _backups.CreateAsync(BackupKind.Automatic, cancellationToken);
             LogStep("Respaldo automático", backup.Path);
         }

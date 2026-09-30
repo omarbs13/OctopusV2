@@ -59,6 +59,12 @@ public sealed class InMemoryProductRepository : IProductRepository
         return Task.FromResult(_stored.TryGetValue(id, out var p) && !p.IsDeleted ? Clone(p) : null);
     }
 
+    public Task<long> CountActiveAsync(CancellationToken cancellationToken)
+    {
+        ThrowIfFailing();
+        return Task.FromResult((long)_stored.Values.Count(p => p.IsActive && !p.IsDeleted));
+    }
+
     public Task<bool> SkuExistsAsync(string sku, Guid? excludingId, CancellationToken cancellationToken)
     {
         ThrowIfFailing();

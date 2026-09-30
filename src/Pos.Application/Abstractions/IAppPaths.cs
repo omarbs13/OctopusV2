@@ -16,4 +16,10 @@ public interface IAppPaths
     string LogsDirectory { get; }
 
     string LockFile { get; }
+
+    /// <summary>Logotipo del cliente (opcional): reemplaza al predeterminado.</summary>
+    string LogoFile { get; }
+
+    /// <summary>Preferencias locales de la máquina (por ejemplo, el menú).</summary>
+    string PreferencesDirectory { get; }
 }

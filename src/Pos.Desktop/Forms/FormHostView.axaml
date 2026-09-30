@@ -1,0 +1,41 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:forms="using:Pos.Desktop.Forms"
+             xmlns:res="using:Pos.Desktop.Resources"
+             x:Class="Pos.Desktop.Forms.FormHostView">
+
+  <!-- El DataContext sigue siendo el de la pantalla; el estado del formulario se lee de Host. -->
+  <Grid ColumnDefinitions="*,Auto">
+    <!-- Listado -->
+    <ContentPresenter Grid.Column="0"
+                      Content="{Binding $parent[forms:FormHostView].ListContent}"
+                      IsVisible="{Binding $parent[forms:FormHostView].Host.IsListVisible, FallbackValue=True}" />
+
+    <!-- Formulario corto: panel lateral sobre el listado -->
+    <Border Grid.Column="1"
+            IsVisible="{Binding $parent[forms:FormHostView].Host.IsSidePanel, FallbackValue=False}"
+            Margin="16,0,0,0" Padding="16"
+            CornerRadius="6" BorderThickness="1"
+            BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
+      <ScrollViewer>
+        <ContentControl Content="{Binding $parent[forms:FormHostView].Host.ActiveForm}" />
+      </ScrollViewer>
+    </Border>
+
+    <!-- Formulario grande: ocupa el área de contenido; el menú lateral sigue visible -->
+    <DockPanel Grid.ColumnSpan="2" IsVisible="{Binding $parent[forms:FormHostView].Host.IsFullScreen, FallbackValue=False}">
+      <Button DockPanel.Dock="Top"
+              HorizontalAlignment="Left" MinHeight="44" Margin="0,0,0,12"
+              Command="{Binding $parent[forms:FormHostView].Host.ActiveForm.CancelCommand}"
+              AutomationProperties.Name="{x:Static res:Strings.Form_BackToList}">
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <PathIcon Width="16" Height="16" Data="{StaticResource Icon.Back}" />
+          <TextBlock Text="{x:Static res:Strings.Form_BackToList}" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+      <ScrollViewer>
+        <ContentControl Content="{Binding $parent[forms:FormHostView].Host.ActiveForm}" />
+      </ScrollViewer>
+    </DockPanel>
+  </Grid>
+</UserControl>

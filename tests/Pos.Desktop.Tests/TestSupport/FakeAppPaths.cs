@@ -17,4 +17,8 @@ public sealed class FakeAppPaths : IAppPaths
     public string LogsDirectory => "/datos/Pos/logs";
 
     public string LockFile => "/datos/Pos/app.lock";
+
+    public string LogoFile => "/datos/Pos/logo.png";
+
+    public string PreferencesDirectory => "/datos/Pos/preferences";
 }

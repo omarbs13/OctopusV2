@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using Pos.Application.Diagnostics.ExportDiagnostics;
 using Pos.Application.Diagnostics.GetAppInfo;
+using Pos.Application.Products.CountActiveProducts;
 using Pos.Application.Products.CreateProduct;
 using Pos.Application.Products.DeleteProduct;
 using Pos.Application.Products.GetProduct;
@@ -26,6 +27,7 @@ public static class DependencyInjection
         services.AddSingleton<IValidator<UpdateProductCommand>, UpdateProductValidator>();
         services.AddScoped<UpdateProductHandler>();
         services.AddScoped<DeleteProductHandler>();
+        services.AddScoped<CountActiveProductsHandler>();
 
         // Diagnóstico
         services.AddScoped<GetAppInfoHandler>();

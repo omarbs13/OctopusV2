@@ -4,8 +4,12 @@ using Microsoft.Extensions.Hosting;
 using Pos.Application;
 using Pos.Desktop.About;
 using Pos.Desktop.Common;
+using Pos.Desktop.Home;
+using Pos.Desktop.Inventory;
+using Pos.Desktop.Navigation;
 using Pos.Desktop.Products;
 using Pos.Desktop.Shell;
+using Pos.Desktop.Splash;
 using Pos.Desktop.Startup;
 using Pos.Infrastructure;
 using Pos.Infrastructure.Platform;
@@ -37,14 +41,16 @@ internal static class HostBuilder
         builder.Services.AddSingleton<IClipboardService, ClipboardService>();
 
         builder.Services.AddSingleton<StartupPresenter>();
-        builder.Services.AddTransient<ProductEditorViewModel>();
-        builder.Services.AddSingleton<Func<ProductEditorViewModel>>(sp => sp.GetRequiredService<ProductEditorViewModel>);
-        builder.Services.AddSingleton<ProductsViewModel>();
-        builder.Services.AddSingleton<AboutViewModel>();
+        builder.Services.AddSingleton<IBrandingAssets, BrandingAssets>();
+        builder.Services.AddSingleton<SplashViewModel>();
 
-        // Orden del menú lateral: Productos, Acerca de.
-        builder.Services.AddSingleton<PageViewModel>(sp => sp.GetRequiredService<ProductsViewModel>());
-        builder.Services.AddSingleton<PageViewModel>(sp => sp.GetRequiredService<AboutViewModel>());
+        // Navegación y módulos: cada módulo registra su menú, pantallas, vistas y tarjetas.
+        builder.Services.AddNavigationCore();
+        builder.Services.AddHomeModule();
+        builder.Services.AddProductsModule();
+        builder.Services.AddInventoryModule();
+        builder.Services.AddSalesPlaceholders();
+        builder.Services.AddHelpModule();
 
         builder.Services.AddSingleton<MainViewModel>();
 

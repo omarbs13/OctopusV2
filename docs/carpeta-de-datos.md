@@ -17,6 +17,9 @@ La ruta real siempre se ve en la pantalla **Acerca de**, con un botón para copi
 ```text
 Pos/
 ├── app.lock                     Bloqueo de instancia única (lo libera el sistema si el proceso muere)
+├── logo.png                     Logotipo del cliente (opcional) para la pantalla de carga
+├── preferences/
+│   └── navigation.json          Estado del menú lateral (contraído y grupos abiertos)
 ├── data/
 │   ├── pos.db                   Base de datos SQLite (modo WAL)
 │   ├── pos.db-wal               Diario WAL; forma parte de la base mientras la app está abierta
@@ -32,6 +35,30 @@ Pos/
 **Nunca copies `pos.db` a mano con la aplicación abierta**: en modo WAL, los cambios recientes
 pueden estar en `pos.db-wal`. Para obtener una copia consistente usa **Acerca de → Exportar
 diagnóstico**, o cierra la aplicación antes de copiar.
+
+## Logotipo del cliente
+
+La pantalla de carga muestra el logotipo predeterminado del POS. Para usar el del cliente, copia
+un archivo **PNG** llamado `logo.png` en la raíz de la carpeta de datos y reinicia la aplicación.
+No hace falta recompilar.
+
+- Se muestra a un máximo de 160 × 160 píxeles, conservando la proporción. Se recomienda una
+  imagen cuadrada de 320 × 320 con fondo transparente.
+- Si el archivo no existe, no es un PNG válido o no se puede leer, se usa el logotipo
+  predeterminado y se registra una advertencia en el log.
+
+## Preferencias del menú
+
+`preferences/navigation.json` guarda si el menú lateral quedó contraído y qué grupos estaban
+abiertos. Es una preferencia de esta máquina, fuera de la base del negocio:
+
+```json
+{ "collapsed": false, "expandedGroups": ["catalogs", "inventory"] }
+```
+
+Se puede borrar sin riesgo para restablecer el menú. Si está dañado, la aplicación lo ignora,
+muestra el menú expandido y registra una advertencia. La contracción automática en ventanas de
+menos de 1000 px de ancho no se guarda.
 
 ## Respaldos automáticos
 

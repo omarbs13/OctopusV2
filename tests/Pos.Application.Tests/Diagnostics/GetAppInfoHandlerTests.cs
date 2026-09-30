@@ -37,5 +37,9 @@ public class GetAppInfoHandlerTests
         public string LogsDirectory => string.Empty;
 
         public string LockFile => string.Empty;
+
+        public string LogoFile => string.Empty;
+
+        public string PreferencesDirectory => string.Empty;
     }
 }

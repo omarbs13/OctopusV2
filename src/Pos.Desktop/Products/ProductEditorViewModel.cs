@@ -1,38 +1,36 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using Pos.Application.Abstractions;
 using Pos.Application.Products;
 using Pos.Application.Products.CreateProduct;
 using Pos.Application.Products.GetProduct;
 using Pos.Application.Products.UpdateProduct;
 using Pos.Desktop.Common;
+using Pos.Desktop.Forms;
 using Pos.Desktop.Resources;
 using Pos.Domain.Common;
+using Pos.Domain.Products;
 
 namespace Pos.Desktop.Products;
 
-/// <summary>Alta y edición de un producto. Solo coordina la interfaz; las reglas viven en Application.</summary>
-public sealed partial class ProductEditorViewModel : ViewModelBase
+/// <summary>
+/// Alta y edición de un producto (formulario corto). Solo coordina la interfaz; las reglas viven
+/// en Application.
+/// </summary>
+public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
 {
     private readonly UseCases _useCases;
     private readonly OperationRunner _runner;
-    private readonly IDialogService _dialogs;
 
     private Guid? _productId;
     private int _expectedVersion;
 
     public ProductEditorViewModel(UseCases useCases, OperationRunner runner, IDialogService dialogs)
+        : base(dialogs)
     {
         _useCases = useCases;
         _runner = runner;
-        _dialogs = dialogs;
+        ResetOriginalState();
     }
-
-    /// <summary>El producto se guardó; incluye sus datos actuales.</summary>
-    public event EventHandler<ProductDto>? Saved;
-
-    /// <summary>El editor se cerró sin guardar.</summary>
-    public event EventHandler? Closed;
 
     [ObservableProperty]
     public partial string Name { get; set; } = string.Empty;
@@ -61,15 +59,19 @@ public sealed partial class ProductEditorViewModel : ViewModelBase
     [ObservableProperty]
     public partial string? PriceError { get; set; }
 
-    /// <summary>Campo que debe recibir el foco (el primero con error).</summary>
-    [ObservableProperty]
-    public partial string? FocusField { get; set; }
-
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(Title))]
     public partial bool IsEditMode { get; private set; }
 
-    public string Title => IsEditMode ? Strings.Editor_EditTitle : Strings.Editor_NewTitle;
+    public override string Title => IsEditMode ? Strings.Editor_EditTitle : Strings.Editor_NewTitle;
+
+    public bool IsNameRequired { get; } = true;
+
+    public bool IsSkuRequired { get; } = true;
+
+    public bool IsBarcodeRequired { get; }
+
+    public bool IsPriceRequired { get; } = true;
 
     /// <summary>Carga un producto para editarlo. Devuelve falso si ya no existe (y lo informa).</summary>
     public async Task<bool> LoadAsync(Guid productId)
@@ -87,7 +89,7 @@ public sealed partial class ProductEditorViewModel : ViewModelBase
 
         if (!result.IsSuccess)
         {
-            await _dialogs.ShowMessageAsync(Strings.Common_InfoTitle, Strings.Editor_NotFound);
+            await Dialogs.ShowMessageAsync(Strings.Common_InfoTitle, Strings.Editor_NotFound);
             return false;
         }
 
@@ -95,8 +97,7 @@ public sealed partial class ProductEditorViewModel : ViewModelBase
         return true;
     }
 
-    [RelayCommand]
-    private async Task SaveAsync()
+    protected override async Task<bool> SaveCoreAsync()
     {
         ClearErrors();
         var (completed, result) = await _runner.RunAsync(
@@ -112,20 +113,26 @@ public sealed partial class ProductEditorViewModel : ViewModelBase
 
         if (!completed || result is null)
         {
-            return;
+            return false;
         }
 
         if (result.IsSuccess)
         {
-            Saved?.Invoke(this, result.Value);
-            return;
+            OnSaved(result.Value);
+            return true;
         }
 
         await ShowErrorAsync(result.Error);
+        return false;
     }
 
-    [RelayCommand]
-    private void Cancel() => Closed?.Invoke(this, EventArgs.Empty);
+    /// <summary>Valores como se guardarían: revertir un cambio o escribir el SKU en minúsculas no cuenta como cambio.</summary>
+    protected override object CaptureState() => new ProductFormState(
+        Product.NormalizeName(Name),
+        Product.NormalizeSku(Sku),
+        Product.NormalizeBarcode(Barcode),
+        Money.TryParse(PriceText, out var price) ? price.Cents.ToString(System.Globalization.CultureInfo.InvariantCulture) : PriceText.Trim(),
+        IsActive);
 
     private async Task ShowErrorAsync(Error error)
     {
@@ -148,7 +155,7 @@ public sealed partial class ProductEditorViewModel : ViewModelBase
                 break;
 
             case Conflict when _productId is { } id:
-                if (await _dialogs.ConfirmAsync(Strings.Editor_ConflictTitle, Strings.Editor_Conflict, Strings.Editor_Reload))
+                if (await Dialogs.ConfirmAsync(Strings.Editor_ConflictTitle, Strings.Editor_Conflict, Strings.Editor_Reload))
                 {
                     await LoadAsync(id);
                 }
@@ -156,12 +163,12 @@ public sealed partial class ProductEditorViewModel : ViewModelBase
                 break;
 
             case NotFound:
-                await _dialogs.ShowMessageAsync(Strings.Common_InfoTitle, Strings.Editor_NotFound);
-                Closed?.Invoke(this, EventArgs.Empty);
+                await Dialogs.ShowMessageAsync(Strings.Common_InfoTitle, Strings.Editor_NotFound);
+                RaiseClosed();
                 break;
 
             default:
-                await _dialogs.ShowMessageAsync(Strings.Common_ErrorTitle, Strings.Common_UnexpectedError);
+                await Dialogs.ShowMessageAsync(Strings.Common_ErrorTitle, Strings.Common_UnexpectedError);
                 break;
         }
     }
@@ -177,6 +184,7 @@ public sealed partial class ProductEditorViewModel : ViewModelBase
         PriceText = Money.FromCents(product.PriceCents).ToEditableString();
         IsActive = product.IsActive;
         ClearErrors();
+        ResetOriginalState();
     }
 
     private void SetError(string field, string message)
@@ -204,3 +212,6 @@ public sealed partial class ProductEditorViewModel : ViewModelBase
         FocusField = null;
     }
 }
+
+/// <summary>Estado normalizado del formulario de producto, para detectar cambios.</summary>
+internal sealed record ProductFormState(string Name, string Sku, string? Barcode, string Price, bool IsActive);

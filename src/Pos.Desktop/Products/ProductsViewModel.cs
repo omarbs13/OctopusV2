@@ -7,6 +7,7 @@ using Pos.Application.Products;
 using Pos.Application.Products.DeleteProduct;
 using Pos.Application.Products.SearchProducts;
 using Pos.Desktop.Common;
+using Pos.Desktop.Forms;
 using Pos.Desktop.Resources;
 
 namespace Pos.Desktop.Products;
@@ -36,6 +37,13 @@ public sealed partial class ProductsViewModel : PageViewModel, IDisposable
         _runner = runner;
         _dialogs = dialogs;
         _editorFactory = editorFactory;
+        Forms.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(FormHost.ActiveForm))
+            {
+                OnPropertyChanged(nameof(Editor));
+            }
+        };
     }
 
     public override string Title => Strings.Shell_NavProducts;
@@ -59,11 +67,11 @@ public sealed partial class ProductsViewModel : PageViewModel, IDisposable
     [NotifyCanExecuteChangedFor(nameof(DeleteCommand))]
     public partial ProductListItemDto? SelectedItem { get; set; }
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsEditorOpen))]
-    public partial ProductEditorViewModel? Editor { get; private set; }
+    /// <summary>Formulario de alta y edición: panel lateral sobre el listado (FR-027).</summary>
+    public override FormHost Forms { get; } = new();
 
-    public bool IsEditorOpen => Editor is not null;
+    /// <summary>Editor abierto, si hay.</summary>
+    public ProductEditorViewModel? Editor => Forms.ActiveForm as ProductEditorViewModel;
 
     public override Task OnActivatedAsync() => SearchAsync();
 
@@ -91,7 +99,7 @@ public sealed partial class ProductsViewModel : PageViewModel, IDisposable
     }
 
     [RelayCommand]
-    private void NewProduct() => OpenEditor(_editorFactory());
+    private Task NewProductAsync() => OpenEditorAsync(_editorFactory());
 
     [RelayCommand(CanExecute = nameof(HasSelection))]
     private async Task EditAsync()
@@ -104,7 +112,7 @@ public sealed partial class ProductsViewModel : PageViewModel, IDisposable
         var editor = _editorFactory();
         if (await editor.LoadAsync(selected.Id))
         {
-            OpenEditor(editor);
+            await OpenEditorAsync(editor);
         }
         else
         {
@@ -143,20 +151,15 @@ public sealed partial class ProductsViewModel : PageViewModel, IDisposable
 
     private bool HasSelection() => SelectedItem is not null;
 
-    private void OpenEditor(ProductEditorViewModel editor)
+    private async Task OpenEditorAsync(ProductEditorViewModel editor)
     {
         editor.Saved += (_, product) => _ = OnEditorSavedAsync(product);
-        editor.Closed += (_, _) =>
-        {
-            Editor = null;
-            _ = SearchAsync();
-        };
-        Editor = editor;
+        editor.Closed += (_, _) => _ = SearchAsync();
+        await Forms.OpenAsync(editor, FormPresentation.SidePanel);
     }
 
     private async Task OnEditorSavedAsync(ProductDto product)
     {
-        Editor = null;
         await SearchAsync();
 
         var visibleByStatus = product.IsActive || IncludeInactive;

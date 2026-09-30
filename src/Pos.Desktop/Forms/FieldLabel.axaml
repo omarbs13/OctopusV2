@@ -1,0 +1,10 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Pos.Desktop.Forms.FieldLabel">
+  <StackPanel Orientation="Horizontal" Spacing="4">
+    <TextBlock x:Name="LabelText" />
+    <!-- Marca de campo obligatorio (FR-025) -->
+    <TextBlock x:Name="RequiredMark" Text="*" FontWeight="Bold"
+               Foreground="{DynamicResource SystemAccentColor}" IsVisible="False" />
+  </StackPanel>
+</UserControl>

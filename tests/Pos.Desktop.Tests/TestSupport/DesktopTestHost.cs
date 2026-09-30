@@ -16,7 +16,7 @@ public sealed class DesktopTestHost : IDisposable
 {
     private readonly ServiceProvider _provider;
 
-    public DesktopTestHost()
+    public DesktopTestHost(Action<IServiceCollection>? configure = null)
     {
         var services = new ServiceCollection();
         services.AddApplication();
@@ -31,6 +31,7 @@ public sealed class DesktopTestHost : IDisposable
         services.AddSingleton(Sink.CreateLogger());
         services.AddSingleton<OperationRunner>();
         services.AddSingleton<UseCases>();
+        configure?.Invoke(services);
         _provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
     }
 

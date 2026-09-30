@@ -69,4 +69,19 @@ public class OperationRunnerTests
         Assert.Equal((true, 42), value);
         Assert.Equal((false, 0), failed);
     }
+
+    [Fact]
+    public async Task RunQuietlyAsync_Excepcion_SeRegistraConContextoSinDialogo()
+    {
+        var ok = await CreateRunner().RunQuietlyAsync(
+            "CargarTarjeta",
+            () => throw new InvalidOperationException("falla"),
+            new Dictionary<string, object?> { ["Card"] = "Productos activos" });
+
+        Assert.False(ok);
+        Assert.Empty(_dialogs.Messages);
+        var error = Assert.Single(_sink.Events, e => e.Level == LogEventLevel.Error);
+        Assert.Equal("\"CargarTarjeta\"", error.Properties["Operation"].ToString());
+        Assert.Equal("\"Productos activos\"", error.Properties["Card"].ToString());
+    }
 }

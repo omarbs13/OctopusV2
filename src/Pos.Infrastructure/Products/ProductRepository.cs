@@ -21,6 +21,9 @@ public sealed class ProductRepository : IProductRepository
     public Task<Product?> GetAsync(Guid id, CancellationToken cancellationToken) =>
         _context.Products.SingleOrDefaultAsync(p => p.Id == id && p.DeletedAt == null, cancellationToken);
 
+    public Task<long> CountActiveAsync(CancellationToken cancellationToken) =>
+        _context.Products.LongCountAsync(p => p.IsActive && p.DeletedAt == null, cancellationToken);
+
     public Task<bool> SkuExistsAsync(string sku, Guid? excludingId, CancellationToken cancellationToken) =>
         _context.Products.AnyAsync(
             p => p.DeletedAt == null && p.Sku == sku && (excludingId == null || p.Id != excludingId),

@@ -1,0 +1,15 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:nav="using:Pos.Desktop.Navigation"
+             xmlns:common="using:Pos.Desktop.Common"
+             x:Class="Pos.Desktop.Navigation.ComingSoonView"
+             x:DataType="nav:ComingSoonViewModel">
+
+  <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12" MaxWidth="420">
+    <PathIcon Width="64" Height="64" Opacity="0.4" HorizontalAlignment="Center"
+              Data="{Binding Icon, Converter={x:Static common:IconConverter.Instance}}" />
+    <TextBlock Text="{Binding Title}" FontSize="22" FontWeight="SemiBold" HorizontalAlignment="Center" />
+    <TextBlock Text="{Binding Heading}" FontWeight="SemiBold" Opacity="0.8" HorizontalAlignment="Center" />
+    <TextBlock Text="{Binding Message}" TextWrapping="Wrap" TextAlignment="Center" Opacity="0.8" />
+  </StackPanel>
+</UserControl>

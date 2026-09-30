@@ -1,0 +1,23 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Pos.Desktop.Splash"
+        x:Class="Pos.Desktop.Splash.SplashWindow"
+        x:DataType="vm:SplashViewModel"
+        Title="{Binding AppName}"
+        Width="420" Height="320"
+        CanResize="False"
+        WindowDecorations="None"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource SystemControlBackgroundAltHighBrush}">
+
+  <Border BorderThickness="1" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
+    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="10">
+      <Image Source="{Binding Logo}" MaxWidth="160" MaxHeight="160" Stretch="Uniform" HorizontalAlignment="Center" />
+      <TextBlock Text="{Binding AppName}" FontSize="26" FontWeight="SemiBold" HorizontalAlignment="Center" />
+      <TextBlock Text="{Binding Version}" Opacity="0.7" HorizontalAlignment="Center" />
+      <ProgressBar IsIndeterminate="True" Width="220" Margin="0,8,0,0" />
+      <TextBlock Text="{Binding StepText}" HorizontalAlignment="Center" />
+    </StackPanel>
+  </Border>
+</Window>

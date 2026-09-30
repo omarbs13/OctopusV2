@@ -8,6 +8,9 @@ public interface IProductRepository
     /// <summary>Producto no borrado, o nulo.</summary>
     Task<Product?> GetAsync(Guid id, CancellationToken cancellationToken);
 
+    /// <summary>Productos activos y no borrados.</summary>
+    Task<long> CountActiveAsync(CancellationToken cancellationToken);
+
     /// <summary>Indica si otro producto no borrado usa el SKU (ya normalizado).</summary>
     Task<bool> SkuExistsAsync(string sku, Guid? excludingId, CancellationToken cancellationToken);
 

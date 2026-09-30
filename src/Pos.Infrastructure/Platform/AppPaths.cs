@@ -21,6 +21,8 @@ public sealed class AppPaths : IAppPaths
         CorruptDirectory = Path.Combine(DataDirectory, "backups", "corrupt");
         LogsDirectory = Path.Combine(DataDirectory, "logs");
         LockFile = Path.Combine(DataDirectory, "app.lock");
+        LogoFile = Path.Combine(DataDirectory, "logo.png");
+        PreferencesDirectory = Path.Combine(DataDirectory, "preferences");
     }
 
     public string DataDirectory { get; }
@@ -36,6 +38,10 @@ public sealed class AppPaths : IAppPaths
     public string LogsDirectory { get; }
 
     public string LockFile { get; }
+
+    public string LogoFile { get; }
+
+    public string PreferencesDirectory { get; }
 
     public static AppPaths FromEnvironment()
     {
@@ -58,5 +64,6 @@ public sealed class AppPaths : IAppPaths
         Directory.CreateDirectory(PreMigrationBackupsDirectory);
         Directory.CreateDirectory(CorruptDirectory);
         Directory.CreateDirectory(LogsDirectory);
+        Directory.CreateDirectory(PreferencesDirectory);
     }
 }

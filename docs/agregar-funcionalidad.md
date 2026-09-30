@@ -105,9 +105,37 @@ Modelo: `src/Pos.Desktop/Products/ProductEditorViewModel.cs` y `ProductsViewMode
 - Usa `[ObservableProperty]` y `[RelayCommand]` de CommunityToolkit.Mvvm. Los comandos
   asíncronos no admiten ejecuciones simultáneas, lo que evita guardar dos veces por un doble clic.
 - Los diálogos se muestran a través de `IDialogService`, para poder probarlo sin UI.
-- Una pantalla del menú lateral hereda de `PageViewModel`.
+- Una pantalla del menú lateral hereda de `PageViewModel`. Es una sola instancia durante la
+  sesión: conserva su búsqueda, filtros y selección, y en `OnActivatedAsync` refresca sus datos
+  sin reiniciarlos.
 - Pruebas: `tests/Pos.Desktop.Tests/` con `DesktopTestHost` (casos de uso reales y un
-  repositorio en memoria).
+  repositorio en memoria). `HomeTestSupport.CreateHostWithModules()` agrega los módulos reales.
+
+### Formularios
+
+Modelo: `src/Pos.Desktop/Products/ProductEditorViewModel.cs`. Todo formulario hereda de
+`FormViewModel<TResultado>` (`src/Pos.Desktop/Forms/`):
+
+- `CaptureState()` devuelve un registro con los valores **normalizados como se guardarían**. Así
+  `IsDirty` no marca como cambio un valor revertido o un SKU en minúsculas.
+- `SaveCoreAsync()` invoca el caso de uso, muestra los errores junto a cada campo, asigna
+  `FocusField` al primero y devuelve `true` solo si guardó. Al guardar llama a `OnSaved(resultado)`.
+- Llama a `ResetOriginalState()` al crear el formulario y después de cargar o recargar datos.
+- La validación ocurre **solo al guardar**; salir de un campo no muestra errores.
+- `SaveCommand` evita el doble clic. `CancelCommand` y cualquier salida (navegar, abrir otro
+  registro, cerrar la aplicación) preguntan Guardar, Descartar o Seguir editando si hay cambios.
+
+La pantalla que abre el formulario decide cómo se muestra, con su `FormHost`
+(`public override FormHost Forms { get; } = new();`):
+
+| Formulario | Presentación |
+|---|---|
+| Hasta 8 campos, sin pestañas ni listas internas | `Forms.OpenAsync(form, FormPresentation.SidePanel)`: panel lateral sobre el listado |
+| Más campos, secciones, pestañas o listas internas | `Forms.OpenAsync(form, FormPresentation.FullScreen)`: ocupa el área de contenido con "Regresar al listado" |
+
+El comportamiento del formulario no cambia al pasar de una presentación a otra. En la vista,
+envuelve el listado con `<forms:FormHostView Host="{Binding Forms}">` y su `ListContent`, y usa
+`<forms:FieldLabel Text="..." IsRequired="True" />` para marcar los campos obligatorios.
 
 ## 7. Vista
 
@@ -116,12 +144,37 @@ Modelo: `src/Pos.Desktop/Products/ProductsView.axaml` y `ProductEditorView.axaml
 - Compiled bindings (`x:DataType`) siempre.
 - **Ningún texto fijo**: todo va en `src/Pos.Desktop/Resources/Strings.resx` y se usa con
   `{x:Static res:Strings.Clave}`.
-- Asocia el ViewModel con su vista en `src/Pos.Desktop/Composition/App.axaml`
-  (`DataTemplate`), sin reflexión.
-- Registra el ViewModel en `src/Pos.Desktop/Composition/HostBuilder.cs`. Si es una pantalla del
-  menú, regístralo también como `PageViewModel`.
+- Íconos: claves de `src/Pos.Desktop/Resources/Icons.axaml` (por ejemplo `Icon.Product`). Si
+  hace falta uno nuevo, agrega su ruta de Material Design Icons al mismo archivo.
 - Ningún ViewModel ni vista accede al `DbContext` ni a SQL; las pruebas de arquitectura lo
   verifican.
+
+### Registrar el módulo
+
+Modelo: `src/Pos.Desktop/Products/ProductsModule.cs`. Cada módulo tiene un
+`Add<Modulo>Module()` que registra todo lo suyo **sin modificar vistas existentes** (ni
+`App.axaml`, ni el menú, ni Inicio):
+
+```csharp
+public static IServiceCollection AddVentasModule(this IServiceCollection services)
+{
+    services.AddNavigationGroup("sales", Strings.Nav_Sales, "Icon.Sales", 30);
+    services.AddPage<VentasViewModel, VentasView>("sales.pos", Strings.Nav_Pos, "Icon.Sales", 0, "sales");
+    services.AddComponentView<CobroViewModel, CobroView>();   // vistas que no son pantallas
+    services.AddDashboardCard<VentasDelDiaChart>();            // tarjetas de Inicio
+    return services;
+}
+```
+
+Después, agrega una línea en `src/Pos.Desktop/Composition/HostBuilder.cs`
+(`builder.Services.AddVentasModule();`). Si el módulo reemplaza una opción "disponible más
+adelante", quita su `AddComingSoonPage` y sus tarjetas vacías del módulo correspondiente.
+
+- El menú admite dos niveles: grupos y opciones. `Order` define la posición.
+- Una tarjeta de Inicio hereda de `DashboardCard` (`src/Pos.Desktop/Home/`). En
+  `LoadCoreAsync` llama a `SetReady(valor)` con datos reales o a `SetEmpty(mensaje)`; **nunca**
+  muestres datos de ejemplo. Si falla, la tarjeta queda en error y se registra sin afectar a
+  las demás.
 
 ## 8. Verificación final
 

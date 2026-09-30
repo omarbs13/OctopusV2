@@ -1,5 +1,10 @@
 # Contrato: interfaz de usuario
 
+> **Nota**: la navegación lateral, la pantalla de inicio y la presentación del editor (panel
+> lateral o pantalla completa, con confirmación de cambios sin guardar) se rigen ahora por
+> `specs/002-navigation-forms/contracts/`. Este contrato sigue vigente para el comportamiento
+> propio de Productos y de Acerca de.
+
 Pantallas y comportamiento visibles para el operador. Todos los textos están en español y viven
 en archivos de recursos (`Resources/Strings.resx`), no en cadenas fijas en las vistas.
 

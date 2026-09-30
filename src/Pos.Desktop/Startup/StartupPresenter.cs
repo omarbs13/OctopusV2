@@ -28,13 +28,13 @@ public sealed class StartupPresenter
         _logger = logger;
     }
 
-    public async Task<bool> RunAsync(CancellationToken cancellationToken)
+    public async Task<bool> RunAsync(CancellationToken cancellationToken, IProgress<StartupStep>? progress = null)
     {
         try
         {
             while (true)
             {
-                var result = await _startup.RunAsync(cancellationToken);
+                var result = await _startup.RunAsync(cancellationToken, progress);
                 switch (result)
                 {
                     case StartupResult.Ready:
@@ -47,7 +47,7 @@ public sealed class StartupPresenter
                             return false;
                         }
 
-                        await _startup.RecoverFromBackupAsync(backup, cancellationToken);
+                        await _startup.RecoverFromBackupAsync(backup, cancellationToken, progress);
                         continue;
 
                     default:

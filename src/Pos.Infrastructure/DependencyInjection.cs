@@ -23,6 +23,7 @@ public static class DependencyInjection
         services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<ICurrentUser, SystemCurrentUser>();
         services.AddSingleton<IAppInfo, AssemblyAppInfo>();
+        services.AddSingleton<IPreferencesStore, JsonFilePreferencesStore>();
         services.AddSingleton<AuditingInterceptor>();
 
         services.AddDbContextFactory<PosDbContext>((sp, options) =>

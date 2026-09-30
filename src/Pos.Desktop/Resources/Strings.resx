@@ -72,4 +72,41 @@
   <data name="About_Exporting" xml:space="preserve"><value>Exportando diagnóstico…</value></data>
   <data name="About_ExportDone" xml:space="preserve"><value>Diagnóstico exportado en {0}.</value></data>
   <data name="About_Description" xml:space="preserve"><value>Para soporte técnico: la exportación genera un archivo con los registros recientes y un respaldo de la base de datos.</value></data>
+  <data name="Nav_Home" xml:space="preserve"><value>Inicio</value></data>
+  <data name="Nav_Catalogs" xml:space="preserve"><value>Catálogos</value></data>
+  <data name="Nav_Products" xml:space="preserve"><value>Productos</value></data>
+  <data name="Nav_Inventory" xml:space="preserve"><value>Inventario</value></data>
+  <data name="Nav_Stock" xml:space="preserve"><value>Existencias</value></data>
+  <data name="Nav_Movements" xml:space="preserve"><value>Movimientos</value></data>
+  <data name="Nav_Help" xml:space="preserve"><value>Ayuda</value></data>
+  <data name="Nav_About" xml:space="preserve"><value>Acerca de</value></data>
+  <data name="Menu_Toggle" xml:space="preserve"><value>Mostrar u ocultar el menú (Ctrl+B)</value></data>
+  <data name="ComingSoon_Title" xml:space="preserve"><value>Disponible más adelante</value></data>
+  <data name="ComingSoon_Message" xml:space="preserve"><value>Esta sección estará disponible en una versión próxima del POS.</value></data>
+  <data name="Splash_Starting" xml:space="preserve"><value>Iniciando…</value></data>
+  <data name="Splash_CheckingDatabase" xml:space="preserve"><value>Verificando la base de datos…</value></data>
+  <data name="Splash_BackingUp" xml:space="preserve"><value>Respaldando la base de datos…</value></data>
+  <data name="Splash_Migrating" xml:space="preserve"><value>Actualizando la base de datos…</value></data>
+  <data name="Splash_Restoring" xml:space="preserve"><value>Restaurando el respaldo…</value></data>
+  <data name="Splash_Finishing" xml:space="preserve"><value>Preparando…</value></data>
+  <data name="Home_Title" xml:space="preserve"><value>Inicio</value></data>
+  <data name="Home_Indicators" xml:space="preserve"><value>Indicadores</value></data>
+  <data name="Home_Charts" xml:space="preserve"><value>Ventas</value></data>
+  <data name="Card_ActiveProducts" xml:space="preserve"><value>Productos activos</value></data>
+  <data name="Card_LowStock" xml:space="preserve"><value>Existencia baja</value></data>
+  <data name="Card_OutOfStock" xml:space="preserve"><value>Sin existencia</value></data>
+  <data name="Chart_SalesToday" xml:space="preserve"><value>Ventas del día</value></data>
+  <data name="Chart_SalesLast7Days" xml:space="preserve"><value>Ventas de los últimos 7 días</value></data>
+  <data name="Chart_TopProducts" xml:space="preserve"><value>Productos más vendidos</value></data>
+  <data name="Card_InventoryPending" xml:space="preserve"><value>Disponible con el módulo de Inventario</value></data>
+  <data name="Card_SalesPending" xml:space="preserve"><value>Disponible con el módulo de Ventas</value></data>
+  <data name="Card_Unavailable" xml:space="preserve"><value>No disponible por el momento</value></data>
+  <data name="Form_BackToList" xml:space="preserve"><value>Regresar al listado</value></data>
+  <data name="Form_Required" xml:space="preserve"><value>obligatorio</value></data>
+  <data name="Unsaved_Title" xml:space="preserve"><value>Cambios sin guardar</value></data>
+  <data name="Unsaved_Message" xml:space="preserve"><value>Hay cambios sin guardar. ¿Qué desea hacer?</value></data>
+  <data name="Unsaved_Save" xml:space="preserve"><value>Guardar</value></data>
+  <data name="Unsaved_Discard" xml:space="preserve"><value>Descartar</value></data>
+  <data name="Unsaved_KeepEditing" xml:space="preserve"><value>Seguir editando</value></data>
+  <data name="Common_ViewNotRegistered" xml:space="preserve"><value>Esta pantalla no está disponible. Contacte a soporte.</value></data>
 </root>

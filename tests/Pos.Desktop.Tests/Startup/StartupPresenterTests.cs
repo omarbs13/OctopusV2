@@ -109,13 +109,16 @@ public sealed class FakeDatabaseStartup : IDatabaseStartup
 
     public List<BackupInfo> Recovered { get; } = [];
 
-    public Task<StartupResult> RunAsync(CancellationToken cancellationToken)
+    public List<IProgress<StartupStep>?> ProgressReceived { get; } = [];
+
+    public Task<StartupResult> RunAsync(CancellationToken cancellationToken, IProgress<StartupStep>? progress = null)
     {
+        ProgressReceived.Add(progress);
         RunCount++;
         return _exception is null ? Task.FromResult(_results.Dequeue()) : Task.FromException<StartupResult>(_exception);
     }
 
-    public Task RecoverFromBackupAsync(BackupInfo backup, CancellationToken cancellationToken)
+    public Task RecoverFromBackupAsync(BackupInfo backup, CancellationToken cancellationToken, IProgress<StartupStep>? progress = null)
     {
         Recovered.Add(backup);
         return Task.CompletedTask;

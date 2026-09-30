@@ -1,30 +1,28 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:shell="using:Pos.Desktop.Shell"
-        xmlns:common="using:Pos.Desktop.Common"
-        xmlns:res="using:Pos.Desktop.Resources"
+        xmlns:nav="using:Pos.Desktop.Navigation"
         x:Class="Pos.Desktop.Shell.MainWindow"
         x:DataType="shell:MainViewModel"
         Icon="/Assets/pos.ico"
         Title="{Binding WindowTitle}"
         Width="1200" Height="720"
-        MinWidth="800" MinHeight="500"
+        MinWidth="640" MinHeight="480"
         WindowStartupLocation="CenterScreen">
 
-  <Grid ColumnDefinitions="180,*">
-    <Border Grid.Column="0" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
-      <ListBox ItemsSource="{Binding Pages}"
-               SelectedItem="{Binding SelectedPage}"
-               Background="Transparent"
-               Margin="0,12,0,0">
-        <ListBox.ItemTemplate>
-          <DataTemplate x:DataType="common:PageViewModel">
-            <TextBlock Text="{Binding Title}" Margin="8,6" FontSize="15" />
-          </DataTemplate>
-        </ListBox.ItemTemplate>
-      </ListBox>
-    </Border>
+  <Window.KeyBindings>
+    <KeyBinding Gesture="Ctrl+B" Command="{Binding Menu.ToggleCommand}" />
+  </Window.KeyBindings>
 
-    <ContentControl Grid.Column="1" Content="{Binding SelectedPage}" Margin="16" />
-  </Grid>
+  <SplitView DisplayMode="CompactInline"
+             IsPaneOpen="{Binding !Menu.IsCollapsed}"
+             OpenPaneLength="240"
+             CompactPaneLength="56"
+             PaneBackground="{DynamicResource SystemControlBackgroundBaseLowBrush}">
+    <SplitView.Pane>
+      <nav:MenuView DataContext="{Binding Menu}" />
+    </SplitView.Pane>
+
+    <ContentControl Content="{Binding CurrentPage}" Margin="16" />
+  </SplitView>
 </Window>

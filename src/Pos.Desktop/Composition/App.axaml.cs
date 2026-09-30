@@ -6,8 +6,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Pos.Application.Startup;
 using Pos.Desktop.Common;
+using Pos.Desktop.Navigation;
 using Pos.Desktop.Resources;
 using Pos.Desktop.Shell;
+using Pos.Desktop.Splash;
 using Pos.Desktop.Startup;
 using Serilog;
 
@@ -17,6 +19,7 @@ public partial class App : Avalonia.Application
 {
     private IHost? _host;
     private bool _closeBackupDone;
+    private bool _closing;
 
     public override void Initialize()
     {
@@ -42,6 +45,9 @@ public partial class App : Avalonia.Application
             else
             {
                 _host = HostBuilder.Build(context.Paths, context.Logger, desktop);
+
+                // Las vistas se resuelven con lo que registró cada módulo.
+                DataTemplates.Add(_host.Services.GetRequiredService<RegisteredViewLocator>());
                 GlobalExceptionHandlers.Register(context.Logger, () => _host?.Services.GetService<IDialogService>());
                 desktop.Exit += (_, _) =>
                 {
@@ -60,31 +66,43 @@ public partial class App : Avalonia.Application
         IServiceProvider services,
         StartupContext context)
     {
+        // Pantalla de carga: es la dueña de los diálogos de arranque hasta que abre la principal.
+        var splashViewModel = services.GetRequiredService<SplashViewModel>();
+        var splash = new SplashWindow { DataContext = splashViewModel };
+        desktop.MainWindow = splash;
+        splash.Show();
+
         var presenter = services.GetRequiredService<StartupPresenter>();
-        if (!await presenter.RunAsync(CancellationToken.None))
+        if (!await presenter.RunAsync(CancellationToken.None, splashViewModel))
         {
+            splash.Close();
             desktop.Shutdown(1);
             return;
         }
 
-        var window = new MainWindow
-        {
-            DataContext = services.GetRequiredService<MainViewModel>(),
-        };
-        window.Closing += (_, e) => OnMainWindowClosing(window, e, services.GetRequiredService<IDatabaseStartup>());
+        await splashViewModel.WaitMinimumAsync();
+
+        var main = services.GetRequiredService<MainViewModel>();
+        var window = new MainWindow { DataContext = main };
+        window.Closing += (_, e) => OnMainWindowClosing(window, main, e, services.GetRequiredService<IDatabaseStartup>());
 
         if (context.Guard is not null)
         {
             context.Guard.ActivationRequested += (_, _) => Dispatcher.UIThread.Post(window.BringToFront);
         }
 
+        await main.StartAsync();
         desktop.MainWindow = window;
-        desktop.ShutdownMode = ShutdownMode.OnMainWindowClose;
         window.Show();
+        splash.Close();
+        desktop.ShutdownMode = ShutdownMode.OnMainWindowClose;
     }
 
-    /// <summary>Respaldo automático al cerrar (si el último tiene más de 24 h), con límite de tiempo.</summary>
-    private void OnMainWindowClosing(Window window, WindowClosingEventArgs e, IDatabaseStartup startup)
+    /// <summary>
+    /// Al cerrar: primero se confirma salir de un formulario con cambios (Seguir editando cancela
+    /// el cierre, sin respaldo); después, respaldo automático con límite de tiempo y cierre.
+    /// </summary>
+    private void OnMainWindowClosing(Window window, MainViewModel main, WindowClosingEventArgs e, IDatabaseStartup startup)
     {
         if (_closeBackupDone)
         {
@@ -92,13 +110,24 @@ public partial class App : Avalonia.Application
         }
 
         e.Cancel = true;
-        window.IsEnabled = false;
-        _ = Task.Run(startup.BackupOnCloseAsync).ContinueWith(
-            _ => Dispatcher.UIThread.Post(() =>
+        if (_closing)
+        {
+            return;
+        }
+
+        _closing = true;
+        Dispatcher.UIThread.Post(async () =>
+        {
+            if (!await main.CanCloseAsync())
             {
-                _closeBackupDone = true;
-                window.Close();
-            }),
-            TaskScheduler.Default);
+                _closing = false;
+                return;
+            }
+
+            window.IsEnabled = false;
+            await Task.Run(startup.BackupOnCloseAsync);
+            _closeBackupDone = true;
+            window.Close();
+        });
     }
 }

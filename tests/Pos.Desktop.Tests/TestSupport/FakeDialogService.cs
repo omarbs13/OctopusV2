@@ -1,4 +1,5 @@
 using Pos.Desktop.Common;
+using Pos.Desktop.Forms;
 
 namespace Pos.Desktop.Tests.TestSupport;
 
@@ -15,6 +16,17 @@ public sealed class FakeDialogService : IDialogService
     public string? SaveFilePath { get; set; }
 
     public string? LastSuggestedFileName { get; private set; }
+
+    /// <summary>Respuesta que dará AskUnsavedChangesAsync.</summary>
+    public UnsavedChangesChoice UnsavedChoice { get; set; } = UnsavedChangesChoice.KeepEditing;
+
+    public int UnsavedQuestions { get; private set; }
+
+    public Task<UnsavedChangesChoice> AskUnsavedChangesAsync()
+    {
+        UnsavedQuestions++;
+        return Task.FromResult(UnsavedChoice);
+    }
 
     public Task ShowMessageAsync(string title, string message)
     {

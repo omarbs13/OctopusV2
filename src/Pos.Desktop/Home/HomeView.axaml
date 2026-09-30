@@ -1,0 +1,109 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Pos.Desktop.Home"
+             xmlns:common="using:Pos.Desktop.Common"
+             xmlns:res="using:Pos.Desktop.Resources"
+             x:Class="Pos.Desktop.Home.HomeView"
+             x:DataType="vm:HomeViewModel">
+
+  <UserControl.Styles>
+    <!-- Tarjeta: botón sin apariencia de botón; solo reacciona si lleva a alguna pantalla. -->
+    <Style Selector="Button.card">
+      <Setter Property="Padding" Value="16" />
+      <Setter Property="Margin" Value="0,0,12,12" />
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="VerticalContentAlignment" Value="Stretch" />
+      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseLowBrush}" />
+      <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}" />
+    </Style>
+    <Style Selector="Button.card.navigable">
+      <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Button.card.empty, Button.card.error">
+      <Setter Property="Opacity" Value="0.65" />
+    </Style>
+    <Style Selector="TextBlock.cardTitle">
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+    <Style Selector="TextBlock.cardValue">
+      <Setter Property="FontSize" Value="34" />
+      <Setter Property="FontWeight" Value="Bold" />
+    </Style>
+    <Style Selector="TextBlock.cardMessage">
+      <Setter Property="TextWrapping" Value="Wrap" />
+      <Setter Property="Opacity" Value="0.8" />
+    </Style>
+  </UserControl.Styles>
+
+  <ScrollViewer>
+    <StackPanel Spacing="12">
+      <TextBlock Text="{x:Static res:Strings.Home_Title}" FontSize="22" FontWeight="SemiBold" />
+
+      <!-- Indicadores -->
+      <ItemsControl ItemsSource="{Binding Metrics}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <WrapPanel />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:DashboardCard">
+            <Button Classes="card"
+                    Classes.navigable="{Binding IsNavigable}"
+                    Classes.empty="{Binding IsEmpty}"
+                    Classes.error="{Binding IsError}"
+                    Width="240" MinHeight="130"
+                    Command="{Binding $parent[ItemsControl].((vm:HomeViewModel)DataContext).ActivateCardCommand}"
+                    CommandParameter="{Binding}"
+                    AutomationProperties.Name="{Binding Title}">
+              <Grid RowDefinitions="Auto,*" ColumnDefinitions="*,Auto">
+                <TextBlock Classes="cardTitle" Text="{Binding Title}" />
+                <PathIcon Grid.Column="1" Width="22" Height="22"
+                          Data="{Binding Icon, Converter={x:Static common:IconConverter.Instance}}" />
+                <StackPanel Grid.Row="1" Grid.ColumnSpan="2" VerticalAlignment="Bottom" Margin="0,12,0,0">
+                  <TextBlock Classes="cardValue" Text="{Binding Value}" IsVisible="{Binding IsReady}" />
+                  <TextBlock Classes="cardMessage" Text="{Binding Message}"
+                             IsVisible="{Binding Message, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                  <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsLoading}" />
+                </StackPanel>
+              </Grid>
+            </Button>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <!-- Gráficas -->
+      <ItemsControl ItemsSource="{Binding Charts}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <WrapPanel />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:DashboardCard">
+            <Button Classes="card"
+                    Classes.navigable="{Binding IsNavigable}"
+                    Classes.empty="{Binding IsEmpty}"
+                    Classes.error="{Binding IsError}"
+                    Width="360" Height="220"
+                    Command="{Binding $parent[ItemsControl].((vm:HomeViewModel)DataContext).ActivateCardCommand}"
+                    CommandParameter="{Binding}"
+                    AutomationProperties.Name="{Binding Title}">
+              <Grid RowDefinitions="Auto,*">
+                <TextBlock Classes="cardTitle" Text="{Binding Title}" />
+                <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
+                  <PathIcon Width="40" Height="40" HorizontalAlignment="Center"
+                            Data="{Binding Icon, Converter={x:Static common:IconConverter.Instance}}" />
+                  <TextBlock Classes="cardMessage" Text="{Binding Message}" TextAlignment="Center" MaxWidth="280" />
+                </StackPanel>
+              </Grid>
+            </Button>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

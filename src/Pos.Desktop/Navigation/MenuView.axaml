@@ -1,0 +1,137 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:nav="using:Pos.Desktop.Navigation"
+             xmlns:common="using:Pos.Desktop.Common"
+             xmlns:res="using:Pos.Desktop.Resources"
+             x:Class="Pos.Desktop.Navigation.MenuView"
+             x:DataType="nav:MenuViewModel">
+
+  <UserControl.Styles>
+    <!-- Todos los elementos: área de toque mínima de 44 x 44 (FR-019). -->
+    <Style Selector="Button.menuItem">
+      <Setter Property="MinHeight" Value="44" />
+      <Setter Property="MinWidth" Value="44" />
+      <Setter Property="Padding" Value="12,0" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="CornerRadius" Value="6" />
+      <Setter Property="Margin" Value="4,1" />
+    </Style>
+    <Style Selector="Button.menuItem.child">
+      <Setter Property="Padding" Value="36,0,12,0" />
+    </Style>
+    <Style Selector="nav|MenuView[IsCollapsed=True] Button.menuItem.child">
+      <Setter Property="Padding" Value="12,0" />
+    </Style>
+    <!-- Opción actual: fondo de acento. -->
+    <Style Selector="Button.menuItem.current">
+      <Setter Property="Background" Value="{DynamicResource SystemAccentColor}" />
+      <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="Button.menuItem.current /template/ ContentPresenter">
+      <Setter Property="Foreground" Value="White" />
+    </Style>
+    <!-- Grupo que contiene la opción actual: marca lateral y negrita. -->
+    <Style Selector="Button.menuItem.currentGroup">
+      <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColor}" />
+      <Setter Property="BorderThickness" Value="4,0,0,0" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="PathIcon.expanded">
+      <Setter Property="RenderTransform" Value="rotate(90deg)" />
+    </Style>
+    <Style Selector="PathIcon.menuIcon">
+      <Setter Property="Width" Value="20" />
+      <Setter Property="Height" Value="20" />
+    </Style>
+  </UserControl.Styles>
+
+  <DockPanel>
+    <!-- Alternar menú (Ctrl+B) -->
+    <Button DockPanel.Dock="Top" Classes="menuItem"
+            Command="{Binding ToggleCommand}"
+            ToolTip.Tip="{x:Static res:Strings.Menu_Toggle}"
+            AutomationProperties.Name="{x:Static res:Strings.Menu_Toggle}"
+            Margin="4,8,4,8">
+      <PathIcon Classes="menuIcon" Data="{StaticResource Icon.Menu}" />
+    </Button>
+
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+      <ItemsControl ItemsSource="{Binding Items}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="nav:MenuItemViewModel">
+            <StackPanel>
+              <!-- Opción de primer nivel o encabezado de grupo (expandido) -->
+              <Button Classes="menuItem"
+                      Classes.current="{Binding IsCurrent}"
+                      Classes.currentGroup="{Binding IsCurrentGroup}"
+                      Command="{Binding ActivateCommand}"
+                      ToolTip.Tip="{Binding Title}"
+                      AutomationProperties.Name="{Binding Title}"
+                      IsVisible="{Binding ShowFull}">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                  <PathIcon Classes="menuIcon" Data="{Binding Icon, Converter={x:Static common:IconConverter.Instance}}" />
+                  <TextBlock Grid.Column="1" Text="{Binding Title}" Margin="12,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                  <PathIcon Grid.Column="2" Width="12" Height="12" IsVisible="{Binding IsGroup}"
+                            Data="{StaticResource Icon.ChevronRight}"
+                            Classes.expanded="{Binding IsExpanded}" />
+                </Grid>
+              </Button>
+
+              <!-- Contraído: opción suelta, solo ícono -->
+              <Button Classes="menuItem"
+                      Classes.current="{Binding IsCurrent}"
+                      Command="{Binding ActivateCommand}"
+                      ToolTip.Tip="{Binding Title}"
+                      AutomationProperties.Name="{Binding Title}"
+                      IsVisible="{Binding ShowIconOnly}">
+                <PathIcon Classes="menuIcon" Data="{Binding Icon, Converter={x:Static common:IconConverter.Instance}}" />
+              </Button>
+
+              <!-- Contraído: grupo con menú flotante de sus opciones -->
+              <Button Classes="menuItem"
+                      Classes.currentGroup="{Binding IsCurrentGroup}"
+                      ToolTip.Tip="{Binding Title}"
+                      AutomationProperties.Name="{Binding Title}"
+                      IsVisible="{Binding ShowFlyout}">
+                <Button.Flyout>
+                  <MenuFlyout Placement="RightEdgeAlignedTop" ItemsSource="{Binding Children}">
+                    <MenuFlyout.ItemContainerTheme>
+                      <ControlTheme TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}" x:DataType="nav:MenuItemViewModel">
+                        <Setter Property="Header" Value="{Binding Title}" />
+                        <Setter Property="Command" Value="{Binding ActivateCommand}" />
+                        <Setter Property="MinHeight" Value="44" />
+                        <Setter Property="FontWeight" Value="Normal" />
+                      </ControlTheme>
+                    </MenuFlyout.ItemContainerTheme>
+                  </MenuFlyout>
+                </Button.Flyout>
+                <PathIcon Classes="menuIcon" Data="{Binding Icon, Converter={x:Static common:IconConverter.Instance}}" />
+              </Button>
+
+              <!-- Expandido: opciones del grupo abierto -->
+              <ItemsControl ItemsSource="{Binding Children}" IsVisible="{Binding ShowChildren}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="nav:MenuItemViewModel">
+                    <Button Classes="menuItem child"
+                            Classes.current="{Binding IsCurrent}"
+                            Command="{Binding ActivateCommand}"
+                            ToolTip.Tip="{Binding Title}"
+                            AutomationProperties.Name="{Binding Title}">
+                      <StackPanel Orientation="Horizontal" Spacing="12">
+                        <PathIcon Classes="menuIcon" Data="{Binding Icon, Converter={x:Static common:IconConverter.Instance}}" />
+                        <TextBlock Text="{Binding Title}" VerticalAlignment="Center" />
+                      </StackPanel>
+                    </Button>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </ScrollViewer>
+  </DockPanel>
+</UserControl>

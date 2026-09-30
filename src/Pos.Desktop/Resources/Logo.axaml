@@ -1,0 +1,19 @@
+<!--
+  Logotipo predeterminado (vectorial). El cliente puede reemplazarlo colocando logo.png en la
+  carpeta de datos de la aplicación (ver docs/carpeta-de-datos.md).
+-->
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <DrawingImage x:Key="Logo.Default">
+    <DrawingGroup>
+      <!-- Fondo: cuadrado redondeado en color de marca -->
+      <GeometryDrawing Brush="#1565C0" Geometry="M24,0 H136 A24,24 0 0 1 160,24 V136 A24,24 0 0 1 136,160 H24 A24,24 0 0 1 0,136 V24 A24,24 0 0 1 24,0 Z" />
+      <!-- Pantalla de la caja -->
+      <GeometryDrawing Brush="#FFFFFF" Geometry="M40,30 H120 A8,8 0 0 1 128,38 V70 A8,8 0 0 1 120,78 H40 A8,8 0 0 1 32,70 V38 A8,8 0 0 1 40,30 Z" />
+      <GeometryDrawing Brush="#1565C0" Geometry="M44,42 H116 V66 H44 Z" />
+      <!-- Cuerpo de la caja con teclado -->
+      <GeometryDrawing Brush="#FFFFFF" Geometry="M28,86 H132 L140,130 H20 Z" />
+      <GeometryDrawing Brush="#1565C0" Geometry="M44,96 h12 v8 h-12 Z M64,96 h12 v8 h-12 Z M84,96 h12 v8 h-12 Z M104,96 h12 v8 h-12 Z M40,112 h12 v8 h-12 Z M60,112 h12 v8 h-12 Z M80,112 h12 v8 h-12 Z M100,112 h20 v8 h-20 Z" />
+    </DrawingGroup>
+  </DrawingImage>
+</ResourceDictionary>
