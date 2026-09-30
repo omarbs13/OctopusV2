@@ -13,6 +13,7 @@ using Pos.Application.Sales.ReviewSale;
 using Pos.Application.Sales.SaveSaleDraft;
 using Pos.Desktop.Common;
 using Pos.Desktop.Resources;
+using Pos.Desktop.Settings;
 using Pos.Domain.Common;
 using Pos.Domain.Products;
 using Pos.Domain.Sales;
@@ -71,13 +72,20 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
     private readonly ILogger _logger;
     private readonly DraftAutosaver _autosaver;
     private readonly ScanQueue _scans;
+    private readonly TicketPrintingService _printing;
 
     private CheckoutViewModel? _pendingCheckout;
     private bool _draftChecked;
     private int _statusVersion;
 
-    public PointOfSaleViewModel(UseCases useCases, OperationRunner runner, IDialogService dialogs, ILogger logger)
+    public PointOfSaleViewModel(
+        UseCases useCases,
+        OperationRunner runner,
+        IDialogService dialogs,
+        ILogger logger,
+        TicketPrintingService printing)
     {
+        _printing = printing;
         _useCases = useCases;
         _runner = runner;
         _dialogs = dialogs;
@@ -144,6 +152,10 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
     [ObservableProperty]
     public partial CheckoutViewModel? Checkout { get; private set; }
 
+    /// <summary>Diálogo del motivo para abrir el cajón sin venta, mientras esté abierto.</summary>
+    [ObservableProperty]
+    public partial DrawerReasonViewModel? DrawerReason { get; private set; }
+
     [ObservableProperty]
     public partial bool IsEditingQuantity { get; private set; }
 
@@ -154,7 +166,7 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
     public partial string? QuantityEditError { get; private set; }
 
     /// <summary>Hay una ventana modal sobre la venta (selector o cobro): los atajos de captura no aplican.</summary>
-    public bool IsModalOpen => Chooser is not null || Checkout is not null;
+    public bool IsModalOpen => Chooser is not null || Checkout is not null || DrawerReason is not null;
 
     public bool HasLastSale => LastSaleText is not null;
 
@@ -183,6 +195,8 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
     partial void OnChooserChanged(ProductChooserViewModel? value) => OnModalChanged();
 
     partial void OnCheckoutChanged(CheckoutViewModel? value) => OnModalChanged();
+
+    partial void OnDrawerReasonChanged(DrawerReasonViewModel? value) => OnModalChanged();
 
     partial void OnLastSaleTextChanged(string? value) => OnPropertyChanged(nameof(HasLastSale));
 
@@ -330,6 +344,21 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
         ShowStatus(Strings.Sale_Cancelled, warning: false);
     }
 
+    /// <summary>Abre el cajón sin venta: pide el motivo, que queda en la bitácora.</summary>
+    [RelayCommand]
+    private void OpenDrawer()
+    {
+        if (IsModalOpen)
+        {
+            return;
+        }
+
+        DrawerReason = new DrawerReasonViewModel(
+            _printing,
+            (message, warning) => ShowStatus(message, warning),
+            () => DrawerReason = null);
+    }
+
     /// <summary>F12: revisa precios y existencia y abre el cobro.</summary>
     [RelayCommand(CanExecute = nameof(CanCheckout))]
     private async Task CheckoutAsync()
@@ -411,6 +440,7 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
             Cart.DraftId,
             [.. Cart.Lines.Select(l => new ConfirmLineInput(l.ProductId, l.Quantity.Thousandths, l.UnitPrice.Cents))],
             [.. checkout.ToPayments().Select(p => new PaymentInput(p.Method, p.Amount.Cents, p.Received?.Cents, p.Reference))]);
+        var hadCash = command.Payments.Any(p => p.Method == PaymentMethod.Cash);
 
         var (completed, result) = await _runner.RunAsync(
             "ConfirmarVenta",
@@ -427,6 +457,7 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
         {
             case null:
                 OnSaleRegistered(result.Value.Folio, result.Value.ChangeCents);
+                StartDevices(result.Value.SaleId, result.Value.Folio, hadCash);
                 break;
 
             case AlreadyRegistered registered:
@@ -449,6 +480,13 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
                 break;
         }
     }
+
+    /// <summary>
+    /// Cajón e impresión después de confirmar la venta y fuera de su flujo: el Punto de venta ya quedó
+    /// listo y una falla del dispositivo nunca toca la venta (006, FR-009).
+    /// </summary>
+    private void StartDevices(Guid saleId, string folio, bool hadCash) =>
+        _printing.OnSaleRegistered(saleId, folio, hadCash);
 
     private void ApplyReview(IReadOnlyList<SaleLineReview> lines)
     {

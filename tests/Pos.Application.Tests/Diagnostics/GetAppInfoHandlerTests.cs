@@ -41,5 +41,7 @@ public class GetAppInfoHandlerTests
         public string LogoFile => string.Empty;
 
         public string PreferencesDirectory => string.Empty;
+
+        public string TicketsDirectory => string.Empty;
     }
 }

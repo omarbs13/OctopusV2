@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Pos.Domain.Audit;
+using Pos.Domain.Business;
 using Pos.Domain.Inventory;
 using Pos.Domain.Products;
 using Pos.Domain.Sales;
@@ -34,6 +35,8 @@ public class PosDbContext : DbContext
 
     public DbSet<AuditEntry> AuditEntries => Set<AuditEntry>();
 
+    public DbSet<BusinessProfile> BusinessProfiles => Set<BusinessProfile>();
+
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
         RejectMovementChanges();
@@ -59,6 +62,7 @@ public class PosDbContext : DbContext
         modelBuilder.ApplyConfiguration(new SalePaymentConfiguration());
         modelBuilder.ApplyConfiguration(new SaleDraftConfiguration());
         modelBuilder.ApplyConfiguration(new AuditEntryConfiguration());
+        modelBuilder.ApplyConfiguration(new BusinessProfileConfiguration());
     }
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)

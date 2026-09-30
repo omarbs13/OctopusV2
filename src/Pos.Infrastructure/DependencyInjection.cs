@@ -1,15 +1,21 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Pos.Application.Abstractions;
+using Pos.Application.Business;
 using Pos.Application.Diagnostics;
 using Pos.Application.Inventory;
+using Pos.Application.Printing;
 using Pos.Application.Products;
 using Pos.Application.Sales;
 using Pos.Application.Startup;
 using Pos.Infrastructure.Audit;
+using Pos.Infrastructure.Business;
 using Pos.Infrastructure.Diagnostics;
 using Pos.Infrastructure.Inventory;
 using Pos.Infrastructure.Persistence;
+using Pos.Infrastructure.Printing;
+using Pos.Infrastructure.Printing.Linux;
+using Pos.Infrastructure.Printing.Windows;
 using Pos.Infrastructure.Platform;
 using Pos.Infrastructure.Products;
 using Pos.Infrastructure.Sales;
@@ -29,7 +35,19 @@ public static class DependencyInjection
         services.AddSingleton<ICurrentUser, SystemCurrentUser>();
         services.AddSingleton<IAppInfo, AssemblyAppInfo>();
         services.AddSingleton<IPreferencesStore, JsonFilePreferencesStore>();
+        services.AddSingleton<IPrintingSettingsStore, PreferencesPrintingSettingsStore>();
         services.AddSingleton<AuditingInterceptor>();
+
+        // Impresión: el transporte se elige por sistema operativo; el resto no conoce la plataforma.
+        services.AddSingleton<PrintGate>();
+        services.AddSingleton<FileTicketPrinter>();
+        services.AddSingleton<IRawPrinterTransport>(sp =>
+            OperatingSystem.IsWindows() ? ActivatorUtilities.CreateInstance<WinSpoolTransport>(sp)
+            : OperatingSystem.IsLinux() || OperatingSystem.IsMacOS() ? ActivatorUtilities.CreateInstance<CupsTransport>(sp)
+            : new UnsupportedTransport());
+        services.AddSingleton<ITicketPrinter, PlatformTicketPrinter>();
+        services.AddSingleton<ICashDrawer, PlatformCashDrawer>();
+        services.AddSingleton<IPrinterCatalog, PlatformPrinterCatalog>();
 
         services.AddDbContextFactory<PosDbContext>((sp, options) =>
             options
@@ -40,6 +58,7 @@ public static class DependencyInjection
         services.AddScoped(sp => sp.GetRequiredService<IDbContextFactory<PosDbContext>>().CreateDbContext());
 
         services.AddScoped<IProductRepository, ProductRepository>();
+        services.AddScoped<IBusinessProfileRepository, BusinessProfileRepository>();
         services.AddScoped<IInventoryRepository, InventoryRepository>();
         services.AddScoped<ISaleRepository, SaleRepository>();
         services.AddScoped<ISaleDraftStore, SqliteSaleDraftStore>();

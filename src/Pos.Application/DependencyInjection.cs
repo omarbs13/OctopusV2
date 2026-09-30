@@ -1,11 +1,18 @@
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
+using Pos.Application.Business.GetBusinessProfile;
+using Pos.Application.Business.SaveBusinessProfile;
 using Pos.Application.Diagnostics.ExportDiagnostics;
 using Pos.Application.Diagnostics.GetAppInfo;
 using Pos.Application.Inventory.GetStockAlerts;
 using Pos.Application.Inventory.RegisterMovement;
 using Pos.Application.Inventory.SearchMovements;
 using Pos.Application.Inventory.SearchStock;
+using Pos.Application.Printing.GetPrintingSettings;
+using Pos.Application.Printing.ListPrinters;
+using Pos.Application.Printing.OpenCashDrawer;
+using Pos.Application.Printing.PrintTicket;
+using Pos.Application.Printing.SavePrintingSettings;
 using Pos.Application.Products.CountActiveProducts;
 using Pos.Application.Products.CreateProduct;
 using Pos.Application.Products.DeleteProduct;
@@ -67,6 +74,19 @@ public static class DependencyInjection
         services.AddSingleton<IValidator<CancelSaleCommand>, CancelSaleValidator>();
         services.AddScoped<CancelSaleHandler>();
         services.AddScoped<GetSalesDashboardHandler>();
+
+        // Datos del negocio
+        services.AddScoped<GetBusinessProfileHandler>();
+        services.AddSingleton<IValidator<SaveBusinessProfileCommand>, SaveBusinessProfileValidator>();
+        services.AddScoped<SaveBusinessProfileHandler>();
+
+        // Impresión y cajón
+        services.AddSingleton<GetPrintingSettingsHandler>();
+        services.AddSingleton<SavePrintingSettingsHandler>();
+        services.AddScoped<ListPrintersHandler>();
+        services.AddScoped<PrintTicketHandler>();
+        services.AddSingleton<IValidator<OpenCashDrawerCommand>, OpenCashDrawerValidator>();
+        services.AddScoped<OpenCashDrawerHandler>();
 
         // Diagnóstico
         services.AddScoped<GetAppInfoHandler>();

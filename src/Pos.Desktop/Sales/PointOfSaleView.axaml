@@ -132,6 +132,7 @@
         <Button Classes="touch" Content="{x:Static res:Strings.Sale_Quantity}" Command="{Binding ChangeQuantityCommand}" />
         <Button Classes="touch" Content="{x:Static res:Strings.Sale_Remove}" Command="{Binding RemoveLineCommand}" />
         <Button Classes="touch" Content="{x:Static res:Strings.Sale_CancelSale}" Command="{Binding CancelSaleCommand}" />
+        <Button Classes="touch" Content="{x:Static res:Strings.Sale_OpenDrawer}" Command="{Binding OpenDrawerCommand}" />
       </StackPanel>
 
       <!-- Barra inferior: aviso y atajos (FR-008) -->
@@ -145,6 +146,11 @@
     <!-- Selector de productos (búsqueda por nombre) -->
     <Grid Background="#99000000" IsVisible="{Binding Chooser, Converter={x:Static ObjectConverters.IsNotNull}}">
       <ContentControl Content="{Binding Chooser}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+    </Grid>
+
+    <!-- Motivo para abrir el cajón sin venta -->
+    <Grid Background="#99000000" IsVisible="{Binding DrawerReason, Converter={x:Static ObjectConverters.IsNotNull}}">
+      <ContentControl Content="{Binding DrawerReason}" HorizontalAlignment="Center" VerticalAlignment="Center" />
     </Grid>
 
     <!-- Cobro -->

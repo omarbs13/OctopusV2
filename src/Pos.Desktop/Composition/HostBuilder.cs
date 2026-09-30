@@ -9,6 +9,7 @@ using Pos.Desktop.Inventory;
 using Pos.Desktop.Navigation;
 using Pos.Desktop.Products;
 using Pos.Desktop.Sales;
+using Pos.Desktop.Settings;
 using Pos.Desktop.Shell;
 using Pos.Desktop.Splash;
 using Pos.Desktop.Startup;
@@ -51,6 +52,7 @@ internal static class HostBuilder
         builder.Services.AddProductsModule();
         builder.Services.AddInventoryModule();
         builder.Services.AddSalesModule();
+        builder.Services.AddSettingsModule();
         builder.Services.AddHelpModule();
 
         builder.Services.AddSingleton<MainViewModel>();

@@ -1,0 +1,45 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Pos.Desktop.Settings"
+             xmlns:res="using:Pos.Desktop.Resources"
+             x:Class="Pos.Desktop.Settings.PrinterSettingsView"
+             x:DataType="vm:PrinterSettingsViewModel">
+
+  <ScrollViewer>
+    <StackPanel Spacing="12" MaxWidth="640" HorizontalAlignment="Left">
+      <TextBlock Text="{x:Static res:Strings.Nav_Printer}" FontSize="22" FontWeight="SemiBold" />
+      <TextBlock Text="{x:Static res:Strings.Printer_Description}" TextWrapping="Wrap" Opacity="0.8" />
+
+      <StackPanel Spacing="4">
+        <TextBlock Text="{x:Static res:Strings.Printer_Destination}" />
+        <ComboBox ItemsSource="{Binding Printers}" SelectedItem="{Binding SelectedPrinter}"
+                  HorizontalAlignment="Stretch" MinHeight="44">
+          <ComboBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:PrinterChoice">
+              <TextBlock Text="{Binding Label}" />
+            </DataTemplate>
+          </ComboBox.ItemTemplate>
+        </ComboBox>
+      </StackPanel>
+
+      <StackPanel Spacing="4">
+        <TextBlock Text="{x:Static res:Strings.Printer_Paper}" />
+        <ComboBox ItemsSource="{Binding PaperWidths}" SelectedIndex="{Binding PaperWidthIndex}"
+                  HorizontalAlignment="Stretch" MinHeight="44" />
+      </StackPanel>
+
+      <CheckBox IsChecked="{Binding AutoPrint}" Content="{x:Static res:Strings.Printer_AutoPrint}" />
+      <CheckBox IsChecked="{Binding AutoOpenDrawer}" Content="{x:Static res:Strings.Printer_AutoDrawer}" />
+
+      <StackPanel Orientation="Horizontal" Spacing="12">
+        <Button Classes="accent" MinHeight="44" MinWidth="140" Command="{Binding SaveCommand}"
+                Content="{x:Static res:Strings.Printer_Save}" />
+        <Button MinHeight="44" MinWidth="180" Command="{Binding TestPrintCommand}"
+                Content="{x:Static res:Strings.Printer_TestPrint}" />
+        <ProgressBar IsIndeterminate="True" Width="100" IsVisible="{Binding IsBusy}" VerticalAlignment="Center" />
+      </StackPanel>
+      <TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap"
+                 IsVisible="{Binding StatusMessage, Converter={x:Static ObjectConverters.IsNotNull}}" />
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

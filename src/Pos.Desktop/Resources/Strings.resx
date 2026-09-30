@@ -282,4 +282,54 @@
   <data name="Card_SalesTodayOne" xml:space="preserve"><value>{0} · {1} venta</value></data>
   <data name="Card_SalesWeekEmpty" xml:space="preserve"><value>Sin ventas en los últimos 7 días</value></data>
   <data name="Card_TopProductsEmpty" xml:space="preserve"><value>Aún no hay ventas</value></data>
+  <data name="Nav_Settings" xml:space="preserve"><value>Configuración</value></data>
+  <data name="Nav_BusinessProfile" xml:space="preserve"><value>Datos del negocio</value></data>
+  <data name="BusinessProfile_Description" xml:space="preserve"><value>Estos datos aparecen en el encabezado y el pie de cada ticket.</value></data>
+  <data name="BusinessProfile_TradeName" xml:space="preserve"><value>Nombre comercial</value></data>
+  <data name="BusinessProfile_Address" xml:space="preserve"><value>Dirección</value></data>
+  <data name="BusinessProfile_Phone" xml:space="preserve"><value>Teléfono</value></data>
+  <data name="BusinessProfile_TaxId" xml:space="preserve"><value>RFC (opcional)</value></data>
+  <data name="BusinessProfile_Footer" xml:space="preserve"><value>Mensaje de pie (opcional)</value></data>
+  <data name="BusinessProfile_Logo" xml:space="preserve"><value>Logotipo (opcional)</value></data>
+  <data name="BusinessProfile_NoLogo" xml:space="preserve"><value>Sin logotipo</value></data>
+  <data name="BusinessProfile_SelectLogo" xml:space="preserve"><value>Seleccionar logotipo</value></data>
+  <data name="BusinessProfile_RemoveLogo" xml:space="preserve"><value>Quitar logotipo</value></data>
+  <data name="BusinessProfile_Save" xml:space="preserve"><value>Guardar</value></data>
+  <data name="BusinessProfile_Saved" xml:space="preserve"><value>Datos guardados.</value></data>
+  <data name="BusinessProfile_Changed" xml:space="preserve"><value>Los datos del negocio cambiaron en otro lugar. Se cargaron los datos vigentes; revise y vuelva a guardar.</value></data>
+  <data name="Nav_Printer" xml:space="preserve"><value>Impresora</value></data>
+  <data name="Printer_Description" xml:space="preserve"><value>Elija dónde se imprimen los tickets en esta computadora. Con la impresora virtual se guardan como archivos de texto para revisarlos.</value></data>
+  <data name="Printer_Destination" xml:space="preserve"><value>Impresora</value></data>
+  <data name="Printer_Virtual" xml:space="preserve"><value>Impresora virtual (archivo de texto)</value></data>
+  <data name="Printer_NotFound" xml:space="preserve"><value>{0} (no se encuentra)</value></data>
+  <data name="Printer_Paper" xml:space="preserve"><value>Ancho del papel</value></data>
+  <data name="Printer_Paper58" xml:space="preserve"><value>58 mm</value></data>
+  <data name="Printer_Paper80" xml:space="preserve"><value>80 mm</value></data>
+  <data name="Printer_AutoPrint" xml:space="preserve"><value>Imprimir el ticket automáticamente al cobrar</value></data>
+  <data name="Printer_AutoDrawer" xml:space="preserve"><value>Abrir el cajón automáticamente al cobrar en efectivo</value></data>
+  <data name="Printer_Save" xml:space="preserve"><value>Guardar</value></data>
+  <data name="Printer_Saved" xml:space="preserve"><value>Configuración guardada.</value></data>
+  <data name="Printer_TestPrint" xml:space="preserve"><value>Impresión de prueba</value></data>
+  <data name="Printer_TestLabel" xml:space="preserve"><value>PRUEBA</value></data>
+  <data name="Print_Sent" xml:space="preserve"><value>Ticket enviado a: {0}</value></data>
+  <data name="Print_FailedTitle" xml:space="preserve"><value>No se imprimió el ticket</value></data>
+  <data name="Print_Failed" xml:space="preserve"><value>No se pudo imprimir el ticket ({0}). La venta quedó registrada y no se ve afectada.</value></data>
+  <data name="Print_Unavailable" xml:space="preserve"><value>La impresora no está disponible o no responde ({0}). La venta quedó registrada y no se ve afectada.</value></data>
+  <data name="Print_Retry" xml:space="preserve"><value>Reintentar</value></data>
+  <data name="Print_Continue" xml:space="preserve"><value>Continuar sin imprimir</value></data>
+  <data name="Print_NotConfiguredTitle" xml:space="preserve"><value>Impresora sin configurar</value></data>
+  <data name="Print_NotConfigured" xml:space="preserve"><value>No hay una impresora configurada en esta computadora, así que no se puede imprimir el ticket. La venta no se ve afectada.</value></data>
+  <data name="Print_OpenSettings" xml:space="preserve"><value>Abrir configuración</value></data>
+  <data name="Drawer_Title" xml:space="preserve"><value>Abrir cajón</value></data>
+  <data name="Drawer_Description" xml:space="preserve"><value>Capture el motivo. Quedará registrado en la bitácora junto con su usuario y la fecha.</value></data>
+  <data name="Drawer_Reason" xml:space="preserve"><value>Motivo</value></data>
+  <data name="Drawer_Open" xml:space="preserve"><value>Abrir cajón</value></data>
+  <data name="Drawer_ReasonRequired" xml:space="preserve"><value>Capture el motivo de la apertura.</value></data>
+  <data name="Drawer_Opened" xml:space="preserve"><value>Cajón abierto.</value></data>
+  <data name="Drawer_NotConfigured" xml:space="preserve"><value>No hay una impresora configurada, así que no se pudo abrir el cajón.</value></data>
+  <data name="Drawer_Failed" xml:space="preserve"><value>No se pudo abrir el cajón. La venta en curso no se ve afectada.</value></data>
+  <data name="Drawer_FailedTitle" xml:space="preserve"><value>No se abrió el cajón</value></data>
+  <data name="Drawer_FailedSale" xml:space="preserve"><value>No se pudo abrir el cajón. Ábralo manualmente; la venta quedó registrada y no se ve afectada.</value></data>
+  <data name="Sale_OpenDrawer" xml:space="preserve"><value>Abrir cajón</value></data>
+  <data name="SaleDetail_Reprint" xml:space="preserve"><value>Reimprimir</value></data>
 </root>

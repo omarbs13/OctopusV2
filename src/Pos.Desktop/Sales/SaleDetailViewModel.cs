@@ -2,11 +2,13 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Pos.Application.Abstractions;
+using Pos.Application.Printing.PrintTicket;
 using Pos.Application.Sales;
 using Pos.Application.Sales.GetSale;
 using Pos.Desktop.Common;
 using Pos.Desktop.Forms;
 using Pos.Desktop.Resources;
+using Pos.Desktop.Settings;
 using Pos.Domain.Sales;
 
 namespace Pos.Desktop.Sales;
@@ -49,12 +51,14 @@ public sealed partial class SaleDetailViewModel : FormViewModel
 
     private readonly UseCases _useCases;
     private readonly OperationRunner _runner;
+    private readonly TicketPrintingService _printing;
 
     private Guid _saleId;
 
-    public SaleDetailViewModel(UseCases useCases, OperationRunner runner, IDialogService dialogs)
+    public SaleDetailViewModel(UseCases useCases, OperationRunner runner, IDialogService dialogs, TicketPrintingService printing)
         : base(dialogs)
     {
+        _printing = printing;
         _useCases = useCases;
         _runner = runner;
     }
@@ -144,6 +148,20 @@ public sealed partial class SaleDetailViewModel : FormViewModel
     [CommunityToolkit.Mvvm.Input.RelayCommand(CanExecute = nameof(CanCancel))]
     private void CancelSale() => StartCancel();
 
+    /// <summary>Reimprime el ticket (con la leyenda REIMPRESIÓN) sin afectar la venta; vale para completadas y canceladas.</summary>
+    [CommunityToolkit.Mvvm.Input.RelayCommand(CanExecute = nameof(CanReprint))]
+    private async Task ReprintAsync()
+    {
+        if (Detail is not { } detail)
+        {
+            return;
+        }
+
+        await _printing.PrintAsync(PrintSource.Sale(detail.Id), isReprint: true, detail.Folio, automatic: false);
+    }
+
+    private bool CanReprint() => Detail is not null;
+
     private void CloseCancelForm()
     {
         CancelForm = null;
@@ -173,5 +191,6 @@ public sealed partial class SaleDetailViewModel : FormViewModel
 
         Detail = detail;
         CancelSaleCommand.NotifyCanExecuteChanged();
+        ReprintCommand.NotifyCanExecuteChanged();
     }
 }

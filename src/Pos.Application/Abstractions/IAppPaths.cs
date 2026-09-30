@@ -22,4 +22,7 @@ public interface IAppPaths
 
     /// <summary>Preferencias locales de la máquina (por ejemplo, el menú).</summary>
     string PreferencesDirectory { get; }
+
+    /// <summary>Tickets de la impresora virtual (un archivo de texto por ticket).</summary>
+    string TicketsDirectory { get; }
 }

@@ -7,4 +7,10 @@ namespace Pos.Application.Abstractions;
 public interface IAuditLog
 {
     void Add(string action, string entityType, Guid entityId, string? details);
+
+    /// <summary>
+    /// Persiste lo agregado con <see cref="Add"/> cuando no hay otra escritura que lo lleve (por
+    /// ejemplo, la apertura del cajón sin venta).
+    /// </summary>
+    Task SaveAsync(CancellationToken cancellationToken);
 }
