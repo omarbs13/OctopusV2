@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "read": {
+      "deny": [
+        "bin/",
+        "obj/",
+        "**/*.db",
+        "**/*.db-wal",
+        "**/*.db-shm",
+        "**/*.png",
+        "**/*.jpg",
+        "**/*.jpeg",
+        "**/*.webp",
+        "**/*.ico"
+      ]
+    }
+  }
+}
