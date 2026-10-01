@@ -25,9 +25,9 @@ public sealed record SignInOutcome(SessionUser User, bool MustChangePassword);
 public sealed record SetupState(bool NeedsFirstAdmin);
 
 /// <summary>Resultado de verificar un permiso.</summary>
-public sealed record AccessDecision(bool Allowed, Guid? AuthorizedBy, Abstractions.Forbidden? Error)
+public sealed record AccessDecision(bool Allowed, Guid? AuthorizedBy, Abstractions.Error? Error)
 {
     public static AccessDecision Allow(Guid? authorizedBy = null) => new(true, authorizedBy, null);
 
-    public static AccessDecision Deny(Abstractions.Forbidden error) => new(false, null, error);
+    public static AccessDecision Deny(Abstractions.Error error) => new(false, null, error);
 }

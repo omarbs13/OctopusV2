@@ -42,7 +42,7 @@ public sealed class TicketPrintingService : IDisposable
         _dialogs = dialogs;
         _navigation = navigation;
         _logger = logger;
-        _queue = new PrintJobQueue(ex => logger.Error(ex, "Error al atender un trabajo de impresión o cajón"));
+        _queue = new PrintJobQueue(ex => logger.Fatal(ex, "Error inesperado al atender un trabajo de impresión o cajón"));
     }
 
     /// <summary>

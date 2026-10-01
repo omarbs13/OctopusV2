@@ -100,7 +100,7 @@ public sealed class HomeViewModelTests : IDisposable
         Assert.Equal(Strings.Card_Unavailable, failing.Message);
         Assert.Equal(DashboardCardState.Ready, home.Cards.OfType<ActiveProductsCard>().Single().State);
         Assert.Empty(host.Dialogs.Messages);
-        var error = Assert.Single(host.Sink.Events, e => e.Level == LogEventLevel.Error);
+        var error = Assert.Single(host.Sink.Events, e => e.Level == LogEventLevel.Fatal);
         Assert.Equal("\"CargarTarjeta\"", error.Properties["Operation"].ToString());
         Assert.Equal("\"Tarjeta que falla\"", error.Properties["Card"].ToString());
     }

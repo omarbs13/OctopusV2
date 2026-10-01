@@ -24,6 +24,7 @@ public sealed class AppPaths : IAppPaths
         LogoFile = Path.Combine(DataDirectory, "logo.png");
         PreferencesDirectory = Path.Combine(DataDirectory, "preferences");
         TicketsDirectory = Path.Combine(DataDirectory, "tickets");
+        LicenseFile = Path.Combine(DataDirectory, "license.lic");
     }
 
     public string DataDirectory { get; }
@@ -45,6 +46,8 @@ public sealed class AppPaths : IAppPaths
     public string PreferencesDirectory { get; }
 
     public string TicketsDirectory { get; }
+
+    public string LicenseFile { get; }
 
     public static AppPaths FromEnvironment()
     {

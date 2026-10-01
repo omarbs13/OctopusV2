@@ -86,3 +86,24 @@ public sealed record HeldSaleWillBeDiscarded(string OwnerName) : Error;
 
 /// <summary>El efectivo esperado cambió entre el conteo y el cierre; hay que revisar las cifras (008, research §8).</summary>
 public sealed record ShiftChanged : Error;
+
+/// <summary>Período de evaluación o licencia vencidos: el sistema está en modo lectura (011, FR-007).</summary>
+public sealed record LicenseExpired(string ContactPhone, string ContactEmail) : Error;
+
+/// <summary>El archivo de licencia importado se rechazó; la licencia vigente no cambió (011, FR-012).</summary>
+public sealed record InvalidLicense(LicenseImportRejection Reason) : Error;
+
+public enum LicenseImportRejection
+{
+    /// <summary>El archivo no se pudo leer o no tiene el formato esperado.</summary>
+    Unreadable,
+
+    /// <summary>La firma del proveedor no es válida.</summary>
+    BadSignature,
+
+    /// <summary>La licencia corresponde a otra máquina.</summary>
+    OtherMachine,
+
+    /// <summary>Es anterior a la licencia vigente.</summary>
+    Older,
+}

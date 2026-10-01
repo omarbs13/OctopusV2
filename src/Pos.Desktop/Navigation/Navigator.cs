@@ -1,5 +1,9 @@
+using System.Globalization;
 using Microsoft.Extensions.DependencyInjection;
+using Pos.Application.Licensing;
 using Pos.Desktop.Common;
+using Pos.Desktop.Diagnostics;
+using Pos.Desktop.Resources;
 using Serilog;
 
 namespace Pos.Desktop.Navigation;
@@ -13,14 +17,36 @@ public sealed class Navigator
     private readonly NavigationRegistry _registry;
     private readonly IServiceProvider _services;
     private readonly ILogger _logger;
+    private readonly DiagnosticContext? _diagnostics;
+    private readonly ILicenseState? _license;
+    private readonly VendorContact _contact;
+    private readonly IDialogService? _dialogs;
     private readonly Dictionary<string, PageViewModel> _resolved = [];
 
-    public Navigator(NavigationRegistry registry, IServiceProvider services, ILogger logger)
+    public Navigator(
+        NavigationRegistry registry,
+        IServiceProvider services,
+        ILogger logger,
+        DiagnosticContext? diagnostics = null,
+        ILicenseState? license = null,
+        VendorContact? contact = null,
+        IDialogService? dialogs = null)
     {
+        _license = license;
+        _contact = contact ?? VendorContact.Default;
+        _dialogs = dialogs;
         _registry = registry;
         _services = services;
         _logger = logger;
+        _diagnostics = diagnostics;
+
+        // La pantalla segura es el Punto de venta (FR-004); la sesión vigente es la última que se registra.
+        // Con la licencia vencida el Punto de venta está bloqueado: la pantalla segura es Inicio (011).
+        _diagnostics?.SetSafeScreenAction(() => NavigateAsync(_license?.Current.IsReadOnly == true ? Home.HomeModule.PageId : SafeScreenId));
     }
+
+    /// <summary>Opción a la que se regresa cuando la pantalla actual no puede continuar tras un error.</summary>
+    public const string SafeScreenId = Sales.SalesModule.PointOfSalePageId;
 
     public event EventHandler? CurrentChanged;
 
@@ -53,6 +79,12 @@ public sealed class Navigator
             return false;
         }
 
+        if (entry.Permission is { } required && _license?.IsBlocked(required) == true)
+        {
+            await ShowLicenseExpiredAsync();
+            return false;
+        }
+
         if (!await CanLeaveCurrentAsync())
         {
             return false;
@@ -66,6 +98,7 @@ public sealed class Navigator
             receiver.Receive(argument);
         }
 
+        _diagnostics?.SetScreen(CurrentEntryId);
         CurrentChanged?.Invoke(this, EventArgs.Empty);
         await CurrentPage.OnActivatedAsync();
         return true;
@@ -78,4 +111,10 @@ public sealed class Navigator
 
     public Task<bool> CanLeaveCurrentAsync() =>
         CurrentPage is ILeaveGuard guard ? guard.CanLeaveAsync() : Task.FromResult(true);
+
+    private Task ShowLicenseExpiredAsync() =>
+        _dialogs?.ShowMessageAsync(
+            Strings.Common_InfoTitle,
+            string.Format(CultureInfo.CurrentCulture, Strings.License_Expired, _contact.Phone, _contact.Email))
+        ?? Task.CompletedTask;
 }

@@ -20,7 +20,11 @@ public sealed class FakeDiagnosticsExporter : IDiagnosticsExporter
     /// <summary>Si se asigna, la exportación espera a que se complete.</summary>
     public TaskCompletionSource? Gate { get; set; }
 
-    public async Task ExportAsync(string destinationFile, CancellationToken cancellationToken)
+    public bool? IncludeDatabase { get; private set; }
+
+    public int LogFileCount { get; set; } = 1;
+
+    public async Task<int> ExportAsync(string destinationFile, bool includeDatabase, CancellationToken cancellationToken)
     {
         if (Gate is not null)
         {
@@ -33,6 +37,8 @@ public sealed class FakeDiagnosticsExporter : IDiagnosticsExporter
         }
 
         Destination = destinationFile;
+        IncludeDatabase = includeDatabase;
+        return LogFileCount;
     }
 }
 

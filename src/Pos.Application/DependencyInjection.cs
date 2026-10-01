@@ -40,6 +40,10 @@ using Pos.Application.Sales.GetSalesDashboard;
 using Pos.Application.Sales.ReviewSale;
 using Pos.Application.Sales.SaveSaleDraft;
 using Pos.Application.Sales.SearchSales;
+using Pos.Application.Licensing;
+using Pos.Application.Licensing.ExportLicenseRequest;
+using Pos.Application.Licensing.GetLicenseStatus;
+using Pos.Application.Licensing.ImportLicense;
 using Pos.Application.Startup;
 using Pos.Application.Audit.SearchAuditLog;
 using Pos.Application.Security.GetSecuritySettings;
@@ -189,6 +193,14 @@ public static class DependencyInjection
         services.AddScoped<PrintTicketHandler>();
         services.AddSingleton<IValidator<OpenCashDrawerCommand>, OpenCashDrawerValidator>();
         services.AddScoped<OpenCashDrawerHandler>();
+
+        // Licencia local (011)
+        services.AddSingleton<ILicenseState, LicenseState>();
+        services.AddSingleton(VendorContact.Default);
+        services.AddSingleton<LicenseBootstrapper>();
+        services.AddSingleton<GetLicenseStatusHandler>();
+        services.AddScoped<ImportLicenseHandler>();
+        services.AddScoped<ExportLicenseRequestHandler>();
 
         // Diagnóstico
         services.AddScoped<GetAppInfoHandler>();

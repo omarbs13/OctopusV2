@@ -8,7 +8,7 @@ namespace Pos.Application.Sales;
 internal static class SaleAccess
 {
     /// <summary>Nulo si el usuario puede acceder a la venta creada por <paramref name="createdBy"/>; si no, el rechazo.</summary>
-    public static async Task<Forbidden?> CheckOwnershipAsync(
+    public static async Task<Error?> CheckOwnershipAsync(
         IAccessControl access,
         ICurrentUser currentUser,
         Guid createdBy,

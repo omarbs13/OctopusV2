@@ -17,6 +17,7 @@ La ruta real siempre se ve en la pantalla **Acerca de**, con un botón para copi
 ```text
 Pos/
 ├── app.lock                     Bloqueo de instancia única (lo libera el sistema si el proceso muere)
+├── license.lic                  Licencia local (cifrada): ID de máquina, primer arranque y licencia vigente
 ├── logo.png                     Logotipo del cliente (opcional) para la pantalla de carga
 ├── preferences/
 │   ├── navigation.json          Estado del menú lateral (contraído y grupos abiertos)
@@ -30,7 +31,7 @@ Pos/
 │   ├── pre-migration/           Respaldo antes de cada migración: se conservan los 5 más recientes
 │   └── corrupt/<fecha>Z/        Bases dañadas apartadas al restaurar (no se borran solas)
 └── logs/
-    └── pos-AAAAMMDD.log         Log estructurado (un archivo por día, se conservan 31)
+    └── pos-AAAAMMDD.log         Log de texto (un archivo por día, se conservan 30 días)
 ```
 
 **Nunca copies `pos.db` a mano con la aplicación abierta**: en modo WAL, los cambios recientes
@@ -106,25 +107,65 @@ o si no hay respaldos, la aplicación no abre.
 
 ## Logs
 
-Los logs usan el formato CLEF (JSON compacto, un evento por línea). Cada error incluye la
-operación (`Operation`), el usuario (`UserId`) y los identificadores relevantes (`ProductId`,
-`Sku`...), además de `AppVersion`, `MachineName` y `OperatingSystem`. No contienen datos
-sensibles.
+Los logs son archivos de texto legibles, uno por día (`pos-AAAAMMDD.log`). Al iniciar la aplicación y
+cada vez que cambia el día se eliminan los de más de **30 días**, según la fecha del nombre.
+Cada línea tiene este formato:
 
-Para leerlos puedes usar cualquier visor de CLEF (por ejemplo Seq o `clef-tool`), o `jq`:
-
-```bash
-jq -c 'select(."@l" == "Error") | {t: ."@t", op: .Operation, msg: ."@mt", ex: ."@x"}' pos-20260929.log
+```text
+2026-09-30 14:32:05.123 -06:00 [FATAL] Error inesperado en la operación CobrarVenta {"Operation":"CobrarVenta","UserId":"…","Screen":"sales.pos","SaleLines":3,…}
+System.InvalidOperationException: …
+   at …
 ```
+
+| Nivel | Cuándo |
+|---|---|
+| `INFO` | Operaciones críticas: venta registrada, turno abierto, usuario conectado |
+| `WARNING` | Situaciones esperadas pero anómalas: impresora que no responde, existencia insuficiente |
+| `ERROR` | Fallas controladas: validación fallida, exportación fallida, base inaccesible |
+| `FATAL` | Excepciones no controladas (siempre incluyen tipo y traza de pila) |
+
+Cada entrada incluye el contexto para reproducir el problema: `UserId` y `UserName` del usuario
+conectado, `Screen` (pantalla actual), `SaleLines` y `SaleDraftId` si hay una venta sin guardar, y los
+identificadores de la operación (`ProductId`, `SaleId`, `ShiftId`...), además de `AppVersion`,
+`MachineName` y `OperatingSystem`. Los valores de propiedades sensibles (contraseñas, tarjetas, tokens)
+se reemplazan por `***`.
+
+Si el mismo error se repite varias veces en 5 segundos, solo se escribe completo el primero y después
+una entrada resumen: `Error repetido N veces en 5 s: <tipo>`. El operador ve un único mensaje por vez:
+"Ocurrió un error inesperado. Los detalles se registraron para soporte técnico."
+
+Para buscar errores: `grep -E "\[(ERROR|FATAL)\]" pos-20260930.log`.
 
 ## Exportar diagnóstico
 
 En **Acerca de → Exportar diagnóstico…** se genera un único `.zip` con:
 
 - `info.json`: versión, sistema operativo, carpeta de datos y fecha de exportación.
-- `logs/`: los logs de los últimos 7 días.
-- `pos.db`: un respaldo consistente de la base, **sin las imágenes de productos**: se borran de
-  la copia y se compacta antes de comprimirla, porque pesan mucho y no aportan al diagnóstico.
+- `logs/`: los logs de los últimos 30 días. Si no hay ninguno, la pantalla lo avisa.
+- `pos.db` (**opcional**, casilla "Incluir respaldo de la base de datos", desactivada por omisión):
+  un respaldo consistente de la base, **sin las imágenes de productos**: se borran de la copia y se
+  compacta antes de comprimirla, porque pesan mucho y no aportan al diagnóstico.
+
+Solo el Administrador puede exportar el diagnóstico.
 
 El archivo se arma en una carpeta temporal y solo al final se mueve al destino, así que nunca
 queda un zip incompleto.
+
+## Licencia local (`license.lic`)
+
+El sistema se puede evaluar 30 días en una máquina; después pasa a **modo lectura**: el Punto de
+venta, la apertura de turnos, los reportes y la administración de usuarios se bloquean, y Productos,
+Inventario y Ventas registradas siguen disponibles. Un turno ya abierto se puede cerrar.
+
+- `license.lic` está cifrado y ligado al ID de la máquina. **No lo edites, no lo copies a otra
+  máquina y no lo envíes a soporte**: no se incluye en el diagnóstico y copiarlo a otro equipo lo
+  invalida (el sistema queda en modo lectura).
+- Si se borra, se regenera con el mismo ID de máquina. El inicio del período se toma de la fecha del
+  primer usuario creado, así que borrar el archivo no reinicia los 30 días.
+- Para activar o extender: **Acerca de → Administración de licencia** (solo Administrador).
+  1. **Exportar solicitud…** genera un archivo `.posreq` con el ID de máquina; se envía al proveedor.
+  2. El proveedor devuelve un archivo `.poslic` firmado.
+  3. **Importar licencia…** lo aplica de inmediato, sin reiniciar. Se rechaza si pertenece a otra
+     máquina, si está alterado o si es anterior a la licencia vigente.
+- Si el reloj del sistema se retrasa, los días restantes no aumentan.
+- Importar una licencia queda registrado en la bitácora de auditoría.

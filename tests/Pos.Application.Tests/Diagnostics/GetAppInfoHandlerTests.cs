@@ -43,5 +43,7 @@ public class GetAppInfoHandlerTests
         public string PreferencesDirectory => string.Empty;
 
         public string TicketsDirectory => string.Empty;
+
+        public string LicenseFile => "";
     }
 }

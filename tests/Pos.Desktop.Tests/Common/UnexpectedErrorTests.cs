@@ -30,7 +30,7 @@ public sealed class UnexpectedErrorTests : IDisposable
 
     private void AssertLoggedAndNotified(string operation)
     {
-        var error = Assert.Single(_host.Sink.Events, e => e.Level == LogEventLevel.Error);
+        var error = Assert.Single(_host.Sink.Events, e => e.Level == LogEventLevel.Fatal);
         Assert.Same(Failure, error.Exception);
         Assert.Equal($"\"{operation}\"", error.Properties["Operation"].ToString());
         Assert.Equal(FixedCurrentUser.Id.ToString(), error.Properties["UserId"].ToString());
@@ -48,7 +48,7 @@ public sealed class UnexpectedErrorTests : IDisposable
 
         AssertLoggedAndNotified("GuardarProducto");
         Assert.Equal(("Café", "CAF-001", "10"), (editor.Name, editor.Sku, editor.PriceText));
-        Assert.Contains("Sku", _host.Sink.Events.Single(e => e.Level == LogEventLevel.Error).Properties.Keys);
+        Assert.Contains("Sku", _host.Sink.Events.Single(e => e.Level == LogEventLevel.Fatal).Properties.Keys);
 
         _host.Repository.FailWith = null;
         await editor.SaveCommand.ExecuteAsync(null);
@@ -85,7 +85,7 @@ public sealed class UnexpectedErrorTests : IDisposable
 
         AssertLoggedAndNotified("GuardarProducto");
         Assert.Equal("Café de Olla", editor.Name);
-        Assert.Equal(product.Id.ToString(), _host.Sink.Events.Single(e => e.Level == LogEventLevel.Error).Properties["ProductId"].ToString());
+        Assert.Equal(product.Id.ToString(), _host.Sink.Events.Single(e => e.Level == LogEventLevel.Fatal).Properties["ProductId"].ToString());
     }
 
     [Fact]
@@ -100,7 +100,7 @@ public sealed class UnexpectedErrorTests : IDisposable
 
         await page.DeleteCommand.ExecuteAsync(null);
 
-        Assert.Contains(_host.Sink.Events, e => e.Level == LogEventLevel.Error && e.Properties["Operation"].ToString() == "\"BorrarProducto\"");
+        Assert.Contains(_host.Sink.Events, e => e.Level == LogEventLevel.Fatal && e.Properties["Operation"].ToString() == "\"BorrarProducto\"");
         Assert.Contains(_host.Dialogs.Messages, m => m.Message == Strings.Common_UnexpectedError);
         _host.Repository.FailWith = null;
         Assert.False(_host.Repository.All.Single().IsDeleted);

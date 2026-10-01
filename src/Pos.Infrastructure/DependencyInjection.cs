@@ -22,6 +22,8 @@ using Pos.Infrastructure.Inventory;
 using Pos.Infrastructure.Persistence;
 using Pos.Infrastructure.Printing;
 using Pos.Infrastructure.Printing.Linux;
+using Pos.Application.Licensing;
+using Pos.Infrastructure.Licensing;
 using Pos.Infrastructure.Printing.Windows;
 using Pos.Infrastructure.Platform;
 using Pos.Infrastructure.Products;
@@ -89,6 +91,10 @@ public static class DependencyInjection
         services.AddSingleton<IXlsxReportWriter, XlsxReportWriter>();
         services.AddSingleton<IDatabaseMaintenance, SqliteDatabaseMaintenance>();
         services.AddSingleton<IBackupService, SqliteBackupService>();
+        services.AddSingleton<IMachineIdProvider, MachineIdProvider>();
+        services.AddSingleton<ILicenseStore, LicenseFileStore>();
+        services.AddSingleton<IInstallationAgeReader, InstallationAgeReader>();
+        services.AddSingleton<ILicenseVerifier, EcdsaLicenseVerifier>();
         services.AddSingleton<IDiagnosticsExporter>(sp => new ZipDiagnosticsExporter(
             sp.GetRequiredService<IAppPaths>(),
             sp.GetRequiredService<IAppInfo>(),

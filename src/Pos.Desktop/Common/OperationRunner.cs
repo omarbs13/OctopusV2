@@ -1,4 +1,5 @@
 using Pos.Application.Abstractions;
+using Pos.Desktop.Diagnostics;
 using Pos.Desktop.Resources;
 using Serilog;
 
@@ -14,9 +15,11 @@ public sealed class OperationRunner
     private readonly ILogger _logger;
     private readonly IDialogService _dialogs;
     private readonly ICurrentUser _currentUser;
+    private readonly ErrorEpisodeGate? _gate;
 
-    public OperationRunner(ILogger logger, IDialogService dialogs, ICurrentUser currentUser)
+    public OperationRunner(ILogger logger, IDialogService dialogs, ICurrentUser currentUser, ErrorEpisodeGate? gate = null)
     {
+        _gate = gate;
         _logger = logger;
         _dialogs = dialogs;
         _currentUser = currentUser;
@@ -54,8 +57,11 @@ public sealed class OperationRunner
 #pragma warning restore CA1031
         {
             var log = ForOperation(operation, context);
-            log.Error(ex, "Error inesperado en la operación {Operation}", operation);
-            await NotifyOperatorAsync(log);
+            if (LogUnexpected(log, operation, ex))
+            {
+                await NotifyOperatorAsync(log);
+            }
+
             return (false, default);
         }
     }
@@ -79,7 +85,7 @@ public sealed class OperationRunner
         catch (Exception ex)
 #pragma warning restore CA1031
         {
-            ForOperation(operation, context).Error(ex, "Error inesperado en la operación {Operation}", operation);
+            LogUnexpected(ForOperation(operation, context), operation, ex);
             return false;
         }
     }
@@ -99,7 +105,7 @@ public sealed class OperationRunner
         catch (Exception ex)
 #pragma warning restore CA1031
         {
-            ForOperation(operation, context).Error(ex, "Error inesperado en la operación {Operation}", operation);
+            LogUnexpected(ForOperation(operation, context), operation, ex);
             return (false, default);
         }
     }
@@ -121,6 +127,30 @@ public sealed class OperationRunner
         return log;
     }
 
+    /// <summary>
+    /// Registra la falla inesperada como FATAL; <c>false</c> si es una repetición dentro del episodio
+    /// (solo se cuenta) o ya hay un aviso abierto, para no saturar al operador (FR-017).
+    /// </summary>
+    private bool LogUnexpected(ILogger log, string operation, Exception ex)
+    {
+        try
+        {
+            if (_gate is not null && !_gate.Observe(ex).IsNew)
+            {
+                return false;
+            }
+
+            log.Fatal(ex, "Error inesperado en la operación {Operation}", operation);
+            return _gate?.TryBeginNotification() ?? true;
+        }
+#pragma warning disable CA1031 // Una falla del registro nunca debe afectar la operación (FR-014).
+        catch (Exception)
+#pragma warning restore CA1031
+        {
+            return false;
+        }
+    }
+
     private async Task NotifyOperatorAsync(ILogger log)
     {
         try
@@ -132,6 +162,10 @@ public sealed class OperationRunner
 #pragma warning restore CA1031
         {
             log.Error(ex, "No se pudo mostrar el mensaje de error al operador");
+        }
+        finally
+        {
+            _gate?.EndNotification();
         }
     }
 }

@@ -6,9 +6,12 @@ using Pos.Desktop.About;
 using Pos.Desktop.Administration;
 using Pos.Desktop.Auth;
 using Pos.Desktop.CashShifts;
+using Pos.Application.Users.Session;
 using Pos.Desktop.Common;
+using Pos.Desktop.Diagnostics;
 using Pos.Desktop.Home;
 using Pos.Desktop.Inventory;
+using Pos.Desktop.Licensing;
 using Pos.Desktop.Navigation;
 using Pos.Desktop.Products;
 using Pos.Desktop.Reports;
@@ -25,7 +28,11 @@ namespace Pos.Desktop.Composition;
 /// <summary>Raíz de composición: único lugar de Desktop que conoce Infrastructure.</summary>
 internal static class HostBuilder
 {
-    public static IHost Build(AppPaths paths, ILogger logger, IClassicDesktopStyleApplicationLifetime lifetime)
+    public static IHost Build(
+        AppPaths paths,
+        ILogger logger,
+        IClassicDesktopStyleApplicationLifetime lifetime,
+        DiagnosticContext? diagnostics = null)
     {
         var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings
         {
@@ -33,7 +40,7 @@ internal static class HostBuilder
             DisableDefaults = true,
         });
 
-        ConfigureServices(builder.Services, paths, logger, lifetime);
+        ConfigureServices(builder.Services, paths, logger, lifetime, diagnostics);
 
         return builder.Build();
     }
@@ -43,11 +50,19 @@ internal static class HostBuilder
         IServiceCollection services,
         AppPaths paths,
         ILogger logger,
-        IClassicDesktopStyleApplicationLifetime lifetime)
+        IClassicDesktopStyleApplicationLifetime lifetime,
+        DiagnosticContext? diagnostics = null)
     {
         services.AddLogging();
         services.AddSerilog(logger, dispose: false);
         services.AddSingleton(logger);
+        services.AddSingleton(sp =>
+        {
+            var context = diagnostics ?? new DiagnosticContext();
+            context.BindSession(sp.GetRequiredService<IUserSession>());
+            return context;
+        });
+        services.AddSingleton(sp => ErrorEpisodeGate.CreateDefault(sp.GetRequiredService<ILogger>()));
 
         services.AddInfrastructure(paths);
         services.AddApplication();
@@ -74,6 +89,7 @@ internal static class HostBuilder
         services.AddReportsModule();
         services.AddAdministrationModule();
         services.AddSettingsModule();
+        services.AddLicenseModule();
         services.AddHelpModule();
     }
 }

@@ -4,8 +4,10 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Pos.Application.Licensing;
 using Pos.Application.Startup;
 using Pos.Desktop.Common;
+using Pos.Desktop.Diagnostics;
 using Pos.Desktop.Navigation;
 using Pos.Desktop.Resources;
 using Pos.Desktop.Shell;
@@ -44,16 +46,24 @@ public partial class App : Avalonia.Application
             }
             else
             {
-                _host = HostBuilder.Build(context.Paths, context.Logger, desktop);
+                _host = HostBuilder.Build(context.Paths, context.Logger, desktop, context.Diagnostics);
 
                 // El tema guardado se aplica antes de mostrar la pantalla de carga.
                 _host.Services.GetRequiredService<ThemeService>().ApplySaved();
 
                 // Las vistas se resuelven con lo que registró cada módulo.
                 DataTemplates.Add(_host.Services.GetRequiredService<RegisteredViewLocator>());
-                GlobalExceptionHandlers.Register(context.Logger, () => _host?.Services.GetService<IDialogService>());
+                GlobalExceptionHandlers.Register(
+                    context.Logger,
+                    _host.Services.GetRequiredService<ErrorEpisodeGate>(),
+                    _host.Services.GetRequiredService<DiagnosticContext>(),
+                    () => _host?.Services.GetService<IDialogService>());
+                var retention = new LogRetentionScheduler(context.Paths.LogsDirectory);
+                var licenseClock = new LicenseClockScheduler(_host.Services.GetRequiredService<LicenseBootstrapper>());
                 desktop.Exit += (_, _) =>
                 {
+                    retention.Dispose();
+                    licenseClock.Dispose();
                     _host?.Dispose();
                     Log.CloseAndFlush();
                 };
@@ -83,6 +93,7 @@ public partial class App : Avalonia.Application
             return;
         }
 
+        await services.GetRequiredService<LicenseBootstrapper>().RunAsync(CancellationToken.None);
         await splashViewModel.WaitMinimumAsync();
 
         var root = services.GetRequiredService<RootViewModel>();

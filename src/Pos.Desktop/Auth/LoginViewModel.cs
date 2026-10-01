@@ -18,13 +18,22 @@ public sealed partial class LoginViewModel : ViewModelBase
     private readonly OperationRunner _runner;
     private readonly Func<SignInOutcome, Task> _signedIn;
 
-    public LoginViewModel(UseCases useCases, OperationRunner runner, Func<SignInOutcome, Task> signedIn, string? userName = null)
+    public LoginViewModel(
+        UseCases useCases,
+        OperationRunner runner,
+        Func<SignInOutcome, Task> signedIn,
+        string? userName = null,
+        string? licenseWarning = null)
     {
         _useCases = useCases;
         _runner = runner;
         _signedIn = signedIn;
         UserName = userName ?? string.Empty;
+        LicenseWarning = licenseWarning;
     }
+
+    /// <summary>Aviso rojo de licencia por vencer o vencida (011, FR-013); nulo si no aplica.</summary>
+    public string? LicenseWarning { get; }
 
     [ObservableProperty]
     public partial string UserName { get; set; }

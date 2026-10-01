@@ -40,7 +40,7 @@ public class OperationRunnerTests
             new Dictionary<string, object?> { ["ProductId"] = productId });
 
         Assert.False(ok);
-        var error = Assert.Single(_sink.Events, e => e.Level == LogEventLevel.Error);
+        var error = Assert.Single(_sink.Events, e => e.Level == LogEventLevel.Fatal);
         Assert.IsType<InvalidOperationException>(error.Exception);
         Assert.Equal("\"GuardarProducto\"", error.Properties["Operation"].ToString());
         Assert.Equal(FixedCurrentUser.Id.ToString(), error.Properties["UserId"].ToString());
@@ -80,7 +80,7 @@ public class OperationRunnerTests
 
         Assert.False(ok);
         Assert.Empty(_dialogs.Messages);
-        var error = Assert.Single(_sink.Events, e => e.Level == LogEventLevel.Error);
+        var error = Assert.Single(_sink.Events, e => e.Level == LogEventLevel.Fatal);
         Assert.Equal("\"CargarTarjeta\"", error.Properties["Operation"].ToString());
         Assert.Equal("\"Productos activos\"", error.Properties["Card"].ToString());
     }

@@ -13,7 +13,7 @@ namespace Pos.Infrastructure.Diagnostics;
 /// </summary>
 public sealed class ZipDiagnosticsExporter : IDiagnosticsExporter
 {
-    public static readonly TimeSpan LogWindow = TimeSpan.FromDays(7);
+    public static readonly TimeSpan LogWindow = TimeSpan.FromDays(LogRetention.RetentionDays);
 
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
@@ -37,7 +37,7 @@ public sealed class ZipDiagnosticsExporter : IDiagnosticsExporter
         _tempDirectory = tempDirectory ?? Path.GetTempPath();
     }
 
-    public async Task ExportAsync(string destinationFile, CancellationToken cancellationToken)
+    public async Task<int> ExportAsync(string destinationFile, bool includeDatabase, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(destinationFile);
 
@@ -46,13 +46,18 @@ public sealed class ZipDiagnosticsExporter : IDiagnosticsExporter
         string? databaseCopy = null;
         try
         {
-            databaseCopy = await _backups.CreateTemporaryCopyAsync(cancellationToken);
-            var copy = databaseCopy;
-            await Task.Run(() => RemoveProductImages(copy), cancellationToken);
-            await Task.Run(() => BuildZip(workZip, copy), cancellationToken);
+            if (includeDatabase)
+            {
+                databaseCopy = await _backups.CreateTemporaryCopyAsync(cancellationToken);
+                var copy = databaseCopy;
+                await Task.Run(() => RemoveProductImages(copy), cancellationToken);
+            }
+
+            var logFiles = await Task.Run(() => BuildZip(workZip, databaseCopy), cancellationToken);
 
             File.Copy(workZip, destinationTemp, overwrite: true);
             File.Move(destinationTemp, destinationFile, overwrite: true);
+            return logFiles;
         }
         catch
         {
@@ -109,8 +114,9 @@ public sealed class ZipDiagnosticsExporter : IDiagnosticsExporter
         }
     }
 
-    private void BuildZip(string zipFile, string databaseCopy)
+    private int BuildZip(string zipFile, string? databaseCopy)
     {
+        var logFiles = 0;
         using var zip = ZipFile.Open(zipFile, ZipArchiveMode.Create);
 
         var info = new
@@ -139,9 +145,15 @@ public sealed class ZipDiagnosticsExporter : IDiagnosticsExporter
                 using var source = new FileStream(log, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
                 using var target = zip.CreateEntry($"logs/{Path.GetFileName(log)}").Open();
                 source.CopyTo(target);
+                logFiles++;
             }
         }
 
-        zip.CreateEntryFromFile(databaseCopy, "pos.db");
+        if (databaseCopy is not null)
+        {
+            zip.CreateEntryFromFile(databaseCopy, "pos.db");
+        }
+
+        return logFiles;
     }
 }

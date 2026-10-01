@@ -4,8 +4,9 @@ namespace Pos.Application.Diagnostics;
 public interface IDiagnosticsExporter
 {
     /// <summary>
-    /// Escribe en <paramref name="destinationFile"/> un zip con los logs recientes, un respaldo
-    /// consistente de la base y la información de la aplicación. Nunca deja un archivo incompleto.
+    /// Escribe en <paramref name="destinationFile"/> un zip con los logs de los últimos 30 días y la
+    /// información de la aplicación; el respaldo de la base solo va si <paramref name="includeDatabase"/>.
+    /// Nunca deja un archivo incompleto. Devuelve la cantidad de archivos de log incluidos.
     /// </summary>
-    Task ExportAsync(string destinationFile, CancellationToken cancellationToken);
+    Task<int> ExportAsync(string destinationFile, bool includeDatabase, CancellationToken cancellationToken);
 }

@@ -17,7 +17,7 @@
   <data name="Common_Cancel" xml:space="preserve"><value>Cancelar</value></data>
   <data name="Common_ErrorTitle" xml:space="preserve"><value>Error</value></data>
   <data name="Common_InfoTitle" xml:space="preserve"><value>Información</value></data>
-  <data name="Common_UnexpectedError" xml:space="preserve"><value>Ocurrió un error inesperado. La información quedó registrada para soporte. Puede intentar de nuevo.</value></data>
+  <data name="Common_UnexpectedError" xml:space="preserve"><value>Ocurrió un error inesperado. Los detalles se registraron para soporte técnico.</value></data>
   <data name="Shell_NavProducts" xml:space="preserve"><value>Productos</value></data>
   <data name="Shell_NavAbout" xml:space="preserve"><value>Acerca de</value></data>
   <data name="Startup_Title" xml:space="preserve"><value>POS</value></data>
@@ -84,8 +84,10 @@
   <data name="About_Export" xml:space="preserve"><value>Exportar diagnóstico…</value></data>
   <data name="About_ExportTitle" xml:space="preserve"><value>Guardar diagnóstico</value></data>
   <data name="About_Exporting" xml:space="preserve"><value>Exportando diagnóstico…</value></data>
+  <data name="About_IncludeDatabase" xml:space="preserve"><value>Incluir respaldo de la base de datos</value></data>
+  <data name="About_ExportNoLogs" xml:space="preserve"><value>No había registros disponibles; el archivo solo incluye los datos de la versión.</value></data>
   <data name="About_ExportDone" xml:space="preserve"><value>Diagnóstico exportado en {0}.</value></data>
-  <data name="About_Description" xml:space="preserve"><value>Para soporte técnico: la exportación genera un archivo con los registros recientes y un respaldo de la base de datos.</value></data>
+  <data name="About_Description" xml:space="preserve"><value>Para soporte técnico: la exportación genera un archivo con los registros de los últimos 30 días y los datos de la versión; el respaldo de la base de datos es opcional.</value></data>
   <data name="Nav_Home" xml:space="preserve"><value>Inicio</value></data>
   <data name="Nav_Catalogs" xml:space="preserve"><value>Catálogos</value></data>
   <data name="Nav_Products" xml:space="preserve"><value>Productos</value></data>
@@ -665,4 +667,32 @@
   <data name="Session_Theme" xml:space="preserve"><value>Tema</value></data>
   <data name="Session_ThemeLight" xml:space="preserve"><value>Claro</value></data>
   <data name="Session_ThemeDark" xml:space="preserve"><value>Oscuro</value></data>
+  <data name="License_CardTitle" xml:space="preserve"><value>Período de evaluación</value></data>
+  <data name="License_CardTitleLicensed" xml:space="preserve"><value>Licencia</value></data>
+  <data name="License_DaysRemaining" xml:space="preserve"><value>{0} días restantes</value></data>
+  <data name="License_OneDayRemaining" xml:space="preserve"><value>1 día restante</value></data>
+  <data name="License_Active" xml:space="preserve"><value>Licencia activa</value></data>
+  <data name="License_Contact" xml:space="preserve"><value>Contacto: {0} / {1}</value></data>
+  <data name="License_ReadOnly" xml:space="preserve"><value>Sistema en modo lectura. Contacte para activación.</value></data>
+  <data name="License_Expired" xml:space="preserve"><value>Período de evaluación vencido. Contacte a {0} / {1}.</value></data>
+  <data name="License_InvalidOtherMachine" xml:space="preserve"><value>La licencia de esta carpeta de datos pertenece a otra máquina.</value></data>
+  <data name="License_InvalidCorrupt" xml:space="preserve"><value>El archivo de licencia no es válido.</value></data>
+  <data name="License_NearExpiry" xml:space="preserve"><value>Quedan {0} días. Contacte para renovar.</value></data>
+  <data name="License_NearExpiryOne" xml:space="preserve"><value>Queda 1 día. Contacte para renovar.</value></data>
+  <data name="License_AdminTitle" xml:space="preserve"><value>Administración de licencia</value></data>
+  <data name="License_Import" xml:space="preserve"><value>Importar licencia…</value></data>
+  <data name="License_ImportTitle" xml:space="preserve"><value>Seleccionar archivo de licencia</value></data>
+  <data name="License_ExportRequest" xml:space="preserve"><value>Exportar solicitud…</value></data>
+  <data name="License_ExportRequestTitle" xml:space="preserve"><value>Guardar solicitud de licencia</value></data>
+  <data name="License_FileType" xml:space="preserve"><value>Licencia</value></data>
+  <data name="License_RequestType" xml:space="preserve"><value>Solicitud de licencia</value></data>
+  <data name="License_Imported" xml:space="preserve"><value>Licencia importada. El sistema ya está actualizado.</value></data>
+  <data name="License_RequestSaved" xml:space="preserve"><value>Solicitud guardada en {0}. Envíela al proveedor para obtener su licencia.</value></data>
+  <data name="License_Reject_Unreadable" xml:space="preserve"><value>El archivo de licencia no es válido.</value></data>
+  <data name="License_Reject_BadSignature" xml:space="preserve"><value>El archivo de licencia no es auténtico o fue modificado.</value></data>
+  <data name="License_Reject_OtherMachine" xml:space="preserve"><value>Esa licencia pertenece a otra máquina. La licencia actual no cambió.</value></data>
+  <data name="License_Reject_Older" xml:space="preserve"><value>Esa licencia es anterior a la que ya está en uso. La licencia actual no cambió.</value></data>
+  <data name="License_SummaryTrial" xml:space="preserve"><value>Período de evaluación: {0} restantes.</value></data>
+  <data name="License_SummaryLicensed" xml:space="preserve"><value>Licencia vigente: {0} restantes.</value></data>
+  <data name="License_SummaryUnlimited" xml:space="preserve"><value>Licencia activa sin vencimiento.</value></data>
 </root>

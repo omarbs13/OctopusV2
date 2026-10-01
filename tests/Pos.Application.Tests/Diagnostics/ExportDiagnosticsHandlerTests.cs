@@ -18,7 +18,7 @@ public class ExportDiagnosticsHandlerTests
     {
         var result = await Handler.HandleAsync(new ExportDiagnosticsCommand("/destino/diag.zip"), Ct);
 
-        Assert.Equal("/destino/diag.zip", result.Value);
+        Assert.Equal("/destino/diag.zip", result.Value.DestinationFilePath);
         Assert.Equal("/destino/diag.zip", _exporter.Destination);
     }
 
@@ -53,7 +53,7 @@ public class ExportDiagnosticsHandlerTests
 
         public Exception? FailWith { get; set; }
 
-        public Task ExportAsync(string destinationFile, CancellationToken cancellationToken)
+        public Task<int> ExportAsync(string destinationFile, bool includeDatabase, CancellationToken cancellationToken)
         {
             if (FailWith is not null)
             {
@@ -61,7 +61,7 @@ public class ExportDiagnosticsHandlerTests
             }
 
             Destination = destinationFile;
-            return Task.CompletedTask;
+            return Task.FromResult(1);
         }
     }
 }

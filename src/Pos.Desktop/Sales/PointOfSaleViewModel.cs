@@ -16,6 +16,7 @@ using Pos.Application.Sales.SaveSaleDraft;
 using Pos.Desktop.Auth;
 using Pos.Desktop.CashShifts;
 using Pos.Desktop.Common;
+using Pos.Desktop.Diagnostics;
 using Pos.Desktop.Resources;
 using Pos.Desktop.Settings;
 using Pos.Domain.CashShifts;
@@ -77,6 +78,7 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
     private readonly IDialogService _dialogs;
     private readonly ILogger _logger;
     private readonly DraftAutosaver _autosaver;
+    private readonly DiagnosticContext? _diagnostics;
     private readonly ScanQueue _scans;
     private readonly TicketPrintingService _printing;
     private readonly AdminAuthorizationService? _authorization;
@@ -95,8 +97,10 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
         TicketPrintingService printing,
         AdminAuthorizationService? authorization = null,
         CashShiftDialogs? shiftDialogs = null,
-        ICurrentPermissions? permissions = null)
+        ICurrentPermissions? permissions = null,
+        DiagnosticContext? diagnostics = null)
     {
+        _diagnostics = diagnostics;
         _authorization = authorization;
         _shiftDialogs = shiftDialogs;
         _permissions = permissions;
@@ -553,6 +557,14 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
         }
 
         var insufficient = review.Lines.Where(l => l.InsufficientStock).ToList();
+        foreach (var line in insufficient)
+        {
+            _logger.Warning(
+                "Existencia insuficiente al cobrar; la venta dejaría la existencia negativa. ProductId={ProductId} OnHandThousandths={OnHand}",
+                line.ProductId,
+                line.OnHandThousandths);
+        }
+
         if (insufficient.Count > 0 && !await ConfirmStockWarningAsync(insufficient))
         {
             return;
@@ -646,6 +658,10 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
 
             case ValidationFailed validation:
                 checkout.ErrorMessage = validation.Errors is [{ } first, ..] ? first.Message : Strings.Sale_NotRegistered;
+                break;
+
+            case LicenseExpired expired:
+                checkout.ErrorMessage = Licensing.LicenseMessages.Expired(expired);
                 break;
 
             default:
@@ -858,6 +874,9 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
         TotalText = MoneyConverter.Format(Cart.Total.Cents);
         ItemsText = string.Format(Display, Strings.Sale_Items, Cart.Lines.Count);
         UpdateCanCheckout();
+
+        // Instantánea para el diagnóstico: la venta sin guardar (borrador y cantidad de líneas).
+        _diagnostics?.SetSale(Cart.DraftId, Cart.Lines.Count);
     }
 
     private void UpdateCanCheckout() => CanCheckout = Cart.CanCheckout && !IsModalOpen && !IsSaleBlocked;

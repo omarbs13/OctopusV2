@@ -5,6 +5,7 @@ using Pos.Application.CashShifts.CloseShift;
 using Pos.Application.CashShifts.CountShiftCash;
 using Pos.Application.CashShifts.OpenShift;
 using Pos.Application.CashShifts.RegisterCashMovement;
+using Pos.Application.Licensing;
 using Pos.Application.Sales;
 using Pos.Application.Sales.CancelSale;
 using Pos.Application.Sales.SaveSaleDraft;
@@ -46,6 +47,9 @@ public sealed class ShiftTestSupport
 
     public AuthorizationGrants Grants { get; }
 
+    /// <summary>Estado de licencia de las operaciones; nulo = sin restricciones.</summary>
+    public ILicenseState? License { get; set; }
+
     public static async Task<ShiftTestSupport> CreateAsync(TestDb db)
     {
         var admin = User.Create("Admin Uno", "admin", UserRole.Admin, "hash");
@@ -66,7 +70,7 @@ public sealed class ShiftTestSupport
     }
 
     public AccessControl Access(PosDbContext context) =>
-        new(Session, new UserRepository(context), Grants, NullLogger<AccessControl>.Instance);
+        new(Session, new UserRepository(context), Grants, NullLogger<AccessControl>.Instance, License);
 
     public ShiftGuard Guard(PosDbContext context) => SalesTestSupport.ShiftGuardFor(_db, context);
 
@@ -82,7 +86,8 @@ public sealed class ShiftTestSupport
             _db.User,
             new OpenShiftValidator(),
             Guard(context),
-            NullLogger<OpenShiftHandler>.Instance).HandleAsync(new OpenShiftCommand(floatCents, confirmZero), Ct);
+            NullLogger<OpenShiftHandler>.Instance,
+            License).HandleAsync(new OpenShiftCommand(floatCents, confirmZero), Ct);
     }
 
     public async Task<Result<RegisteredMovement>> MoveAsync(

@@ -25,4 +25,7 @@ public interface IAppPaths
 
     /// <summary>Tickets de la impresora virtual (un archivo de texto por ticket).</summary>
     string TicketsDirectory { get; }
+
+    /// <summary>Archivo de licencia local (011): cifrado, no se muestra ni se exporta.</summary>
+    string LicenseFile { get; }
 }

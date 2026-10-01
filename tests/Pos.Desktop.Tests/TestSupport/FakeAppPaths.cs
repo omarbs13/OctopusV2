@@ -23,4 +23,6 @@ public sealed class FakeAppPaths : IAppPaths
     public string PreferencesDirectory => "/datos/Pos/preferences";
 
     public string TicketsDirectory => "/datos/Pos/tickets";
+
+    public string LicenseFile => "/datos/Pos/license.lic";
 }

@@ -52,13 +52,15 @@ public sealed class ZipDiagnosticsExporterTests : IAsyncLifetime
         WriteLog("pos-20260929.log", TimeSpan.FromHours(1));
         WriteLog("pos-20260925.log", TimeSpan.FromDays(4));
         WriteLog("pos-20260910.log", TimeSpan.FromDays(19));
+        WriteLog("pos-20260801.log", TimeSpan.FromDays(31));
         var destination = Path.Combine(_work, "destino", "diag.zip");
 
-        await CreateExporter().ExportAsync(destination, Ct);
+        var logFiles = await CreateExporter().ExportAsync(destination, includeDatabase: true, Ct);
 
+        Assert.Equal(3, logFiles);
         using var zip = ZipFile.OpenRead(destination);
         var names = zip.Entries.Select(e => e.FullName).Order(StringComparer.Ordinal).ToArray();
-        Assert.Equal(["info.json", "logs/pos-20260925.log", "logs/pos-20260929.log", "pos.db"], names);
+        Assert.Equal(["info.json", "logs/pos-20260910.log", "logs/pos-20260925.log", "logs/pos-20260929.log", "pos.db"], names);
 
         using (var info = JsonDocument.Parse(zip.GetEntry("info.json")!.Open()))
         {
@@ -77,13 +79,39 @@ public sealed class ZipDiagnosticsExporterTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Exportar_NoIncluyeElArchivoDeLicencia()
+    {
+        File.WriteAllText(_db.Directory.Paths.LicenseFile, "contenido de licencia");
+        WriteLog("pos-20260929.log", TimeSpan.FromHours(1));
+        var destination = Path.Combine(_work, "destino", "diag.zip");
+
+        await CreateExporter().ExportAsync(destination, includeDatabase: true, Ct);
+
+        using var zip = ZipFile.OpenRead(destination);
+        Assert.DoesNotContain(zip.Entries, e => e.FullName.EndsWith(".lic", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task Exportar_SinBase_NoIncluyeElRespaldoYSinLogsIndicaCero()
+    {
+        var destination = Path.Combine(_work, "destino", "diag.zip");
+
+        var logFiles = await CreateExporter().ExportAsync(destination, includeDatabase: false, Ct);
+
+        Assert.Equal(0, logFiles);
+        using var zip = ZipFile.OpenRead(destination);
+        Assert.Equal(["info.json"], zip.Entries.Select(e => e.FullName).ToArray());
+        Assert.Empty(Directory.GetFiles(Path.Combine(_work, "tmp")));
+    }
+
+    [Fact]
     public async Task Exportar_NoIncluyeImagenesDeProductos()
     {
         var product = (await DatabaseTestHelpers.SeedProductsAsync(_db, 1, prefix: "Img"))[0];
         await DatabaseTestHelpers.SetImageAsync(_db, product.Id, seed: 5);
         var destination = Path.Combine(_work, "destino", "diag.zip");
 
-        await CreateExporter().ExportAsync(destination, Ct);
+        await CreateExporter().ExportAsync(destination, includeDatabase: true, Ct);
 
         using var zip = ZipFile.OpenRead(destination);
         var extracted = Path.Combine(_work, "sin-imagenes.db");
@@ -103,7 +131,7 @@ public sealed class ZipDiagnosticsExporterTests : IAsyncLifetime
         await writer.FlushAsync(Ct);
         var destination = Path.Combine(_work, "destino", "diag.zip");
 
-        await CreateExporter().ExportAsync(destination, Ct);
+        await CreateExporter().ExportAsync(destination, includeDatabase: true, Ct);
 
         using var zip = ZipFile.OpenRead(destination);
         using var reader = new StreamReader(zip.GetEntry("logs/pos-20260929.log")!.Open());
@@ -121,7 +149,7 @@ public sealed class ZipDiagnosticsExporterTests : IAsyncLifetime
         try
         {
             await Assert.ThrowsAnyAsync<UnauthorizedAccessException>(
-                () => CreateExporter().ExportAsync(Path.Combine(destinationDir, "diag.zip"), Ct));
+                () => CreateExporter().ExportAsync(Path.Combine(destinationDir, "diag.zip"), includeDatabase: true, Ct));
         }
         finally
         {

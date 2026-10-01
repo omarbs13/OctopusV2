@@ -23,4 +23,7 @@ public enum Permission
     WithdrawCash,
     ManageShifts,
     ViewReports,
+
+    /// <summary>Importar la licencia y exportar la solicitud (011); solo el Administrador, nunca bloqueado por la licencia.</summary>
+    ManageLicense,
 }

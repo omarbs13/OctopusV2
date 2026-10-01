@@ -23,10 +23,22 @@
     <Separator />
 
     <TextBlock Text="{x:Static res:Strings.About_Description}" TextWrapping="Wrap" IsVisible="{Binding CanExport}" />
+    <CheckBox IsChecked="{Binding IncludeDatabase}" Content="{x:Static res:Strings.About_IncludeDatabase}" IsVisible="{Binding CanExport}" />
     <StackPanel Orientation="Horizontal" Spacing="12" IsVisible="{Binding CanExport}">
       <Button Classes="accent" Content="{x:Static res:Strings.About_Export}" Command="{Binding ExportCommand}" />
       <ProgressBar IsIndeterminate="True" Width="160" IsVisible="{Binding IsExporting}" VerticalAlignment="Center" />
       <TextBlock Text="{x:Static res:Strings.About_Exporting}" IsVisible="{Binding IsExporting}" VerticalAlignment="Center" />
+    </StackPanel>
+
+    <Separator IsVisible="{Binding CanManageLicense}" />
+
+    <StackPanel Spacing="8" IsVisible="{Binding CanManageLicense}">
+      <TextBlock Text="{x:Static res:Strings.License_AdminTitle}" FontSize="16" FontWeight="SemiBold" />
+      <TextBlock Text="{Binding LicenseSummary}" TextWrapping="Wrap" />
+      <StackPanel Orientation="Horizontal" Spacing="12">
+        <Button Classes="accent" Content="{x:Static res:Strings.License_Import}" Command="{Binding ImportLicenseCommand}" />
+        <Button Content="{x:Static res:Strings.License_ExportRequest}" Command="{Binding ExportLicenseRequestCommand}" />
+      </StackPanel>
     </StackPanel>
   </StackPanel>
 </UserControl>

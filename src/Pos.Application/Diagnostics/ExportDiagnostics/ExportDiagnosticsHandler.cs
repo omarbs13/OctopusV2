@@ -21,30 +21,30 @@ public sealed class ExportDiagnosticsHandler
         _exporter = exporter;
     }
 
-    public async Task<Result<string>> HandleAsync(ExportDiagnosticsCommand command, CancellationToken cancellationToken)
+    public async Task<Result<ExportDiagnosticsResult>> HandleAsync(ExportDiagnosticsCommand command, CancellationToken cancellationToken)
     {
         var access = await _access.CheckAsync(Permission.ExportDiagnostics, cancellationToken);
         if (!access.Allowed)
         {
-            return Result.Failure<string>(access.Error!);
+            return Result.Failure<ExportDiagnosticsResult>(access.Error!);
         }
 
         ArgumentNullException.ThrowIfNull(command);
 
         if (string.IsNullOrWhiteSpace(command.DestinationFilePath))
         {
-            return Result.Failure<string>(new ValidationFailed([new FieldError(DestinationField, DestinationRequiredMessage)]));
+            return Result.Failure<ExportDiagnosticsResult>(new ValidationFailed([new FieldError(DestinationField, DestinationRequiredMessage)]));
         }
 
         try
         {
-            await _exporter.ExportAsync(command.DestinationFilePath, cancellationToken);
-            return Result.Success(command.DestinationFilePath);
+            var logFiles = await _exporter.ExportAsync(command.DestinationFilePath, command.IncludeDatabase, cancellationToken);
+            return Result.Success(new ExportDiagnosticsResult(command.DestinationFilePath, logFiles));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or DatabaseAccessException)
         {
             // El detalle técnico lo registra quien invoca; al operador se le da un mensaje comprensible.
-            return Result.Failure<string>(new ExportFailed(ExportFailedMessage));
+            return Result.Failure<ExportDiagnosticsResult>(new ExportFailed(ExportFailedMessage));
         }
     }
 }

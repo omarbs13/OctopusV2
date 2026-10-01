@@ -102,7 +102,7 @@ public class RestrictedOperationsTests
         var decision = await auth.Access.CheckAsync(Permission.ManageUsers, Ct);
 
         Assert.False(decision.Allowed);
-        Assert.False(decision.Error!.CanBeAuthorized);
+        Assert.False(Assert.IsType<Forbidden>(decision.Error).CanBeAuthorized);
     }
 
     [Fact]

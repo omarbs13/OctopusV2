@@ -1,4 +1,5 @@
 using Avalonia;
+using Pos.Desktop.Diagnostics;
 using Pos.Infrastructure.Diagnostics;
 using Pos.Infrastructure.Platform;
 using Pos.Infrastructure.Startup;
@@ -17,7 +18,8 @@ internal static class Program
         var paths = AppPaths.FromEnvironment();
         TryEnsureDirectories(paths);
 
-        var logger = Logging.Create(paths, new AssemblyAppInfo().Version);
+        var diagnostics = new DiagnosticContext();
+        var logger = Logging.Create(paths, new AssemblyAppInfo().Version, diagnostics);
         Log.Logger = logger;
 
         // 1. Instancia única (primer paso obligatorio de la secuencia de arranque).
@@ -36,7 +38,7 @@ internal static class Program
             logger.Information("Iniciando POS en {DataDirectory}", paths.DataDirectory);
         }
 
-        Context = new StartupContext(paths, logger, guard, alreadyRunning);
+        Context = new StartupContext(paths, logger, guard, alreadyRunning, diagnostics);
         try
         {
             return BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
@@ -82,4 +84,9 @@ internal static class Program
     }
 }
 
-internal sealed record StartupContext(AppPaths Paths, ILogger Logger, SingleInstanceGuard? Guard, bool AlreadyRunning);
+internal sealed record StartupContext(
+    AppPaths Paths,
+    ILogger Logger,
+    SingleInstanceGuard? Guard,
+    bool AlreadyRunning,
+    DiagnosticContext Diagnostics);
