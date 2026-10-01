@@ -57,6 +57,7 @@ internal static class HostBuilder
         services.AddSingleton<OperationRunner>();
         services.AddSingleton<UseCases>();
         services.AddSingleton<IClipboardService, ClipboardService>();
+        services.AddSingleton<ThemeService>();
 
         services.AddSingleton<StartupPresenter>();
         services.AddSingleton<IBrandingAssets, BrandingAssets>();

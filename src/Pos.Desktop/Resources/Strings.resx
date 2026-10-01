@@ -662,4 +662,7 @@
   <data name="Card_AlertsMore" xml:space="preserve"><value>y {0} más</value></data>
   <data name="Card_AlertsCashLine" xml:space="preserve"><value>{0} · {1} · {2:dd/MM} · {3}</value></data>
   <data name="Card_AlertsCriticalLine" xml:space="preserve"><value>{0} ({1}): {2} {3}</value></data>
+  <data name="Session_Theme" xml:space="preserve"><value>Tema</value></data>
+  <data name="Session_ThemeLight" xml:space="preserve"><value>Claro</value></data>
+  <data name="Session_ThemeDark" xml:space="preserve"><value>Oscuro</value></data>
 </root>

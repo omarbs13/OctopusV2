@@ -46,6 +46,9 @@ public partial class App : Avalonia.Application
             {
                 _host = HostBuilder.Build(context.Paths, context.Logger, desktop);
 
+                // El tema guardado se aplica antes de mostrar la pantalla de carga.
+                _host.Services.GetRequiredService<ThemeService>().ApplySaved();
+
                 // Las vistas se resuelven con lo que registró cada módulo.
                 DataTemplates.Add(_host.Services.GetRequiredService<RegisteredViewLocator>());
                 GlobalExceptionHandlers.Register(context.Logger, () => _host?.Services.GetService<IDialogService>());

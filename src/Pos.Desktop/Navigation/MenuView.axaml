@@ -70,6 +70,16 @@
             <ControlTheme TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}" x:DataType="auth:UserMenuAction">
               <Setter Property="Header" Value="{Binding Title}" />
               <Setter Property="Command" Value="{Binding Command}" />
+              <Setter Property="ItemsSource" Value="{Binding Choices}" />
+              <Setter Property="ItemContainerTheme">
+                <ControlTheme TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}" x:DataType="auth:UserMenuChoice">
+                  <Setter Property="Header" Value="{Binding Title}" />
+                  <Setter Property="Command" Value="{Binding Command}" />
+                  <Setter Property="ToggleType" Value="Radio" />
+                  <Setter Property="IsChecked" Value="{Binding IsChecked, Mode=OneWay}" />
+                  <Setter Property="MinHeight" Value="44" />
+                </ControlTheme>
+              </Setter>
               <Setter Property="MinHeight" Value="44" />
             </ControlTheme>
           </MenuFlyout.ItemContainerTheme>
