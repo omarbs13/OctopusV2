@@ -1,0 +1,182 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Pos.Desktop.Customers"
+             xmlns:res="using:Pos.Desktop.Resources"
+             x:Class="Pos.Desktop.Customers.CustomerDetailView"
+             x:DataType="vm:CustomerDetailViewModel">
+
+  <UserControl.KeyBindings>
+    <KeyBinding Gesture="Escape" Command="{Binding CancelCommand}" />
+  </UserControl.KeyBindings>
+
+  <UserControl.Styles>
+    <Style Selector="TextBlock.label">
+      <Setter Property="Opacity" Value="0.75" />
+      <Setter Property="FontSize" Value="12" />
+    </Style>
+    <Style Selector="TextBlock.figure">
+      <Setter Property="FontSize" Value="20" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+  </UserControl.Styles>
+
+  <Grid RowDefinitions="Auto,Auto,Auto,Auto,*" RowSpacing="12" MaxWidth="1100" HorizontalAlignment="Left">
+    <!-- Encabezado -->
+    <StackPanel Grid.Row="0" Spacing="4">
+      <StackPanel Orientation="Horizontal" Spacing="12">
+        <Button Command="{Binding CancelCommand}" ToolTip.Tip="{x:Static res:Strings.Common_Cancel}">
+          <PathIcon Data="{StaticResource Icon.Back}" />
+        </Button>
+        <TextBlock Text="{Binding Title}" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center" />
+        <Border Background="{DynamicResource SystemFillColorCautionBackgroundBrush}" CornerRadius="4" Padding="8,2"
+                VerticalAlignment="Center" IsVisible="{Binding IsInactive}">
+          <TextBlock Text="{x:Static res:Strings.Customer_InactiveBadge}" />
+        </Border>
+      </StackPanel>
+      <TextBlock Text="{Binding ContactText}" TextWrapping="Wrap" />
+    </StackPanel>
+
+    <!-- Cifras: las calcula GetCustomer (Principio III) -->
+    <WrapPanel Grid.Row="1" Orientation="Horizontal">
+      <StackPanel Margin="0,0,32,0">
+        <TextBlock Classes="label" Text="{x:Static res:Strings.Customer_CreditMode}" />
+        <TextBlock Classes="figure" Text="{Binding ModeText}" />
+      </StackPanel>
+      <StackPanel Margin="0,0,32,0">
+        <TextBlock Classes="label" Text="{x:Static res:Strings.Customer_Limit}" />
+        <TextBlock Classes="figure" Text="{Binding LimitText}" />
+      </StackPanel>
+      <StackPanel Margin="0,0,32,0">
+        <TextBlock Classes="label" Text="{x:Static res:Strings.Customer_Balance}" />
+        <TextBlock Classes="figure" Text="{Binding BalanceText}" />
+      </StackPanel>
+      <StackPanel Margin="0,0,32,0">
+        <TextBlock Classes="label" Text="{x:Static res:Strings.Customer_Available}" />
+        <TextBlock Classes="figure" Text="{Binding AvailableText}" />
+      </StackPanel>
+      <StackPanel Margin="0,0,32,0" IsVisible="{Binding HasOverdue}">
+        <TextBlock Classes="label" Text="{x:Static res:Strings.Customer_DaysOverdue}" />
+        <TextBlock Classes="figure" Text="{Binding DaysOverdueText}" Foreground="{DynamicResource SystemFillColorCriticalBrush}" />
+      </StackPanel>
+    </WrapPanel>
+
+    <!-- Acciones -->
+    <StackPanel Grid.Row="2" Spacing="6">
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <Button MinHeight="44" Content="{x:Static res:Strings.Customer_Edit}" Command="{Binding EditCommand}" />
+        <Button MinHeight="44" Content="{x:Static res:Strings.Customer_Deactivate}" Command="{Binding DeactivateCommand}"
+                IsVisible="{Binding CanDeactivate}" />
+        <Button MinHeight="44" Content="{x:Static res:Strings.Customer_Activate}" Command="{Binding ActivateCommand}"
+                IsVisible="{Binding CanActivate}" />
+      </StackPanel>
+      <TextBlock Text="{Binding ErrorMessage}" TextWrapping="Wrap" Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                 IsVisible="{Binding ErrorMessage, Converter={x:Static ObjectConverters.IsNotNull}}" />
+    </StackPanel>
+
+    <!-- Formulario o diálogo abierto dentro de la ficha -->
+    <ContentControl Grid.Row="3" Content="{Binding ActiveDialog}" HorizontalAlignment="Left" />
+
+    <!-- Pestañas -->
+    <TabControl Grid.Row="4" x:Name="Tabs">
+      <TabItem Header="{x:Static res:Strings.Customer_TabSales}">
+        <Grid RowDefinitions="Auto,Auto,*" RowSpacing="6">
+          <Button Grid.Row="0" HorizontalAlignment="Left" Content="{x:Static res:Strings.Customer_OpenSale}" Command="{Binding OpenSaleCommand}" />
+          <Grid Grid.Row="1" Margin="12,0,12,0" ColumnDefinitions="120,150,130,130,160,110">
+            <Grid.Styles>
+              <Style Selector="TextBlock">
+                <Setter Property="FontWeight" Value="SemiBold" />
+              </Style>
+            </Grid.Styles>
+            <TextBlock Grid.Column="0" Text="{x:Static res:Strings.Customer_ColFolio}" />
+            <TextBlock Grid.Column="1" Text="{x:Static res:Strings.Customer_ColDate}" />
+            <TextBlock Grid.Column="2" Text="{x:Static res:Strings.Customer_ColAmount}" TextAlignment="Right" />
+            <TextBlock Grid.Column="3" Text="{x:Static res:Strings.Customer_ColSaleBalance}" TextAlignment="Right" />
+            <TextBlock Grid.Column="4" Text="{x:Static res:Strings.Customer_ColState}" Margin="12,0,0,0" />
+            <TextBlock Grid.Column="5" Text="{x:Static res:Strings.Customer_ColDaysOverdue}" TextAlignment="Right" />
+          </Grid>
+          <ListBox Grid.Row="2" ItemsSource="{Binding Receivables}" SelectedItem="{Binding SelectedReceivable}"
+                   DoubleTapped="OnReceivableDoubleTapped" MinHeight="120">
+            <ListBox.KeyBindings>
+              <KeyBinding Gesture="Enter" Command="{Binding OpenSaleCommand}" />
+            </ListBox.KeyBindings>
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="vm:CustomerReceivableRow">
+                <Grid ColumnDefinitions="120,150,130,130,160,110" MinHeight="36">
+                  <Grid.Styles>
+                    <Style Selector="TextBlock">
+                      <Setter Property="VerticalAlignment" Value="Center" />
+                    </Style>
+                  </Grid.Styles>
+                  <TextBlock Grid.Column="0" Text="{Binding Folio}" />
+                  <TextBlock Grid.Column="1" Text="{Binding DateText}" />
+                  <TextBlock Grid.Column="2" Text="{Binding AmountText}" TextAlignment="Right" />
+                  <TextBlock Grid.Column="3" Text="{Binding BalanceText}" TextAlignment="Right" />
+                  <TextBlock Grid.Column="4" Text="{Binding StatusText}" Margin="12,0,0,0" />
+                  <TextBlock Grid.Column="5" Text="{Binding DaysOverdueText}" TextAlignment="Right"
+                             Foreground="{DynamicResource SystemFillColorCriticalBrush}" />
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+          <TextBlock Grid.Row="2" Margin="12" Text="{x:Static res:Strings.Customer_SalesEmpty}" IsVisible="{Binding HasNoReceivables}"
+                     HorizontalAlignment="Center" VerticalAlignment="Top" />
+        </Grid>
+      </TabItem>
+      <TabItem Header="{x:Static res:Strings.Customer_TabPayments}">
+        <Grid RowDefinitions="Auto,Auto,*" RowSpacing="6">
+          <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" IsVisible="{Binding CanRegisterPayments}">
+            <Button Classes="accent" MinHeight="40" Content="{x:Static res:Strings.Payment_Tab_Register}" Command="{Binding RegisterPaymentCommand}" />
+            <Button MinHeight="40" Content="{x:Static res:Strings.Payment_Tab_Reprint}" Command="{Binding ReprintReceiptCommand}" />
+            <Button MinHeight="40" Content="{x:Static res:Strings.Payment_Tab_Void}" Command="{Binding VoidPaymentCommand}" />
+          </StackPanel>
+          <Grid Grid.Row="1" Margin="12,0,12,0" ColumnDefinitions="110,140,110,130,*,120,120,90">
+            <Grid.Styles>
+              <Style Selector="TextBlock">
+                <Setter Property="FontWeight" Value="SemiBold" />
+              </Style>
+            </Grid.Styles>
+            <TextBlock Grid.Column="0" Text="{x:Static res:Strings.Payment_ColFolio}" />
+            <TextBlock Grid.Column="1" Text="{x:Static res:Strings.Payment_ColDate}" />
+            <TextBlock Grid.Column="2" Text="{x:Static res:Strings.Payment_ColAmount}" TextAlignment="Right" />
+            <TextBlock Grid.Column="3" Text="{x:Static res:Strings.Payment_ColMethod}" Margin="12,0,0,0" />
+            <TextBlock Grid.Column="4" Text="{x:Static res:Strings.Payment_ColReference}" />
+            <TextBlock Grid.Column="5" Text="{x:Static res:Strings.Payment_ColBefore}" TextAlignment="Right" />
+            <TextBlock Grid.Column="6" Text="{x:Static res:Strings.Payment_ColAfter}" TextAlignment="Right" />
+            <TextBlock Grid.Column="7" Text="{x:Static res:Strings.Payment_ColStatus}" Margin="12,0,0,0" />
+          </Grid>
+          <ListBox Grid.Row="2" ItemsSource="{Binding Payments}" SelectedItem="{Binding SelectedPayment}" MinHeight="120">
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="vm:CustomerPaymentItem">
+                <Grid ColumnDefinitions="110,140,110,130,*,120,120,90" MinHeight="36">
+                  <Grid.Styles>
+                    <Style Selector="TextBlock">
+                      <Setter Property="VerticalAlignment" Value="Center" />
+                    </Style>
+                  </Grid.Styles>
+                  <TextBlock Grid.Column="0" Text="{Binding Folio}" />
+                  <TextBlock Grid.Column="1" Text="{Binding DateText}" />
+                  <TextBlock Grid.Column="2" Text="{Binding AmountText}" TextAlignment="Right" />
+                  <TextBlock Grid.Column="3" Text="{Binding MethodText}" Margin="12,0,0,0" />
+                  <TextBlock Grid.Column="4" Text="{Binding ReferenceText}" TextTrimming="CharacterEllipsis" />
+                  <TextBlock Grid.Column="5" Text="{Binding BeforeText}" TextAlignment="Right" />
+                  <TextBlock Grid.Column="6" Text="{Binding AfterText}" TextAlignment="Right" />
+                  <TextBlock Grid.Column="7" Text="{Binding StatusText}" Margin="12,0,0,0" ToolTip.Tip="{Binding VoidTip}"
+                             Classes.voided="{Binding IsVoided}">
+                    <TextBlock.Styles>
+                      <Style Selector="TextBlock.voided">
+                        <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCriticalBrush}" />
+                        <Setter Property="FontWeight" Value="SemiBold" />
+                      </Style>
+                    </TextBlock.Styles>
+                  </TextBlock>
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+          <TextBlock Grid.Row="2" Margin="12" Text="{x:Static res:Strings.Payment_Empty}" IsVisible="{Binding HasNoPayments}"
+                     HorizontalAlignment="Center" VerticalAlignment="Top" />
+        </Grid>
+      </TabItem>
+    </TabControl>
+  </Grid>
+</UserControl>

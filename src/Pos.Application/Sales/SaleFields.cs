@@ -12,4 +12,5 @@ public static class SaleFields
     public const string Folio = "Folio";
     public const string DateRange = "DateRange";
     public const string DraftId = "DraftId";
+    public const string Customer = "Customer";
 }

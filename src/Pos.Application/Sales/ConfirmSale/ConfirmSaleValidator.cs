@@ -39,7 +39,15 @@ public sealed class ConfirmSaleValidator : AbstractValidator<ConfirmSaleCommand>
             .Must(payments => payments.All(IsWellFormed)).WithMessage(SaleMessages.PaymentInvalid)
             .Must(payments => payments.All(p => NormalizeReference(p.Reference) is not { Length: > SalePayment.ReferenceMaxLength }))
             .WithMessage(SaleMessages.ReferenceTooLong)
+            .Must(payments => !payments.Any(p => p.Method == PaymentMethod.OnAccount) || payments.Count == 1)
+            .WithMessage(SaleMessages.OnAccountExclusive)
             .OverridePropertyName(SaleFields.Payments);
+
+        // 014: la venta a crédito exige el cliente (FR-005).
+        RuleFor(c => c.CustomerId)
+            .Must(id => id is { } customerId && customerId != Guid.Empty).WithMessage(SaleMessages.CustomerRequired)
+            .When(c => c.Payments?.Any(p => p.Method == PaymentMethod.OnAccount) == true)
+            .OverridePropertyName(SaleFields.Customer);
     }
 
     private static string? NormalizeReference(string? reference) =>

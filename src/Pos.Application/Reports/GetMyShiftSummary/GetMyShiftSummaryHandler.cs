@@ -53,11 +53,12 @@ public sealed class GetMyShiftSummaryHandler
             var totals = await _sales.GetShiftTotalsAsync(shift.Id, cancellationToken);
             return Result.Success(new MyShiftSummary(
                 shift.Id, shift.Folio, shift.OpenedAt, null, true, shift.OpeningFloatCents, totals.SalesCount, totals.TotalSoldCents,
-                shift.DepositsTotalCents, shift.WithdrawalsTotalCents, null, null, null, movements));
+                shift.DepositsTotalCents, shift.WithdrawalsTotalCents, null, null, null, movements, ShiftCreditTotals.From(totals)));
         }
 
         return Result.Success(new MyShiftSummary(
             shift.Id, shift.Folio, shift.OpenedAt, shift.ClosedAt, false, shift.OpeningFloatCents, shift.SalesCount ?? 0, shift.TotalSoldCents ?? 0,
-            shift.DepositsCents ?? 0, shift.WithdrawalsCents ?? 0, shift.ExpectedCashCents, shift.CountedCashCents, shift.DifferenceCents, movements));
+            shift.DepositsCents ?? 0, shift.WithdrawalsCents ?? 0, shift.ExpectedCashCents, shift.CountedCashCents, shift.DifferenceCents, movements,
+            ShiftCreditTotals.From(shift)));
     }
 }

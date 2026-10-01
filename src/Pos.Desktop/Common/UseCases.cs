@@ -39,7 +39,8 @@ public sealed class UseCases
         error is Forbidden or InvalidCredentials or LockedOut or AlreadyRegistered or SaleChanged
             or ShiftRequired or ShiftOwnedByOther or ShiftAlreadyOpen or ShiftClosed or ShiftChanged
             or InsufficientCash or SaleInProgress or HeldSaleWillBeDiscarded or ModuleNotLicensed
-            or ReturnWindowExpired or NothingToReturn or CreditNoteNotFound or InsufficientCreditNote;
+            or ReturnWindowExpired or NothingToReturn or CreditNoteNotFound or InsufficientCreditNote
+            or CreditLimitExceeded or CustomerNotEligibleForCredit or CustomerHasBalance or PaymentExceedsBalance;
 
     private void LogFailure(string handler, Result? result)
     {

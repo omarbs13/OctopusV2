@@ -16,6 +16,13 @@ public sealed class ModuleAccessTests
     [InlineData(Permission.ProcessReturns, LicensedModule.Returns)]
     [InlineData(Permission.ApproveReturns, LicensedModule.Returns)]
     [InlineData(Permission.ManageCreditNotes, LicensedModule.Returns)]
+    [InlineData(Permission.ManageCustomers, LicensedModule.CreditAndCustomers)]
+    [InlineData(Permission.SellOnCredit, LicensedModule.CreditAndCustomers)]
+    [InlineData(Permission.RegisterCustomerPayments, LicensedModule.CreditAndCustomers)]
+    [InlineData(Permission.ManageCustomerCredit, LicensedModule.CreditAndCustomers)]
+    [InlineData(Permission.ApproveCreditOverLimit, LicensedModule.CreditAndCustomers)]
+    [InlineData(Permission.VoidCustomerPayments, LicensedModule.CreditAndCustomers)]
+    [InlineData(Permission.ViewReceivables, LicensedModule.CreditAndCustomers)]
     public void PermisosDeModulo_MapeanASuModulo(Permission permission, LicensedModule expected) =>
         Assert.Equal(expected, ModuleAccess.Required(permission));
 

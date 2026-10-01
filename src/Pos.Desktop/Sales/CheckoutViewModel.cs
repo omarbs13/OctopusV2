@@ -3,6 +3,7 @@ using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Pos.Application.CreditNotes;
+using Pos.Application.Customers;
 using Pos.Desktop.Common;
 using Pos.Desktop.Resources;
 using Pos.Domain.Common;
@@ -21,6 +22,14 @@ public sealed record CheckoutPaymentRow(CheckoutPayment Payment)
 }
 
 /// <summary>
+/// Cliente elegido para vender a crédito (014) y la consulta de su estado de crédito con el total de la
+/// venta; el error ya viene en español.
+/// </summary>
+public sealed record CreditCheckoutOption(
+    CustomerForSaleDto Customer,
+    Func<long, Task<(CustomerCreditStatusDto? Status, string? Error)>> LoadStatus);
+
+/// <summary>
 /// Diálogo de cobro. Envuelve un <see cref="Checkout"/> de dominio: todos los importes, el cambio y
 /// el faltante los calcula el dominio (Principio III); aquí solo se captura y se presenta.
 /// </summary>
@@ -32,20 +41,24 @@ public sealed partial class CheckoutViewModel : ViewModelBase
     private readonly Func<CheckoutViewModel, Task> _confirm;
     private readonly Action _cancel;
     private readonly Func<string, Task<(CreditNoteBalance? Balance, string? Error)>>? _lookupCreditNote;
+    private readonly CreditCheckoutOption? _credit;
 
     // lookupCreditNote consulta el saldo de una nota por folio (013); es nulo si el módulo Devoluciones
-    // no está activo y entonces el cobro no ofrece la nota de crédito.
+    // no está activo y entonces el cobro no ofrece la nota de crédito. credit es el cliente elegido para
+    // vender a crédito (014); sin él no se ofrece "Venta a crédito".
     public CheckoutViewModel(
         Checkout checkout,
         Func<CheckoutViewModel, Task> confirm,
         Action cancel,
-        Func<string, Task<(CreditNoteBalance? Balance, string? Error)>>? lookupCreditNote = null)
+        Func<string, Task<(CreditNoteBalance? Balance, string? Error)>>? lookupCreditNote = null,
+        CreditCheckoutOption? credit = null)
     {
         ArgumentNullException.ThrowIfNull(checkout);
         _checkout = checkout;
         _confirm = confirm;
         _cancel = cancel;
         _lookupCreditNote = lookupCreditNote;
+        _credit = credit;
         MethodOptions =
         [
             new(PaymentMethod.Card, PaymentMethodLabels.Of(PaymentMethod.Card)),
@@ -64,7 +77,46 @@ public sealed partial class CheckoutViewModel : ViewModelBase
     public IReadOnlyList<PaymentMethodOption> MethodOptions { get; }
 
     /// <summary>La nota de crédito solo se ofrece con el módulo Devoluciones activo (contracts/ui.md §3).</summary>
-    public bool CanUseCreditNote => _lookupCreditNote is not null;
+    public bool CanUseCreditNote => _lookupCreditNote is not null && !IsOnAccount;
+
+    /// <summary>"Venta a crédito" solo aparece con un cliente elegido (contracts/ui.md "Cobro").</summary>
+    public bool CanSellOnCredit => _credit is not null;
+
+    public string CreditCustomerText => _credit is null ? string.Empty : string.Format(Display, Strings.Credit_CustomerLabel, _credit.Customer.Name);
+
+    /// <summary>Cliente de la venta, solo si se cobra a crédito.</summary>
+    public Guid? CustomerId => IsOnAccount ? _credit?.Customer.Id : null;
+
+    /// <summary>Cliente elegido en el punto de venta, aunque todavía no se cobre a crédito.</summary>
+    public Guid? ChosenCustomerId => _credit?.Customer.Id;
+
+    /// <summary>Concesión de <c>ApproveCreditOverLimit</c> para el reintento tras exceder el límite.</summary>
+    public Guid? OverLimitGrantId { get; set; }
+
+    /// <summary>Se cobra con un único pago a crédito por el total (FR-005).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsNormalPayment), nameof(CanUseCreditNote), nameof(CustomerId))]
+    public partial bool IsOnAccount { get; private set; }
+
+    public bool IsNormalPayment => !IsOnAccount;
+
+    [ObservableProperty]
+    public partial string CreditBalanceText { get; private set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string CreditLimitText { get; private set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string CreditAvailableText { get; private set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial bool HasOverdue { get; private set; }
+
+    [ObservableProperty]
+    public partial string? ExceedText { get; private set; }
+
+    [ObservableProperty]
+    public partial string? CreditError { get; private set; }
 
     [ObservableProperty]
     public partial string CreditNoteFolioText { get; set; } = string.Empty;
@@ -235,6 +287,57 @@ public sealed partial class CheckoutViewModel : ViewModelBase
         NonCashAmountText = _checkout.Pending.ToEditableString();
     }
 
+    /// <summary>Reemplaza los pagos capturados por un único pago a crédito y muestra el estado del cliente.</summary>
+    [RelayCommand]
+    private async Task SellOnCreditAsync()
+    {
+        if (_credit is null)
+        {
+            return;
+        }
+
+        _checkout.SetOnAccount();
+        IsOnAccount = true;
+        ErrorMessage = null;
+        ReceivedText = string.Empty;
+        Refresh();
+
+        // Saldo, límite, disponible y avisos: los calcula GetCustomerCreditStatus (Principio III).
+        CreditError = null;
+        var (status, error) = await _credit.LoadStatus(_checkout.Total.Cents);
+        if (status is null)
+        {
+            CreditError = error;
+            return;
+        }
+
+        CreditBalanceText = MoneyConverter.Format(status.BalanceCents);
+        CreditLimitText = MoneyConverter.Format(status.LimitCents);
+        CreditAvailableText = MoneyConverter.Format(status.AvailableCents);
+        HasOverdue = status.HasOverdue;
+        ExceedText = status.WouldExceedByCents > 0
+            ? string.Format(Display, Strings.Credit_Exceeds, MoneyConverter.Format(status.WouldExceedByCents))
+            : null;
+    }
+
+    /// <summary>Quita el pago a crédito para cobrar en efectivo, tarjeta o transferencia.</summary>
+    [RelayCommand]
+    private void PayOtherWay()
+    {
+        var index = _checkout.Payments.ToList().FindIndex(p => p.Method == PaymentMethod.OnAccount);
+        if (index >= 0)
+        {
+            _checkout.RemovePayment(index);
+        }
+
+        IsOnAccount = false;
+        OverLimitGrantId = null;
+        ErrorMessage = CreditError = ExceedText = null;
+        Refresh();
+        NonCashAmountText = _checkout.Pending.ToEditableString();
+        RequestFocus();
+    }
+
     [RelayCommand(CanExecute = nameof(CanConfirm))]
     private async Task ConfirmAsync()
     {
@@ -254,7 +357,7 @@ public sealed partial class CheckoutViewModel : ViewModelBase
     private void Refresh()
     {
         Payments.Clear();
-        foreach (var payment in _checkout.Payments)
+        foreach (var payment in _checkout.Payments.Where(p => p.Method != PaymentMethod.OnAccount))
         {
             Payments.Add(new CheckoutPaymentRow(payment));
         }

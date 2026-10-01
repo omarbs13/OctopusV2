@@ -62,7 +62,7 @@
           <RadioButton GroupName="Compensation" IsChecked="{Binding IsRefund}"
                        Content="{x:Static res:Strings.Return_Refund}" />
           <RadioButton GroupName="Compensation" IsChecked="{Binding IsCreditNote}"
-                       Content="{x:Static res:Strings.Return_CreditNote}" />
+                       Content="{x:Static res:Strings.Return_CreditNote}" IsVisible="{Binding CanUseCreditNote}" />
         </StackPanel>
         <TextBlock Text="{Binding SummaryText}" FontSize="16" FontWeight="SemiBold" />
         <ItemsControl ItemsSource="{Binding Breakdown}">

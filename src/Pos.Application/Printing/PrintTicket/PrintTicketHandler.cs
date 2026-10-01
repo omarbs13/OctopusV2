@@ -4,6 +4,7 @@ using Pos.Application.Business;
 using Pos.Application.CashShifts;
 using Pos.Application.CreditNotes;
 using Pos.Application.Printing.Ticket;
+using Pos.Application.Receivables;
 using Pos.Application.Sales;
 using Pos.Application.Users.Access;
 using Pos.Domain.Users;
@@ -21,6 +22,7 @@ public sealed partial class PrintTicketHandler
     private readonly ISaleRepository _sales;
     private readonly ICashShiftRepository _shifts;
     private readonly ICreditNoteRepository? _creditNotes;
+    private readonly ICustomerPaymentRepository? _customerPayments;
     private readonly IBusinessProfileRepository _profiles;
     private readonly IPrintingSettingsStore _settings;
     private readonly ITicketPrinter _printer;
@@ -35,9 +37,11 @@ public sealed partial class PrintTicketHandler
         IPrintingSettingsStore settings,
         ITicketPrinter printer,
         ILogger<PrintTicketHandler> logger,
-        ICreditNoteRepository? creditNotes = null)
+        ICreditNoteRepository? creditNotes = null,
+        ICustomerPaymentRepository? customerPayments = null)
     {
         _creditNotes = creditNotes;
+        _customerPayments = customerPayments;
         _access = access;
         _currentUser = currentUser;
         _sales = sales;
@@ -61,6 +65,8 @@ public sealed partial class PrintTicketHandler
                 PrintSource.ShiftReportSource or PrintSource.CashMovementSource => Permission.OperateShift,
                 // Quien emite la nota (ProcessReturns) la imprime al emitirla; reimprimir exige ManageCreditNotes (research §13).
                 PrintSource.CreditNoteSource => command.IsReprint ? Permission.ManageCreditNotes : Permission.ProcessReturns,
+                // Quien registra abonos imprime y reimprime su recibo (014, contracts/ui.md "Abonos").
+                PrintSource.CustomerPaymentSource => Permission.RegisterCustomerPayments,
                 _ => Permission.ManageSettings,
             },
             cancellationToken);
@@ -121,6 +127,17 @@ public sealed partial class PrintTicketHandler
 
                 folio = data.Folio;
                 ticket = CreditNoteTicketBuilder.Build(profile, data, settings.Columns, new TicketOptions(command.IsReprint));
+            }
+            else if (command.Source is PrintSource.CustomerPaymentSource paymentSource)
+            {
+                var data = _customerPayments is null ? null : await _customerPayments.GetReceiptDataAsync(paymentSource.PaymentId, cancellationToken);
+                if (data is null)
+                {
+                    return Result.Failure<PrintedTicket>(new NotFound());
+                }
+
+                folio = data.Folio;
+                ticket = CustomerPaymentReceiptBuilder.Build(profile, data, settings.Columns, new TicketOptions(command.IsReprint));
             }
             else if (command.Source is PrintSource.CashMovementSource movementSource)
             {

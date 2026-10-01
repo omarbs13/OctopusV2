@@ -1,11 +1,14 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.Logging;
 using Pos.Domain.Audit;
 using Pos.Domain.Business;
 using Pos.Domain.CashShifts;
 using Pos.Domain.CreditNotes;
+using Pos.Domain.Customers;
 using Pos.Domain.Inventory;
 using Pos.Domain.Products;
+using Pos.Domain.Receivables;
 using Pos.Domain.Returns;
 using Pos.Domain.Sales;
 using Pos.Domain.Users;
@@ -18,6 +21,17 @@ public class PosDbContext : DbContext
 {
     /// <summary>Id del aviso de EF "ModelValidationKeyDefaultValueWarning".</summary>
     private const int KeyDefaultValueWarningId = 20600;
+
+    /// <summary>Campos que puede cambiar la anulación de un abono (014, FR-014).</summary>
+    private static readonly HashSet<string> PaymentVoidFields =
+    [
+        nameof(CustomerPayment.Status),
+        nameof(CustomerPayment.VoidedAt),
+        nameof(CustomerPayment.VoidedBy),
+        nameof(CustomerPayment.VoidAuthorizedBy),
+        nameof(CustomerPayment.VoidReason),
+        nameof(CustomerPayment.VoidCashShiftId),
+    ];
 
     public PosDbContext(DbContextOptions options)
         : base(options)
@@ -64,6 +78,14 @@ public class PosDbContext : DbContext
 
     public DbSet<CreditNoteMovement> CreditNoteMovements => Set<CreditNoteMovement>();
 
+    public DbSet<Customer> Customers => Set<Customer>();
+
+    public DbSet<Receivable> Receivables => Set<Receivable>();
+
+    public DbSet<ReceivableEntry> ReceivableEntries => Set<ReceivableEntry>();
+
+    public DbSet<CustomerPayment> CustomerPayments => Set<CustomerPayment>();
+
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
         RejectImmutableChanges();
@@ -109,6 +131,10 @@ public class PosDbContext : DbContext
         modelBuilder.ApplyConfiguration(new SaleReturnRefundConfiguration());
         modelBuilder.ApplyConfiguration(new CreditNoteConfiguration());
         modelBuilder.ApplyConfiguration(new CreditNoteMovementConfiguration());
+        modelBuilder.ApplyConfiguration(new CustomerConfiguration());
+        modelBuilder.ApplyConfiguration(new ReceivableConfiguration());
+        modelBuilder.ApplyConfiguration(new ReceivableEntryConfiguration());
+        modelBuilder.ApplyConfiguration(new CustomerPaymentConfiguration());
     }
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
@@ -121,8 +147,9 @@ public class PosDbContext : DbContext
     }
 
     /// <summary>
-    /// Los movimientos de inventario y de efectivo, la bitácora de auditoría y los turnos cerrados son
-    /// inmutables: no se modifican ni se borran (004 FR-010, 005 Principio IX, 008 research §10).
+    /// Los movimientos de inventario y de efectivo, la bitácora de auditoría, los turnos cerrados y el
+    /// libro de las cuentas por cobrar son inmutables: no se modifican ni se borran (004 FR-010,
+    /// 005 Principio IX, 008 research §10, 014 FR-014).
     /// </summary>
     private void RejectImmutableChanges()
     {
@@ -165,9 +192,33 @@ public class PosDbContext : DbContext
             throw new InvalidOperationException("Un reintegro solo puede pasar de pendiente de reversa a reversado.");
         }
 
+        // 014: el libro de las cuentas por cobrar es inmutable y una cuenta nunca se borra (se cancela).
+        if (ChangeTracker.Entries<ReceivableEntry>().Any(e => e.State is EntityState.Modified or EntityState.Deleted))
+        {
+            throw new InvalidOperationException("Los movimientos de las cuentas por cobrar no se pueden modificar ni borrar.");
+        }
+
+        if (ChangeTracker.Entries<Receivable>().Any(e => e.State is EntityState.Deleted))
+        {
+            throw new InvalidOperationException("Una cuenta por cobrar no se puede borrar.");
+        }
+
+        // Única mutación de un abono: ACTIVE -> VOIDED, una sola vez, solo con los campos de la anulación (FR-014).
+        if (ChangeTracker.Entries<CustomerPayment>().Any(e =>
+                e.State is EntityState.Deleted
+                || (e.State is EntityState.Modified && !IsPaymentVoid(e))))
+        {
+            throw new InvalidOperationException("Un abono solo puede pasar de vigente a anulado.");
+        }
+
         if (ChangeTracker.Entries<AuditEntry>().Any(e => e.State is EntityState.Modified or EntityState.Deleted))
         {
             throw new InvalidOperationException("Las entradas de la bitácora de auditoría no se pueden modificar ni borrar.");
         }
     }
+
+    private static bool IsPaymentVoid(EntityEntry<CustomerPayment> entry) =>
+        entry.Property(nameof(CustomerPayment.Status)).OriginalValue is CustomerPaymentStatus.Active
+        && entry.Property(nameof(CustomerPayment.Status)).CurrentValue is CustomerPaymentStatus.Voided
+        && entry.Properties.Where(p => p.IsModified).All(p => PaymentVoidFields.Contains(p.Metadata.Name));
 }

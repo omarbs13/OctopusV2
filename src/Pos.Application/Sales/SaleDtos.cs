@@ -1,4 +1,5 @@
 using Pos.Application.Returns;
+using Pos.Domain.Receivables;
 using Pos.Domain.Sales;
 
 namespace Pos.Application.Sales;
@@ -57,8 +58,10 @@ public sealed record SaleSearch(
     SaleStatus? Status,
     int Page,
     int PageSize,
-    Guid? CashierId = null);
+    Guid? CashierId = null,
+    Guid? CustomerId = null);
 
+/// <summary><c>CreditStatus</c> solo en las ventas a crédito (014): estado de su cuenta por cobrar.</summary>
 public sealed record SaleListItemDto(
     Guid Id,
     string Folio,
@@ -66,7 +69,8 @@ public sealed record SaleListItemDto(
     long TotalCents,
     IReadOnlyList<PaymentMethod> Methods,
     SaleStatus Status,
-    string CashierName);
+    string CashierName,
+    ReceivableStatus? CreditStatus = null);
 
 public sealed record SalePage(IReadOnlyList<SaleListItemDto> Items, long TotalCount, int Page, int PageSize)
 {
@@ -115,8 +119,12 @@ public sealed record SaleDetailDto(
     Guid CreatedById,
     long ReturnedCents = 0,
     IReadOnlyList<ReturnSummaryDto>? Returns = null,
-    bool WithinReturnWindow = true)
+    bool WithinReturnWindow = true,
+    CreditInfo? Credit = null)
 {
+    /// <summary>Venta a crédito (014): se paga con un único pago <c>ACCOUNT</c>.</summary>
+    public bool IsOnAccount => Credit is not null;
+
     /// <summary>Venta vigente con parte de lo vendido devuelto.</summary>
     public bool IsPartiallyReturned => Status == SaleStatus.Completed && ReturnedCents > 0 && ReturnedCents < TotalCents;
 
@@ -125,6 +133,9 @@ public sealed record SaleDetailDto(
 
     public IReadOnlyList<ReturnSummaryDto> ReturnHistory => Returns ?? [];
 }
+
+/// <summary>Cuenta por cobrar de una venta a crédito (014): cliente, saldo de esa venta y estado.</summary>
+public sealed record CreditInfo(Guid CustomerId, string CustomerName, long BalanceCents, ReceivableStatus Status);
 
 /// <summary>Un día local convertido a UTC: <c>[FromUtc, ToUtcExclusive)</c>.</summary>
 public sealed record DayWindow(DateOnly LocalDate, DateTime FromUtc, DateTime ToUtcExclusive);

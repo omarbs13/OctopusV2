@@ -11,6 +11,9 @@ internal sealed record PaymentShare(SalePayment Payment, long AmountCents);
 internal sealed record ReturnPlan(long TotalCents, IReadOnlyList<ReturnLineAmount> Lines, IReadOnlyList<PaymentShare> Shares)
 {
     public long CashCents => Shares.Where(s => s.Payment.Method == PaymentMethod.Cash).Sum(s => s.AmountCents);
+
+    /// <summary>Parte de una venta a crédito (014): la liquida <c>CreditSettlementService</c>, no la caja.</summary>
+    public long OnAccountCents => Shares.Where(s => s.Payment.Method == PaymentMethod.OnAccount).Sum(s => s.AmountCents);
 }
 
 /// <summary>Calcula una devolución sin modificar la venta; la comparten la vista previa y el procesador.</summary>

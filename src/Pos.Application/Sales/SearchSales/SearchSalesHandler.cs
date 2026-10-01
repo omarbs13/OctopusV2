@@ -69,7 +69,8 @@ public sealed class SearchSalesHandler
             query.Status,
             Math.Max(query.Page, 1),
             SalePage.DefaultPageSize,
-            cashierId);
+            cashierId,
+            query.CustomerId);
         return Result.Success(await _sales.SearchAsync(search, cancellationToken));
     }
 }

@@ -1,4 +1,5 @@
 using Pos.Application.Abstractions;
+using Pos.Application.Receivables;
 using Pos.Application.Sales;
 using Pos.Application.Users.Access;
 using Pos.Domain.Common;
@@ -19,6 +20,7 @@ public sealed class PreviewReturnHandler
     private readonly IReturnsSettingsStore _settings;
     private readonly ReturnCashGate _cashGate;
     private readonly IClock _clock;
+    private readonly CreditSettlementService? _creditSettlement;
 
     public PreviewReturnHandler(
         IAccessControl access,
@@ -27,8 +29,10 @@ public sealed class PreviewReturnHandler
         IReturnRepository returns,
         IReturnsSettingsStore settings,
         ReturnCashGate cashGate,
-        IClock clock)
+        IClock clock,
+        CreditSettlementService? creditSettlement = null)
     {
+        _creditSettlement = creditSettlement;
         _access = access;
         _currentUser = currentUser;
         _sales = sales;
@@ -75,14 +79,20 @@ public sealed class PreviewReturnHandler
             return Result.Failure<ReturnPreview>(new NothingToReturn());
         }
 
-        var cash = await _cashGate.ResolveAsync(plan.CashCents, cancellationToken);
+        // 014: en una venta a crédito el efectivo que sale es solo lo abonado de más que no cubre otras deudas.
+        var credit = plan.OnAccountCents > 0 && _creditSettlement is not null
+            ? await _creditSettlement.PreviewAsync(sale.Id, plan.OnAccountCents, cancellationToken)
+            : null;
+        var cashCents = plan.CashCents + (credit?.CashRefundCents ?? 0);
+        var cash = await _cashGate.ResolveAsync(cashCents, cancellationToken);
         return Result.Success(new ReturnPreview(
             plan.TotalCents,
             [.. plan.Lines.Select(l => new ReturnPreviewLine(l.SaleLineId, l.QuantityThousandths, l.AmountCents))],
             [.. plan.Shares.Select(s => new RefundBreakdownItem(s.Payment.Method, s.AmountCents))],
-            plan.CashCents,
+            cashCents,
             withinWindow,
             cash.IsSuccess,
-            windowDays));
+            windowDays,
+            credit));
     }
 }

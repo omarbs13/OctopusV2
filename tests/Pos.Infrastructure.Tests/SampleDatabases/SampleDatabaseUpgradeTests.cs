@@ -79,6 +79,7 @@ public sealed class SampleDatabaseUpgradeTests
         AssertCashShifts(connection, sampleFile);
         AssertReports(connection);
         AssertReturns(connection, sampleFile);
+        AssertCredit(connection, sampleFile);
         await AssertLegacyCancelledCashAsync(db, connection, sampleFile);
 
         foreach (var index in new[] { "IX_Products_Sku", "IX_Products_Barcode", "IX_Products_NameSearch" })
@@ -147,11 +148,15 @@ public sealed class SampleDatabaseUpgradeTests
             return;
         }
 
-        Assert.Equal(SampleData.SaleCount, Scalar<long>(connection, "SELECT COUNT(*) FROM Sales"));
-        Assert.Equal("1,2,3", Scalar<string>(connection, "SELECT group_concat(FolioNumber) FROM (SELECT FolioNumber FROM Sales ORDER BY FolioNumber)"));
+        // Desde 0.9.0 hay además una venta a crédito (la 4) del producto sin inventario.
+        var creditSales = HasCredit(sampleFile) ? SampleData.CreditSaleCount : 0;
+        Assert.Equal(SampleData.SaleCount + creditSales, Scalar<long>(connection, "SELECT COUNT(*) FROM Sales"));
+        Assert.Equal(
+            HasCredit(sampleFile) ? "1,2,3,4" : "1,2,3",
+            Scalar<string>(connection, "SELECT group_concat(FolioNumber) FROM (SELECT FolioNumber FROM Sales ORDER BY FolioNumber)"));
         Assert.Equal(1, Scalar<long>(connection, $"SELECT COUNT(*) FROM Sales WHERE Status = 'CANCELLED' AND CancellationReason = '{SampleData.CancellationReason}' AND CancelledAt IS NOT NULL"));
-        Assert.Equal(4, Scalar<long>(connection, "SELECT COUNT(*) FROM SaleLines"));
-        Assert.Equal(3, Scalar<long>(connection, "SELECT COUNT(*) FROM SalePayments"));
+        Assert.Equal(4 + creditSales, Scalar<long>(connection, "SELECT COUNT(*) FROM SaleLines"));
+        Assert.Equal(3 + creditSales, Scalar<long>(connection, "SELECT COUNT(*) FROM SalePayments"));
         Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM SaleDrafts"));
         Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM AuditEntries WHERE Action = 'SALE_CANCELLED' AND EntityType = 'Sale'"));
         Assert.Equal(
@@ -170,7 +175,7 @@ public sealed class SampleDatabaseUpgradeTests
     private static void AssertUsers(SqliteConnection connection, string sampleFile)
     {
         // Desde 0.6.0 la base de ejemplo ya trae un administrador y un cajero además de "Sistema".
-        Assert.Equal(sampleFile is "v0.6.0.db" or "v0.7.0.db" or "v0.8.0.db" ? 3 : 1, Scalar<long>(connection, "SELECT COUNT(*) FROM Users"));
+        Assert.Equal(VersionOf(sampleFile) >= new Version(0, 6, 0) ? 3 : 1, Scalar<long>(connection, "SELECT COUNT(*) FROM Users"));
         Assert.Equal(
             1,
             Scalar<long>(connection, $"""
@@ -187,11 +192,12 @@ public sealed class SampleDatabaseUpgradeTests
             return;
         }
 
-        if (sampleFile is "v0.6.0.db" or "v0.7.0.db" or "v0.8.0.db")
+        if (VersionOf(sampleFile) >= new Version(0, 6, 0))
         {
-            // Las ventas conservan a su cajero: el administrador hizo la 1 y el cajero la 2 y la 3 (con su borrador).
+            // Las ventas conservan a su cajero: el administrador hizo la 1 y el cajero la 2 y la 3 (con su
+            // borrador); desde 0.9.0 el cajero también hizo la venta a crédito.
             Assert.Equal(1, Scalar<long>(connection, $"SELECT COUNT(*) FROM Sales s JOIN Users u ON u.Id = s.CreatedBy WHERE u.UserName = '{SampleData.AdminUserName}'"));
-            Assert.Equal(2, Scalar<long>(connection, $"SELECT COUNT(*) FROM Sales s JOIN Users u ON u.Id = s.CreatedBy WHERE u.UserName = '{SampleData.CashierUserName}'"));
+            Assert.Equal(HasCredit(sampleFile) ? 3 : 2, Scalar<long>(connection, $"SELECT COUNT(*) FROM Sales s JOIN Users u ON u.Id = s.CreatedBy WHERE u.UserName = '{SampleData.CashierUserName}'"));
             Assert.Equal(1, Scalar<long>(connection, $"SELECT COUNT(*) FROM SaleDrafts d JOIN Users u ON u.Id = d.UserId WHERE u.UserName = '{SampleData.CashierUserName}'"));
             return;
         }
@@ -211,13 +217,15 @@ public sealed class SampleDatabaseUpgradeTests
     /// </summary>
     private static void AssertCashShifts(SqliteConnection connection, string sampleFile)
     {
-        if (sampleFile is "v0.7.0.db" or "v0.8.0.db")
+        if (VersionOf(sampleFile) >= new Version(0, 7, 0))
         {
             // Desde 0.7.0 la base de ejemplo ya trae turnos (uno cerrado y uno abierto) y sus ventas.
             Assert.Equal(2, Scalar<long>(connection, "SELECT COUNT(*) FROM CashShifts"));
             Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM CashShifts WHERE Status = 'CLOSED' AND CountedCashCents IS NOT NULL"));
             Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM CashShifts WHERE Status = 'OPEN' AND ExpectedCashCents IS NULL"));
-            Assert.Equal(SampleData.SaleCount, Scalar<long>(connection, "SELECT COUNT(*) FROM Sales WHERE CashShiftId IS NOT NULL"));
+            Assert.Equal(
+                SampleData.SaleCount + (HasCredit(sampleFile) ? SampleData.CreditSaleCount : 0),
+                Scalar<long>(connection, "SELECT COUNT(*) FROM Sales WHERE CashShiftId IS NOT NULL"));
             return;
         }
 
@@ -255,7 +263,7 @@ public sealed class SampleDatabaseUpgradeTests
             Scalar<string>(connection, "SELECT sql FROM sqlite_master WHERE type = 'index' AND name = 'IX_SaleReturnRefunds_Pending'"),
             StringComparison.Ordinal);
 
-        if (sampleFile != "v0.8.0.db")
+        if (VersionOf(sampleFile) < new Version(0, 8, 0))
         {
             foreach (var table in new[] { "SaleReturns", "SaleReturnLines", "SaleReturnRefunds", "CreditNotes", "CreditNoteMovements" })
             {
@@ -290,7 +298,7 @@ public sealed class SampleDatabaseUpgradeTests
     private static async Task AssertLegacyCancelledCashAsync(TestDb db, SqliteConnection connection, string sampleFile)
     {
         // Solo desde 0.7.0 las ventas pertenecen a turnos.
-        if (sampleFile is not ("v0.7.0.db" or "v0.8.0.db"))
+        if (VersionOf(sampleFile) < new Version(0, 7, 0))
         {
             return;
         }
@@ -322,7 +330,63 @@ public sealed class SampleDatabaseUpgradeTests
         Assert.Equal(expected, cancelledCash);
     }
 
-    private static bool HasSales(string sampleFile) => sampleFile is "v0.4.0.db" or "v0.5.0.db" or "v0.6.0.db" or "v0.7.0.db" or "v0.8.0.db";
+    /// <summary>
+    /// 014: las tablas de clientes y crédito existen; las bases anteriores a 0.9.0 las dejan vacías, sin
+    /// pagos <c>ACCOUNT</c> y con el bloque "Crédito" de los turnos en nulo. La de 0.9.0 conserva su
+    /// cliente, su venta a crédito y su abono, con el saldo igual al libro (SC-004).
+    /// </summary>
+    private static void AssertCredit(SqliteConnection connection, string sampleFile)
+    {
+        Assert.Contains(
+            "WHERE \"TaxId\" IS NOT NULL",
+            Scalar<string>(connection, "SELECT sql FROM sqlite_master WHERE type = 'index' AND name = 'IX_Customers_TaxId'"),
+            StringComparison.Ordinal);
+        Assert.Equal(
+            0,
+            Scalar<long>(connection, """
+                SELECT COUNT(*) FROM Receivables r
+                WHERE r.BalanceCents <> r.OriginalCents + IFNULL((SELECT SUM(e.AmountCents) FROM ReceivableEntries e WHERE e.ReceivableId = r.Id), 0)
+                """));
+
+        if (!HasCredit(sampleFile))
+        {
+            foreach (var table in new[] { "Customers", "Receivables", "ReceivableEntries", "CustomerPayments" })
+            {
+                Assert.Equal(0, Scalar<long>(connection, $"SELECT COUNT(*) FROM {table}"));
+            }
+
+            Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM SalePayments WHERE Method = 'ACCOUNT'"));
+            Assert.Equal(
+                0,
+                Scalar<long>(connection, """
+                    SELECT COUNT(*) FROM CashShifts
+                    WHERE OnAccountSalesCents IS NOT NULL OR CustomerPaymentsCashCents IS NOT NULL OR CustomerPaymentsNonCashCents IS NOT NULL
+                       OR CustomerPaymentVoidsCashCents IS NOT NULL OR CustomerPaymentVoidsNonCashCents IS NOT NULL
+                    """));
+            return;
+        }
+
+        Assert.Equal(1, Scalar<long>(connection, $"SELECT COUNT(*) FROM Customers WHERE Name = '{SampleData.CustomerName}' AND TaxId = '{SampleData.CustomerTaxId}' AND CreditMode = 'CREDIT' AND IsActive = 1"));
+        Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM SalePayments WHERE Method = 'ACCOUNT'"));
+        Assert.Equal(
+            1,
+            Scalar<long>(connection, """
+                SELECT COUNT(*) FROM Receivables r JOIN Sales s ON s.Id = r.SaleId
+                WHERE r.OriginalCents = s.TotalCents AND r.Status = 'PENDING'
+                """));
+        Assert.Equal(SampleData.CreditBalanceCents, Scalar<long>(connection, "SELECT BalanceCents FROM Receivables"));
+        Assert.Equal(1, Scalar<long>(connection, $"SELECT COUNT(*) FROM CustomerPayments WHERE Number = 1 AND Status = 'ACTIVE' AND Method = 'CASH' AND AmountCents = {SampleData.CreditPaymentCents}"));
+        Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM ReceivableEntries WHERE Type = 'PAYMENT'"));
+        Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM AuditEntries WHERE Action = 'CREDIT_SALE_REGISTERED'"));
+        Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM AuditEntries WHERE Action = 'CUSTOMER_PAYMENT_REGISTERED'"));
+    }
+
+    private static bool HasSales(string sampleFile) => VersionOf(sampleFile) >= new Version(0, 4, 0);
+
+    private static bool HasCredit(string sampleFile) => VersionOf(sampleFile) >= new Version(0, 9, 0);
+
+    /// <summary>Versión de la base de ejemplo a partir de su nombre (<c>v0.8.0.db</c>).</summary>
+    private static Version VersionOf(string sampleFile) => new(sampleFile[1..^3]);
 
     private static T Scalar<T>(SqliteConnection connection, string sql)
     {

@@ -52,6 +52,15 @@ public static class TicketBuilder
             lines.Add(new TicketLine(cashier.Length > columns ? cashier[..columns] : cashier));
         }
 
+        if (sale.Credit is { } credit)
+        {
+            // 014: la venta a crédito muestra al cliente con el nombre que tenía al vender (research §2).
+            foreach (var text in TextWrap.Wrap($"Cliente: {credit.CustomerName}", columns))
+            {
+                lines.Add(new TicketLine(text));
+            }
+        }
+
         lines.Add(Separator(columns));
 
         foreach (var line in sale.Lines.OrderBy(l => l.Position))
@@ -61,7 +70,15 @@ public static class TicketBuilder
 
         lines.Add(Separator(columns));
         lines.Add(new TicketLine(TextWrap.TwoColumns("TOTAL", FormatMoney(sale.TotalCents), columns), Bold: true));
-        AddPayments(lines, sale.Payments, columns);
+        if (sale.Credit is not null)
+        {
+            // En lugar del bloque de pagos: sin efectivo recibido ni cambio (research §12).
+            lines.Add(new TicketLine(TextWrap.TwoColumns("A crédito:", FormatMoney(sale.TotalCents), columns), Bold: true));
+        }
+        else
+        {
+            AddPayments(lines, sale.Payments, columns);
+        }
 
         if (!string.IsNullOrWhiteSpace(profile?.FooterMessage))
         {
@@ -177,6 +194,9 @@ public static class TicketBuilder
                     break;
                 case PaymentMethod.CreditNote:
                     lines.Add(new TicketLine(TextWrap.TwoColumns("Nota de crédito", FormatMoney(payment.AmountCents), columns)));
+                    break;
+                case PaymentMethod.OnAccount:
+                    lines.Add(new TicketLine(TextWrap.TwoColumns("A crédito:", FormatMoney(payment.AmountCents), columns)));
                     break;
                 default:
                     lines.Add(new TicketLine(TextWrap.TwoColumns("Transferencia", FormatMoney(payment.AmountCents), columns)));

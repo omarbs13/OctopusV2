@@ -16,6 +16,9 @@ public enum RefundStatus
 
     /// <summary>Monto devuelto al saldo de la nota de crédito con que se pagó.</summary>
     Restored,
+
+    /// <summary>Parte de una devolución de venta a crédito que redujo la deuda del cliente (014, research §8).</summary>
+    Settled,
 }
 
 public static class RefundStatusExtensions
@@ -26,6 +29,7 @@ public static class RefundStatusExtensions
         RefundStatus.PendingReversal => "PENDING_REVERSAL",
         RefundStatus.Reversed => "REVERSED",
         RefundStatus.Restored => "RESTORED",
+        RefundStatus.Settled => "SETTLED",
         _ => throw new DomainException("El estado del reintegro no es válido."),
     };
 
@@ -35,6 +39,7 @@ public static class RefundStatusExtensions
         "PENDING_REVERSAL" => RefundStatus.PendingReversal,
         "REVERSED" => RefundStatus.Reversed,
         "RESTORED" => RefundStatus.Restored,
+        "SETTLED" => RefundStatus.Settled,
         _ => throw new DomainException("El estado del reintegro no es válido."),
     };
 }

@@ -47,6 +47,30 @@ public class CashShiftMathTests
     }
 
     [Fact]
+    public void Esperado_SumaAbonosEnEfectivoYRestaSusAnulaciones_SinVentasACreditoNiAbonosConTarjeta()
+    {
+        // 014, SC-007: fondo $500.00 y ventas en efectivo $100.00; una venta a crédito de $700.00 y abonos con
+        // tarjeta de $400.00 no mueven efectivo; abonos en efectivo $300.00 y una anulación en efectivo de $50.00.
+        var totals = new ShiftSalesTotals(
+            SalesCount: 2,
+            CancelledCount: 0,
+            TotalSoldCents: 80_000,
+            CashSalesCents: 10_000,
+            CashCancelledCents: 0,
+            CardCents: 0,
+            TransferCents: 0,
+            OnAccountSalesCents: 70_000,
+            CustomerPaymentsCashCents: 30_000,
+            CustomerPaymentsNonCashCents: 40_000,
+            CustomerPaymentVoidsCashCents: 5_000,
+            CustomerPaymentVoidsNonCashCents: 10_000);
+
+        var expected = CashShiftMath.ExpectedCash(50_000, totals, depositsCents: 0, withdrawalsCents: 0);
+
+        Assert.Equal(50_000 + 10_000 + 30_000 - 5_000, expected);
+    }
+
+    [Fact]
     public void CanRefund_DetectaQueLaDevolucionDejariaElEsperadoEnNegativo()
     {
         Assert.True(CashShiftMath.CanRefund(expectedCents: 10_000, saleCashCents: 10_000));

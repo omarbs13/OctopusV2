@@ -1,3 +1,4 @@
+using Pos.Application.CashShifts;
 using Pos.Domain.CashShifts;
 
 namespace Pos.Application.Reports.GetMyShiftSummary;
@@ -23,7 +24,8 @@ public sealed record MyShiftSummary(
     long? ExpectedCashCents,
     long? CountedCashCents,
     long? DifferenceCents,
-    IReadOnlyList<MyShiftMovement> Movements);
+    IReadOnlyList<MyShiftMovement> Movements,
+    ShiftCreditTotals? Credit = null);
 
 /// <summary>Turno propio en la lista de los más recientes.</summary>
 public sealed record MyShiftListItem(Guid ShiftId, string FolioText, DateTime OpenedAtUtc, DateTime? ClosedAtUtc, bool IsOpen, long TotalSoldCents);

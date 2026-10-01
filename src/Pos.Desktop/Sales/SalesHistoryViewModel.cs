@@ -36,7 +36,9 @@ public sealed record SaleRow(SaleListItemDto Item)
 
     public bool IsCancelled => Item.Status == SaleStatus.Cancelled;
 
-    public string StatusText => IsCancelled ? Strings.Sales_StatusCancelled : Strings.Sales_StatusCompleted;
+    /// <summary>Las ventas a crédito agregan "Pendiente de pago" o "Pagada" (014).</summary>
+    public string StatusText => (IsCancelled ? Strings.Sales_StatusCancelled : Strings.Sales_StatusCompleted)
+        + (Item.CreditStatus is { } credit && !IsCancelled ? $" · {CreditStatusLabels.Of(credit)}" : string.Empty);
 }
 
 /// <summary>Opción del filtro de cajero; el valor nulo significa "Todos" (solo quien ve todas las ventas).</summary>
@@ -247,7 +249,7 @@ public sealed partial class SalesHistoryViewModel : PageViewModel, INavigationAr
             return;
         }
 
-        var selected = SelectedCashier.UserId;
+        var selected = SelectedCashier?.UserId;
         _suppressAutoSearch = true;
         try
         {
@@ -275,9 +277,9 @@ public sealed partial class SalesHistoryViewModel : PageViewModel, INavigationAr
             FromDate is { } from ? LocalMidnightToUtc(from) : null,
             ToDate is { } to ? LocalMidnightToUtc(to.AddDays(1)) : null,
             FolioText,
-            SelectedStatus.Status,
+            SelectedStatus?.Status,
             CurrentPage,
-            CanFilterByCashier ? SelectedCashier.UserId : null);
+            CanFilterByCashier ? SelectedCashier?.UserId : null);
 
         var (completed, result) = await _runner.RunAsync(
             "BuscarVentas",

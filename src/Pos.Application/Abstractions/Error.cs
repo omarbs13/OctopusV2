@@ -104,6 +104,27 @@ public sealed record CreditNoteNotFound : Error;
 /// <summary>El monto excede el saldo de la nota de crédito (013, FR-008).</summary>
 public sealed record InsufficientCreditNote(long AvailableCents) : Error;
 
+/// <summary>
+/// Saldo + venta exceden el límite de crédito del cliente y no hay concesión válida (014, FR-006).
+/// Mensaje: "La venta excede el límite de crédito del cliente por {excedente}. Se requiere autorización de un Administrador".
+/// </summary>
+public sealed record CreditLimitExceeded(long ExcessCents) : Error;
+
+/// <summary>El cliente está inactivo o es "solo efectivo" (014, Historia 2, escenario 4). Mensaje: "Este cliente no tiene crédito disponible".</summary>
+public sealed record CustomerNotEligibleForCredit : Error;
+
+/// <summary>
+/// Se intenta desactivar un cliente con saldo (014, FR-004).
+/// Mensaje: "El cliente tiene un saldo pendiente de {saldo}; no se puede desactivar".
+/// </summary>
+public sealed record CustomerHasBalance(long BalanceCents) : Error;
+
+/// <summary>
+/// El abono es ≤ 0 o mayor que el saldo del cliente (014, FR-010).
+/// Mensaje: "El monto debe ser mayor que 0 y no exceder el saldo de {saldo}".
+/// </summary>
+public sealed record PaymentExceedsBalance(long MaxCents) : Error;
+
 /// <summary>El archivo de licencia importado se rechazó; la licencia vigente no cambió (011, FR-012).</summary>
 public sealed record InvalidLicense(LicenseImportRejection Reason) : Error;
 

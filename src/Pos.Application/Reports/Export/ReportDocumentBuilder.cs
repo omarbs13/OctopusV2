@@ -121,6 +121,7 @@ public sealed class ReportDocumentBuilder
             new(ReportTexts.Cash, new MoneyCell(totals.CashCents)),
             new(ReportTexts.Card, new MoneyCell(totals.CardCents)),
             new(ReportTexts.Transfer, new MoneyCell(totals.TransferCents)),
+            new(ReportTexts.OnAccount, new MoneyCell(totals.OnAccountCents)),
         ];
         if (report.Comparison is { } comparison)
         {

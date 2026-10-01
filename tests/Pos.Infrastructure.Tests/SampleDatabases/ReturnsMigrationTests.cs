@@ -33,14 +33,4 @@ public sealed class ReturnsMigrationTests
         Assert.DoesNotContain("DROP TABLE", script, StringComparison.Ordinal);
         Assert.DoesNotContain("ef_temp_", script, StringComparison.Ordinal);
     }
-
-    [Fact]
-    public async Task ReturnsAndCreditNotes_EsLaUltimaMigracion()
-    {
-        using var db = await TestDb.CreateAsync();
-        await using var context = db.CreateDbContext();
-
-        Assert.EndsWith("_ReturnsAndCreditNotes", context.Database.GetMigrations().Last(), StringComparison.Ordinal);
-        Assert.Empty(await context.Database.GetPendingMigrationsAsync(TestContext.Current.CancellationToken));
-    }
 }

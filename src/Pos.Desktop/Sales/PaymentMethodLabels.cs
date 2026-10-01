@@ -11,6 +11,7 @@ internal static class PaymentMethodLabels
         PaymentMethod.Cash => Strings.Payment_Cash,
         PaymentMethod.Card => Strings.Payment_Card,
         PaymentMethod.CreditNote => Strings.Payment_CreditNote,
+        PaymentMethod.OnAccount => Strings.Payment_OnAccount,
         _ => Strings.Payment_Transfer,
     };
 }

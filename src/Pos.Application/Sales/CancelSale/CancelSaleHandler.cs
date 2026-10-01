@@ -7,6 +7,7 @@ using Pos.Application.Users.Access;
 using Pos.Application.Inventory;
 using Pos.Application.Licensing;
 using Pos.Application.Products;
+using Pos.Application.Receivables;
 using Pos.Application.Returns;
 using Pos.Domain.CashShifts;
 using Pos.Domain.Licensing;
@@ -21,7 +22,8 @@ namespace Pos.Application.Sales.CancelSale;
 /// una entrada en la bitácora, todo en una transacción. Las ventas nunca se borran.
 /// Con el módulo Devoluciones activo (013) delega en <see cref="SaleReturnProcessor"/>: exige la
 /// autorización de un Administrador y compensa al cliente con reintegro o nota de crédito. Sin el
-/// módulo conserva la cancelación básica de 005/008 (research §12).
+/// módulo conserva la cancelación básica de 005/008 (research §12); en ella una venta a crédito también
+/// ajusta su cuenta por cobrar en la misma transacción (014, research §8).
 /// </summary>
 public sealed partial class CancelSaleHandler
 {
@@ -39,6 +41,7 @@ public sealed partial class CancelSaleHandler
     private readonly ILogger<CancelSaleHandler> _logger;
     private readonly ILicenseState? _license;
     private readonly SaleReturnProcessor? _processor;
+    private readonly CreditSettlementService? _creditSettlement;
 
     public CancelSaleHandler(
         IAccessControl access,
@@ -52,8 +55,10 @@ public sealed partial class CancelSaleHandler
         IValidator<CancelSaleCommand> validator,
         ILogger<CancelSaleHandler> logger,
         ILicenseState? license = null,
-        SaleReturnProcessor? processor = null)
+        SaleReturnProcessor? processor = null,
+        CreditSettlementService? creditSettlement = null)
     {
+        _creditSettlement = creditSettlement;
         _license = license;
         _processor = processor;
         _access = access;
@@ -151,8 +156,27 @@ public sealed partial class CancelSaleHandler
             }
         }
 
+        // 014: una venta a crédito nunca se cancela sin ajustar su saldo. Esta ruta no registra
+        // devoluciones ni reintegros, así que no puede devolver efectivo por lo abonado de más.
+        var isCredit = sale.Payments.Any(p => p.Method == PaymentMethod.OnAccount);
+        var remaining = sale.TotalCents - sale.ReturnedCents;
+        if (isCredit)
+        {
+            var preview = await Settlement().PreviewAsync(sale.Id, remaining, cancellationToken);
+            if (preview is { CashRefundCents: > 0 })
+            {
+                LogCreditCashRefund(sale.Id, preview.CashRefundCents);
+                return Result.Failure<ReturnResult>(new InvalidState(ReceivableMessages.CashRefundNeedsReturns));
+            }
+        }
+
         var reason = command.Reason.Trim();
         sale.Cancel(reason, _clock.UtcNow, _currentUser.UserId);
+        if (isCredit && remaining > 0)
+        {
+            // Sin registro de devolución, el origen de los movimientos de la cuenta es la propia venta.
+            await Settlement().ApplyAsync(sale.Id, sale.Id, remaining, closesSale: true, cancellationToken);
+        }
 
         var inventoryActive = _license?.IsModuleActive(LicensedModule.Inventory) != false;
         var withMovement = inventoryActive
@@ -184,6 +208,12 @@ public sealed partial class CancelSaleHandler
         LogCancelled(sale.Id, sale.Folio);
         return Result.Success(ReturnResult.Basic(sale.TotalCents));
     }
+
+    private CreditSettlementService Settlement() =>
+        _creditSettlement ?? throw new InvalidOperationException("Falta el servicio de liquidación de ventas a crédito.");
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Cancelación básica de venta a crédito rechazada: requiere reintegro en efectivo. SaleId={SaleId} ReintegroCents={CashRefundCents}")]
+    private partial void LogCreditCashRefund(Guid saleId, long cashRefundCents);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Venta cancelada. SaleId={SaleId} Folio={Folio}")]
     private partial void LogCancelled(Guid saleId, string folio);

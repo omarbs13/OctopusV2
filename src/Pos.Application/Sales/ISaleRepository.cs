@@ -23,9 +23,13 @@ public interface ISaleRepository
 
     Task<SalePage> SearchAsync(SaleSearch search, CancellationToken cancellationToken);
 
+    /// <summary>Detalle de la venta; las ventas a crédito traen <see cref="SaleDetailDto.Credit"/> (014).</summary>
     Task<SaleDetailDto?> GetDetailAsync(Guid id, CancellationToken cancellationToken);
 
-    /// <summary>Totales de las ventas de un turno en una sola consulta agregada (008, research §3).</summary>
+    /// <summary>
+    /// Totales de las ventas de un turno (008, research §3); desde 014 incluye las ventas a crédito y los
+    /// abonos y anulaciones de abonos hechos en el turno, separados en efectivo y no efectivo.
+    /// </summary>
     Task<ShiftSalesTotals> GetShiftTotalsAsync(Guid shiftId, CancellationToken cancellationToken);
 
     /// <summary>Ventas de un turno para su detalle, de la más antigua a la más reciente.</summary>

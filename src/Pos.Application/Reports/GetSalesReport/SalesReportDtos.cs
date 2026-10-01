@@ -24,7 +24,7 @@ public sealed record SalesReportQuery(
     public const int DefaultPageSize = 100;
 }
 
-/// <summary>Totales de ventas completadas; todo en centavos.</summary>
+/// <summary>Totales de ventas completadas; todo en centavos. <c>OnAccountCents</c> son las ventas a crédito (014), incluidas en el total.</summary>
 public sealed record SalesTotals(
     int SalesCount,
     long TotalCents,
@@ -32,7 +32,8 @@ public sealed record SalesTotals(
     long CashCents,
     long CardCents,
     long TransferCents,
-    long CreditNoteCents = 0)
+    long CreditNoteCents = 0,
+    long OnAccountCents = 0)
 {
     public static SalesTotals Empty { get; } = new(0, 0, 0, 0, 0, 0);
 }

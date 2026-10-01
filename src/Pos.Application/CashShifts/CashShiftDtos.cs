@@ -85,7 +85,47 @@ public sealed record ShiftReconciliationDto(
     string? Comment,
     long CashRefundsCents = 0,
     long NonCashRefundsCents = 0,
-    long CreditNotesIssuedCents = 0);
+    long CreditNotesIssuedCents = 0,
+    ShiftCreditTotals? Credit = null);
+
+/// <summary>
+/// Bloque "Crédito" del turno (014, FR-012): ventas a crédito, abonos en efectivo y con tarjeta o
+/// transferencia y anulaciones de abonos. Nulo en turnos cerrados antes de 0.9.0.
+/// </summary>
+public sealed record ShiftCreditTotals(
+    long OnAccountSalesCents,
+    long PaymentsCashCents,
+    long PaymentsNonCashCents,
+    long PaymentVoidsCashCents,
+    long PaymentVoidsNonCashCents)
+{
+    public long PaymentVoidsCents => PaymentVoidsCashCents + PaymentVoidsNonCashCents;
+
+    public static ShiftCreditTotals From(ShiftSalesTotals totals)
+    {
+        ArgumentNullException.ThrowIfNull(totals);
+        return new(
+            totals.OnAccountSalesCents,
+            totals.CustomerPaymentsCashCents,
+            totals.CustomerPaymentsNonCashCents,
+            totals.CustomerPaymentVoidsCashCents,
+            totals.CustomerPaymentVoidsNonCashCents);
+    }
+
+    /// <summary>Instantánea del cierre; nula si el turno se cerró antes de 0.9.0.</summary>
+    public static ShiftCreditTotals? From(CashShift shift)
+    {
+        ArgumentNullException.ThrowIfNull(shift);
+        return shift.OnAccountSalesCents is null
+            ? null
+            : new(
+                shift.OnAccountSalesCents ?? 0,
+                shift.CustomerPaymentsCashCents ?? 0,
+                shift.CustomerPaymentsNonCashCents ?? 0,
+                shift.CustomerPaymentVoidsCashCents ?? 0,
+                shift.CustomerPaymentVoidsNonCashCents ?? 0);
+    }
+}
 
 public sealed record ShiftDetailDto(
     Guid Id,
@@ -141,7 +181,8 @@ public sealed record ShiftReportDto(
     string? Comment,
     long CashRefundsCents = 0,
     long NonCashRefundsCents = 0,
-    long CreditNotesIssuedCents = 0);
+    long CreditNotesIssuedCents = 0,
+    ShiftCreditTotals? Credit = null);
 
 /// <summary>Datos del comprobante de un movimiento de efectivo, más lo necesario para decidir el acceso.</summary>
 public sealed record CashMovementReceiptDto(

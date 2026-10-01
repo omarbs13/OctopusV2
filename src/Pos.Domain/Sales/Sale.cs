@@ -113,6 +113,12 @@ public sealed class Sale
             throw new DomainException("La venta admite a lo más un pago con nota de crédito.");
         }
 
+        // 014: la venta a crédito no admite enganche ni pago mixto (research §1).
+        if (paymentList.Any(p => p.Method == PaymentMethod.OnAccount) && paymentList.Count != 1)
+        {
+            throw new DomainException("La venta a crédito debe tener un único pago por el total.");
+        }
+
         var sale = new Sale
         {
             Id = Guid.CreateVersion7(),

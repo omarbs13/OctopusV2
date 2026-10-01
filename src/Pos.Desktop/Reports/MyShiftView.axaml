@@ -45,6 +45,17 @@
           <vm:MetricCard Label="{x:Static res:Strings.Reports_MyShift_Withdrawals}" Value="{Binding WithdrawalsText}" />
         </WrapPanel>
 
+        <!-- Crédito (014): ventas a crédito, abonos y anulaciones -->
+        <StackPanel Spacing="4" IsVisible="{Binding HasCredit}">
+          <TextBlock Text="{x:Static res:Strings.Shift_CreditSection}" FontWeight="SemiBold" />
+          <WrapPanel>
+            <vm:MetricCard Label="{x:Static res:Strings.Shift_OnAccountSales}" Value="{Binding OnAccountSalesText}" />
+            <vm:MetricCard Label="{x:Static res:Strings.Shift_PaymentsCash}" Value="{Binding PaymentsCashText}" />
+            <vm:MetricCard Label="{x:Static res:Strings.Shift_PaymentsNonCash}" Value="{Binding PaymentsNonCashText}" />
+            <vm:MetricCard Label="{x:Static res:Strings.Shift_PaymentVoids}" Value="{Binding PaymentVoidsText}" />
+          </WrapPanel>
+        </StackPanel>
+
         <WrapPanel IsVisible="{Binding ShowCashCount}">
           <vm:MetricCard Label="{x:Static res:Strings.Reports_MyShift_Expected}" Value="{Binding ExpectedText}" />
           <vm:MetricCard Label="{x:Static res:Strings.Reports_MyShift_Counted}" Value="{Binding CountedText}" />

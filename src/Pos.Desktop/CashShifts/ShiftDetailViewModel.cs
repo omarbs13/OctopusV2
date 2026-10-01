@@ -238,6 +238,16 @@ public sealed partial class ShiftDetailViewModel : FormViewModel
         Reconciliation.Add(new ReconciliationRow(Strings.Shift_NonCashRefunds, MoneyConverter.Format(r.NonCashRefundsCents)));
         Reconciliation.Add(new ReconciliationRow(Strings.Shift_CreditNotesIssued, MoneyConverter.Format(r.CreditNotesIssuedCents)));
 
+        // 014, FR-012: bloque "Crédito" (el esperado ya incluye los abonos y anulaciones en efectivo).
+        if (r.Credit is { } credit)
+        {
+            Reconciliation.Add(new ReconciliationRow(Strings.Shift_CreditSection, string.Empty, IsEmphasis: true));
+            Reconciliation.Add(new ReconciliationRow(Strings.Shift_OnAccountSales, MoneyConverter.Format(credit.OnAccountSalesCents)));
+            Reconciliation.Add(new ReconciliationRow(Strings.Shift_PaymentsCash, MoneyConverter.Format(credit.PaymentsCashCents)));
+            Reconciliation.Add(new ReconciliationRow(Strings.Shift_PaymentsNonCash, MoneyConverter.Format(credit.PaymentsNonCashCents)));
+            Reconciliation.Add(new ReconciliationRow(Strings.Shift_PaymentVoids, MoneyConverter.Format(credit.PaymentVoidsCents)));
+        }
+
         Detail = detail;
     }
 }

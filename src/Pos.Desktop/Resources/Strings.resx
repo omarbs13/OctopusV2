@@ -787,4 +787,158 @@
   <data name="Shift_CashRefunds" xml:space="preserve"><value>Reintegros en efectivo</value></data>
   <data name="Shift_NonCashRefunds" xml:space="preserve"><value>Reintegros de tarjeta y transferencia pendientes de reversa</value></data>
   <data name="Shift_CreditNotesIssued" xml:space="preserve"><value>Notas de crédito emitidas</value></data>
+  <data name="Nav_Customers" xml:space="preserve"><value>Clientes</value></data>
+  <data name="Customer_ListTitle" xml:space="preserve"><value>Clientes</value></data>
+  <data name="Customer_SearchPlaceholder" xml:space="preserve"><value>Buscar por nombre, teléfono o RUC</value></data>
+  <data name="Customer_ShowInactive" xml:space="preserve"><value>Mostrar inactivos</value></data>
+  <data name="Customer_New" xml:space="preserve"><value>Nuevo cliente</value></data>
+  <data name="Customer_Open" xml:space="preserve"><value>Abrir ficha</value></data>
+  <data name="Customer_ColName" xml:space="preserve"><value>Nombre</value></data>
+  <data name="Customer_ColPhone" xml:space="preserve"><value>Teléfono</value></data>
+  <data name="Customer_ColTaxId" xml:space="preserve"><value>RUC</value></data>
+  <data name="Customer_ColMode" xml:space="preserve"><value>Modalidad</value></data>
+  <data name="Customer_ColLimit" xml:space="preserve"><value>Límite</value></data>
+  <data name="Customer_ColBalance" xml:space="preserve"><value>Saldo</value></data>
+  <data name="Customer_ColStatus" xml:space="preserve"><value>Estado</value></data>
+  <data name="Customer_Active" xml:space="preserve"><value>Activo</value></data>
+  <data name="Customer_Inactive" xml:space="preserve"><value>Inactivo</value></data>
+  <data name="Customer_Empty" xml:space="preserve"><value>No hay clientes que coincidan con la búsqueda.</value></data>
+  <data name="Customer_PageSummary" xml:space="preserve"><value>{0} clientes · Página {1} de {2}</value></data>
+  <data name="Customer_ModeCredit" xml:space="preserve"><value>Crédito disponible</value></data>
+  <data name="Customer_ModeCashOnly" xml:space="preserve"><value>Solo efectivo</value></data>
+  <data name="Customer_NewTitle" xml:space="preserve"><value>Nuevo cliente</value></data>
+  <data name="Customer_EditTitle" xml:space="preserve"><value>Editar cliente</value></data>
+  <data name="Customer_Name" xml:space="preserve"><value>Nombre</value></data>
+  <data name="Customer_Phone" xml:space="preserve"><value>Teléfono</value></data>
+  <data name="Customer_Email" xml:space="preserve"><value>Email</value></data>
+  <data name="Customer_TaxId" xml:space="preserve"><value>RUC</value></data>
+  <data name="Customer_CreditSection" xml:space="preserve"><value>Crédito</value></data>
+  <data name="Customer_CreditMode" xml:space="preserve"><value>Modalidad</value></data>
+  <data name="Customer_CreditLimit" xml:space="preserve"><value>Límite de crédito</value></data>
+  <data name="Customer_CreditReadOnly" xml:space="preserve"><value>{0}, límite {1}</value></data>
+  <data name="Customer_CreditReadOnlyHint" xml:space="preserve"><value>Solo un Administrador puede asignar crédito.</value></data>
+  <data name="Customer_LimitInvalid" xml:space="preserve"><value>Capture el límite como 1234.50; debe ser mayor o igual que 0 y no exceder $999,999.99.</value></data>
+  <data name="Customer_DuplicateTaxId" xml:space="preserve"><value>El RUC ya está registrado para otro cliente</value></data>
+  <data name="Customer_HasBalance" xml:space="preserve"><value>El cliente tiene un saldo pendiente de {0}; no se puede desactivar</value></data>
+  <data name="Customer_NotFound" xml:space="preserve"><value>El cliente ya no existe.</value></data>
+  <data name="Customer_ConflictTitle" xml:space="preserve"><value>Cliente modificado</value></data>
+  <data name="Customer_Conflict" xml:space="preserve"><value>Otro proceso modificó este cliente después de que lo abrió. ¿Recargar los datos actuales?</value></data>
+  <data name="Customer_DetailTitle" xml:space="preserve"><value>Cliente: {0}</value></data>
+  <data name="Customer_Contact" xml:space="preserve"><value>Teléfono: {0} · Email: {1} · RUC: {2}</value></data>
+  <data name="Customer_Limit" xml:space="preserve"><value>Límite</value></data>
+  <data name="Customer_Balance" xml:space="preserve"><value>Saldo pendiente</value></data>
+  <data name="Customer_Available" xml:space="preserve"><value>Disponible</value></data>
+  <data name="Customer_DaysOverdue" xml:space="preserve"><value>Días vencido</value></data>
+  <data name="Customer_Edit" xml:space="preserve"><value>Editar</value></data>
+  <data name="Customer_Deactivate" xml:space="preserve"><value>Desactivar</value></data>
+  <data name="Customer_Activate" xml:space="preserve"><value>Activar</value></data>
+  <data name="Customer_DeactivateTitle" xml:space="preserve"><value>Desactivar cliente</value></data>
+  <data name="Customer_DeactivateQuestion" xml:space="preserve"><value>¿Desactivar a {0}? No aparecerá en el punto de venta; su historial se conserva.</value></data>
+  <data name="Customer_InactiveBadge" xml:space="preserve"><value>Cliente inactivo</value></data>
+  <data name="Customer_TabSales" xml:space="preserve"><value>Ventas a crédito</value></data>
+  <data name="Customer_TabPayments" xml:space="preserve"><value>Abonos</value></data>
+  <data name="Payment_OnAccount" xml:space="preserve"><value>A crédito</value></data>
+  <data name="Reports_Sales_OnAccount" xml:space="preserve"><value>A crédito</value></data>
+  <data name="Auth_OperationCreditOverLimit" xml:space="preserve"><value>Venta a crédito sobre el límite</value></data>
+  <data name="Credit_ChooseCustomer" xml:space="preserve"><value>Cliente…</value></data>
+  <data name="Credit_CustomerLabel" xml:space="preserve"><value>Cliente: {0}</value></data>
+  <data name="Credit_ClearCustomer" xml:space="preserve"><value>Quitar cliente</value></data>
+  <data name="Credit_PickerTitle" xml:space="preserve"><value>Cliente de la venta a crédito</value></data>
+  <data name="Credit_PickerSearch" xml:space="preserve"><value>Buscar por nombre, teléfono o RUC</value></data>
+  <data name="Credit_PickerEmpty" xml:space="preserve"><value>No hay clientes con crédito que coincidan.</value></data>
+  <data name="Credit_PickerHint" xml:space="preserve"><value>↑/↓ para moverse, Enter para elegir, Esc para cerrar.</value></data>
+  <data name="Credit_Choose" xml:space="preserve"><value>Elegir</value></data>
+  <data name="Credit_SellOnCredit" xml:space="preserve"><value>Venta a crédito</value></data>
+  <data name="Credit_PayOtherWay" xml:space="preserve"><value>Cobrar de otra forma</value></data>
+  <data name="Credit_Balance" xml:space="preserve"><value>Saldo</value></data>
+  <data name="Credit_Limit" xml:space="preserve"><value>Límite</value></data>
+  <data name="Credit_Available" xml:space="preserve"><value>Disponible</value></data>
+  <data name="Credit_Overdue" xml:space="preserve"><value>El cliente tiene ventas vencidas</value></data>
+  <data name="Credit_Exceeds" xml:space="preserve"><value>Excede el límite por {0}; requiere autorización</value></data>
+  <data name="Credit_LimitExceeded" xml:space="preserve"><value>La venta excede el límite de crédito del cliente por {0}. Se requiere autorización de un Administrador</value></data>
+  <data name="Credit_NotEligible" xml:space="preserve"><value>Este cliente no tiene crédito disponible</value></data>
+  <data name="Credit_OnAccountInfo" xml:space="preserve"><value>Se registrará un único pago a crédito por el total, sin efectivo ni cambio.</value></data>
+  <data name="Credit_Section" xml:space="preserve"><value>Crédito</value></data>
+  <data name="Credit_SaleCustomer" xml:space="preserve"><value>Cliente: {0}</value></data>
+  <data name="Credit_SaleBalance" xml:space="preserve"><value>Saldo de esta venta: {0}</value></data>
+  <data name="Credit_StatusPending" xml:space="preserve"><value>Pendiente de pago</value></data>
+  <data name="Credit_StatusPaid" xml:space="preserve"><value>Pagada</value></data>
+  <data name="Credit_StatusCancelled" xml:space="preserve"><value>Cancelada</value></data>
+  <data name="Credit_OpenCustomer" xml:space="preserve"><value>Ver ficha del cliente</value></data>
+  <data name="Customer_ColFolio" xml:space="preserve"><value>Folio</value></data>
+  <data name="Customer_ColDate" xml:space="preserve"><value>Fecha</value></data>
+  <data name="Customer_ColAmount" xml:space="preserve"><value>Monto</value></data>
+  <data name="Customer_ColSaleBalance" xml:space="preserve"><value>Saldo</value></data>
+  <data name="Customer_ColState" xml:space="preserve"><value>Estado</value></data>
+  <data name="Customer_ColDaysOverdue" xml:space="preserve"><value>Días vencido</value></data>
+  <data name="Customer_SalesEmpty" xml:space="preserve"><value>El cliente no tiene ventas a crédito.</value></data>
+  <data name="Customer_OpenSale" xml:space="preserve"><value>Ver venta</value></data>
+  <data name="Shift_CreditSection" xml:space="preserve"><value>Crédito</value></data>
+  <data name="Shift_OnAccountSales" xml:space="preserve"><value>Ventas a crédito</value></data>
+  <data name="Shift_PaymentsCash" xml:space="preserve"><value>Abonos en efectivo</value></data>
+  <data name="Shift_PaymentsNonCash" xml:space="preserve"><value>Abonos con tarjeta o transferencia</value></data>
+  <data name="Shift_PaymentVoids" xml:space="preserve"><value>Anulaciones de abonos</value></data>
+  <data name="Auth_OperationVoidPayment" xml:space="preserve"><value>Anular abono</value></data>
+  <data name="Payment_RegisterTitle" xml:space="preserve"><value>Registrar abono</value></data>
+  <data name="Payment_CurrentBalance" xml:space="preserve"><value>Saldo actual: {0}</value></data>
+  <data name="Payment_FifoHint" xml:space="preserve"><value>Se aplicará a las ventas más antiguas primero</value></data>
+  <data name="Payment_Amount" xml:space="preserve"><value>Monto</value></data>
+  <data name="Payment_Method" xml:space="preserve"><value>Forma de pago</value></data>
+  <data name="Payment_Reference" xml:space="preserve"><value>Referencia</value></data>
+  <data name="Payment_Register" xml:space="preserve"><value>Registrar</value></data>
+  <data name="Payment_AmountInvalid" xml:space="preserve"><value>Capture el monto como 1234.50.</value></data>
+  <data name="Payment_ExceedsBalance" xml:space="preserve"><value>El monto debe ser mayor que 0 y no exceder el saldo de {0}</value></data>
+  <data name="Payment_ShiftRequired" xml:space="preserve"><value>Se requiere un turno abierto para registrar o anular abonos.</value></data>
+  <data name="Payment_Registered" xml:space="preserve"><value>Abono {0} registrado. Saldo nuevo: {1}</value></data>
+  <data name="Payment_PrintFailed" xml:space="preserve"><value>Abono registrado. No se pudo imprimir el recibo; puede reimprimirlo desde el historial</value></data>
+  <data name="Payment_VoidTitle" xml:space="preserve"><value>Anular abono</value></data>
+  <data name="Payment_VoidSummary" xml:space="preserve"><value>Abono {0} del {1} por {2} ({3})</value></data>
+  <data name="Payment_VoidReason" xml:space="preserve"><value>Motivo</value></data>
+  <data name="Payment_VoidConfirm" xml:space="preserve"><value>Anular abono</value></data>
+  <data name="Payment_ReturnedAfter" xml:space="preserve"><value>Este abono se aplicó a una venta que después se canceló o devolvió; no se puede anular</value></data>
+  <data name="Payment_AlreadyVoided" xml:space="preserve"><value>El abono ya está anulado</value></data>
+  <data name="Payment_InsufficientCash" xml:space="preserve"><value>No hay efectivo suficiente en la caja para devolver este abono.</value></data>
+  <data name="Payment_Voided" xml:space="preserve"><value>Abono anulado.</value></data>
+  <data name="Payment_Tab_Register" xml:space="preserve"><value>Registrar abono</value></data>
+  <data name="Payment_Tab_Reprint" xml:space="preserve"><value>Reimprimir recibo</value></data>
+  <data name="Payment_Tab_Void" xml:space="preserve"><value>Anular</value></data>
+  <data name="Payment_StatusActive" xml:space="preserve"><value>Vigente</value></data>
+  <data name="Payment_StatusVoided" xml:space="preserve"><value>Anulado</value></data>
+  <data name="Payment_VoidedTip" xml:space="preserve"><value>Anulado: {0}</value></data>
+  <data name="Payment_ColFolio" xml:space="preserve"><value>Folio</value></data>
+  <data name="Payment_ColDate" xml:space="preserve"><value>Fecha</value></data>
+  <data name="Payment_ColAmount" xml:space="preserve"><value>Monto</value></data>
+  <data name="Payment_ColMethod" xml:space="preserve"><value>Forma de pago</value></data>
+  <data name="Payment_ColReference" xml:space="preserve"><value>Referencia</value></data>
+  <data name="Payment_ColBefore" xml:space="preserve"><value>Saldo anterior</value></data>
+  <data name="Payment_ColAfter" xml:space="preserve"><value>Saldo nuevo</value></data>
+  <data name="Payment_ColStatus" xml:space="preserve"><value>Estado</value></data>
+  <data name="Payment_Empty" xml:space="preserve"><value>El cliente no tiene abonos.</value></data>
+  <data name="Return_CreditReduces" xml:space="preserve"><value>Reduce el saldo en {0}</value></data>
+  <data name="Return_CreditReapplied" xml:space="preserve"><value>Se aplica a otras ventas del cliente {0}</value></data>
+  <data name="Return_CreditCashRefund" xml:space="preserve"><value>Reintegro en efectivo {0}</value></data>
+  <data name="Nav_ReportReceivables" xml:space="preserve"><value>Créditos</value></data>
+  <data name="Receivables_Title" xml:space="preserve"><value>Créditos</value></data>
+  <data name="Receivables_StatusAll" xml:space="preserve"><value>Todos</value></data>
+  <data name="Receivables_StatusCurrent" xml:space="preserve"><value>Al día</value></data>
+  <data name="Receivables_StatusOverdue" xml:space="preserve"><value>Vencido</value></data>
+  <data name="Receivables_StatusAtLimit" xml:space="preserve"><value>Al límite</value></data>
+  <data name="Receivables_Search" xml:space="preserve"><value>Buscar cliente por nombre, teléfono o RUC</value></data>
+  <data name="Receivables_Refresh" xml:space="preserve"><value>Actualizar</value></data>
+  <data name="Receivables_ColCustomer" xml:space="preserve"><value>Cliente</value></data>
+  <data name="Receivables_ColBalance" xml:space="preserve"><value>Saldo pendiente</value></data>
+  <data name="Receivables_ColLimit" xml:space="preserve"><value>Límite</value></data>
+  <data name="Receivables_ColLastPayment" xml:space="preserve"><value>Último abono</value></data>
+  <data name="Receivables_ColDaysOverdue" xml:space="preserve"><value>Días vencido</value></data>
+  <data name="Receivables_ColStatus" xml:space="preserve"><value>Estado</value></data>
+  <data name="Receivables_NoPayment" xml:space="preserve"><value>Sin abonos</value></data>
+  <data name="Receivables_TotalBalance" xml:space="preserve"><value>Saldo total pendiente</value></data>
+  <data name="Receivables_CustomerCount" xml:space="preserve"><value>Clientes con saldo</value></data>
+  <data name="Receivables_Empty" xml:space="preserve"><value>No hay clientes con saldo pendiente.</value></data>
+  <data name="Receivables_TermDays" xml:space="preserve"><value>Plazo de pago (días)</value></data>
+  <data name="Receivables_TermHelp" xml:space="preserve"><value>Entre 1 y 3650 días. Por omisión, 30. Cambiarlo afecta el vencimiento de todas las cuentas.</value></data>
+  <data name="Receivables_TermSave" xml:space="preserve"><value>Guardar plazo</value></data>
+  <data name="Receivables_TermSaved" xml:space="preserve"><value>Plazo de pago guardado.</value></data>
+  <data name="Receivables_TermInvalid" xml:space="preserve"><value>El plazo debe estar entre 1 y 3650 días.</value></data>
+  <data name="Receivables_OpenCustomer" xml:space="preserve"><value>Ver ficha del cliente</value></data>
 </root>

@@ -29,7 +29,11 @@ public sealed class SaleReturnRefund
 
     public Guid? ReversedBy { get; private set; }
 
-    /// <summary>Efectivo: pagado; tarjeta y transferencia: pendiente de reversa; nota: restaurada.</summary>
+    /// <summary>
+    /// Efectivo: pagado; tarjeta y transferencia: pendiente de reversa; nota: restaurada; venta a
+    /// crédito: liquidada contra la deuda (014). El efectivo que sobre de una venta a crédito se crea
+    /// como renglón aparte <c>CASH</c> / <c>PAID</c> ligado al mismo pago (research §8).
+    /// </summary>
     public static SaleReturnRefund Create(Guid salePaymentId, PaymentMethod method, long amountCents)
     {
         if (salePaymentId == Guid.Empty || amountCents <= 0)
@@ -47,6 +51,7 @@ public sealed class SaleReturnRefund
             {
                 PaymentMethod.Cash => RefundStatus.Paid,
                 PaymentMethod.CreditNote => RefundStatus.Restored,
+                PaymentMethod.OnAccount => RefundStatus.Settled,
                 _ => RefundStatus.PendingReversal,
             },
         };

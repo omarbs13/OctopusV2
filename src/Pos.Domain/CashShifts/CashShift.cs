@@ -61,6 +61,17 @@ public sealed class CashShift
 
     public long? CreditNotesIssuedCents { get; private set; }
 
+    /// <summary>Ventas a crédito del turno (014); nulo en turnos cerrados antes de 0.9.0.</summary>
+    public long? OnAccountSalesCents { get; private set; }
+
+    public long? CustomerPaymentsCashCents { get; private set; }
+
+    public long? CustomerPaymentsNonCashCents { get; private set; }
+
+    public long? CustomerPaymentVoidsCashCents { get; private set; }
+
+    public long? CustomerPaymentVoidsNonCashCents { get; private set; }
+
     public long? DepositsCents { get; private set; }
 
     public long? WithdrawalsCents { get; private set; }
@@ -182,6 +193,11 @@ public sealed class CashShift
         CashRefundsCents = totals.CashRefundsCents;
         NonCashRefundsCents = totals.NonCashRefundsCents;
         CreditNotesIssuedCents = totals.CreditNotesIssuedCents;
+        OnAccountSalesCents = totals.OnAccountSalesCents;
+        CustomerPaymentsCashCents = totals.CustomerPaymentsCashCents;
+        CustomerPaymentsNonCashCents = totals.CustomerPaymentsNonCashCents;
+        CustomerPaymentVoidsCashCents = totals.CustomerPaymentVoidsCashCents;
+        CustomerPaymentVoidsNonCashCents = totals.CustomerPaymentVoidsNonCashCents;
         DepositsCents = deposits;
         WithdrawalsCents = withdrawals;
         ExpectedCashCents = expected;

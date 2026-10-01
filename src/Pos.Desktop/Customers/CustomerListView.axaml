@@ -1,0 +1,118 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Pos.Desktop.Customers"
+             xmlns:products="using:Pos.Desktop.Products"
+             xmlns:res="using:Pos.Desktop.Resources"
+             xmlns:forms="using:Pos.Desktop.Forms"
+             x:Class="Pos.Desktop.Customers.CustomerListView"
+             x:DataType="vm:CustomerListViewModel">
+
+  <UserControl.KeyBindings>
+    <KeyBinding Gesture="Ctrl+N" Command="{Binding NewCustomerCommand}" />
+    <KeyBinding Gesture="Alt+Home" Command="{Binding FirstPageCommand}" />
+    <KeyBinding Gesture="Alt+PageUp" Command="{Binding PreviousPageCommand}" />
+    <KeyBinding Gesture="Alt+PageDown" Command="{Binding NextPageCommand}" />
+    <KeyBinding Gesture="Alt+End" Command="{Binding LastPageCommand}" />
+  </UserControl.KeyBindings>
+
+  <forms:FormHostView Host="{Binding Forms}">
+    <forms:FormHostView.ListContent>
+      <Grid RowDefinitions="Auto,Auto,*,Auto">
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" RowSpacing="8" Margin="0,0,0,12">
+          <TextBox x:Name="SearchBox" Grid.Column="0" Text="{Binding SearchText}"
+                   PlaceholderText="{x:Static res:Strings.Customer_SearchPlaceholder}">
+            <TextBox.KeyBindings>
+              <KeyBinding Gesture="Enter" Command="{Binding SearchNowCommand}" />
+            </TextBox.KeyBindings>
+          </TextBox>
+          <CheckBox Grid.Column="1" Margin="12,0" Content="{x:Static res:Strings.Customer_ShowInactive}"
+                    IsChecked="{Binding IncludeInactive}" />
+          <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="8">
+            <Button Classes="accent" Content="{x:Static res:Strings.Customer_New}" Command="{Binding NewCustomerCommand}" />
+            <Button Content="{x:Static res:Strings.Customer_Open}" Command="{Binding OpenDetailCommand}" />
+          </StackPanel>
+        </Grid>
+
+        <!-- Encabezados -->
+        <Grid Grid.Row="1" Margin="12,0,12,4" ColumnDefinitions="*,130,130,150,120,120,90">
+          <Grid.Styles>
+            <Style Selector="TextBlock">
+              <Setter Property="FontWeight" Value="SemiBold" />
+            </Style>
+          </Grid.Styles>
+          <TextBlock Grid.Column="0" Text="{x:Static res:Strings.Customer_ColName}" />
+          <TextBlock Grid.Column="1" Text="{x:Static res:Strings.Customer_ColPhone}" />
+          <TextBlock Grid.Column="2" Text="{x:Static res:Strings.Customer_ColTaxId}" />
+          <TextBlock Grid.Column="3" Text="{x:Static res:Strings.Customer_ColMode}" />
+          <TextBlock Grid.Column="4" Text="{x:Static res:Strings.Customer_ColLimit}" TextAlignment="Right" />
+          <TextBlock Grid.Column="5" Text="{x:Static res:Strings.Customer_ColBalance}" TextAlignment="Right" />
+          <TextBlock Grid.Column="6" Text="{x:Static res:Strings.Customer_ColStatus}" Margin="12,0,0,0" />
+        </Grid>
+
+        <ListBox x:Name="CustomerList" Grid.Row="2" ItemsSource="{Binding Rows}" SelectedItem="{Binding SelectedRow}"
+                 DoubleTapped="OnCustomerDoubleTapped">
+          <ListBox.KeyBindings>
+            <KeyBinding Gesture="Enter" Command="{Binding OpenDetailCommand}" />
+          </ListBox.KeyBindings>
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:CustomerRow">
+              <Grid ColumnDefinitions="*,130,130,150,120,120,90" MinHeight="40"
+                    Opacity="{Binding IsActive, Converter={x:Static products:InactiveOpacityConverter.Instance}}">
+                <Grid.Styles>
+                  <Style Selector="TextBlock">
+                    <Setter Property="VerticalAlignment" Value="Center" />
+                  </Style>
+                </Grid.Styles>
+                <TextBlock Grid.Column="0" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                <TextBlock Grid.Column="1" Text="{Binding Phone}" TextTrimming="CharacterEllipsis" />
+                <TextBlock Grid.Column="2" Text="{Binding TaxId}" TextTrimming="CharacterEllipsis" />
+                <TextBlock Grid.Column="3" Text="{Binding ModeText}" />
+                <TextBlock Grid.Column="4" Text="{Binding LimitText}" TextAlignment="Right" />
+                <TextBlock Grid.Column="5" Text="{Binding BalanceText}" TextAlignment="Right" />
+                <TextBlock Grid.Column="6" Text="{Binding StatusText}" Margin="12,0,0,0" />
+              </Grid>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+
+        <TextBlock Grid.Row="2" Margin="12" Text="{x:Static res:Strings.Customer_Empty}"
+                   IsVisible="{Binding IsEmpty}" HorizontalAlignment="Center" VerticalAlignment="Top" />
+
+        <!-- Paginación -->
+        <Grid Grid.Row="3" Margin="0,8,0,0" ColumnDefinitions="*,Auto">
+          <Grid.Styles>
+            <Style Selector="Button.pager">
+              <Setter Property="MinWidth" Value="44" />
+              <Setter Property="MinHeight" Value="44" />
+              <Setter Property="HorizontalContentAlignment" Value="Center" />
+              <Setter Property="VerticalContentAlignment" Value="Center" />
+            </Style>
+          </Grid.Styles>
+          <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="{Binding PageSummary}" />
+          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+            <Button Classes="pager" Command="{Binding FirstPageCommand}"
+                    ToolTip.Tip="{x:Static res:Strings.Products_FirstPage}"
+                    AutomationProperties.Name="{x:Static res:Strings.Products_FirstPage}">
+              <PathIcon Data="{StaticResource Icon.PageFirst}" />
+            </Button>
+            <Button Classes="pager" Command="{Binding PreviousPageCommand}"
+                    ToolTip.Tip="{x:Static res:Strings.Products_PreviousPage}"
+                    AutomationProperties.Name="{x:Static res:Strings.Products_PreviousPage}">
+              <PathIcon Data="{StaticResource Icon.PagePrevious}" />
+            </Button>
+            <Button Classes="pager" Command="{Binding NextPageCommand}"
+                    ToolTip.Tip="{x:Static res:Strings.Products_NextPage}"
+                    AutomationProperties.Name="{x:Static res:Strings.Products_NextPage}">
+              <PathIcon Data="{StaticResource Icon.PageNext}" />
+            </Button>
+            <Button Classes="pager" Command="{Binding LastPageCommand}"
+                    ToolTip.Tip="{x:Static res:Strings.Products_LastPage}"
+                    AutomationProperties.Name="{x:Static res:Strings.Products_LastPage}">
+              <PathIcon Data="{StaticResource Icon.PageLast}" />
+            </Button>
+          </StackPanel>
+        </Grid>
+      </Grid>
+    </forms:FormHostView.ListContent>
+  </forms:FormHostView>
+</UserControl>

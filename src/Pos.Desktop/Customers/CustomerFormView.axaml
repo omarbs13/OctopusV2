@@ -1,0 +1,76 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Pos.Desktop.Customers"
+             xmlns:res="using:Pos.Desktop.Resources"
+             xmlns:forms="using:Pos.Desktop.Forms"
+             x:Class="Pos.Desktop.Customers.CustomerFormView"
+             x:DataType="vm:CustomerFormViewModel">
+
+  <UserControl.KeyBindings>
+    <KeyBinding Gesture="Enter" Command="{Binding SaveCommand}" />
+    <KeyBinding Gesture="Escape" Command="{Binding CancelCommand}" />
+  </UserControl.KeyBindings>
+
+  <UserControl.Styles>
+    <Style Selector="TextBlock.error">
+      <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCriticalBrush}" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="Margin" Value="0,2,0,0" />
+    </Style>
+    <Style Selector="StackPanel.field">
+      <Setter Property="Spacing" Value="4" />
+    </Style>
+  </UserControl.Styles>
+
+  <StackPanel Spacing="14" Width="320">
+    <TextBlock Text="{Binding Title}" FontSize="20" FontWeight="SemiBold" />
+
+    <StackPanel Classes="field">
+      <forms:FieldLabel Text="{x:Static res:Strings.Customer_Name}" IsRequired="True" />
+      <TextBox x:Name="NameBox" Text="{Binding Name}" MaxLength="120" />
+      <TextBlock Classes="error" Text="{Binding NameError}" IsVisible="{Binding NameError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+    </StackPanel>
+
+    <StackPanel Classes="field">
+      <forms:FieldLabel Text="{x:Static res:Strings.Customer_Phone}" IsRequired="True" />
+      <TextBox x:Name="PhoneBox" Text="{Binding Phone}" MaxLength="30" />
+      <TextBlock Classes="error" Text="{Binding PhoneError}" IsVisible="{Binding PhoneError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+    </StackPanel>
+
+    <StackPanel Classes="field">
+      <forms:FieldLabel Text="{x:Static res:Strings.Customer_Email}" />
+      <TextBox x:Name="EmailBox" Text="{Binding Email}" MaxLength="254" />
+      <TextBlock Classes="error" Text="{Binding EmailError}" IsVisible="{Binding EmailError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+    </StackPanel>
+
+    <StackPanel Classes="field">
+      <forms:FieldLabel Text="{x:Static res:Strings.Customer_TaxId}" />
+      <TextBox x:Name="TaxIdBox" Text="{Binding TaxId}" MaxLength="20" />
+      <TextBlock Classes="error" Text="{Binding TaxIdError}" IsVisible="{Binding TaxIdError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+    </StackPanel>
+
+    <!-- Crédito: editable solo por el Administrador (FR-020) -->
+    <TextBlock Text="{x:Static res:Strings.Customer_CreditSection}" FontWeight="SemiBold" />
+    <StackPanel Classes="field" IsVisible="{Binding CanEditCredit}">
+      <forms:FieldLabel Text="{x:Static res:Strings.Customer_CreditMode}" />
+      <ComboBox x:Name="ModeBox" HorizontalAlignment="Stretch" ItemsSource="{Binding Modes}" SelectedItem="{Binding SelectedMode}"
+                DisplayMemberBinding="{Binding Label, x:DataType=vm:CreditModeOption}" />
+      <forms:FieldLabel Text="{x:Static res:Strings.Customer_CreditLimit}" />
+      <TextBox x:Name="LimitBox" Text="{Binding LimitText}" MaxLength="12" />
+      <TextBlock Classes="error" Text="{Binding LimitError}" IsVisible="{Binding LimitError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+    </StackPanel>
+    <StackPanel Classes="field" IsVisible="{Binding IsCreditReadOnly}">
+      <TextBlock Text="{Binding CreditReadOnlyText}" />
+      <TextBlock Text="{x:Static res:Strings.Customer_CreditReadOnlyHint}" FontSize="12" Opacity="0.75" TextWrapping="Wrap" />
+    </StackPanel>
+
+    <TextBlock Classes="error" FontSize="13" Text="{Binding ErrorMessage}"
+               IsVisible="{Binding ErrorMessage, Converter={x:Static ObjectConverters.IsNotNull}}" />
+
+    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+      <Button Content="{x:Static res:Strings.Editor_Save}" Command="{Binding SaveCommand}" Classes="accent" MinWidth="100" />
+      <Button Content="{x:Static res:Strings.Common_Cancel}" Command="{Binding CancelCommand}" MinWidth="100" />
+    </StackPanel>
+  </StackPanel>
+</UserControl>

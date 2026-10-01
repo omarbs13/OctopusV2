@@ -45,7 +45,26 @@ public sealed class Checkout
 
     public bool CanConfirm => Total.Cents > 0 && Shortfall.Cents == 0;
 
-    public void SetCashReceived(Money received) => Received = received;
+    /// <summary>Venta a crédito: un único pago <see cref="PaymentMethod.OnAccount"/> por el total (014).</summary>
+    public bool IsOnAccount => _payments.Any(p => p.Method == PaymentMethod.OnAccount);
+
+    public void SetCashReceived(Money received) => Received = IsOnAccount ? Money.Zero : received;
+
+    /// <summary>
+    /// Venta a crédito (014, FR-005): reemplaza todos los pagos capturados por un único pago
+    /// <see cref="PaymentMethod.OnAccount"/> por el total, sin efectivo recibido ni cambio.
+    /// </summary>
+    public void SetOnAccount()
+    {
+        if (Total.Cents <= 0)
+        {
+            throw new DomainException("El total de la venta debe ser mayor que 0.");
+        }
+
+        _payments.Clear();
+        Received = Money.Zero;
+        _payments.Add(new CheckoutPayment(PaymentMethod.OnAccount, Total, null));
+    }
 
     /// <summary>Monto rápido: exacto (sin billete) usa el pendiente; un billete reemplaza lo recibido.</summary>
     public void QuickAmount(int? bill = null)
@@ -70,6 +89,11 @@ public sealed class Checkout
         if (method == PaymentMethod.Cash)
         {
             throw new DomainException("El efectivo se captura como monto recibido.");
+        }
+
+        if (method == PaymentMethod.OnAccount || IsOnAccount)
+        {
+            throw new DomainException("La venta a crédito debe tener un único pago por el total.");
         }
 
         if (amount.Cents <= 0)

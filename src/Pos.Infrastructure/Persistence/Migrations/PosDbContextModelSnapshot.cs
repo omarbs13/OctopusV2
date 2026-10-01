@@ -201,6 +201,18 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.Property<long?>("CreditNotesIssuedCents")
                         .HasColumnType("INTEGER");
 
+                    b.Property<long?>("CustomerPaymentVoidsCashCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("CustomerPaymentVoidsNonCashCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("CustomerPaymentsCashCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("CustomerPaymentsNonCashCents")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("TEXT");
 
@@ -217,6 +229,9 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<long>("Number")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("OnAccountSalesCents")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("OpenedAt")
@@ -350,6 +365,77 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("IX_CreditNoteMovements_Note_Sequence");
 
                     b.ToTable("CreditNoteMovements", (string)null);
+                });
+
+            modelBuilder.Entity("Pos.Domain.Customers.Customer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("CreditLimitCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("CreditMode")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(254)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SearchText")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TaxId")
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TaxId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Customers_TaxId")
+                        .HasFilter("\"TaxId\" IS NOT NULL");
+
+                    b.HasIndex("IsActive", "SearchText")
+                        .HasDatabaseName("IX_Customers_Active_Search");
+
+                    b.ToTable("Customers", (string)null);
                 });
 
             modelBuilder.Entity("Pos.Domain.Inventory.InventoryMovement", b =>
@@ -658,6 +744,187 @@ namespace Pos.Infrastructure.Persistence.Migrations
                             Name = "Paquete",
                             SortOrder = 8
                         });
+                });
+
+            modelBuilder.Entity("Pos.Domain.Receivables.CustomerPayment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("AmountCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("BalanceAfterCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("BalanceBeforeCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid?>("CashShiftId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Method")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("Number")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Reference")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("RequestId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("VoidAuthorizedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("VoidCashShiftId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("VoidReason")
+                        .HasMaxLength(250)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("VoidedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("VoidedBy")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CashShiftId")
+                        .HasDatabaseName("IX_CustomerPayments_CashShiftId");
+
+                    b.HasIndex("Number")
+                        .IsUnique()
+                        .HasDatabaseName("IX_CustomerPayments_Number");
+
+                    b.HasIndex("RequestId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_CustomerPayments_RequestId");
+
+                    b.HasIndex("VoidCashShiftId")
+                        .HasDatabaseName("IX_CustomerPayments_VoidCashShiftId");
+
+                    b.HasIndex("CustomerId", "CreatedAt")
+                        .HasDatabaseName("IX_CustomerPayments_Customer");
+
+                    b.ToTable("CustomerPayments", (string)null);
+                });
+
+            modelBuilder.Entity("Pos.Domain.Receivables.Receivable", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("BalanceCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CustomerName")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("OriginalCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid?>("OverLimitAuthorizedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("SaleId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SaleId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Receivables_SaleId");
+
+                    b.HasIndex("CustomerId", "Status", "CreatedAt", "Id")
+                        .HasDatabaseName("IX_Receivables_Customer_Status");
+
+                    b.ToTable("Receivables", (string)null);
+                });
+
+            modelBuilder.Entity("Pos.Domain.Receivables.ReceivableEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("AmountCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("CustomerPaymentId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ReceivableId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("SaleReturnId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(14)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerPaymentId")
+                        .HasDatabaseName("IX_ReceivableEntries_Payment");
+
+                    b.HasIndex("ReceivableId", "CreatedAt")
+                        .HasDatabaseName("IX_ReceivableEntries_Receivable");
+
+                    b.ToTable("ReceivableEntries", (string)null);
                 });
 
             modelBuilder.Entity("Pos.Domain.Returns.SaleReturn", b =>
@@ -1171,6 +1438,49 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Pos.Domain.Receivables.CustomerPayment", b =>
+                {
+                    b.HasOne("Pos.Domain.CashShifts.CashShift", null)
+                        .WithMany()
+                        .HasForeignKey("CashShiftId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Pos.Domain.Customers.Customer", null)
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Pos.Domain.CashShifts.CashShift", null)
+                        .WithMany()
+                        .HasForeignKey("VoidCashShiftId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Pos.Domain.Receivables.Receivable", b =>
+                {
+                    b.HasOne("Pos.Domain.Customers.Customer", null)
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Pos.Domain.Sales.Sale", null)
+                        .WithMany()
+                        .HasForeignKey("SaleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Pos.Domain.Receivables.ReceivableEntry", b =>
+                {
+                    b.HasOne("Pos.Domain.Receivables.Receivable", null)
+                        .WithMany("Entries")
+                        .HasForeignKey("ReceivableId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Pos.Domain.Returns.SaleReturn", b =>
                 {
                     b.HasOne("Pos.Domain.Sales.Sale", null)
@@ -1257,6 +1567,11 @@ namespace Pos.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Pos.Domain.Products.Product", b =>
                 {
                     b.Navigation("Image");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Receivables.Receivable", b =>
+                {
+                    b.Navigation("Entries");
                 });
 
             modelBuilder.Entity("Pos.Domain.Returns.SaleReturn", b =>

@@ -1,0 +1,41 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Pos.Desktop.Sales"
+             xmlns:res="using:Pos.Desktop.Resources"
+             x:Class="Pos.Desktop.Sales.CustomerPickerView"
+             x:DataType="vm:CustomerPickerViewModel">
+
+  <Border Width="560" Padding="16" CornerRadius="8" BorderThickness="1"
+          Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+          BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
+    <StackPanel Spacing="10">
+      <TextBlock Text="{x:Static res:Strings.Credit_PickerTitle}" FontSize="20" FontWeight="SemiBold" />
+      <TextBox x:Name="SearchBox" Text="{Binding SearchText}" MinHeight="44"
+               PlaceholderText="{x:Static res:Strings.Credit_PickerSearch}" />
+
+      <ListBox x:Name="ResultsList" MaxHeight="320"
+               ItemsSource="{Binding Rows}"
+               SelectedItem="{Binding SelectedRow}"
+               DoubleTapped="OnRowDoubleTapped">
+        <ListBox.ItemTemplate>
+          <DataTemplate x:DataType="vm:CustomerPickerRow">
+            <StackPanel MinHeight="44" VerticalAlignment="Center">
+              <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+              <TextBlock Text="{Binding Detail}" FontSize="12" Opacity="0.7" />
+            </StackPanel>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+      <TextBlock Text="{x:Static res:Strings.Credit_PickerEmpty}" IsVisible="{Binding IsEmpty}" Opacity="0.75" />
+      <TextBlock Text="{Binding ErrorMessage}" Foreground="{DynamicResource SystemFillColorCriticalBrush}" TextWrapping="Wrap"
+                 IsVisible="{Binding ErrorMessage, Converter={x:Static ObjectConverters.IsNotNull}}" />
+
+      <TextBlock Text="{x:Static res:Strings.Credit_PickerHint}" FontSize="12" Opacity="0.7" />
+
+      <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+        <Button Content="{x:Static res:Strings.Credit_Choose}" Command="{Binding ChooseCommand}" Classes="accent" MinWidth="110" MinHeight="44" />
+        <Button Content="{x:Static res:Strings.Common_Cancel}" Command="{Binding CloseCommand}" MinWidth="110" MinHeight="44" />
+      </StackPanel>
+    </StackPanel>
+  </Border>
+</UserControl>

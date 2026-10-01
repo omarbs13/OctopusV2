@@ -13,6 +13,7 @@ public static class ReportsModule
     public const string CashCountPageId = "reports.cashcount";
     public const string InventoryPageId = "reports.inventory";
     public const string MyShiftPageId = "sales.myshift";
+    public const string ReceivablesPageId = "reports.receivables";
 
     /// <summary>
     /// Reportes y análisis (009): grupo "Reportes" con Ventas, Arqueo e Inventario, la vista "Mi turno"
@@ -28,6 +29,9 @@ public static class ReportsModule
         services.AddPage<CashCountReportViewModel, CashCountReportView>(CashCountPageId, Strings.Nav_ReportCashCount, "Icon.Movements", 10, GroupId, permission: Permission.ViewReports);
 
         services.AddPage<InventoryReportViewModel, InventoryReportView>(InventoryPageId, Strings.Nav_ReportInventory, "Icon.Stock", 20, GroupId, permission: Permission.ViewInventory);
+
+        // "Créditos" (014): depende de la licencia Crédito y clientes (vía ViewReceivables), no de Reportes avanzados.
+        services.AddPage<ReceivablesReportViewModel, ReceivablesReportView>(ReceivablesPageId, Strings.Nav_ReportReceivables, "Icon.Users", 30, GroupId, permission: Permission.ViewReceivables);
 
         // "Mi turno": dentro del grupo Ventas, junto a "Turnos" (contracts/ui.md).
         services.AddPage<MyShiftViewModel, MyShiftView>(MyShiftPageId, Strings.Nav_MyShift, "Icon.Movements", 15, SalesModule.GroupId, permission: Permission.OperateShift);

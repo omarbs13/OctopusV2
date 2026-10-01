@@ -98,6 +98,22 @@ public sealed partial class MyShiftViewModel : PageViewModel
     [ObservableProperty]
     public partial string WithdrawalsText { get; private set; } = string.Empty;
 
+    /// <summary>Bloque "Crédito" del turno (014, FR-012); sin montos de efectivo esperado.</summary>
+    [ObservableProperty]
+    public partial bool HasCredit { get; private set; }
+
+    [ObservableProperty]
+    public partial string OnAccountSalesText { get; private set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string PaymentsCashText { get; private set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string PaymentsNonCashText { get; private set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string PaymentVoidsText { get; private set; } = string.Empty;
+
     /// <summary>Solo con el turno cerrado se muestran efectivo esperado, contado y diferencia.</summary>
     [ObservableProperty]
     public partial bool ShowCashCount { get; private set; }
@@ -214,6 +230,11 @@ public sealed partial class MyShiftViewModel : PageViewModel
         SalesTotalText = MoneyConverter.Format(summary.TotalSoldCents);
         DepositsText = MoneyConverter.Format(summary.DepositsCents);
         WithdrawalsText = MoneyConverter.Format(summary.WithdrawalsCents);
+        HasCredit = summary.Credit is not null;
+        OnAccountSalesText = MoneyConverter.Format(summary.Credit?.OnAccountSalesCents ?? 0);
+        PaymentsCashText = MoneyConverter.Format(summary.Credit?.PaymentsCashCents ?? 0);
+        PaymentsNonCashText = MoneyConverter.Format(summary.Credit?.PaymentsNonCashCents ?? 0);
+        PaymentVoidsText = MoneyConverter.Format(summary.Credit?.PaymentVoidsCents ?? 0);
 
         ShowCashCount = !summary.IsOpen && summary.ExpectedCashCents is not null;
         ExpectedText = summary.ExpectedCashCents is { } expected ? MoneyConverter.Format(expected) : string.Empty;

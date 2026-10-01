@@ -6,6 +6,7 @@ using Pos.Application.Products;
 using Pos.Application.Returns;
 using Pos.Application.Sales;
 using Pos.Domain.CashShifts;
+using Pos.Domain.Receivables;
 using Pos.Domain.Returns;
 using Pos.Domain.Sales;
 using Pos.Infrastructure.Persistence;
@@ -101,6 +102,7 @@ public sealed class SaleRepository : ISaleRepository
                 s.Status,
                 s.CreatedBy,
                 CashierName = _context.Users.Where(u => u.Id == s.CreatedBy).Select(u => u.FullName).FirstOrDefault(),
+                CreditStatus = _context.Receivables.Where(r => r.SaleId == s.Id).Select(r => (ReceivableStatus?)r.Status).FirstOrDefault(),
             })
             .ToListAsync(cancellationToken);
 
@@ -120,7 +122,8 @@ public sealed class SaleRepository : ISaleRepository
                 r.TotalCents,
                 methods.GetValueOrDefault(r.Id) ?? [],
                 r.Status,
-                r.CashierName ?? SystemUser.NameOf(r.CreatedBy)))
+                r.CashierName ?? SystemUser.NameOf(r.CreatedBy),
+                r.CreditStatus))
             .ToList();
         return new SalePage(items, total, page, search.PageSize);
     }
@@ -155,6 +158,12 @@ public sealed class SaleRepository : ISaleRepository
                 NoteNumber = _context.CreditNotes.Where(n => n.Id == r.CreditNoteId).Select(n => (long?)n.Number).FirstOrDefault(),
             })
             .ToListAsync(cancellationToken);
+
+        // 014: la venta a crédito se liga al cliente por su cuenta por cobrar (research §2).
+        var credit = await _context.Receivables.AsNoTracking()
+            .Where(r => r.SaleId == id)
+            .Select(r => new CreditInfo(r.CustomerId, r.CustomerName, r.BalanceCents, r.Status))
+            .SingleOrDefaultAsync(cancellationToken);
 
         var userIds = new[] { sale.CreatedBy, sale.CancelledBy ?? sale.CreatedBy }
             .Concat(returns.SelectMany(r => new[] { r.CreatedBy, r.AuthorizedBy }))
@@ -206,7 +215,8 @@ public sealed class SaleRepository : ISaleRepository
                 r.TotalCents,
                 r.Kind,
                 r.Compensation,
-                r.NoteNumber is { } note ? Pos.Domain.CreditNotes.CreditNoteFolio.Format(note) : null))]);
+                r.NoteNumber is { } note ? Pos.Domain.CreditNotes.CreditNoteFolio.Format(note) : null))],
+            Credit: credit);
     }
 
     public async Task<ShiftSalesTotals> GetShiftTotalsAsync(Guid shiftId, CancellationToken cancellationToken)
@@ -246,6 +256,16 @@ public sealed class SaleRepository : ISaleRepository
             .Where(r => r.CashShiftId == shiftId && r.Compensation == ReturnCompensation.CreditNote)
             .SumAsync(r => (long?)r.TotalCents, cancellationToken) ?? 0;
 
+        // 014: abonos registrados en el turno (vigentes o anulados después) y anulaciones hechas en el turno.
+        var customerPayments = await _context.CustomerPayments.AsNoTracking()
+            .Where(p => p.CashShiftId == shiftId)
+            .Select(p => new { p.Method, p.AmountCents })
+            .ToListAsync(cancellationToken);
+        var customerPaymentVoids = await _context.CustomerPayments.AsNoTracking()
+            .Where(p => p.VoidCashShiftId == shiftId && p.Status == CustomerPaymentStatus.Voided)
+            .Select(p => new { p.Method, p.AmountCents })
+            .ToListAsync(cancellationToken);
+
         var completed = byStatus.FirstOrDefault(x => x.Status == SaleStatus.Completed);
         var cancelled = byStatus.FirstOrDefault(x => x.Status == SaleStatus.Cancelled);
         return new ShiftSalesTotals(
@@ -260,7 +280,12 @@ public sealed class SaleRepository : ISaleRepository
             Paid(PaymentMethod.Transfer, SaleStatus.Completed),
             refunds.Where(f => f.Method == PaymentMethod.Cash).Sum(f => f.AmountCents),
             refunds.Where(f => f.Method is PaymentMethod.Card or PaymentMethod.Transfer).Sum(f => f.AmountCents),
-            notesIssued);
+            notesIssued,
+            Paid(PaymentMethod.OnAccount, SaleStatus.Completed),
+            customerPayments.Where(p => p.Method == PaymentMethod.Cash).Sum(p => p.AmountCents),
+            customerPayments.Where(p => p.Method != PaymentMethod.Cash).Sum(p => p.AmountCents),
+            customerPaymentVoids.Where(p => p.Method == PaymentMethod.Cash).Sum(p => p.AmountCents),
+            customerPaymentVoids.Where(p => p.Method != PaymentMethod.Cash).Sum(p => p.AmountCents));
     }
 
     public async Task<IReadOnlyList<ShiftSaleRowDto>> ListByShiftAsync(Guid shiftId, CancellationToken cancellationToken)
@@ -371,6 +396,11 @@ public sealed class SaleRepository : ISaleRepository
         if (search.CashierId is { } cashier)
         {
             sales = sales.Where(s => s.CreatedBy == cashier);
+        }
+
+        if (search.CustomerId is { } customer)
+        {
+            sales = sales.Where(s => _context.Receivables.Any(r => r.SaleId == s.Id && r.CustomerId == customer));
         }
 
         return sales;

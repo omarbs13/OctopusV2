@@ -72,7 +72,7 @@ internal sealed class SalesReportReader : ISalesReportReader
 
         // Promedio: total / ventas, media hacia arriba (data-model.md).
         var average = (total + (count / 2)) / count;
-        return new SalesTotals(count, total, average, Paid(PaymentMethod.Cash), Paid(PaymentMethod.Card), Paid(PaymentMethod.Transfer), Paid(PaymentMethod.CreditNote));
+        return new SalesTotals(count, total, average, Paid(PaymentMethod.Cash), Paid(PaymentMethod.Card), Paid(PaymentMethod.Transfer), Paid(PaymentMethod.CreditNote), Paid(PaymentMethod.OnAccount));
     }
 
     /// <summary>

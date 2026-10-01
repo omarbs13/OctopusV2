@@ -91,7 +91,8 @@ public sealed class CashShiftRepository : ICashShiftRepository
             shift.ClosingComment,
             shift.CashRefundsCents ?? 0,
             shift.NonCashRefundsCents ?? 0,
-            shift.CreditNotesIssuedCents ?? 0);
+            shift.CreditNotesIssuedCents ?? 0,
+            ShiftCreditTotals.From(shift));
     }
 
     public async Task<long> NextNumberAsync(CancellationToken cancellationToken) =>
@@ -227,7 +228,8 @@ public sealed class CashShiftRepository : ICashShiftRepository
                 shift.ClosingComment,
                 shift.CashRefundsCents ?? 0,
                 shift.NonCashRefundsCents ?? 0,
-                shift.CreditNotesIssuedCents ?? 0)
+                shift.CreditNotesIssuedCents ?? 0,
+                ShiftCreditTotals.From(shift))
             : new ShiftReconciliationDto(
                 IsSnapshot: false,
                 openShiftTotals.SalesCount,
@@ -245,7 +247,8 @@ public sealed class CashShiftRepository : ICashShiftRepository
                 Comment: null,
                 openShiftTotals.CashRefundsCents,
                 openShiftTotals.NonCashRefundsCents,
-                openShiftTotals.CreditNotesIssuedCents);
+                openShiftTotals.CreditNotesIssuedCents,
+                ShiftCreditTotals.From(openShiftTotals));
 
         return new ShiftDetailDto(
             shift.Id,

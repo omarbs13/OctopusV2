@@ -72,6 +72,34 @@ public sealed class InventoryConsistencyTests : IAsyncLifetime
         await AssertInvariantsAsync();
     }
 
+    [Fact]
+    public async Task VentaACreditoYSuCancelacion_MuevenExistenciasIgualQueUnaDeContado()
+    {
+        // 014: la venta a crédito usa el flujo normal del cobro (FR-008).
+        var credit = new CreditTestSupport(_db, await ShiftTestSupport.CreateAsync(_db));
+        var product = _products[0];
+        await SalesTestSupport.StockAsync(_db, product, "10");
+        var ana = await credit.CreditCustomerAsync(limitCents: 10_000_000);
+
+        await SalesTestSupport.SellOkAsync(_db, (product, 3000));
+        await credit.SellOnCreditOkAsync(ana, product, 2000);
+        var cancelled = await credit.SellOnCreditOkAsync(ana, product, 1000);
+
+        await using (var context = _db.CreateDbContext())
+        {
+            Assert.Equal(10_000 - 3_000 - 2_000 - 1_000, (await context.ProductStocks.AsNoTracking().SingleAsync(s => s.ProductId == product.Id, Ct)).OnHandThousandths);
+        }
+
+        // La cancelación de una venta a crédito regresa la existencia igual que una de contado (014, FR-016).
+        Assert.True((await credit.Returns.CancelAsync(cancelled.SaleId)).IsSuccess);
+        await using (var context = _db.CreateDbContext())
+        {
+            Assert.Equal(10_000 - 3_000 - 2_000, (await context.ProductStocks.AsNoTracking().SingleAsync(s => s.ProductId == product.Id, Ct)).OnHandThousandths);
+        }
+
+        await AssertInvariantsAsync();
+    }
+
     private async Task AssertInvariantsAsync()
     {
         await using var context = _db.CreateDbContext();

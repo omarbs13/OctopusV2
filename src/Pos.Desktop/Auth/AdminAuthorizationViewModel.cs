@@ -40,6 +40,8 @@ public sealed partial class AdminAuthorizationViewModel : ViewModelBase
             Permission.CancelSales => Strings.Auth_OperationCancelSale,
             Permission.WithdrawCash => Strings.Auth_OperationWithdrawCash,
             Permission.ApproveReturns => Strings.Auth_OperationReturns,
+            Permission.ApproveCreditOverLimit => Strings.Auth_OperationCreditOverLimit,
+            Permission.VoidCustomerPayments => Strings.Auth_OperationVoidPayment,
             _ => Strings.Auth_OperationOpenDrawer,
         });
 

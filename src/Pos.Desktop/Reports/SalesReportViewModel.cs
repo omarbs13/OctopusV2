@@ -76,6 +76,9 @@ public sealed partial class SalesReportViewModel : ReportPageViewModel
     public partial string TransferText { get; private set; } = string.Empty;
 
     [ObservableProperty]
+    public partial string OnAccountText { get; private set; } = string.Empty;
+
+    [ObservableProperty]
     public partial bool HasComparison { get; private set; }
 
     [ObservableProperty]
@@ -196,6 +199,7 @@ public sealed partial class SalesReportViewModel : ReportPageViewModel
         CashText = MoneyConverter.Format(totals.CashCents);
         CardText = MoneyConverter.Format(totals.CardCents);
         TransferText = MoneyConverter.Format(totals.TransferCents);
+        OnAccountText = MoneyConverter.Format(totals.OnAccountCents);
 
         HasComparison = report.Comparison is not null;
         if (report.Comparison is { } comparison)

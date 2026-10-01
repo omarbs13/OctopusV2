@@ -155,6 +155,11 @@ public sealed partial class ReturnSaleViewModel : ViewModelBase
     /// <summary>Sin el módulo Devoluciones solo se muestra el motivo.</summary>
     public bool IsFullForm => !_isBasic;
 
+    /// <summary>Venta a crédito (014): no admite nota de crédito; la devolución reduce el saldo del cliente.</summary>
+    public bool IsCreditSale => _sale.Credit is not null;
+
+    public bool CanUseCreditNote => !IsCreditSale;
+
     public ObservableCollection<ReturnLineRow> Lines { get; } = [];
 
     public ObservableCollection<string> Breakdown { get; } = [];
@@ -482,7 +487,14 @@ public sealed partial class ReturnSaleViewModel : ViewModelBase
         _preview = result.Value;
         SummaryText = string.Format(Display, Strings.Return_Summary, MoneyConverter.Format(_preview.TotalCents));
         Breakdown.Clear();
-        if (IsRefund)
+        if (_preview.CreditSettlement is { } credit)
+        {
+            // 014: cuánto baja el saldo, cuánto se aplica a otras ventas y cuánto se reintegra; lo calcula PreviewReturn.
+            Breakdown.Add(string.Format(Display, Strings.Return_CreditReduces, MoneyConverter.Format(credit.ReducesBalanceCents)));
+            Breakdown.Add(string.Format(Display, Strings.Return_CreditReapplied, MoneyConverter.Format(credit.ReappliedCents)));
+            Breakdown.Add(string.Format(Display, Strings.Return_CreditCashRefund, MoneyConverter.Format(credit.CashRefundCents)));
+        }
+        else if (IsRefund)
         {
             foreach (var item in _preview.RefundBreakdown)
             {

@@ -50,6 +50,7 @@
           <vm:MetricCard Label="{x:Static res:Strings.Reports_Sales_Cash}" Value="{Binding CashText}" />
           <vm:MetricCard Label="{x:Static res:Strings.Reports_Sales_Card}" Value="{Binding CardText}" />
           <vm:MetricCard Label="{x:Static res:Strings.Reports_Sales_Transfer}" Value="{Binding TransferText}" />
+          <vm:MetricCard Label="{x:Static res:Strings.Reports_Sales_OnAccount}" Value="{Binding OnAccountText}" />
         </WrapPanel>
 
         <!-- Comparativo -->

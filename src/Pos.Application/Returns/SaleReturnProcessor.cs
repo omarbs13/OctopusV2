@@ -6,6 +6,7 @@ using Pos.Application.Inventory;
 using Pos.Application.Licensing;
 using Pos.Application.Printing.Ticket;
 using Pos.Application.Products;
+using Pos.Application.Receivables;
 using Pos.Application.Sales;
 using Pos.Application.Users.Access;
 using Pos.Domain.Common;
@@ -34,7 +35,9 @@ public sealed record ReturnRequest(
 /// Núcleo compartido por <c>CancelSale</c> y <c>ReturnSaleItems</c> (contracts/application-ports.md).
 /// Orden dentro de la transacción: licencia → permiso → entrada → venta → versión y estado → plazo →
 /// cantidades → turno y efectivo → consumir la concesión → devolución, inventario, reintegros o nota →
-/// bitácora → guardar → confirmar. Una falla no deja nada a medias (FR-011).
+/// bitácora → guardar → confirmar. Una falla no deja nada a medias (FR-011). Una venta a crédito (014)
+/// solo admite reintegro: ajusta las cuentas del cliente con <see cref="CreditSettlementService"/> y
+/// devuelve en efectivo únicamente lo que sobra (research §8).
 /// </summary>
 public sealed partial class SaleReturnProcessor
 {
@@ -52,6 +55,7 @@ public sealed partial class SaleReturnProcessor
     private readonly ICurrentUser _currentUser;
     private readonly ILogger<SaleReturnProcessor> _logger;
     private readonly ILicenseState? _license;
+    private readonly CreditSettlementService? _creditSettlement;
 
     public SaleReturnProcessor(
         IAccessControl access,
@@ -67,8 +71,10 @@ public sealed partial class SaleReturnProcessor
         IClock clock,
         ICurrentUser currentUser,
         ILogger<SaleReturnProcessor> logger,
-        ILicenseState? license = null)
+        ILicenseState? license = null,
+        CreditSettlementService? creditSettlement = null)
     {
+        _creditSettlement = creditSettlement;
         _access = access;
         _grants = grants;
         _sales = sales;
@@ -153,7 +159,24 @@ public sealed partial class SaleReturnProcessor
         }
 
         var refund = request.Compensation == ReturnCompensation.Refund;
-        var gate = await _cashGate.ResolveAsync(refund ? plan.CashCents : 0, cancellationToken);
+
+        // 014: la venta a crédito no admite nota de crédito ni saldo a favor; el efectivo que sale es solo
+        // lo abonado de más que no cubre otras deudas del cliente (research §8).
+        var isCredit = sale.Payments.Any(p => p.Method == PaymentMethod.OnAccount);
+        CreditSettlement? creditPreview = null;
+        if (isCredit)
+        {
+            if (!refund)
+            {
+                return Result.Failure<ReturnResult>(new ValidationFailed(
+                    [new FieldError(ReturnFields.Compensation, ReceivableMessages.CreditNoteNotAllowed)]));
+            }
+
+            creditPreview = await Settlement().PreviewAsync(sale.Id, plan.OnAccountCents, cancellationToken);
+        }
+
+        var cashOut = (refund ? plan.CashCents : 0) + (creditPreview?.CashRefundCents ?? 0);
+        var gate = await _cashGate.ResolveAsync(cashOut, cancellationToken);
         if (!gate.IsSuccess)
         {
             if (gate.Error is InsufficientCash)
@@ -220,10 +243,35 @@ public sealed partial class SaleReturnProcessor
 
         var refunds = new List<SaleReturnRefund>();
         CreditNote? note = null;
+        CreditSettlement? credit = null;
         if (request.Compensation == ReturnCompensation.Refund)
         {
             foreach (var share in plan.Shares)
             {
+                if (share.Payment.Method == PaymentMethod.OnAccount)
+                {
+                    // 014: renglón ACCOUNT/SETTLED por lo que redujo la deuda y CASH/PAID por lo que se
+                    // reintegra, ligados al mismo pago (research §8).
+                    credit = await Settlement().ApplyAsync(
+                        sale.Id,
+                        returnId,
+                        share.AmountCents,
+                        closesSale: isCancellation || sale.IsFullyReturned,
+                        cancellationToken)
+                        ?? throw new DomainException("La venta a crédito no tiene cuenta por cobrar.");
+                    if (share.AmountCents - credit.CashRefundCents > 0)
+                    {
+                        refunds.Add(SaleReturnRefund.Create(share.Payment.Id, PaymentMethod.OnAccount, share.AmountCents - credit.CashRefundCents));
+                    }
+
+                    if (credit.CashRefundCents > 0)
+                    {
+                        refunds.Add(SaleReturnRefund.Create(share.Payment.Id, PaymentMethod.Cash, credit.CashRefundCents));
+                    }
+
+                    continue;
+                }
+
                 refunds.Add(SaleReturnRefund.Create(share.Payment.Id, share.Payment.Method, share.AmountCents));
                 if (share.Payment.Method == PaymentMethod.CreditNote)
                 {
@@ -252,9 +300,11 @@ public sealed partial class SaleReturnProcessor
             note?.Id);
         _returns.Add(saleReturn);
 
-        var compensation = note is null
-            ? "Reintegro"
-            : $"Nota de crédito {note.Folio}";
+        var compensation = note is not null
+            ? $"Nota de crédito {note.Folio}"
+            : credit is not null
+                ? $"Crédito: reduce el saldo {TicketBuilder.FormatMoney(credit.ReducesBalanceCents)}, aplicado a otras ventas {TicketBuilder.FormatMoney(credit.ReappliedCents)}, reintegro en efectivo {TicketBuilder.FormatMoney(credit.CashRefundCents)}"
+                : "Reintegro";
         _audit.Add(
             isCancellation ? AuditActions.SaleCancelled : AuditActions.SaleReturned,
             AuditActions.SaleEntity,
@@ -271,8 +321,16 @@ public sealed partial class SaleReturnProcessor
 
         await transaction.CommitAsync(cancellationToken);
         LogReturned(sale.Id, sale.Folio, saleReturn.Folio, _currentUser.UserId, plan.TotalCents, request.Compensation);
+        if (credit is not null)
+        {
+            LogCreditSettled(sale.Id, sale.Folio, saleReturn.Folio, credit.ReducesBalanceCents, credit.ReappliedCents, credit.CashRefundCents);
+        }
+
         return Result.Success(new ReturnResult(saleReturn.Id, saleReturn.Folio, plan.TotalCents, note?.Id, note?.Folio));
     }
+
+    private CreditSettlementService Settlement() =>
+        _creditSettlement ?? throw new InvalidOperationException("Falta el servicio de liquidación de ventas a crédito.");
 
     /// <summary>Regresa las existencias; devuelve el movimiento generado por línea.</summary>
     private async Task<Dictionary<Guid, Guid>> RestoreInventoryAsync(
@@ -329,6 +387,10 @@ public sealed partial class SaleReturnProcessor
     [LoggerMessage(Level = LogLevel.Information,
         Message = "Devolución registrada. SaleId={SaleId} Folio={Folio} Devolucion={ReturnFolio} UserId={UserId} TotalCents={TotalCents} Compensacion={Compensation}")]
     private partial void LogReturned(Guid saleId, string folio, string returnFolio, Guid userId, long totalCents, ReturnCompensation compensation);
+
+    [LoggerMessage(Level = LogLevel.Information,
+        Message = "Devolución de venta a crédito liquidada. SaleId={SaleId} Folio={Folio} Devolucion={ReturnFolio} ReduceSaldoCents={ReducesCents} ReaplicadoCents={ReappliedCents} ReintegroEfectivoCents={CashRefundCents}")]
+    private partial void LogCreditSettled(Guid saleId, string folio, string returnFolio, long reducesCents, long reappliedCents, long cashRefundCents);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Devolución rechazada: sin autorización de Administrador. SaleId={SaleId} UserId={UserId}")]
     private partial void LogNotAuthorized(Guid saleId, Guid userId);

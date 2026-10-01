@@ -16,7 +16,9 @@ public sealed record RefundBreakdownItem(PaymentMethod Method, long AmountCents)
 
 /// <summary>
 /// Vista previa de una devolución, calculada con <c>ReturnMath</c>. <c>CanRefundCash</c> es falso sin
-/// turno abierto utilizable o con efectivo insuficiente, sin revelar montos.
+/// turno abierto utilizable o con efectivo insuficiente, sin revelar montos. En una venta a crédito
+/// (014) <c>CreditSettlement</c> dice cuánto reduce el saldo, cuánto se aplica a otras ventas y cuánto se
+/// reintegra en efectivo, que es también <c>CashRefundCents</c>.
 /// </summary>
 public sealed record ReturnPreview(
     long TotalCents,
@@ -25,7 +27,12 @@ public sealed record ReturnPreview(
     long CashRefundCents,
     bool WithinWindow,
     bool CanRefundCash,
-    int WindowDays);
+    int WindowDays,
+    Pos.Application.Receivables.CreditSettlement? CreditSettlement = null)
+{
+    /// <summary>Venta a crédito (014): no admite nota de crédito y muestra cómo baja el saldo del cliente.</summary>
+    public bool IsCreditSale => CreditSettlement is not null;
+}
 
 /// <summary>Evento de devolución en el historial de una venta (FR-013).</summary>
 public sealed record ReturnSummaryDto(

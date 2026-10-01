@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Pos.Application.Abstractions;
 using Pos.Application.Licensing;
+using Pos.Application.Receivables;
 using Pos.Application.Returns;
 using Pos.Application.Returns.ReturnSaleItems;
 using Pos.Application.Sales;
@@ -18,6 +19,7 @@ using Pos.Infrastructure.CreditNotes;
 using Pos.Infrastructure.Inventory;
 using Pos.Infrastructure.Persistence;
 using Pos.Infrastructure.Products;
+using Pos.Infrastructure.Receivables;
 using Pos.Infrastructure.Returns;
 using Pos.Infrastructure.Sales;
 
@@ -73,7 +75,8 @@ public sealed class ReturnsTestSupport
             _db.Clock,
             _db.User,
             NullLogger<SaleReturnProcessor>.Instance,
-            Users.License);
+            Users.License,
+            new CreditSettlementService(new ReceivableRepository(context)));
     }
 
     public CancelSaleHandler CancelHandler(PosDbContext context) =>
@@ -89,7 +92,8 @@ public sealed class ReturnsTestSupport
             new CancelSaleValidator(),
             NullLogger<CancelSaleHandler>.Instance,
             Users.License,
-            Processor(context));
+            Processor(context),
+            new CreditSettlementService(new ReceivableRepository(context)));
 
     public ConfirmSaleHandler ConfirmHandler(PosDbContext context) =>
         new(

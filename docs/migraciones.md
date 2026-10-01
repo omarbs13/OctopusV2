@@ -181,3 +181,25 @@ parcial de la venta 1 compensada con una nota de crédito. La migración `Return
 `SampleDatabaseUpgradeTests` migra de `v0.1.0.db` a `v0.8.0.db`, verifica que las tablas nuevas existan
 (vacías, salvo en `v0.8.0.db`), que los acumulados valgan 0 y que las ventas ya canceladas conserven su
 efectivo heredado en los totales del turno. Ver [devoluciones.md](devoluciones.md).
+
+## 0.9.0: clientes y crédito (`CustomersAndCredit`)
+
+La base de ejemplo `v0.9.0.db` trae, además de lo anterior, un cliente con crédito, una venta a crédito
+del cajero (la venta 4, del producto sin inventario) y un abono en efectivo, con su borrador conservado.
+La migración `CustomersAndCredit` **no reconstruye ninguna tabla**:
+
+- Crea `Customers`, `Receivables`, `ReceivableEntries` y `CustomerPayments` con sus índices, entre ellos
+  el único filtrado `IX_Customers_TaxId ... WHERE "TaxId" IS NOT NULL` y los únicos de `Receivables.SaleId`,
+  `CustomerPayments.Number` y `CustomerPayments.RequestId`. Las llaves foráneas (`Restrict`) van solo de
+  las tablas nuevas hacia `Sales`, `Customers` y `CashShifts`.
+- Agrega a `CashShifts` cinco columnas nulas con `ALTER TABLE ... ADD`: `OnAccountSalesCents`,
+  `CustomerPaymentsCashCents`, `CustomerPaymentsNonCashCents`, `CustomerPaymentVoidsCashCents` y
+  `CustomerPaymentVoidsNonCashCents`. Los turnos ya cerrados quedan en `NULL` y el corte no muestra el
+  bloque "Crédito".
+- No rellena datos: ninguna venta existente es a crédito. `PaymentMethod.OnAccount` usa el código
+  `ACCOUNT` y `RefundStatus.Settled` el código `SETTLED`; ambos caben en las columnas actuales.
+
+`CustomersMigrationTests` revisa el SQL (sin `DROP TABLE`, `ef_temp_`, `INSERT` ni `UPDATE`) y que los
+turnos cerrados antes de 0.9.0 queden con el bloque en nulo. `SampleDatabaseUpgradeTests` migra de
+`v0.1.0.db` a `v0.9.0.db`, verifica que las tablas nuevas existan (vacías, salvo en `v0.9.0.db`) y que en
+toda cuenta el saldo sea igual al original más su libro. Ver [clientes-y-credito.md](clientes-y-credito.md).

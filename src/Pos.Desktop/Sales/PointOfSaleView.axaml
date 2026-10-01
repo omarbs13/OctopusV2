@@ -143,8 +143,21 @@
         <TextBlock Classes="warning" Text="{x:Static res:Strings.Sale_RemoveMarkedLines}"
                    IsVisible="{Binding HasUnavailableLines}" />
 
+        <!-- Cliente de la venta a crédito (014); no se guarda en el borrador -->
+        <Border IsVisible="{Binding HasCustomer}" Padding="8,4" CornerRadius="4"
+                Background="{DynamicResource SystemFillColorAttentionBackgroundBrush}">
+          <Grid ColumnDefinitions="*,Auto">
+            <TextBlock Text="{Binding CustomerText}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+            <Button Grid.Column="1" Content="×" MinWidth="36" MinHeight="36" Command="{Binding ClearCustomerCommand}"
+                    ToolTip.Tip="{x:Static res:Strings.Credit_ClearCustomer}"
+                    AutomationProperties.Name="{x:Static res:Strings.Credit_ClearCustomer}" />
+          </Grid>
+        </Border>
+
         <Button Classes="touch pay accent" Content="{x:Static res:Strings.Sale_Pay}"
                 Command="{Binding CheckoutCommand}" Margin="0,8,0,0" />
+        <Button Classes="touch" Content="{x:Static res:Strings.Credit_ChooseCustomer}" Command="{Binding ChooseCustomerCommand}"
+                IsVisible="{Binding CanUseCredit}" />
         <Button Classes="touch" Content="{x:Static res:Strings.Sale_Search}" Command="{Binding SearchCommand}" />
         <Button Classes="touch" Content="{x:Static res:Strings.Sale_Quantity}" Command="{Binding ChangeQuantityCommand}" />
         <Button Classes="touch" Content="{x:Static res:Strings.Sale_Remove}" Command="{Binding RemoveLineCommand}" />
@@ -179,6 +192,11 @@
     <!-- Selector de productos (búsqueda por nombre) -->
     <Grid Background="#99000000" IsVisible="{Binding Chooser, Converter={x:Static ObjectConverters.IsNotNull}}">
       <ContentControl Content="{Binding Chooser}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+    </Grid>
+
+    <!-- Cliente para la venta a crédito -->
+    <Grid Background="#99000000" IsVisible="{Binding CustomerPicker, Converter={x:Static ObjectConverters.IsNotNull}}">
+      <ContentControl Content="{Binding CustomerPicker}" HorizontalAlignment="Center" VerticalAlignment="Center" />
     </Grid>
 
     <!-- Motivo para abrir el cajón sin venta -->

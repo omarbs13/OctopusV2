@@ -68,6 +68,17 @@ esperado = fondo + efectivo de ventas − efectivo cancelado heredado + ingresos
 - El corte de turno muestra los reintegros en efectivo, los de tarjeta y transferencia pendientes y las
   notas de crédito emitidas durante el turno. Los turnos cerrados antes de 0.8.0 muestran 0.
 
+## Ventas a crédito (0.9.0)
+
+Una venta pagada con `ACCOUNT` (venta a crédito) solo admite **reintegro**: "Nota de crédito" no se
+ofrece. La devolución reduce el saldo de la cuenta por cobrar de la venta; si el cliente ya había abonado
+de más sobre lo devuelto, ese excedente se aplica a sus otras ventas pendientes (la más antigua primero)
+y solo lo que sobra se reintegra en efectivo desde el turno abierto. En `SaleReturnRefunds` queda un
+renglón `ACCOUNT` / `SETTLED` por lo que bajó la deuda y, si hubo reintegro, uno `CASH` / `PAID` ligado
+al mismo pago. La vista previa muestra "Reduce el saldo en $X", "Se aplica a otras ventas del cliente $Y"
+y "Reintegro en efectivo $Z". La cuenta pasa a `CANCELLED` al cancelar la venta o devolverla completa.
+Detalles en [clientes-y-credito.md](clientes-y-credito.md).
+
 ## Notas de crédito
 
 - Se emiten por el total cancelado o devuelto cuando se elige "Nota de crédito". Se imprime un ticket

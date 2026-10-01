@@ -35,4 +35,25 @@ public enum Permission
 
     /// <summary>Listar notas de crédito y reintegros pendientes, marcarlos y configurar el plazo (013); solo el Administrador.</summary>
     ManageCreditNotes,
+
+    /// <summary>Alta, edición de datos y consulta de clientes (014); Cajero y Administrador.</summary>
+    ManageCustomers,
+
+    /// <summary>Vender a crédito a un cliente con crédito disponible (014); Cajero y Administrador.</summary>
+    SellOnCredit,
+
+    /// <summary>Registrar abonos de clientes (014); Cajero y Administrador.</summary>
+    RegisterCustomerPayments,
+
+    /// <summary>Asignar límite y modalidad, desactivar clientes y configurar el plazo de pago (014); solo el Administrador.</summary>
+    ManageCustomerCredit,
+
+    /// <summary>Autorizar una venta a crédito que excede el límite (014); solo el Administrador.</summary>
+    ApproveCreditOverLimit,
+
+    /// <summary>Autorizar la anulación de un abono (014); solo el Administrador, siempre exigida.</summary>
+    VoidCustomerPayments,
+
+    /// <summary>Ver "Reportes > Créditos" (014); solo el Administrador.</summary>
+    ViewReceivables,
 }

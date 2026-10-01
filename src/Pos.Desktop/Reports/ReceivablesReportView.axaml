@@ -1,0 +1,95 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Pos.Desktop.Reports"
+             xmlns:res="using:Pos.Desktop.Resources"
+             x:Class="Pos.Desktop.Reports.ReceivablesReportView"
+             x:DataType="vm:ReceivablesReportViewModel">
+
+  <Grid RowDefinitions="Auto,Auto,Auto,*,Auto,Auto" RowSpacing="8">
+    <TextBlock Grid.Row="0" Text="{Binding Title}" FontSize="22" FontWeight="SemiBold" />
+
+    <!-- Filtros -->
+    <Grid Grid.Row="1" ColumnDefinitions="180,*,Auto" ColumnSpacing="8">
+      <ComboBox Grid.Column="0" HorizontalAlignment="Stretch" MinHeight="40" ItemsSource="{Binding StatusOptions}" SelectedItem="{Binding SelectedStatus}"
+                DisplayMemberBinding="{Binding Label, x:DataType=vm:ReceivablesStatusOption}" />
+      <TextBox Grid.Column="1" Text="{Binding SearchText}" PlaceholderText="{x:Static res:Strings.Receivables_Search}">
+        <TextBox.KeyBindings>
+          <KeyBinding Gesture="Enter" Command="{Binding RefreshCommand}" />
+        </TextBox.KeyBindings>
+      </TextBox>
+      <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+        <Button MinHeight="40" Content="{x:Static res:Strings.Receivables_Refresh}" Command="{Binding RefreshCommand}" />
+        <Button MinHeight="40" Content="{x:Static res:Strings.Receivables_OpenCustomer}" Command="{Binding OpenCustomerCommand}" />
+      </StackPanel>
+    </Grid>
+
+    <!-- Encabezados -->
+    <Grid Grid.Row="2" Margin="12,0,12,0" ColumnDefinitions="*,140,120,120,110,170">
+      <Grid.Styles>
+        <Style Selector="TextBlock">
+          <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+      </Grid.Styles>
+      <TextBlock Grid.Column="0" Text="{x:Static res:Strings.Receivables_ColCustomer}" />
+      <TextBlock Grid.Column="1" Text="{x:Static res:Strings.Receivables_ColBalance}" TextAlignment="Right" />
+      <TextBlock Grid.Column="2" Text="{x:Static res:Strings.Receivables_ColLimit}" TextAlignment="Right" />
+      <TextBlock Grid.Column="3" Text="{x:Static res:Strings.Receivables_ColLastPayment}" Margin="12,0,0,0" />
+      <TextBlock Grid.Column="4" Text="{x:Static res:Strings.Receivables_ColDaysOverdue}" TextAlignment="Right" />
+      <TextBlock Grid.Column="5" Text="{x:Static res:Strings.Receivables_ColStatus}" Margin="12,0,0,0" />
+    </Grid>
+
+    <Panel Grid.Row="3">
+      <ListBox ItemsSource="{Binding Rows}" SelectedItem="{Binding SelectedRow}" DoubleTapped="OnRowDoubleTapped">
+        <ListBox.KeyBindings>
+          <KeyBinding Gesture="Enter" Command="{Binding OpenCustomerCommand}" />
+        </ListBox.KeyBindings>
+        <ListBox.ItemTemplate>
+          <DataTemplate x:DataType="vm:ReceivablesReportItem">
+            <Grid ColumnDefinitions="*,140,120,120,110,170" MinHeight="36">
+              <Grid.Styles>
+                <Style Selector="TextBlock">
+                  <Setter Property="VerticalAlignment" Value="Center" />
+                </Style>
+              </Grid.Styles>
+              <TextBlock Grid.Column="0" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+              <TextBlock Grid.Column="1" Text="{Binding BalanceText}" TextAlignment="Right" FontWeight="SemiBold" />
+              <TextBlock Grid.Column="2" Text="{Binding LimitText}" TextAlignment="Right" />
+              <TextBlock Grid.Column="3" Text="{Binding LastPaymentText}" Margin="12,0,0,0" />
+              <TextBlock Grid.Column="4" Text="{Binding DaysOverdueText}" TextAlignment="Right"
+                         Foreground="{DynamicResource SystemFillColorCriticalBrush}" />
+              <TextBlock Grid.Column="5" Text="{Binding TagsText}" Margin="12,0,0,0" />
+            </Grid>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+      <TextBlock Margin="12" Text="{x:Static res:Strings.Receivables_Empty}" IsVisible="{Binding IsEmpty}"
+                 HorizontalAlignment="Center" VerticalAlignment="Top" />
+    </Panel>
+
+    <!-- Pie: totales sobre las filas visibles -->
+    <StackPanel Grid.Row="4" Orientation="Horizontal" Spacing="32">
+      <StackPanel>
+        <TextBlock Text="{x:Static res:Strings.Receivables_TotalBalance}" FontSize="12" Opacity="0.75" />
+        <TextBlock Text="{Binding TotalText}" FontSize="20" FontWeight="SemiBold" />
+      </StackPanel>
+      <StackPanel>
+        <TextBlock Text="{x:Static res:Strings.Receivables_CustomerCount}" FontSize="12" Opacity="0.75" />
+        <TextBlock Text="{Binding CountText}" FontSize="20" FontWeight="SemiBold" />
+      </StackPanel>
+      <TextBlock Text="{Binding ErrorMessage}" VerticalAlignment="Center" Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                 IsVisible="{Binding ErrorMessage, Converter={x:Static ObjectConverters.IsNotNull}}" />
+    </StackPanel>
+
+    <!-- Plazo de pago: solo el Administrador -->
+    <StackPanel Grid.Row="5" Spacing="4" IsVisible="{Binding CanEditTerm}">
+      <TextBlock Text="{x:Static res:Strings.Receivables_TermDays}" FontWeight="SemiBold" />
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <TextBox Text="{Binding TermText}" Width="100" MaxLength="4" />
+        <Button Content="{x:Static res:Strings.Receivables_TermSave}" Command="{Binding SaveTermCommand}" />
+        <TextBlock Text="{Binding TermMessage}" VerticalAlignment="Center"
+                   IsVisible="{Binding TermMessage, Converter={x:Static ObjectConverters.IsNotNull}}" />
+      </StackPanel>
+      <TextBlock Text="{x:Static res:Strings.Receivables_TermHelp}" FontSize="12" Opacity="0.75" TextWrapping="Wrap" />
+    </StackPanel>
+  </Grid>
+</UserControl>

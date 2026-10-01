@@ -46,7 +46,45 @@
       <TextBlock Text="{Binding ChangeText}" FontSize="28" FontWeight="Bold"
                  IsVisible="{Binding !HasShortfall}" />
 
+      <!-- Venta a crédito (014): solo con un cliente elegido en el punto de venta -->
+      <Border IsVisible="{Binding CanSellOnCredit}" Padding="10" CornerRadius="6" BorderThickness="1"
+              BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
+        <StackPanel Spacing="6">
+          <Grid ColumnDefinitions="*,Auto">
+            <TextBlock Text="{Binding CreditCustomerText}" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+            <Button Grid.Column="1" Classes="touch" Content="{x:Static res:Strings.Credit_SellOnCredit}"
+                    Command="{Binding SellOnCreditCommand}" IsVisible="{Binding IsNormalPayment}" />
+            <Button Grid.Column="1" Classes="touch" Content="{x:Static res:Strings.Credit_PayOtherWay}"
+                    Command="{Binding PayOtherWayCommand}" IsVisible="{Binding IsOnAccount}" />
+          </Grid>
+          <StackPanel Spacing="4" IsVisible="{Binding IsOnAccount}">
+            <TextBlock Text="{x:Static res:Strings.Credit_OnAccountInfo}" FontSize="12" Opacity="0.75" TextWrapping="Wrap" />
+            <Grid ColumnDefinitions="*,*,*">
+              <StackPanel Grid.Column="0">
+                <TextBlock Text="{x:Static res:Strings.Credit_Balance}" FontSize="12" Opacity="0.75" />
+                <TextBlock Text="{Binding CreditBalanceText}" FontSize="16" />
+              </StackPanel>
+              <StackPanel Grid.Column="1">
+                <TextBlock Text="{x:Static res:Strings.Credit_Limit}" FontSize="12" Opacity="0.75" />
+                <TextBlock Text="{Binding CreditLimitText}" FontSize="16" />
+              </StackPanel>
+              <StackPanel Grid.Column="2">
+                <TextBlock Text="{x:Static res:Strings.Credit_Available}" FontSize="12" Opacity="0.75" />
+                <TextBlock Text="{Binding CreditAvailableText}" FontSize="16" />
+              </StackPanel>
+            </Grid>
+            <TextBlock Text="{x:Static res:Strings.Credit_Overdue}" IsVisible="{Binding HasOverdue}"
+                       Foreground="{DynamicResource SystemFillColorCautionBrush}" />
+            <TextBlock Text="{Binding ExceedText}" Classes="error"
+                       IsVisible="{Binding ExceedText, Converter={x:Static ObjectConverters.IsNotNull}}" />
+            <TextBlock Text="{Binding CreditError}" Classes="error"
+                       IsVisible="{Binding CreditError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
       <!-- Efectivo -->
+      <StackPanel Spacing="10" IsVisible="{Binding IsNormalPayment}">
       <TextBlock Classes="section" Text="{x:Static res:Strings.Checkout_Cash}" />
       <TextBox x:Name="ReceivedBox" Text="{Binding ReceivedText}" MinHeight="48" FontSize="20"
                PlaceholderText="{x:Static res:Strings.Checkout_Received}" />
@@ -84,6 +122,7 @@
         <Button Grid.Column="3" Classes="touch" Content="{x:Static res:Strings.Checkout_AddPayment}"
                 Command="{Binding AddPaymentCommand}" />
       </Grid>
+      </StackPanel>
 
       <!-- Nota de crédito (solo con el módulo Devoluciones) -->
       <StackPanel Spacing="4" IsVisible="{Binding CanUseCreditNote}">

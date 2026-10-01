@@ -84,6 +84,18 @@
       </ItemsControl.ItemTemplate>
     </ItemsControl>
 
+    <!-- Crédito (014): cliente, saldo de esta venta y estado -->
+    <StackPanel Spacing="4" IsVisible="{Binding HasCredit}">
+      <TextBlock Classes="heading" Text="{x:Static res:Strings.Credit_Section}" />
+      <StackPanel Margin="12,0" Spacing="2">
+        <TextBlock Text="{Binding CreditCustomerText}" />
+        <TextBlock Text="{Binding CreditBalanceText}" />
+        <TextBlock Text="{Binding CreditStatusText}" FontWeight="SemiBold" />
+        <Button Content="{x:Static res:Strings.Credit_OpenCustomer}" Command="{Binding OpenCustomerCommand}"
+                IsVisible="{Binding ShowCustomerLink}" Margin="0,4,0,0" />
+      </StackPanel>
+    </StackPanel>
+
     <!-- Historial de cancelación y devoluciones (FR-013): solo lectura, sin editar ni eliminar -->
     <StackPanel Spacing="4" IsVisible="{Binding HasHistory}">
       <TextBlock Classes="heading" Text="{x:Static res:Strings.Return_History}" />

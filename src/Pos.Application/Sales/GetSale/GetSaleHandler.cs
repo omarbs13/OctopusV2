@@ -5,7 +5,10 @@ using Pos.Domain.Users;
 
 namespace Pos.Application.Sales.GetSale;
 
-/// <summary>Detalle de una venta con los valores que se guardaron al venderla; un cajero solo ve las suyas.</summary>
+/// <summary>
+/// Detalle de una venta con los valores que se guardaron al venderla; un cajero solo ve las suyas. Las
+/// ventas a crédito traen su cliente, el saldo de esa venta y su estado (014).
+/// </summary>
 public sealed class GetSaleHandler
 {
     private readonly IAccessControl _access;

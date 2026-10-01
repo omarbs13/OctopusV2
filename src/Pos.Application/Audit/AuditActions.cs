@@ -34,6 +34,16 @@ public static class AuditActions
     public const string ReportSettingsChanged = "REPORT_SETTINGS_CHANGED";
     public const string LicenseImported = "LICENSE_IMPORTED";
     public const string LicenseRecovered = "LICENSE_RECOVERED";
+    public const string CustomerCreated = "CUSTOMER_CREATED";
+    public const string CustomerUpdated = "CUSTOMER_UPDATED";
+    public const string CustomerCreditChanged = "CUSTOMER_CREDIT_CHANGED";
+    public const string CustomerDeactivated = "CUSTOMER_DEACTIVATED";
+    public const string CustomerActivated = "CUSTOMER_ACTIVATED";
+    public const string CreditSaleRegistered = "CREDIT_SALE_REGISTERED";
+    public const string CreditLimitOverride = "CREDIT_LIMIT_OVERRIDE";
+    public const string CustomerPaymentRegistered = "CUSTOMER_PAYMENT_REGISTERED";
+    public const string CustomerPaymentVoided = "CUSTOMER_PAYMENT_VOIDED";
+    public const string CreditSettingsChanged = "CREDIT_SETTINGS_CHANGED";
 
     public const string UserEntity = "User";
     public const string CashShiftEntity = "CashShift";
@@ -43,6 +53,9 @@ public static class AuditActions
     public const string SaleReturnEntity = "SaleReturn";
     public const string CreditNoteEntity = "CreditNote";
     public const string ReturnSettingsEntity = "ReturnSettings";
+    public const string CustomerEntity = "Customer";
+    public const string CustomerPaymentEntity = "CustomerPayment";
+    public const string ReceivablesSettingsEntity = "ReceivablesSettings";
 
     /// <summary>Texto en español de cada evento, en el orden en que se ofrece en el filtro.</summary>
     public static readonly IReadOnlyDictionary<string, string> All = new Dictionary<string, string>
@@ -76,6 +89,16 @@ public static class AuditActions
         [ReportSettingsChanged] = "Configuración de reportes modificada",
         [LicenseImported] = "Licencia importada",
         [LicenseRecovered] = "Licencia regenerada",
+        [CustomerCreated] = "Cliente creado",
+        [CustomerUpdated] = "Cliente modificado",
+        [CustomerCreditChanged] = "Límite o modalidad de crédito modificados",
+        [CustomerDeactivated] = "Cliente desactivado",
+        [CustomerActivated] = "Cliente activado",
+        [CreditSaleRegistered] = "Venta a crédito",
+        [CreditLimitOverride] = "Venta a crédito sobre el límite autorizada",
+        [CustomerPaymentRegistered] = "Abono registrado",
+        [CustomerPaymentVoided] = "Abono anulado",
+        [CreditSettingsChanged] = "Plazo de pago modificado",
     }.ToFrozenDictionary();
 
     /// <summary>Texto en español del evento; el código tal cual si no está en el catálogo.</summary>

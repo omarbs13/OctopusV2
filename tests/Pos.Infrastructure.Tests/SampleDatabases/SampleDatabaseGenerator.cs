@@ -2,20 +2,29 @@ using System.Reflection;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
+using Pos.Application.Customers.CreateCustomer;
+using Pos.Application.Receivables;
+using Pos.Application.Receivables.RegisterCustomerPayment;
 using Pos.Application.Returns;
 using Pos.Application.Sales;
+using Pos.Application.Sales.ConfirmSale;
 using Pos.Application.Sales.SaveSaleDraft;
 using Pos.Application.Users.Access;
 using Pos.Domain.Common;
+using Pos.Domain.Customers;
 using Pos.Domain.Inventory;
 using Pos.Domain.Products;
 using Pos.Domain.Returns;
+using Pos.Domain.Sales;
 using Pos.Domain.Users;
 using Pos.Infrastructure.Audit;
 using Pos.Infrastructure.CashShifts;
 using Pos.Infrastructure.CreditNotes;
+using Pos.Infrastructure.Customers;
 using Pos.Infrastructure.Inventory;
 using Pos.Infrastructure.Persistence;
+using Pos.Infrastructure.Products;
+using Pos.Infrastructure.Receivables;
 using Pos.Infrastructure.Returns;
 using Pos.Infrastructure.Sales;
 using Pos.Infrastructure.Tests.TestSupport;
@@ -84,6 +93,9 @@ public sealed class SampleDatabaseGenerator
 
         // Desde 0.8.0: una devolución parcial (el servicio de la venta 1) compensada con una nota de crédito.
         await SeedReturnAsync(db, adminId);
+
+        // Desde 0.9.0: un cliente con crédito, una venta a crédito del cajero y un abono en efectivo.
+        await SeedCreditAsync(db, cashierId);
 
         // Un solo archivo autocontenido: sin WAL pendiente. Primero se liberan las conexiones del pool.
         SqliteConnection.ClearAllPools();
@@ -175,6 +187,86 @@ public sealed class SampleDatabaseGenerator
         Assert.True(result.IsSuccess, result.Error?.ToString());
     }
 
+    private static async Task SeedCreditAsync(TestDb db, Guid cashierId)
+    {
+        var ct = TestContext.Current.CancellationToken;
+        db.User.UserId = cashierId;
+        db.Clock.UtcNow = new DateTime(2026, 9, 30, 15, 0, 0, DateTimeKind.Utc);
+        var access = new AllowAllAccessControl();
+
+        Guid customerId;
+        await using (var context = db.CreateDbContext())
+        {
+            var created = await new CreateCustomerHandler(
+                access,
+                new CustomerRepository(context),
+                new AuditLog(context),
+                new WriteTransactions(context),
+                new CreateCustomerValidator(),
+                NullLogger<CreateCustomerHandler>.Instance)
+                .HandleAsync(new CreateCustomerCommand(SampleData.CustomerName, "555-0100", null, SampleData.CustomerTaxId, SampleData.CreditLimitCents, CreditMode.Credit), ct);
+            Assert.True(created.IsSuccess, created.Error?.ToString());
+            customerId = created.Value;
+        }
+
+        // El cajero ya tiene el turno abierto (vendió la 3): la venta a crédito entra en él.
+        var service = await FindProductAsync(db, SampleData.SaleWithoutInventorySku);
+        await SalesTestSupport.EnsureShiftAsync(db);
+        db.Clock.UtcNow = new DateTime(2026, 9, 30, 15, 5, 0, DateTimeKind.Utc);
+        await using (var context = db.CreateDbContext())
+        {
+            var total = SaleMath.LineAmount(Quantity.FromThousandths(SampleData.CreditSaleQuantityThousandths), service.Price).Cents;
+            var sold = await new ConfirmSaleHandler(
+                access,
+                new ProductRepository(context),
+                new InventoryRepository(context),
+                new SaleRepository(context),
+                new SqliteSaleDraftStore(context, db.Clock, db.User),
+                SalesTestSupport.ShiftGuardFor(db, context),
+                new WriteTransactions(context),
+                new ConfirmSaleValidator(),
+                NullLogger<ConfirmSaleHandler>.Instance,
+                null,
+                new CreditNoteRepository(context),
+                new AuditLog(context),
+                new CustomerRepository(context),
+                new ReceivableRepository(context),
+                db.User)
+                .HandleAsync(
+                    new ConfirmSaleCommand(
+                        Guid.CreateVersion7(),
+                        [new ConfirmLineInput(service.Id, SampleData.CreditSaleQuantityThousandths, service.Price.Cents)],
+                        [new PaymentInput(PaymentMethod.OnAccount, total, null, null)],
+                        customerId),
+                    ct);
+            Assert.True(sold.IsSuccess, sold.Error?.ToString());
+        }
+
+        db.Clock.UtcNow = new DateTime(2026, 9, 30, 15, 30, 0, DateTimeKind.Utc);
+        await using (var context = db.CreateDbContext())
+        {
+            var paid = await new RegisterCustomerPaymentHandler(
+                access,
+                new CustomerRepository(context),
+                new ReceivableRepository(context),
+                new CustomerPaymentRepository(context),
+                new PaymentShiftGate(new CashShiftRepository(context), new SaleRepository(context), access, db.User, SalesTestSupport.ShiftGuardFor(db, context)),
+                new AuditLog(context),
+                new WriteTransactions(context),
+                db.User,
+                new RegisterCustomerPaymentValidator(),
+                NullLogger<RegisterCustomerPaymentHandler>.Instance)
+                .HandleAsync(new RegisterCustomerPaymentCommand(Guid.CreateVersion7(), customerId, SampleData.CreditPaymentCents, PaymentMethod.Cash, null), ct);
+            Assert.True(paid.IsSuccess, paid.Error?.ToString());
+        }
+
+        // La venta del cajero consumió su borrador: se vuelve a conservar uno, como en 0.4.0 a 0.8.0.
+        var draftLine = await FindProductAsync(db, SampleData.ImageSku);
+        await using var draftContext = db.CreateDbContext();
+        await SalesTestSupport.SaveDraftHandler(db, draftContext).HandleAsync(
+            new SaveSaleDraftCommand(Guid.CreateVersion7(), [new DraftLineDto(draftLine.Id, 2000, draftLine.Price.Cents)]), ct);
+    }
+
     private static async Task<Product> FindProductAsync(TestDb db, string sku)
     {
         await using var context = db.CreateDbContext();
@@ -245,6 +337,17 @@ public static class SampleData
 
     /// <summary>Desde 0.8.0: una devolución parcial de la venta 1 con una nota de crédito por lo devuelto.</summary>
     public const string ReturnReason = "Producto devuelto";
+
+    /// <summary>Desde 0.9.0: un cliente con crédito, una venta a crédito del cajero y un abono en efectivo.</summary>
+    public const int CreditSaleCount = 1;
+    public const string CustomerName = "Cliente de muestra Ñandú";
+    public const string CustomerTaxId = "RUC-0001";
+    public const long CreditLimitCents = 100_000;
+    public const long CreditPaymentCents = 4_000;
+
+    /// <summary>Desde 0.9.0: la venta a crédito es de 2 piezas del producto sin inventario ($50.00 c/u).</summary>
+    public const long CreditSaleQuantityThousandths = 2_000;
+    public const long CreditBalanceCents = 10_000 - CreditPaymentCents;
 
     /// <summary>Desde 0.6.0: usuarios de muestra. El administrador hace la venta 1; el cajero, la 2 y la 3 y el borrador.</summary>
     public const string AdminUserName = "admin";

@@ -20,7 +20,12 @@ public abstract record PrintSource
     /// <summary>Ticket de una nota de crédito recién emitida o su reimpresión (013, FR-007a).</summary>
     public static PrintSource CreditNote(Guid creditNoteId) => new CreditNoteSource(creditNoteId);
 
+    /// <summary>Recibo de un abono recién registrado o su reimpresión (014, FR-013).</summary>
+    public static PrintSource CustomerPayment(Guid paymentId) => new CustomerPaymentSource(paymentId);
+
     public sealed record SaleSource(Guid SaleId) : PrintSource;
+
+    public sealed record CustomerPaymentSource(Guid PaymentId) : PrintSource;
 
     public sealed record CreditNoteSource(Guid CreditNoteId) : PrintSource;
 

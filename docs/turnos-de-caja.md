@@ -35,6 +35,7 @@ esperado = fondo inicial
          − efectivo de las ventas canceladas (heredado, sin devolución registrada)
          + ingresos − retiros
          − reintegros en efectivo (0.8.0)
+         + abonos de clientes en efectivo − anulaciones de abonos en efectivo (0.9.0)
 ```
 
 Se calcula siempre dentro de la transacción de escritura (`CashShiftMath` en Domain); nunca se
@@ -52,6 +53,12 @@ canceladas; es la misma cifra en Inicio, en "Turnos" y en el corte.
 - Desde 0.8.0 el "total vendido" es neto de devoluciones parciales, y el corte agrega los reintegros en
   efectivo, los de tarjeta y transferencia pendientes de reversa y las notas de crédito emitidas
   (0 en los turnos cerrados antes de esa versión).
+- Desde 0.9.0 las ventas a crédito cuentan en el "total vendido" pero **no** en el esperado. El detalle
+  del turno, "Mi turno" y el corte agregan un bloque **"Crédito"**: ventas a crédito, abonos en
+  efectivo, abonos con tarjeta o transferencia y anulaciones de abonos. Un abono cuenta en el turno en
+  que se registró y su anulación en el turno en que se anuló. Todo abono y toda anulación exigen un turno
+  abierto; anular un abono en efectivo se rechaza, sin revelar montos, si el esperado no alcanza. Los
+  turnos cerrados antes de 0.9.0 no muestran el bloque. Ver [clientes-y-credito.md](clientes-y-credito.md).
 
 ## Arqueo ciego y cierre
 

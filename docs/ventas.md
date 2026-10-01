@@ -54,6 +54,23 @@ pone el monto exacto y **1 a 6** los billetes de $20, $50, $100, $200, $500 y $1
 - Doble pulsación de Enter: el botón se deshabilita mientras corre y, además, el `DraftId` de la venta
   tiene un índice único, así que confirmar dos veces registra una sola venta.
 
+### Venta a crédito (0.9.0)
+
+Con el módulo **Crédito y clientes**, el botón "Cliente…" del punto de venta elige un cliente activo con
+crédito; en el cobro aparece "Venta a crédito", que reemplaza los pagos capturados por **un único pago**
+`ACCOUNT` ("A crédito") por el total, sin efectivo ni cambio. La venta crea su cuenta por cobrar en la
+misma transacción y el ticket imprime "Cliente: …" y "A crédito: $X".
+
+- El límite (`saldo + total ≤ límite`) se verifica dentro de la transacción. Si se excede, un Cajero
+  necesita la autorización de un Administrador; si vende un Administrador, no se le pide otra vez y queda
+  como autorizador. La bitácora registra `CREDIT_SALE_REGISTERED` y, si hubo excedente,
+  `CREDIT_LIMIT_OVERRIDE`.
+- El cliente elegido no se guarda en la venta conservada: tras un cierre inesperado se vuelve a elegir.
+- "Ventas realizadas" y el detalle muestran el estado de crédito ("Pendiente de pago" / "Pagada") y el
+  bloque "Crédito" con el cliente y el saldo de esa venta.
+
+Detalles de saldo, abonos y devoluciones en [clientes-y-credito.md](clientes-y-credito.md).
+
 ## Existencia negativa
 
 - Vender más de lo que hay en existencia **se permite** después de una advertencia. La existencia
@@ -77,6 +94,9 @@ turnos y bitácora. Con el módulo inactivo sigue la cancelación básica:
 - Las devoluciones parciales descuentan de esas tarjetas; la fila de la venta conserva su importe
   original y el detalle muestra "Devuelto: X de Y" por línea y el historial de eventos.
 - Forma de pago nueva (0.8.0): **Nota de crédito** (código `CREDIT`), con a lo más un pago por venta.
+- Forma de pago nueva (0.9.0): **A crédito** (código `ACCOUNT`), siempre el único pago de su venta. Su
+  cancelación o devolución reduce el saldo del cliente en lugar de reintegrar
+  ([clientes-y-credito.md](clientes-y-credito.md)).
 
 ## Consultar la bitácora de auditoría (`AuditEntries`)
 

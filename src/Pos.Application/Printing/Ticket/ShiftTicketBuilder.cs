@@ -68,6 +68,17 @@ public static class ShiftTicketBuilder
         lines.Add(Row("Reint. tarjeta/transf.", TicketBuilder.FormatMoney(report.NonCashRefundsCents), columns));
         lines.Add(Row("Notas crédito emitidas", TicketBuilder.FormatMoney(report.CreditNotesIssuedCents), columns));
 
+        // 014, FR-012: bloque "Crédito"; los turnos cerrados antes de 0.9.0 no lo tienen.
+        if (report.Credit is { } credit)
+        {
+            lines.Add(Separator(columns));
+            lines.Add(new TicketLine("CRÉDITO", TicketAlignment.Center, Bold: true));
+            lines.Add(Row("Ventas a crédito", TicketBuilder.FormatMoney(credit.OnAccountSalesCents), columns));
+            lines.Add(Row("Abonos efectivo", TicketBuilder.FormatMoney(credit.PaymentsCashCents), columns));
+            lines.Add(Row("Abonos tarjeta/transf.", TicketBuilder.FormatMoney(credit.PaymentsNonCashCents), columns));
+            lines.Add(Row("Anulaciones de abonos", TicketBuilder.FormatMoney(credit.PaymentVoidsCents), columns));
+        }
+
         lines.Add(Separator(columns));
         lines.Add(Row("Efectivo esperado", TicketBuilder.FormatMoney(report.ExpectedCashCents), columns));
         lines.Add(Row("Efectivo contado", TicketBuilder.FormatMoney(report.CountedCashCents), columns));

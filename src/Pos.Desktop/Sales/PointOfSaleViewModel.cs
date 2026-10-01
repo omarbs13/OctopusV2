@@ -5,6 +5,8 @@ using CommunityToolkit.Mvvm.Input;
 using Pos.Application.Abstractions;
 using Pos.Application.CreditNotes;
 using Pos.Application.CreditNotes.GetCreditNoteBalance;
+using Pos.Application.Customers;
+using Pos.Application.Customers.GetCustomerCreditStatus;
 using Pos.Application.Licensing;
 using Pos.Application.CashShifts;
 using Pos.Application.CashShifts.GetCurrentShift;
@@ -182,6 +184,26 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
     [ObservableProperty]
     public partial DrawerReasonViewModel? DrawerReason { get; private set; }
 
+    /// <summary>Buscador de clientes para la venta a crédito, mientras esté abierto (014).</summary>
+    [ObservableProperty]
+    public partial CustomerPickerViewModel? CustomerPicker { get; private set; }
+
+    /// <summary>
+    /// Cliente elegido para vender a crédito. No se guarda en el borrador (<c>SaleDrafts</c> no cambia):
+    /// si la venta se recupera tras un cierre inesperado, el cliente se vuelve a elegir (contracts/ui.md).
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasCustomer), nameof(CustomerText))]
+    public partial CustomerForSaleDto? SelectedCustomer { get; private set; }
+
+    public bool HasCustomer => SelectedCustomer is not null;
+
+    public string CustomerText => SelectedCustomer is { } customer ? string.Format(Display, Strings.Credit_CustomerLabel, customer.Name) : string.Empty;
+
+    /// <summary>"Cliente…" aparece con <c>SellOnCredit</c> y el módulo Crédito y clientes activo.</summary>
+    public bool CanUseCredit =>
+        (_permissions?.Has(Permission.SellOnCredit) ?? false) && _license?.IsModuleActive(LicensedModule.CreditAndCustomers) != false;
+
     [ObservableProperty]
     public partial bool IsEditingQuantity { get; private set; }
 
@@ -192,7 +214,7 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
     public partial string? QuantityEditError { get; private set; }
 
     /// <summary>Hay una ventana modal sobre la venta (selector o cobro): los atajos de captura no aplican.</summary>
-    public bool IsModalOpen => Chooser is not null || Checkout is not null || DrawerReason is not null;
+    public bool IsModalOpen => Chooser is not null || Checkout is not null || DrawerReason is not null || CustomerPicker is not null;
 
     public bool HasLastSale => LastSaleText is not null;
 
@@ -366,6 +388,63 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
     partial void OnCheckoutChanged(CheckoutViewModel? value) => OnModalChanged();
 
     partial void OnDrawerReasonChanged(DrawerReasonViewModel? value) => OnModalChanged();
+
+    partial void OnCustomerPickerChanged(CustomerPickerViewModel? value) => OnModalChanged();
+
+    /// <summary>"Cliente…": abre el buscador de clientes con crédito.</summary>
+    [RelayCommand]
+    private async Task ChooseCustomerAsync()
+    {
+        if (!CanUseCredit || IsModalOpen || IsSaleBlocked)
+        {
+            return;
+        }
+
+        var picker = new CustomerPickerViewModel(
+            _useCases,
+            _runner,
+            chosen =>
+            {
+                CloseCustomerPicker();
+                SelectedCustomer = chosen;
+            },
+            CloseCustomerPicker);
+        CustomerPicker = picker;
+        await picker.LoadAsync();
+    }
+
+    /// <summary>"×": quita el cliente; la venta sigue y se cobra de contado.</summary>
+    [RelayCommand]
+    private void ClearCustomer() => SelectedCustomer = null;
+
+    private void CloseCustomerPicker()
+    {
+        CustomerPicker?.Dispose();
+        CustomerPicker = null;
+    }
+
+    /// <summary>Estado de crédito del cliente para el cobro; el error ya viene en español.</summary>
+    private async Task<(CustomerCreditStatusDto? Status, string? Error)> LoadCreditStatusAsync(Guid customerId, long totalCents)
+    {
+        var query = new GetCustomerCreditStatusQuery(customerId, totalCents);
+        var (completed, result) = await _runner.RunAsync(
+            "ConsultarCreditoDelCliente",
+            () => _useCases.RunAsync<GetCustomerCreditStatusHandler, Result<CustomerCreditStatusDto>>(h => h.HandleAsync(query, CancellationToken.None)),
+            new Dictionary<string, object?> { ["CustomerId"] = customerId });
+        if (!completed || result is null)
+        {
+            return (null, Strings.Common_UnexpectedError);
+        }
+
+        return result.Error switch
+        {
+            null => (result.Value, null),
+            CustomerNotEligibleForCredit or NotFound => (null, Strings.Credit_NotEligible),
+            ModuleNotLicensed => (null, Strings.License_ModuleNotLicensed),
+            Forbidden => (null, Strings.Common_Forbidden),
+            _ => (null, Strings.Common_UnexpectedError),
+        };
+    }
 
     partial void OnLastSaleTextChanged(string? value) => OnPropertyChanged(nameof(HasLastSale));
 
@@ -601,15 +680,18 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
 
     private void OpenCheckout()
     {
-        // Los pagos capturados se conservan mientras no cambie el total (US3, escenario 7).
-        if (_pendingCheckout is null || _pendingCheckout.Total != Cart.Total)
+        // Los pagos capturados se conservan mientras no cambien el total ni el cliente (US3, escenario 7).
+        if (_pendingCheckout is null || _pendingCheckout.Total != Cart.Total || _pendingCheckout.ChosenCustomerId != SelectedCustomer?.Id)
         {
-            // La nota de crédito se ofrece solo con el módulo Devoluciones activo (013).
+            // La nota de crédito se ofrece solo con el módulo Devoluciones activo (013) y la venta a
+            // crédito solo con un cliente elegido (014).
+            var customer = CanUseCredit ? SelectedCustomer : null;
             _pendingCheckout = new CheckoutViewModel(
                 new Domain.Sales.Checkout(Cart.Total),
                 ConfirmSaleAsync,
                 CloseCheckout,
-                _license?.IsModuleActive(LicensedModule.Returns) != false ? LookupCreditNoteAsync : null);
+                _license?.IsModuleActive(LicensedModule.Returns) != false ? LookupCreditNoteAsync : null,
+                customer is null ? null : new CreditCheckoutOption(customer, total => LoadCreditStatusAsync(customer.Id, total)));
         }
 
         Checkout = _pendingCheckout;
@@ -640,14 +722,19 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
         };
     }
 
-    private async Task ConfirmSaleAsync(CheckoutViewModel checkout)
+    private Task ConfirmSaleAsync(CheckoutViewModel checkout) => ConfirmSaleAsync(checkout, allowAuthorization: true);
+
+    private async Task ConfirmSaleAsync(CheckoutViewModel checkout, bool allowAuthorization)
     {
         await _autosaver.FlushAsync();
 
         var command = new ConfirmSaleCommand(
             Cart.DraftId,
             [.. Cart.Lines.Select(l => new ConfirmLineInput(l.ProductId, l.Quantity.Thousandths, l.UnitPrice.Cents))],
-            [.. checkout.ToPayments().Select(p => new PaymentInput(p.Method, p.Amount.Cents, p.Received?.Cents, p.Reference))]);
+            [.. checkout.ToPayments().Select(p => new PaymentInput(p.Method, p.Amount.Cents, p.Received?.Cents, p.Reference))],
+            checkout.CustomerId,
+            checkout.OverLimitGrantId);
+        checkout.OverLimitGrantId = null;
         var hadCash = command.Payments.Any(p => p.Method == PaymentMethod.Cash);
 
         var (completed, result) = await _runner.RunAsync(
@@ -706,6 +793,23 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
                 checkout.ErrorMessage = string.Format(Display, Strings.CreditNote_Insufficient, MoneyConverter.Format(insufficient.AvailableCents));
                 break;
 
+            case CreditLimitExceeded exceeded:
+                // 014: se pide la autorización de un Administrador y se reintenta una vez con la concesión;
+                // cancelar o una contraseña incorrecta no registran nada (Historia 2, escenario 3).
+                checkout.ErrorMessage = string.Format(Display, Strings.Credit_LimitExceeded, MoneyConverter.Format(exceeded.ExcessCents));
+                if (allowAuthorization && _authorization is not null
+                    && await _authorization.RequestAsync(Permission.ApproveCreditOverLimit) is { } grant)
+                {
+                    checkout.OverLimitGrantId = grant;
+                    await ConfirmSaleAsync(checkout, allowAuthorization: false);
+                }
+
+                break;
+
+            case CustomerNotEligibleForCredit:
+                checkout.ErrorMessage = Strings.Credit_NotEligible;
+                break;
+
             default:
                 checkout.ErrorMessage = Strings.Sale_NotRegistered;
                 break;
@@ -745,6 +849,7 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
     {
         Cart.Clear();
         _pendingCheckout = null;
+        SelectedCustomer = null;
         IsEditingQuantity = false;
         RefreshCart();
         SaveDraft();

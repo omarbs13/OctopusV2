@@ -25,6 +25,13 @@ internal sealed class CashShiftConfiguration : IEntityTypeConfiguration<CashShif
         builder.Property(s => s.OpenedAt).IsRequired();
         builder.Property(s => s.OpeningFloatCents).IsRequired();
         builder.Property(s => s.ClosingComment).HasMaxLength(CashShift.CommentMaxLength);
+
+        // Instantánea del bloque "Crédito" (014): nulas en los turnos cerrados antes de 0.9.0 (AddColumn sin reconstruir).
+        builder.Property(s => s.OnAccountSalesCents);
+        builder.Property(s => s.CustomerPaymentsCashCents);
+        builder.Property(s => s.CustomerPaymentsNonCashCents);
+        builder.Property(s => s.CustomerPaymentVoidsCashCents);
+        builder.Property(s => s.CustomerPaymentVoidsNonCashCents);
         builder.Property(s => s.CreatedAt).IsRequired();
         builder.Property(s => s.CreatedBy).IsRequired();
         builder.Property(s => s.UpdatedAt).IsRequired();

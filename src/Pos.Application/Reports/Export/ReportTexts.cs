@@ -22,6 +22,7 @@ public static class ReportTexts
     public const string Cash = "Efectivo";
     public const string Card = "Tarjeta";
     public const string Transfer = "Transferencia";
+    public const string OnAccount = "A crédito";
     public const string PreviousTotal = "Total del período anterior";
     public const string Variation = "Variación";
     public const string NotCalculable = "No calculable";

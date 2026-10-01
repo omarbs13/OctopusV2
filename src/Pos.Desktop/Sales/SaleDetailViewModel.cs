@@ -9,7 +9,9 @@ using Pos.Application.Sales;
 using Pos.Application.Sales.GetSale;
 using Pos.Desktop.Auth;
 using Pos.Desktop.Common;
+using Pos.Desktop.Customers;
 using Pos.Desktop.Forms;
+using Pos.Desktop.Navigation;
 using Pos.Desktop.Resources;
 using Pos.Desktop.Settings;
 using Pos.Domain.Licensing;
@@ -88,6 +90,7 @@ public sealed partial class SaleDetailViewModel : FormViewModel
     private readonly AdminAuthorizationService? _authorization;
     private readonly ICurrentPermissions? _permissions;
     private readonly ILicenseState? _license;
+    private readonly Navigator? _navigator;
 
     private Guid _saleId;
 
@@ -98,9 +101,11 @@ public sealed partial class SaleDetailViewModel : FormViewModel
         TicketPrintingService printing,
         AdminAuthorizationService? authorization = null,
         ICurrentPermissions? permissions = null,
-        ILicenseState? license = null)
+        ILicenseState? license = null,
+        Navigator? navigator = null)
         : base(dialogs)
     {
+        _navigator = navigator;
         _authorization = authorization;
         _permissions = permissions;
         _license = license;
@@ -130,8 +135,25 @@ public sealed partial class SaleDetailViewModel : FormViewModel
         nameof(IsOutOfReturnWindow),
         nameof(HasHistory),
         nameof(ReturnedTotalText),
-        nameof(CancellationText))]
+        nameof(CancellationText),
+        nameof(HasCredit),
+        nameof(CreditCustomerText),
+        nameof(CreditBalanceText),
+        nameof(CreditStatusText))]
     public partial SaleDetailDto? Detail { get; private set; }
+
+    /// <summary>Venta a crédito (014): bloque "Crédito" con cliente, saldo de esta venta y estado.</summary>
+    public bool HasCredit => Detail?.Credit is not null;
+
+    public string CreditCustomerText => Detail?.Credit is { } credit ? string.Format(Display, Strings.Credit_SaleCustomer, credit.CustomerName) : string.Empty;
+
+    public string CreditBalanceText => Detail?.Credit is { } credit ? string.Format(Display, Strings.Credit_SaleBalance, MoneyConverter.Format(credit.BalanceCents)) : string.Empty;
+
+    public string CreditStatusText => Detail?.Credit is { } credit ? CreditStatusLabels.Of(credit.Status) : string.Empty;
+
+    /// <summary>Enlace a la ficha del cliente; se oculta cuando el detalle ya se abrió desde la ficha.</summary>
+    [ObservableProperty]
+    public partial bool ShowCustomerLink { get; set; } = true;
 
     /// <summary>Formulario de devolución o cancelación, mientras esté abierto.</summary>
     [ObservableProperty]
@@ -274,6 +296,16 @@ public sealed partial class SaleDetailViewModel : FormViewModel
     }
 
     private bool CanReprint() => Detail is not null;
+
+    /// <summary>Lleva a la ficha del cliente de la venta a crédito.</summary>
+    [CommunityToolkit.Mvvm.Input.RelayCommand]
+    private async Task OpenCustomerAsync()
+    {
+        if (Detail?.Credit is { } credit && _navigator is not null)
+        {
+            await _navigator.NavigateAsync(CustomersModule.ListPageId, credit.CustomerId);
+        }
+    }
 
     private void CloseCancelForm()
     {
