@@ -1,11 +1,15 @@
 using FluentValidation;
 using Microsoft.Extensions.Logging;
 using Pos.Application.Abstractions;
+using Pos.Application.Audit;
 using Pos.Application.CashShifts;
+using Pos.Application.CreditNotes;
 using Pos.Application.Inventory;
 using Pos.Application.Licensing;
+using Pos.Application.Printing.Ticket;
 using Pos.Application.Products;
 using Pos.Domain.Common;
+using Pos.Domain.CreditNotes;
 using Pos.Domain.Inventory;
 using Pos.Domain.Licensing;
 using Pos.Domain.Products;
@@ -32,6 +36,8 @@ public sealed partial class ConfirmSaleHandler
     private readonly IValidator<ConfirmSaleCommand> _validator;
     private readonly ILogger<ConfirmSaleHandler> _logger;
     private readonly ILicenseState? _license;
+    private readonly ICreditNoteRepository? _creditNotes;
+    private readonly IAuditLog? _audit;
 
     public ConfirmSaleHandler(
         IAccessControl access,
@@ -43,9 +49,13 @@ public sealed partial class ConfirmSaleHandler
         IWriteTransactions transactions,
         IValidator<ConfirmSaleCommand> validator,
         ILogger<ConfirmSaleHandler> logger,
-        ILicenseState? license = null)
+        ILicenseState? license = null,
+        ICreditNoteRepository? creditNotes = null,
+        IAuditLog? audit = null)
     {
         _license = license;
+        _creditNotes = creditNotes;
+        _audit = audit;
         _access = access;
         _products = products;
         _inventory = inventory;
@@ -167,6 +177,37 @@ public sealed partial class ConfirmSaleHandler
                 [new FieldError(SaleFields.Payments, SaleMessages.PaymentShort)]));
         }
 
+        // Pago con nota de crédito (013, Historia 4): se resuelve la nota y su saldo antes de tocar inventario.
+        CreditNote? creditNote = null;
+        long creditBalance = 0;
+        var creditEntry = checkout.Payments.FirstOrDefault(p => p.Method == PaymentMethod.CreditNote);
+        if (creditEntry is not null)
+        {
+            if (_creditNotes is null || _license?.IsModuleActive(LicensedModule.Returns) == false)
+            {
+                return Result.Failure<ConfirmedSale>(new ModuleNotLicensed(LicensedModule.Returns));
+            }
+
+            if (!CreditNoteFolio.TryParse(creditEntry.Reference, out var noteNumber)
+                || await _creditNotes.FindByNumberAsync(noteNumber, cancellationToken) is not { } found)
+            {
+                return Result.Failure<ConfirmedSale>(new CreditNoteNotFound());
+            }
+
+            creditBalance = await _creditNotes.GetBalanceAsync(found.Id, cancellationToken);
+            if (creditBalance <= 0)
+            {
+                return Result.Failure<ConfirmedSale>(new CreditNoteNotFound());
+            }
+
+            if (creditEntry.Amount.Cents > creditBalance)
+            {
+                return Result.Failure<ConfirmedSale>(new InsufficientCreditNote(creditBalance));
+            }
+
+            creditNote = found;
+        }
+
         var folioNumber = await _sales.NextFolioNumberAsync(cancellationToken);
         var folio = Folio.Format(folioNumber);
 
@@ -207,6 +248,11 @@ public sealed partial class ConfirmSaleHandler
             cashShiftId,
             lines,
             checkout.ToPayments().Select(SalePayment.Create));
+        if (creditNote is not null)
+        {
+            await RedeemCreditNoteAsync(sale, creditNote, creditBalance, cancellationToken);
+        }
+
         _sales.Add(sale);
         _drafts.Remove();
 
@@ -220,6 +266,20 @@ public sealed partial class ConfirmSaleHandler
 
         LogRegistered(sale.Id, folio, sale.Lines.Count, sale.TotalCents);
         return Result.Success(new ConfirmedSale(sale.Id, folio, sale.TotalCents, checkout.Change.Cents));
+    }
+
+    /// <summary>Descuenta del saldo de la nota lo usado como pago y deja la huella en la bitácora.</summary>
+    private async Task RedeemCreditNoteAsync(Sale sale, CreditNote note, long balanceCents, CancellationToken cancellationToken)
+    {
+        var payment = sale.Payments.Single(p => p.Method == PaymentMethod.CreditNote);
+        payment.LinkCreditNote(note.Id);
+        var sequence = await _creditNotes!.NextMovementSequenceAsync(note.Id, cancellationToken);
+        _creditNotes.AddMovement(note.Redeem(payment.AmountCents, balanceCents, sequence, sale.Id));
+        _audit?.Add(
+            AuditActions.CreditNoteRedeemed,
+            AuditActions.CreditNoteEntity,
+            note.Id,
+            $"Nota {note.Folio}. Venta {sale.Folio}. Monto {TicketBuilder.FormatMoney(payment.AmountCents)}");
     }
 
     private static Checkout BuildCheckout(Money total, IReadOnlyList<PaymentInput> payments, out string? error)

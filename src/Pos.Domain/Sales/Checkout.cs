@@ -84,6 +84,19 @@ public sealed class Checkout
         }
 
         var text = string.IsNullOrWhiteSpace(reference) ? null : reference.Trim();
+        if (method == PaymentMethod.CreditNote)
+        {
+            if (text is null)
+            {
+                throw new DomainException("La nota de crédito requiere el folio.");
+            }
+
+            if (_payments.Any(p => p.Method == PaymentMethod.CreditNote))
+            {
+                throw new DomainException("La venta admite a lo más un pago con nota de crédito.");
+            }
+        }
+
         if (text is { Length: > ReferenceMaxLength })
         {
             throw new DomainException($"La referencia admite hasta {ReferenceMaxLength} caracteres.");

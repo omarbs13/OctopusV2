@@ -10,6 +10,7 @@ internal static class PaymentMethodLabels
     {
         PaymentMethod.Cash => Strings.Payment_Cash,
         PaymentMethod.Card => Strings.Payment_Card,
+        PaymentMethod.CreditNote => Strings.Payment_CreditNote,
         _ => Strings.Payment_Transfer,
     };
 }

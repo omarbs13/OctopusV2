@@ -26,4 +26,13 @@ public enum Permission
 
     /// <summary>Importar la licencia y exportar la solicitud (011); solo el Administrador, nunca bloqueado por la licencia.</summary>
     ManageLicense,
+
+    /// <summary>Iniciar cancelaciones y devoluciones (013); Cajero y Administrador.</summary>
+    ProcessReturns,
+
+    /// <summary>Autorizar cancelaciones y devoluciones (013); solo el Administrador, siempre exigida.</summary>
+    ApproveReturns,
+
+    /// <summary>Listar notas de crédito y reintegros pendientes, marcarlos y configurar el plazo (013); solo el Administrador.</summary>
+    ManageCreditNotes,
 }

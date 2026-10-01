@@ -20,5 +20,7 @@ internal sealed class SalePaymentConfiguration : IEntityTypeConfiguration<SalePa
         builder.Property(p => p.ReceivedCents);
         builder.Property(p => p.ChangeCents);
         builder.Property(p => p.Reference).HasMaxLength(SalePayment.ReferenceMaxLength);
+        // Sin llave foránea hacia CreditNotes: evita reconstruir SalePayments en la migración (research §10).
+        builder.Property(p => p.CreditNoteId);
     }
 }

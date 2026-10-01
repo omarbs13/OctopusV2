@@ -63,13 +63,20 @@ pone el monto exacto y **1 a 6** los billetes de $20, $50, $100, $200, $500 y $1
 - Los movimientos de venta (`SALE`) y de cancelación (`SALE_CANCEL`) no se pueden registrar a mano
   desde el formulario de movimientos. Su referencia es el folio.
 
-## Cancelación
+## Cancelación y devoluciones
+
+Desde 0.8.0 (módulo Devoluciones) la cancelación y las devoluciones parciales se explican en
+[devoluciones.md](devoluciones.md): autorización de un Administrador, reintegro o nota de crédito,
+turnos y bitácora. Con el módulo inactivo sigue la cancelación básica:
 
 - Cancelar exige un motivo (máximo 250 caracteres) y cancela la venta **completa**.
 - Regresa a la existencia exactamente lo que salió (un movimiento `SALE_CANCEL` por línea con
   inventario), aunque el producto haya quedado inactivo, eliminado o sin control de inventario.
 - Una venta cancelada no se puede volver a cancelar y nunca se borra. Las ventas canceladas no
   cuentan en las tarjetas de Inicio.
+- Las devoluciones parciales descuentan de esas tarjetas; la fila de la venta conserva su importe
+  original y el detalle muestra "Devuelto: X de Y" por línea y el historial de eventos.
+- Forma de pago nueva (0.8.0): **Nota de crédito** (código `CREDIT`), con a lo más un pago por venta.
 
 ## Consultar la bitácora de auditoría (`AuditEntries`)
 

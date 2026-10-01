@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Pos.Application.CreditNotes;
 using Pos.Desktop.Common;
 using Pos.Desktop.Resources;
 using Pos.Domain.Common;
@@ -30,13 +31,21 @@ public sealed partial class CheckoutViewModel : ViewModelBase
     private readonly Checkout _checkout;
     private readonly Func<CheckoutViewModel, Task> _confirm;
     private readonly Action _cancel;
+    private readonly Func<string, Task<(CreditNoteBalance? Balance, string? Error)>>? _lookupCreditNote;
 
-    public CheckoutViewModel(Checkout checkout, Func<CheckoutViewModel, Task> confirm, Action cancel)
+    // lookupCreditNote consulta el saldo de una nota por folio (013); es nulo si el módulo Devoluciones
+    // no está activo y entonces el cobro no ofrece la nota de crédito.
+    public CheckoutViewModel(
+        Checkout checkout,
+        Func<CheckoutViewModel, Task> confirm,
+        Action cancel,
+        Func<string, Task<(CreditNoteBalance? Balance, string? Error)>>? lookupCreditNote = null)
     {
         ArgumentNullException.ThrowIfNull(checkout);
         _checkout = checkout;
         _confirm = confirm;
         _cancel = cancel;
+        _lookupCreditNote = lookupCreditNote;
         MethodOptions =
         [
             new(PaymentMethod.Card, PaymentMethodLabels.Of(PaymentMethod.Card)),
@@ -53,6 +62,18 @@ public sealed partial class CheckoutViewModel : ViewModelBase
     public string TotalText => MoneyConverter.Format(_checkout.Total.Cents);
 
     public IReadOnlyList<PaymentMethodOption> MethodOptions { get; }
+
+    /// <summary>La nota de crédito solo se ofrece con el módulo Devoluciones activo (contracts/ui.md §3).</summary>
+    public bool CanUseCreditNote => _lookupCreditNote is not null;
+
+    [ObservableProperty]
+    public partial string CreditNoteFolioText { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string? CreditNoteInfo { get; private set; }
+
+    [ObservableProperty]
+    public partial string? CreditNoteError { get; private set; }
 
     public ObservableCollection<CheckoutPaymentRow> Payments { get; } = [];
 
@@ -156,6 +177,46 @@ public sealed partial class CheckoutViewModel : ViewModelBase
 
         ErrorMessage = null;
         NonCashReference = string.Empty;
+        Refresh();
+        NonCashAmountText = _checkout.Pending.ToEditableString();
+    }
+
+    /// <summary>Consulta el saldo del folio y agrega el pago por el menor entre el saldo y lo pendiente.</summary>
+    [RelayCommand]
+    private async Task ApplyCreditNoteAsync()
+    {
+        CreditNoteError = null;
+        CreditNoteInfo = null;
+        if (_lookupCreditNote is null)
+        {
+            return;
+        }
+
+        var (balance, error) = await _lookupCreditNote(CreditNoteFolioText);
+        if (balance is null)
+        {
+            CreditNoteError = error ?? Strings.CreditNote_NotFound;
+            return;
+        }
+
+        var pending = _checkout.Pending.Cents;
+        if (pending <= 0)
+        {
+            return;
+        }
+
+        try
+        {
+            _checkout.AddNonCash(PaymentMethod.CreditNote, Money.FromCents(Math.Min(balance.BalanceCents, pending)), balance.Folio);
+        }
+        catch (DomainException ex)
+        {
+            CreditNoteError = ex.Message;
+            return;
+        }
+
+        CreditNoteInfo = string.Format(Display, Strings.CreditNote_Balance, MoneyConverter.Format(balance.BalanceCents));
+        CreditNoteFolioText = string.Empty;
         Refresh();
         NonCashAmountText = _checkout.Pending.ToEditableString();
     }

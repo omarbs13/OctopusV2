@@ -65,7 +65,7 @@ public sealed class ProductStock
     {
         ArgumentNullException.ThrowIfNull(unit);
 
-        if (type is MovementType.Sale or MovementType.SaleCancellation)
+        if (type is MovementType.Sale or MovementType.SaleCancellation or MovementType.SaleReturn)
         {
             throw new DomainException("Los movimientos de venta solo se generan al vender o cancelar una venta.");
         }
@@ -153,7 +153,17 @@ public sealed class ProductStock
     /// Regresa la existencia que salió por una venta cancelada (<c>SALE_CANCEL</c>). No revisa el
     /// estado ni la configuración actual del producto (research §9).
     /// </summary>
-    public InventoryMovement RecordSaleCancellation(Quantity quantity, string reference)
+    public InventoryMovement RecordSaleCancellation(Quantity quantity, string reference) =>
+        RecordReturnToStock(MovementType.SaleCancellation, quantity, reference);
+
+    /// <summary>
+    /// Regresa la existencia de una devolución parcial (<c>SALE_RETURN</c>). Igual que la cancelación,
+    /// no revisa el estado ni la configuración actual del producto.
+    /// </summary>
+    public InventoryMovement RecordSaleReturn(Quantity quantity, string reference) =>
+        RecordReturnToStock(MovementType.SaleReturn, quantity, reference);
+
+    private InventoryMovement RecordReturnToStock(MovementType type, Quantity quantity, string reference)
     {
         if (quantity <= Quantity.Zero)
         {
@@ -171,7 +181,7 @@ public sealed class ProductStock
         }
 
         var resulting = OnHand + quantity;
-        var movement = new InventoryMovement(ProductId, MovementCount + 1, MovementType.SaleCancellation, quantity, resulting, null, reference);
+        var movement = new InventoryMovement(ProductId, MovementCount + 1, type, quantity, resulting, null, reference);
         OnHandThousandths = resulting.Thousandths;
         MovementCount++;
         return movement;

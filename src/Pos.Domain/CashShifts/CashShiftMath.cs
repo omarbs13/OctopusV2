@@ -5,12 +5,12 @@ public static class CashShiftMath
 {
     /// <summary>
     /// Efectivo esperado (FR-015): fondo inicial + efectivo de ventas (neto de cambio) − efectivo
-    /// de ventas canceladas + ingresos − retiros.
+    /// de ventas canceladas heredado (sin devolución registrada) + ingresos − retiros − reintegros en efectivo.
     /// </summary>
     public static long ExpectedCash(long openingFloatCents, ShiftSalesTotals totals, long depositsCents, long withdrawalsCents)
     {
         ArgumentNullException.ThrowIfNull(totals);
-        return openingFloatCents + totals.CashSalesCents - totals.CashCancelledCents + depositsCents - withdrawalsCents;
+        return openingFloatCents + totals.CashSalesCents - totals.CashCancelledCents + depositsCents - withdrawalsCents - totals.CashRefundsCents;
     }
 
     /// <summary>Indica si se puede devolver el efectivo de una venta sin dejar el esperado en negativo (FR-008).</summary>

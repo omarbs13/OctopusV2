@@ -1,4 +1,5 @@
 using Pos.Domain.Common;
+using Pos.Domain.Returns;
 
 namespace Pos.Domain.Sales;
 
@@ -29,6 +30,9 @@ public sealed class Sale
 
     public long TotalCents { get; private set; }
 
+    /// <summary>Suma de lo devuelto por devoluciones parciales (013); 0 por defecto. Solo lo cambia <see cref="ApplyReturn"/>.</summary>
+    public long ReturnedCents { get; private set; }
+
     public SaleStatus Status { get; private set; }
 
     public string? CancellationReason { get; private set; }
@@ -52,6 +56,12 @@ public sealed class Sale
     public IReadOnlyList<SalePayment> Payments => _payments;
 
     public Money Total => Money.FromCents(TotalCents);
+
+    /// <summary>Venta vigente con parte de lo vendido devuelto.</summary>
+    public bool IsPartiallyReturned => Status == SaleStatus.Completed && ReturnedCents > 0 && ReturnedCents < TotalCents;
+
+    /// <summary>Venta vigente con todo lo vendido devuelto en una o varias devoluciones.</summary>
+    public bool IsFullyReturned => Status == SaleStatus.Completed && ReturnedCents >= TotalCents;
 
     public string Folio => Sales.Folio.Format(FolioNumber);
 
@@ -98,6 +108,11 @@ public sealed class Sale
             throw new DomainException("La venta admite a lo más un pago en efectivo.");
         }
 
+        if (paymentList.Count(p => p.Method == PaymentMethod.CreditNote) > 1)
+        {
+            throw new DomainException("La venta admite a lo más un pago con nota de crédito.");
+        }
+
         var sale = new Sale
         {
             Id = Guid.CreateVersion7(),
@@ -136,6 +151,71 @@ public sealed class Sale
         CancellationReason = text;
         CancelledAt = utcNow;
         CancelledBy = userId;
+    }
+
+    /// <summary>
+    /// Calcula, sin modificar la venta, el monto de cada línea de una devolución parcial: la venta debe
+    /// estar vigente, cada cantidad > 0 y no exceder lo disponible (vendido − ya devuelto), sin líneas repetidas.
+    /// </summary>
+    public IReadOnlyList<ReturnLineAmount> CalculateReturn(IEnumerable<ReturnLineRequest> requests)
+    {
+        ArgumentNullException.ThrowIfNull(requests);
+        if (Status != SaleStatus.Completed)
+        {
+            throw new DomainException("Esta venta ya está cancelada");
+        }
+
+        var list = requests.ToList();
+        if (list.Count == 0 || list.Select(r => r.SaleLineId).Distinct().Count() != list.Count)
+        {
+            throw new DomainException("Seleccione al menos un artículo y no exceda la cantidad disponible");
+        }
+
+        var result = new List<ReturnLineAmount>(list.Count);
+        foreach (var request in list)
+        {
+            var line = _lines.SingleOrDefault(l => l.Id == request.SaleLineId)
+                ?? throw new DomainException("La línea no pertenece a la venta.");
+            if (request.QuantityThousandths <= 0 || request.QuantityThousandths > line.AvailableToReturn)
+            {
+                throw new DomainException("Seleccione al menos un artículo y no exceda la cantidad disponible");
+            }
+
+            var amount = ReturnMath.LineRefund(line.AmountCents, line.QuantityThousandths, line.ReturnedQuantity, request.QuantityThousandths);
+            result.Add(new ReturnLineAmount(line.Id, request.QuantityThousandths, amount));
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Registra una devolución parcial: actualiza lo devuelto por línea y <see cref="ReturnedCents"/>.
+    /// Una cancelación completa exige <see cref="ReturnedCents"/> = 0 (<see cref="EnsureCanCancelInFull"/>).
+    /// </summary>
+    public IReadOnlyList<ReturnLineAmount> ApplyReturn(IEnumerable<ReturnLineRequest> requests)
+    {
+        var amounts = CalculateReturn(requests);
+        foreach (var amount in amounts)
+        {
+            _lines.Single(l => l.Id == amount.SaleLineId).AddReturned(amount.QuantityThousandths);
+        }
+
+        ReturnedCents += amounts.Sum(a => a.AmountCents);
+        return amounts;
+    }
+
+    /// <summary>La cancelación completa solo procede sin devoluciones parciales previas.</summary>
+    public void EnsureCanCancelInFull()
+    {
+        if (Status != SaleStatus.Completed)
+        {
+            throw new DomainException("Esta venta ya está cancelada");
+        }
+
+        if (ReturnedCents > 0)
+        {
+            throw new DomainException("La venta tiene devoluciones parciales; devuelva el resto con una devolución parcial.");
+        }
     }
 
     /// <summary>Liga el movimiento <c>SALE_CANCEL</c> con la línea cuyo movimiento de salida regresa.</summary>

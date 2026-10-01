@@ -54,6 +54,13 @@ public sealed class CashShift
 
     public long? TransferCents { get; private set; }
 
+    /// <summary>Efectivo devuelto en el turno (013); nulo en turnos cerrados antes de 0.8.0.</summary>
+    public long? CashRefundsCents { get; private set; }
+
+    public long? NonCashRefundsCents { get; private set; }
+
+    public long? CreditNotesIssuedCents { get; private set; }
+
     public long? DepositsCents { get; private set; }
 
     public long? WithdrawalsCents { get; private set; }
@@ -172,6 +179,9 @@ public sealed class CashShift
         CashCancelledCents = totals.CashCancelledCents;
         CardCents = totals.CardCents;
         TransferCents = totals.TransferCents;
+        CashRefundsCents = totals.CashRefundsCents;
+        NonCashRefundsCents = totals.NonCashRefundsCents;
+        CreditNotesIssuedCents = totals.CreditNotesIssuedCents;
         DepositsCents = deposits;
         WithdrawalsCents = withdrawals;
         ExpectedCashCents = expected;

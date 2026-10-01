@@ -3,9 +3,9 @@ using Avalonia.Threading;
 
 namespace Pos.Desktop.Sales;
 
-public partial class CancelSaleView : UserControl
+public partial class ReturnSaleView : UserControl
 {
-    public CancelSaleView()
+    public ReturnSaleView()
     {
         InitializeComponent();
         AttachedToVisualTree += (_, _) => Dispatcher.UIThread.Post(() => ReasonBox.Focus());

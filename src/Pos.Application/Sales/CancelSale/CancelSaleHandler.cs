@@ -7,8 +7,10 @@ using Pos.Application.Users.Access;
 using Pos.Application.Inventory;
 using Pos.Application.Licensing;
 using Pos.Application.Products;
+using Pos.Application.Returns;
 using Pos.Domain.CashShifts;
 using Pos.Domain.Licensing;
+using Pos.Domain.Returns;
 using Pos.Domain.Sales;
 using Pos.Domain.Users;
 
@@ -17,6 +19,9 @@ namespace Pos.Application.Sales.CancelSale;
 /// <summary>
 /// Cancela una venta completa (research §9): regresa exactamente lo que salió por cada línea y deja
 /// una entrada en la bitácora, todo en una transacción. Las ventas nunca se borran.
+/// Con el módulo Devoluciones activo (013) delega en <see cref="SaleReturnProcessor"/>: exige la
+/// autorización de un Administrador y compensa al cliente con reintegro o nota de crédito. Sin el
+/// módulo conserva la cancelación básica de 005/008 (research §12).
 /// </summary>
 public sealed partial class CancelSaleHandler
 {
@@ -33,6 +38,7 @@ public sealed partial class CancelSaleHandler
     private readonly IValidator<CancelSaleCommand> _validator;
     private readonly ILogger<CancelSaleHandler> _logger;
     private readonly ILicenseState? _license;
+    private readonly SaleReturnProcessor? _processor;
 
     public CancelSaleHandler(
         IAccessControl access,
@@ -45,9 +51,11 @@ public sealed partial class CancelSaleHandler
         ICurrentUser currentUser,
         IValidator<CancelSaleCommand> validator,
         ILogger<CancelSaleHandler> logger,
-        ILicenseState? license = null)
+        ILicenseState? license = null,
+        SaleReturnProcessor? processor = null)
     {
         _license = license;
+        _processor = processor;
         _access = access;
         _sales = sales;
         _shifts = shifts;
@@ -60,20 +68,46 @@ public sealed partial class CancelSaleHandler
         _logger = logger;
     }
 
-    public async Task<Result> HandleAsync(CancelSaleCommand command, CancellationToken cancellationToken)
+    public async Task<Result<ReturnResult>> HandleAsync(CancelSaleCommand command, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(command);
 
+        if (_processor is not null && _license?.IsModuleActive(LicensedModule.Returns) != false)
+        {
+            var returnValidation = await _validator.ValidateAsync(command, cancellationToken);
+            if (!returnValidation.IsValid)
+            {
+                return Result.Failure<ReturnResult>(ProductRules.ToError(returnValidation));
+            }
+
+            return await _processor.ProcessAsync(
+                new ReturnRequest(
+                    command.SaleId,
+                    command.ExpectedVersion,
+                    ReturnKind.Cancellation,
+                    Lines: null,
+                    command.Reason,
+                    command.Compensation,
+                    command.AuthorizationGrantId),
+                cancellationToken);
+        }
+
+        return await CancelBasicAsync(command, cancellationToken);
+    }
+
+    /// <summary>Cancelación básica de 005/008, sin compensación ni registro de devolución.</summary>
+    private async Task<Result<ReturnResult>> CancelBasicAsync(CancelSaleCommand command, CancellationToken cancellationToken)
+    {
         var access = await _access.CheckAsync(Permission.CancelSales, command.AuthorizationGrantId, cancellationToken);
         if (!access.Allowed)
         {
-            return Result.Failure(access.Error!);
+            return Result.Failure<ReturnResult>(access.Error!);
         }
 
         var validation = await _validator.ValidateAsync(command, cancellationToken);
         if (!validation.IsValid)
         {
-            return Result.Failure(ProductRules.ToError(validation));
+            return Result.Failure<ReturnResult>(ProductRules.ToError(validation));
         }
 
         await using var transaction = await _transactions.BeginAsync(cancellationToken);
@@ -81,17 +115,17 @@ public sealed partial class CancelSaleHandler
         var sale = await _sales.GetAsync(command.SaleId, cancellationToken);
         if (sale is null)
         {
-            return Result.Failure(new NotFound());
+            return Result.Failure<ReturnResult>(new NotFound());
         }
 
         if (sale.Status != SaleStatus.Completed)
         {
-            return Result.Failure(new InvalidState(SaleMessages.AlreadyCancelled));
+            return Result.Failure<ReturnResult>(new InvalidState(SaleMessages.AlreadyCancelled));
         }
 
         if (sale.Version != command.ExpectedVersion)
         {
-            return Result.Failure(new Conflict());
+            return Result.Failure<ReturnResult>(new Conflict());
         }
 
         // 008: solo se cancelan ventas del turno abierto actual (incluye rechazar las anteriores a 0.6.0, sin turno).
@@ -101,7 +135,7 @@ public sealed partial class CancelSaleHandler
             var shift = await _shifts.GetOpenAsync(CashRegister.Default, cancellationToken);
             if (shift is null || sale.CashShiftId != shift.Id)
             {
-                return Result.Failure(new InvalidState(CashShiftMessages.SaleFromClosedShift));
+                return Result.Failure<ReturnResult>(new InvalidState(CashShiftMessages.SaleFromClosedShift));
             }
 
             var saleCash = await _sales.GetCashAppliedAsync(sale.Id, cancellationToken);
@@ -112,7 +146,7 @@ public sealed partial class CancelSaleHandler
                 {
                     // Nunca se revela el monto esperado, a ningún rol (clarificación 1).
                     LogInsufficientCash(sale.Id, shift.Id);
-                    return Result.Failure(new InsufficientCash(null));
+                    return Result.Failure<ReturnResult>(new InsufficientCash(null));
                 }
             }
         }
@@ -143,12 +177,12 @@ public sealed partial class CancelSaleHandler
         if (outcome.Status != SaveStatus.Saved)
         {
             LogConflict(sale.Id);
-            return Result.Failure(new Conflict());
+            return Result.Failure<ReturnResult>(new Conflict());
         }
 
         await transaction.CommitAsync(cancellationToken);
         LogCancelled(sale.Id, sale.Folio);
-        return Result.Success();
+        return Result.Success(ReturnResult.Basic(sale.TotalCents));
     }
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Venta cancelada. SaleId={SaleId} Folio={Folio}")]

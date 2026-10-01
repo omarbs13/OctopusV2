@@ -15,6 +15,7 @@ internal static class MovementTypeLabels
         MovementType.AdjustIn => Strings.MovementType_AdjustIn,
         MovementType.Sale => Strings.MovementType_Sale,
         MovementType.SaleCancellation => Strings.MovementType_SaleCancellation,
+        MovementType.SaleReturn => Strings.MovementType_SaleReturn,
         _ => Strings.MovementType_AdjustOut,
     };
 }

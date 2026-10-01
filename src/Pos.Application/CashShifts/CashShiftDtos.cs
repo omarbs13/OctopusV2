@@ -82,7 +82,10 @@ public sealed record ShiftReconciliationDto(
     long ExpectedCashCents,
     long? CountedCashCents,
     long? DifferenceCents,
-    string? Comment);
+    string? Comment,
+    long CashRefundsCents = 0,
+    long NonCashRefundsCents = 0,
+    long CreditNotesIssuedCents = 0);
 
 public sealed record ShiftDetailDto(
     Guid Id,
@@ -135,7 +138,10 @@ public sealed record ShiftReportDto(
     long ExpectedCashCents,
     long CountedCashCents,
     long DifferenceCents,
-    string? Comment);
+    string? Comment,
+    long CashRefundsCents = 0,
+    long NonCashRefundsCents = 0,
+    long CreditNotesIssuedCents = 0);
 
 /// <summary>Datos del comprobante de un movimiento de efectivo, más lo necesario para decidir el acceso.</summary>
 public sealed record CashMovementReceiptDto(

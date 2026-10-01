@@ -175,6 +175,9 @@ public static class TicketBuilder
                 case PaymentMethod.Card:
                     lines.Add(new TicketLine(TextWrap.TwoColumns("Tarjeta", FormatMoney(payment.AmountCents), columns)));
                     break;
+                case PaymentMethod.CreditNote:
+                    lines.Add(new TicketLine(TextWrap.TwoColumns("Nota de crédito", FormatMoney(payment.AmountCents), columns)));
+                    break;
                 default:
                     lines.Add(new TicketLine(TextWrap.TwoColumns("Transferencia", FormatMoney(payment.AmountCents), columns)));
                     break;

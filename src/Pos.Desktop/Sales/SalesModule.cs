@@ -23,7 +23,7 @@ public static class SalesModule
         services.AddTransient<SaleDetailViewModel>();
         services.AddScoped<Func<SaleDetailViewModel>>(sp => sp.GetRequiredService<SaleDetailViewModel>);
         services.AddComponentView<SaleDetailViewModel, SaleDetailView>();
-        services.AddComponentView<CancelSaleViewModel, CancelSaleView>();
+        services.AddComponentView<ReturnSaleViewModel, ReturnSaleView>();
         services.AddComponentView<CheckoutViewModel, CheckoutView>();
 
         // Tarjetas de Inicio: comparten una sola consulta por activación.

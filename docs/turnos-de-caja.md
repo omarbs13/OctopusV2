@@ -19,7 +19,9 @@ se reimprime un corte.
 - Para vender hace falta un turno abierto **propio**. Si el turno abierto es de otro usuario, el Punto
   de venta se bloquea: el cajero solo puede cerrar sesión y el administrador ve "Cerrar ese turno".
 - Cada venta queda ligada al turno y al cajero (`Sales.CashShiftId`, `Sales.CreatedBy`).
-- Solo se cancelan ventas **del turno abierto actual**.
+- Con el módulo Devoluciones (0.8.0) se pueden cancelar o devolver ventas de **cualquier turno**: el
+  reintegro en efectivo sale del turno abierto actual y el turno cerrado no se modifica. Con el módulo
+  inactivo solo se cancelan ventas del turno abierto actual. Ver [devoluciones.md](devoluciones.md).
 - Un turno cerrado es inmutable: no admite ventas, cancelaciones ni movimientos, y su corte se puede
   reimprimir con las mismas cifras (se lee de la instantánea guardada al cerrar).
 - Un turno abierto sobrevive al cierre de la aplicación: el mismo usuario lo continúa al volver a
@@ -30,8 +32,9 @@ se reimprime un corte.
 ```text
 esperado = fondo inicial
          + efectivo de las ventas (monto aplicado, ya neto de cambio)
-         − efectivo de las ventas canceladas
+         − efectivo de las ventas canceladas (heredado, sin devolución registrada)
          + ingresos − retiros
+         − reintegros en efectivo (0.8.0)
 ```
 
 Se calcula siempre dentro de la transacción de escritura (`CashShiftMath` en Domain); nunca se
@@ -44,7 +47,11 @@ canceladas; es la misma cifra en Inicio, en "Turnos" y en el corte.
 - El retiro de un **cajero** requiere autorización de un administrador con el mismo diálogo que la
   cancelación de ventas (007). Queda el autorizador en la bitácora.
 - La **cancelación** de una venta en efectivo se rechaza si el esperado quedaría negativo, sin revelar
-  su monto a ningún rol. La salida es registrar un ingreso y reintentar.
+  su monto a ningún rol. La salida es registrar un ingreso y reintentar (con Devoluciones, también
+  elegir nota de crédito).
+- Desde 0.8.0 el "total vendido" es neto de devoluciones parciales, y el corte agrega los reintegros en
+  efectivo, los de tarjeta y transferencia pendientes de reversa y las notas de crédito emitidas
+  (0 en los turnos cerrados antes de esa versión).
 
 ## Arqueo ciego y cierre
 
@@ -90,8 +97,10 @@ dueño.
 ## Ventas anteriores a 0.6.0
 
 Las ventas hechas antes de esta versión no pertenecen a ningún turno (`CashShiftId` nulo). Se
-conservan y se consultan igual que antes, pero **ya no se pueden cancelar**: su efectivo no forma
-parte de ningún arqueo, y cancelarlas descuadraría el turno abierto sin razón.
+conservan y se consultan igual que antes. Con el módulo Devoluciones activo (0.8.0) sí se pueden
+cancelar o devolver: el reintegro en efectivo sale del turno abierto actual, que debe existir. Con el
+módulo inactivo **no se pueden cancelar**: su efectivo no forma parte de ningún arqueo y cancelarlas
+descuadraría el turno abierto sin razón.
 
 ## Diagnóstico
 

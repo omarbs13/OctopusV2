@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using Pos.Application.Abstractions;
 using Pos.Application.Business;
 using Pos.Application.CashShifts;
+using Pos.Application.CreditNotes;
 using Pos.Application.Printing.Ticket;
 using Pos.Application.Sales;
 using Pos.Application.Users.Access;
@@ -19,6 +20,7 @@ public sealed partial class PrintTicketHandler
     private readonly ICurrentUser _currentUser;
     private readonly ISaleRepository _sales;
     private readonly ICashShiftRepository _shifts;
+    private readonly ICreditNoteRepository? _creditNotes;
     private readonly IBusinessProfileRepository _profiles;
     private readonly IPrintingSettingsStore _settings;
     private readonly ITicketPrinter _printer;
@@ -32,8 +34,10 @@ public sealed partial class PrintTicketHandler
         IBusinessProfileRepository profiles,
         IPrintingSettingsStore settings,
         ITicketPrinter printer,
-        ILogger<PrintTicketHandler> logger)
+        ILogger<PrintTicketHandler> logger,
+        ICreditNoteRepository? creditNotes = null)
     {
+        _creditNotes = creditNotes;
         _access = access;
         _currentUser = currentUser;
         _sales = sales;
@@ -55,6 +59,8 @@ public sealed partial class PrintTicketHandler
             {
                 PrintSource.SaleSource => Permission.ViewOwnSales,
                 PrintSource.ShiftReportSource or PrintSource.CashMovementSource => Permission.OperateShift,
+                // Quien emite la nota (ProcessReturns) la imprime al emitirla; reimprimir exige ManageCreditNotes (research §13).
+                PrintSource.CreditNoteSource => command.IsReprint ? Permission.ManageCreditNotes : Permission.ProcessReturns,
                 _ => Permission.ManageSettings,
             },
             cancellationToken);
@@ -104,6 +110,17 @@ public sealed partial class PrintTicketHandler
 
                 folio = report.Folio;
                 ticket = ShiftTicketBuilder.BuildReport(profile, report, settings.Columns, new TicketOptions(command.IsReprint));
+            }
+            else if (command.Source is PrintSource.CreditNoteSource noteSource)
+            {
+                var data = _creditNotes is null ? null : await _creditNotes.GetTicketDataAsync(noteSource.CreditNoteId, cancellationToken);
+                if (data is null)
+                {
+                    return Result.Failure<PrintedTicket>(new NotFound());
+                }
+
+                folio = data.Folio;
+                ticket = CreditNoteTicketBuilder.Build(profile, data, settings.Columns, new TicketOptions(command.IsReprint));
             }
             else if (command.Source is PrintSource.CashMovementSource movementSource)
             {

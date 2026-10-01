@@ -19,6 +19,10 @@ public static class AuditActions
     public const string AdminAuthorizationDenied = "ADMIN_AUTHORIZATION_DENIED";
     public const string HeldSaleDiscarded = "HELD_SALE_DISCARDED";
     public const string SaleCancelled = "SALE_CANCELLED";
+    public const string SaleReturned = "SALE_RETURNED";
+    public const string CardReversalDone = "CARD_REVERSAL_DONE";
+    public const string CreditNoteRedeemed = "CREDIT_NOTE_REDEEMED";
+    public const string ReturnSettingsChanged = "RETURN_SETTINGS_CHANGED";
     public const string DrawerOpened = "DRAWER_OPENED";
     public const string ShiftOpened = "SHIFT_OPENED";
     public const string CashDeposit = "CASH_DEPOSIT";
@@ -35,6 +39,10 @@ public static class AuditActions
     public const string CashShiftEntity = "CashShift";
     public const string ReportEntity = "Report";
     public const string LicenseEntity = "License";
+    public const string SaleEntity = "Sale";
+    public const string SaleReturnEntity = "SaleReturn";
+    public const string CreditNoteEntity = "CreditNote";
+    public const string ReturnSettingsEntity = "ReturnSettings";
 
     /// <summary>Texto en español de cada evento, en el orden en que se ofrece en el filtro.</summary>
     public static readonly IReadOnlyDictionary<string, string> All = new Dictionary<string, string>
@@ -53,6 +61,10 @@ public static class AuditActions
         [AdminAuthorizationDenied] = "Autorización de administrador rechazada",
         [HeldSaleDiscarded] = "Venta conservada descartada",
         [SaleCancelled] = "Venta cancelada",
+        [SaleReturned] = "Devolución parcial de venta",
+        [CardReversalDone] = "Reversa de tarjeta realizada",
+        [CreditNoteRedeemed] = "Nota de crédito usada",
+        [ReturnSettingsChanged] = "Plazo de devoluciones modificado",
         [DrawerOpened] = "Cajón abierto sin venta",
         [ShiftOpened] = "Turno abierto",
         [CashDeposit] = "Ingreso de efectivo",

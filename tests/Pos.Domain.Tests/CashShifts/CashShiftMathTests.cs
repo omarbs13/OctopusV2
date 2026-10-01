@@ -25,6 +25,28 @@ public class CashShiftMathTests
     }
 
     [Fact]
+    public void Esperado_RestaLosReintegrosEnEfectivoYNoLaNotaDeCreditoEmitida()
+    {
+        // Fondo $500.00, ventas en efectivo $450.00, reintegro en efectivo $120.00 y una nota de $80.00
+        // emitida: la nota no mueve efectivo. Una cancelada heredada (sin devolución) de $50.00 sigue restando.
+        var totals = new ShiftSalesTotals(
+            SalesCount: 3,
+            CancelledCount: 1,
+            TotalSoldCents: 40_000,
+            CashSalesCents: 45_000,
+            CashCancelledCents: 5_000,
+            CardCents: 0,
+            TransferCents: 0,
+            CashRefundsCents: 12_000,
+            NonCashRefundsCents: 3_000,
+            CreditNotesIssuedCents: 8_000);
+
+        var expected = CashShiftMath.ExpectedCash(50_000, totals, depositsCents: 0, withdrawalsCents: 0);
+
+        Assert.Equal(50_000 + 45_000 - 5_000 - 12_000, expected);
+    }
+
+    [Fact]
     public void CanRefund_DetectaQueLaDevolucionDejariaElEsperadoEnNegativo()
     {
         Assert.True(CashShiftMath.CanRefund(expectedCents: 10_000, saleCashCents: 10_000));

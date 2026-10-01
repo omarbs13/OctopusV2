@@ -78,6 +78,8 @@ public sealed class SampleDatabaseUpgradeTests
         AssertUsers(connection, sampleFile);
         AssertCashShifts(connection, sampleFile);
         AssertReports(connection);
+        AssertReturns(connection, sampleFile);
+        await AssertLegacyCancelledCashAsync(db, connection, sampleFile);
 
         foreach (var index in new[] { "IX_Products_Sku", "IX_Products_Barcode", "IX_Products_NameSearch" })
         {
@@ -168,7 +170,7 @@ public sealed class SampleDatabaseUpgradeTests
     private static void AssertUsers(SqliteConnection connection, string sampleFile)
     {
         // Desde 0.6.0 la base de ejemplo ya trae un administrador y un cajero además de "Sistema".
-        Assert.Equal(sampleFile is "v0.6.0.db" or "v0.7.0.db" ? 3 : 1, Scalar<long>(connection, "SELECT COUNT(*) FROM Users"));
+        Assert.Equal(sampleFile is "v0.6.0.db" or "v0.7.0.db" or "v0.8.0.db" ? 3 : 1, Scalar<long>(connection, "SELECT COUNT(*) FROM Users"));
         Assert.Equal(
             1,
             Scalar<long>(connection, $"""
@@ -185,7 +187,7 @@ public sealed class SampleDatabaseUpgradeTests
             return;
         }
 
-        if (sampleFile is "v0.6.0.db" or "v0.7.0.db")
+        if (sampleFile is "v0.6.0.db" or "v0.7.0.db" or "v0.8.0.db")
         {
             // Las ventas conservan a su cajero: el administrador hizo la 1 y el cajero la 2 y la 3 (con su borrador).
             Assert.Equal(1, Scalar<long>(connection, $"SELECT COUNT(*) FROM Sales s JOIN Users u ON u.Id = s.CreatedBy WHERE u.UserName = '{SampleData.AdminUserName}'"));
@@ -209,7 +211,7 @@ public sealed class SampleDatabaseUpgradeTests
     /// </summary>
     private static void AssertCashShifts(SqliteConnection connection, string sampleFile)
     {
-        if (sampleFile == "v0.7.0.db")
+        if (sampleFile is "v0.7.0.db" or "v0.8.0.db")
         {
             // Desde 0.7.0 la base de ejemplo ya trae turnos (uno cerrado y uno abierto) y sus ventas.
             Assert.Equal(2, Scalar<long>(connection, "SELECT COUNT(*) FROM CashShifts"));
@@ -240,7 +242,87 @@ public sealed class SampleDatabaseUpgradeTests
             Scalar<long>(connection, "SELECT COUNT(*) FROM sqlite_master WHERE type = 'index' AND name = 'IX_InventoryMovements_Product_CreatedAt'"));
     }
 
-    private static bool HasSales(string sampleFile) => sampleFile is "v0.4.0.db" or "v0.5.0.db" or "v0.6.0.db" or "v0.7.0.db";
+    /// <summary>
+    /// 013: las tablas de devoluciones y notas existen; las bases anteriores las dejan vacías con los
+    /// acumulados en 0 y los turnos cerrados antes sin instantánea de reintegros; la de 0.8.0 conserva
+    /// su devolución parcial con nota de crédito, que cuadra con la venta.
+    /// </summary>
+    private static void AssertReturns(SqliteConnection connection, string sampleFile)
+    {
+        Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM Sales WHERE ReturnedCents < 0 OR (ReturnedCents <> 0 AND Status <> 'COMPLETED')"));
+        Assert.Contains(
+            "WHERE \"Status\" = 'PENDING_REVERSAL'",
+            Scalar<string>(connection, "SELECT sql FROM sqlite_master WHERE type = 'index' AND name = 'IX_SaleReturnRefunds_Pending'"),
+            StringComparison.Ordinal);
+
+        if (sampleFile != "v0.8.0.db")
+        {
+            foreach (var table in new[] { "SaleReturns", "SaleReturnLines", "SaleReturnRefunds", "CreditNotes", "CreditNoteMovements" })
+            {
+                Assert.Equal(0, Scalar<long>(connection, $"SELECT COUNT(*) FROM {table}"));
+            }
+
+            Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM Sales WHERE ReturnedCents <> 0"));
+            Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM SaleLines WHERE ReturnedQuantity <> 0"));
+            Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM SalePayments WHERE CreditNoteId IS NOT NULL"));
+            Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM CashShifts WHERE CashRefundsCents IS NOT NULL OR NonCashRefundsCents IS NOT NULL OR CreditNotesIssuedCents IS NOT NULL"));
+            return;
+        }
+
+        Assert.Equal(1, Scalar<long>(connection, $"SELECT COUNT(*) FROM SaleReturns WHERE Kind = 'PARTIAL' AND Compensation = 'CREDIT_NOTE' AND Reason = '{SampleData.ReturnReason}'"));
+        Assert.Equal(
+            0,
+            Scalar<long>(connection, """
+                SELECT COUNT(*) FROM Sales s
+                WHERE s.ReturnedCents <> IFNULL((SELECT SUM(l.AmountCents) FROM SaleReturnLines l JOIN SaleReturns r ON r.Id = l.SaleReturnId WHERE r.SaleId = s.Id), 0)
+                """));
+        Assert.Equal(
+            Scalar<long>(connection, "SELECT TotalCents FROM SaleReturns"),
+            Scalar<long>(connection, "SELECT InitialCents FROM CreditNotes"));
+        Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM CreditNoteMovements WHERE Type = 'ISSUE' AND Sequence = 1"));
+        Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM AuditEntries WHERE Action = 'SALE_RETURNED' AND EntityType = 'Sale'"));
+    }
+
+    /// <summary>
+    /// 013, research §6: las ventas ya canceladas (sin devolución registrada) conservan su efectivo
+    /// heredado en los totales del turno al migrar.
+    /// </summary>
+    private static async Task AssertLegacyCancelledCashAsync(TestDb db, SqliteConnection connection, string sampleFile)
+    {
+        // Solo desde 0.7.0 las ventas pertenecen a turnos.
+        if (sampleFile is not ("v0.7.0.db" or "v0.8.0.db"))
+        {
+            return;
+        }
+
+        var expected = Scalar<long>(connection, """
+            SELECT IFNULL(SUM(p.AmountCents), 0) FROM SalePayments p JOIN Sales s ON s.Id = p.SaleId
+            WHERE s.Status = 'CANCELLED' AND p.Method = 'CASH' AND s.CashShiftId IS NOT NULL
+              AND NOT EXISTS (SELECT 1 FROM SaleReturns r WHERE r.SaleId = s.Id)
+            """);
+        var shiftIds = new List<Guid>();
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = "SELECT Id FROM CashShifts";
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                shiftIds.Add(reader.GetGuid(0));
+            }
+        }
+
+        long cancelledCash = 0;
+        await using var context = db.CreateDbContext();
+        foreach (var shiftId in shiftIds)
+        {
+            cancelledCash += (await new Pos.Infrastructure.Sales.SaleRepository(context).GetShiftTotalsAsync(shiftId, TestContext.Current.CancellationToken)).CashCancelledCents;
+        }
+
+        Assert.True(expected > 0);
+        Assert.Equal(expected, cancelledCash);
+    }
+
+    private static bool HasSales(string sampleFile) => sampleFile is "v0.4.0.db" or "v0.5.0.db" or "v0.6.0.db" or "v0.7.0.db" or "v0.8.0.db";
 
     private static T Scalar<T>(SqliteConnection connection, string sql)
     {

@@ -173,6 +173,9 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.Property<long?>("CashCancelledCents")
                         .HasColumnType("INTEGER");
 
+                    b.Property<long?>("CashRefundsCents")
+                        .HasColumnType("INTEGER");
+
                     b.Property<long?>("CashSalesCents")
                         .HasColumnType("INTEGER");
 
@@ -195,6 +198,9 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("TEXT");
 
+                    b.Property<long?>("CreditNotesIssuedCents")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("TEXT");
 
@@ -205,6 +211,9 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<long?>("ExpectedCashCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("NonCashRefundsCents")
                         .HasColumnType("INTEGER");
 
                     b.Property<long>("Number")
@@ -269,6 +278,78 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("IX_CashShifts_OpenedBy_OpenedAt");
 
                     b.ToTable("CashShifts", (string)null);
+                });
+
+            modelBuilder.Entity("Pos.Domain.CreditNotes.CreditNote", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("InitialCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("Number")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("SaleReturnId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Number")
+                        .IsUnique()
+                        .HasDatabaseName("IX_CreditNotes_Number");
+
+                    b.HasIndex("SaleReturnId")
+                        .HasDatabaseName("IX_CreditNotes_SaleReturnId");
+
+                    b.ToTable("CreditNotes", (string)null);
+                });
+
+            modelBuilder.Entity("Pos.Domain.CreditNotes.CreditNoteMovement", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("AmountCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("CreditNoteId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("SaleId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("SaleReturnId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Sequence")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreditNoteId", "Sequence")
+                        .IsUnique()
+                        .HasDatabaseName("IX_CreditNoteMovements_Note_Sequence");
+
+                    b.ToTable("CreditNoteMovements", (string)null);
                 });
 
             modelBuilder.Entity("Pos.Domain.Inventory.InventoryMovement", b =>
@@ -579,6 +660,143 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Pos.Domain.Returns.SaleReturn", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("AuthorizedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("CashShiftId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Compensation")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("CreditNoteId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("Number")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("SaleId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("TotalCents")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CashShiftId")
+                        .HasDatabaseName("IX_SaleReturns_CashShiftId");
+
+                    b.HasIndex("Number")
+                        .IsUnique()
+                        .HasDatabaseName("IX_SaleReturns_Number");
+
+                    b.HasIndex("SaleId")
+                        .HasDatabaseName("IX_SaleReturns_SaleId");
+
+                    b.ToTable("SaleReturns", (string)null);
+                });
+
+            modelBuilder.Entity("Pos.Domain.Returns.SaleReturnLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("AmountCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("QuantityThousandths")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid?>("ReturnMovementId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("SaleLineId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("SaleReturnId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReturnMovementId");
+
+                    b.HasIndex("SaleLineId")
+                        .HasDatabaseName("IX_SaleReturnLines_SaleLine");
+
+                    b.HasIndex("SaleReturnId", "SaleLineId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_SaleReturnLines_Return_SaleLine");
+
+                    b.ToTable("SaleReturnLines", (string)null);
+                });
+
+            modelBuilder.Entity("Pos.Domain.Returns.SaleReturnRefund", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("AmountCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Method")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("ReversedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("ReversedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("SalePaymentId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("SaleReturnId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SalePaymentId")
+                        .HasDatabaseName("IX_SaleReturnRefunds_SalePayment");
+
+                    b.HasIndex("SaleReturnId");
+
+                    b.HasIndex("Status", "Id")
+                        .HasDatabaseName("IX_SaleReturnRefunds_Pending")
+                        .HasFilter("\"Status\" = 'PENDING_REVERSAL'");
+
+                    b.ToTable("SaleReturnRefunds", (string)null);
+                });
+
             modelBuilder.Entity("Pos.Domain.Sales.Sale", b =>
                 {
                     b.Property<Guid>("Id")
@@ -608,6 +826,11 @@ namespace Pos.Infrastructure.Persistence.Migrations
 
                     b.Property<long>("FolioNumber")
                         .HasColumnType("INTEGER");
+
+                    b.Property<long>("ReturnedCents")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(0L);
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -706,6 +929,11 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.Property<long>("QuantityThousandths")
                         .HasColumnType("INTEGER");
 
+                    b.Property<long>("ReturnedQuantity")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(0L);
+
                     b.Property<Guid>("SaleId")
                         .HasColumnType("TEXT");
 
@@ -746,6 +974,9 @@ namespace Pos.Infrastructure.Persistence.Migrations
 
                     b.Property<long?>("ChangeCents")
                         .HasColumnType("INTEGER");
+
+                    b.Property<Guid?>("CreditNoteId")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Method")
                         .IsRequired()
@@ -886,6 +1117,24 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Pos.Domain.CreditNotes.CreditNote", b =>
+                {
+                    b.HasOne("Pos.Domain.Returns.SaleReturn", null)
+                        .WithMany()
+                        .HasForeignKey("SaleReturnId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Pos.Domain.CreditNotes.CreditNoteMovement", b =>
+                {
+                    b.HasOne("Pos.Domain.CreditNotes.CreditNote", null)
+                        .WithMany()
+                        .HasForeignKey("CreditNoteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Pos.Domain.Inventory.InventoryMovement", b =>
                 {
                     b.HasOne("Pos.Domain.Products.Product", null)
@@ -919,6 +1168,50 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         .WithOne("Image")
                         .HasForeignKey("Pos.Domain.Products.ProductImage", "ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Pos.Domain.Returns.SaleReturn", b =>
+                {
+                    b.HasOne("Pos.Domain.Sales.Sale", null)
+                        .WithMany()
+                        .HasForeignKey("SaleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Pos.Domain.Returns.SaleReturnLine", b =>
+                {
+                    b.HasOne("Pos.Domain.Inventory.InventoryMovement", null)
+                        .WithMany()
+                        .HasForeignKey("ReturnMovementId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Pos.Domain.Sales.SaleLine", null)
+                        .WithMany()
+                        .HasForeignKey("SaleLineId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Pos.Domain.Returns.SaleReturn", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("SaleReturnId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Pos.Domain.Returns.SaleReturnRefund", b =>
+                {
+                    b.HasOne("Pos.Domain.Sales.SalePayment", null)
+                        .WithMany()
+                        .HasForeignKey("SalePaymentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Pos.Domain.Returns.SaleReturn", null)
+                        .WithMany("Refunds")
+                        .HasForeignKey("SaleReturnId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
@@ -964,6 +1257,13 @@ namespace Pos.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Pos.Domain.Products.Product", b =>
                 {
                     b.Navigation("Image");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Returns.SaleReturn", b =>
+                {
+                    b.Navigation("Lines");
+
+                    b.Navigation("Refunds");
                 });
 
             modelBuilder.Entity("Pos.Domain.Sales.Sale", b =>

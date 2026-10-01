@@ -1,3 +1,4 @@
+using Pos.Application.Returns;
 using Pos.Domain.Sales;
 
 namespace Pos.Application.Sales;
@@ -83,7 +84,13 @@ public sealed record SaleLineDto(
     int DecimalPlaces,
     long UnitPriceCents,
     long QuantityThousandths,
-    long AmountCents);
+    long AmountCents,
+    Guid Id = default,
+    long ReturnedThousandths = 0)
+{
+    /// <summary>Milésimas que aún se pueden devolver de la línea.</summary>
+    public long AvailableThousandths => QuantityThousandths - ReturnedThousandths;
+}
 
 public sealed record SalePaymentDto(
     PaymentMethod Method,
@@ -105,7 +112,19 @@ public sealed record SaleDetailDto(
     string? CancelledByName,
     IReadOnlyList<SaleLineDto> Lines,
     IReadOnlyList<SalePaymentDto> Payments,
-    Guid CreatedById);
+    Guid CreatedById,
+    long ReturnedCents = 0,
+    IReadOnlyList<ReturnSummaryDto>? Returns = null,
+    bool WithinReturnWindow = true)
+{
+    /// <summary>Venta vigente con parte de lo vendido devuelto.</summary>
+    public bool IsPartiallyReturned => Status == SaleStatus.Completed && ReturnedCents > 0 && ReturnedCents < TotalCents;
+
+    /// <summary>Venta vigente con todo lo vendido devuelto.</summary>
+    public bool IsFullyReturned => Status == SaleStatus.Completed && ReturnedCents >= TotalCents;
+
+    public IReadOnlyList<ReturnSummaryDto> ReturnHistory => Returns ?? [];
+}
 
 /// <summary>Un día local convertido a UTC: <c>[FromUtc, ToUtcExclusive)</c>.</summary>
 public sealed record DayWindow(DateOnly LocalDate, DateTime FromUtc, DateTime ToUtcExclusive);

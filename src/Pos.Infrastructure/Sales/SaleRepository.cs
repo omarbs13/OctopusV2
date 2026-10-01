@@ -3,8 +3,10 @@ using Microsoft.EntityFrameworkCore;
 using Pos.Application.Abstractions;
 using Pos.Application.CashShifts;
 using Pos.Application.Products;
+using Pos.Application.Returns;
 using Pos.Application.Sales;
 using Pos.Domain.CashShifts;
+using Pos.Domain.Returns;
 using Pos.Domain.Sales;
 using Pos.Infrastructure.Persistence;
 
@@ -136,7 +138,28 @@ public sealed class SaleRepository : ISaleRepository
         }
 
         // Nombres con LEFT JOIN a Users; si no aparece, el id abreviado (007, research §3).
-        var userIds = new[] { sale.CreatedBy, sale.CancelledBy ?? sale.CreatedBy };
+        var returns = await _context.SaleReturns.AsNoTracking()
+            .Where(r => r.SaleId == id)
+            .OrderBy(r => r.Number)
+            .Select(r => new
+            {
+                r.Id,
+                r.Number,
+                r.CreatedAt,
+                r.CreatedBy,
+                r.Reason,
+                r.AuthorizedBy,
+                r.TotalCents,
+                r.Kind,
+                r.Compensation,
+                NoteNumber = _context.CreditNotes.Where(n => n.Id == r.CreditNoteId).Select(n => (long?)n.Number).FirstOrDefault(),
+            })
+            .ToListAsync(cancellationToken);
+
+        var userIds = new[] { sale.CreatedBy, sale.CancelledBy ?? sale.CreatedBy }
+            .Concat(returns.SelectMany(r => new[] { r.CreatedBy, r.AuthorizedBy }))
+            .Distinct()
+            .ToList();
         var names = await _context.Users.AsNoTracking()
             .Where(u => userIds.Contains(u.Id))
             .ToDictionaryAsync(u => u.Id, u => u.FullName, cancellationToken);
@@ -162,34 +185,66 @@ public sealed class SaleRepository : ISaleRepository
                 l.DecimalPlaces,
                 l.UnitPriceCents,
                 l.QuantityThousandths,
-                l.AmountCents))],
+                l.AmountCents,
+                l.Id,
+                l.ReturnedQuantity))],
             [.. sale.Payments.OrderBy(p => p.Method).Select(p => new SalePaymentDto(
                 p.Method,
                 p.AmountCents,
                 p.ReceivedCents,
                 p.ChangeCents,
                 p.Reference))],
-            sale.CreatedBy);
+            sale.CreatedBy,
+            sale.ReturnedCents,
+            [.. returns.Select(r => new ReturnSummaryDto(
+                r.Id,
+                ReturnFolio.Format(r.Number),
+                r.CreatedAt,
+                NameOf(r.CreatedBy),
+                r.Reason,
+                NameOf(r.AuthorizedBy),
+                r.TotalCents,
+                r.Kind,
+                r.Compensation,
+                r.NoteNumber is { } note ? Pos.Domain.CreditNotes.CreditNoteFolio.Format(note) : null))]);
     }
 
     public async Task<ShiftSalesTotals> GetShiftTotalsAsync(Guid shiftId, CancellationToken cancellationToken)
     {
         var sales = _context.Sales.AsNoTracking().Where(s => s.CashShiftId == shiftId);
 
+        // Desde 013 el total vendido es neto de devoluciones parciales (research §11).
         var byStatus = await sales
             .GroupBy(s => s.Status)
-            .Select(g => new { Status = g.Key, Count = g.Count(), Cents = g.Sum(s => s.TotalCents) })
+            .Select(g => new { Status = g.Key, Count = g.Count(), Cents = g.Sum(s => s.TotalCents - s.ReturnedCents) })
             .ToListAsync(cancellationToken);
         var payments = await (
                 from p in _context.SalePayments.AsNoTracking()
                 join s in sales on p.SaleId equals s.Id
-                select new { s.Status, p.Method, p.AmountCents })
-            .GroupBy(x => new { x.Status, x.Method })
-            .Select(g => new { g.Key.Status, g.Key.Method, Cents = g.Sum(x => x.AmountCents) })
+                select new { s.Id, s.Status, p.Method, p.AmountCents })
             .ToListAsync(cancellationToken);
 
+        // Canceladas con devolución registrada: su efectivo ya salió (o se conservó) por el reintegro;
+        // solo las canceladas heredadas (sin devolución) restan su efectivo (research §6).
+        var cancelledWithReturn = (await (
+                from r in _context.SaleReturns.AsNoTracking()
+                join s in sales on r.SaleId equals s.Id
+                where s.Status == SaleStatus.Cancelled
+                select s.Id)
+            .ToListAsync(cancellationToken)).ToHashSet();
+
         long Paid(PaymentMethod method, SaleStatus? status = null) =>
-            payments.Where(p => p.Method == method && (status is null || p.Status == status)).Sum(p => p.Cents);
+            payments.Where(p => p.Method == method && (status is null || p.Status == status)).Sum(p => p.AmountCents);
+
+        var refunds = await (
+                from f in _context.SaleReturnRefunds.AsNoTracking()
+                join r in _context.SaleReturns.AsNoTracking() on f.SaleReturnId equals r.Id
+                where r.CashShiftId == shiftId
+                select new { f.Method, f.AmountCents })
+            .ToListAsync(cancellationToken);
+        var notesIssued = await _context.SaleReturns.AsNoTracking()
+            .Where(r => r.CashShiftId == shiftId && r.Compensation == ReturnCompensation.CreditNote)
+            .SumAsync(r => (long?)r.TotalCents, cancellationToken) ?? 0;
 
         var completed = byStatus.FirstOrDefault(x => x.Status == SaleStatus.Completed);
         var cancelled = byStatus.FirstOrDefault(x => x.Status == SaleStatus.Cancelled);
@@ -198,9 +253,14 @@ public sealed class SaleRepository : ISaleRepository
             cancelled?.Count ?? 0,
             completed?.Cents ?? 0,
             Paid(PaymentMethod.Cash),
-            Paid(PaymentMethod.Cash, SaleStatus.Cancelled),
+            payments
+                .Where(p => p.Method == PaymentMethod.Cash && p.Status == SaleStatus.Cancelled && !cancelledWithReturn.Contains(p.Id))
+                .Sum(p => p.AmountCents),
             Paid(PaymentMethod.Card, SaleStatus.Completed),
-            Paid(PaymentMethod.Transfer, SaleStatus.Completed));
+            Paid(PaymentMethod.Transfer, SaleStatus.Completed),
+            refunds.Where(f => f.Method == PaymentMethod.Cash).Sum(f => f.AmountCents),
+            refunds.Where(f => f.Method is PaymentMethod.Card or PaymentMethod.Transfer).Sum(f => f.AmountCents),
+            notesIssued);
     }
 
     public async Task<IReadOnlyList<ShiftSaleRowDto>> ListByShiftAsync(Guid shiftId, CancellationToken cancellationToken)
@@ -243,7 +303,7 @@ public sealed class SaleRepository : ISaleRepository
         {
             var completed = CompletedBetween(day.FromUtc, day.ToUtcExclusive);
             var count = await completed.CountAsync(cancellationToken);
-            var cents = await completed.SumAsync(s => (long?)s.TotalCents, cancellationToken) ?? 0;
+            var cents = await completed.SumAsync(s => (long?)(s.TotalCents - s.ReturnedCents), cancellationToken) ?? 0;
             totals.Add(new DayTotal(day.LocalDate, cents, count));
         }
 
@@ -255,7 +315,7 @@ public sealed class SaleRepository : ISaleRepository
             var lines =
                 from l in _context.SaleLines.AsNoTracking()
                 join s in CompletedBetween(periodStart, periodEnd) on l.SaleId equals s.Id
-                select new { l.ProductId, l.ProductName, l.DecimalPlaces, l.QuantityThousandths, s.CreatedAt };
+                select new { l.ProductId, l.ProductName, l.DecimalPlaces, QuantityThousandths = l.QuantityThousandths - l.ReturnedQuantity, s.CreatedAt };
 
             var ranked = await lines
                 .GroupBy(l => l.ProductId)

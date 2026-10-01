@@ -15,6 +15,7 @@ public static class RolePermissions
         Permission.ViewProducts,
         Permission.ViewInventory,
         Permission.OperateShift,
+        Permission.ProcessReturns,
     }.ToFrozenSet();
 
     private static readonly FrozenSet<Permission> Authorizable = new[]
@@ -22,6 +23,7 @@ public static class RolePermissions
         Permission.CancelSales,
         Permission.OpenDrawerWithoutSale,
         Permission.WithdrawCash,
+        Permission.ApproveReturns,
     }.ToFrozenSet();
 
     public static IReadOnlySet<Permission> For(UserRole role) => role switch

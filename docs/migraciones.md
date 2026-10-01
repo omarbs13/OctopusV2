@@ -159,3 +159,25 @@ filtrado existe. Ver [turnos-de-caja.md](turnos-de-caja.md).
 Cuando una funcionalidad agregue tablas nuevas, amplía `SampleData` para que la base de ejemplo
 de la siguiente versión también tenga datos en ellas, y agrega verificaciones en
 `SampleDatabaseUpgradeTests`.
+
+## 0.8.0: devoluciones y notas de crédito (`ReturnsAndCreditNotes`)
+
+Desde 0.8.0 (devoluciones) la base de ejemplo `v0.8.0.db` trae, además de lo anterior, una devolución
+parcial de la venta 1 compensada con una nota de crédito. La migración `ReturnsAndCreditNotes`
+**no reconstruye ninguna tabla**:
+
+- Crea `SaleReturns`, `SaleReturnLines`, `SaleReturnRefunds`, `CreditNotes` y `CreditNoteMovements` con
+  llaves foráneas `Restrict` (las tablas son nuevas) y sus índices, entre ellos el filtrado
+  `IX_SaleReturnRefunds_Pending ... WHERE "Status" = 'PENDING_REVERSAL'`.
+- Agrega seis columnas con `ALTER TABLE ... ADD`: `Sales.ReturnedCents` y `SaleLines.ReturnedQuantity`
+  (`NOT NULL DEFAULT 0`), `SalePayments.CreditNoteId` y `CashShifts.CashRefundsCents`,
+  `NonCashRefundsCents` y `CreditNotesIssuedCents` (nulas). `SalePayments.CreditNoteId` va **sin llave
+  foránea**, igual que `Sales.CashShiftId`, para no reconstruir la tabla.
+- No rellena datos: las ventas ya canceladas siguen sin `SaleReturn` y conservan la regla heredada del
+  efectivo cancelado; los turnos ya cerrados quedan con las tres columnas en `NULL` (el corte los muestra
+  como 0). `PaymentMethod.CreditNote` usa el código `CREDIT` para caber en `SalePayments.Method` (`TEXT(10)`).
+
+`ReturnsMigrationTests` revisa el SQL y falla si contiene `DROP TABLE` o `ef_temp_`.
+`SampleDatabaseUpgradeTests` migra de `v0.1.0.db` a `v0.8.0.db`, verifica que las tablas nuevas existan
+(vacías, salvo en `v0.8.0.db`), que los acumulados valgan 0 y que las ventas ya canceladas conserven su
+efectivo heredado en los totales del turno. Ver [devoluciones.md](devoluciones.md).

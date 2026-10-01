@@ -64,6 +64,9 @@ public static class ShiftTicketBuilder
 
         lines.Add(Row("Ingresos", TicketBuilder.FormatMoney(report.DepositsCents), columns));
         lines.Add(Row("Retiros", TicketBuilder.FormatMoney(report.WithdrawalsCents), columns));
+        lines.Add(Row("Reint. efectivo", TicketBuilder.FormatMoney(report.CashRefundsCents), columns));
+        lines.Add(Row("Reint. tarjeta/transf.", TicketBuilder.FormatMoney(report.NonCashRefundsCents), columns));
+        lines.Add(Row("Notas crédito emitidas", TicketBuilder.FormatMoney(report.CreditNotesIssuedCents), columns));
 
         lines.Add(Separator(columns));
         lines.Add(Row("Efectivo esperado", TicketBuilder.FormatMoney(report.ExpectedCashCents), columns));

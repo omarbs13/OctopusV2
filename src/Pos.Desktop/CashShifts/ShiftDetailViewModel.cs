@@ -234,6 +234,9 @@ public sealed partial class ShiftDetailViewModel : FormViewModel
         Reconciliation.Add(new ReconciliationRow(Strings.Shifts_CashCancelled, MoneyConverter.Format(r.CashCancelledCents)));
         Reconciliation.Add(new ReconciliationRow(Strings.Shifts_Deposits, MoneyConverter.Format(r.DepositsCents)));
         Reconciliation.Add(new ReconciliationRow(Strings.Shifts_Withdrawals, MoneyConverter.Format(r.WithdrawalsCents)));
+        Reconciliation.Add(new ReconciliationRow(Strings.Shift_CashRefunds, MoneyConverter.Format(r.CashRefundsCents)));
+        Reconciliation.Add(new ReconciliationRow(Strings.Shift_NonCashRefunds, MoneyConverter.Format(r.NonCashRefundsCents)));
+        Reconciliation.Add(new ReconciliationRow(Strings.Shift_CreditNotesIssued, MoneyConverter.Format(r.CreditNotesIssuedCents)));
 
         Detail = detail;
     }

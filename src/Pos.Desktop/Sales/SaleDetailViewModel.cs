@@ -2,6 +2,8 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Pos.Application.Abstractions;
+using Pos.Application.Licensing;
+using Pos.Application.Returns;
 using Pos.Application.Printing.PrintTicket;
 using Pos.Application.Sales;
 using Pos.Application.Sales.GetSale;
@@ -10,7 +12,10 @@ using Pos.Desktop.Common;
 using Pos.Desktop.Forms;
 using Pos.Desktop.Resources;
 using Pos.Desktop.Settings;
+using Pos.Domain.Licensing;
+using Pos.Domain.Returns;
 using Pos.Domain.Sales;
+using Pos.Domain.Users;
 
 namespace Pos.Desktop.Sales;
 
@@ -26,6 +31,33 @@ public sealed record SaleLineRow(SaleLineDto Line)
     public string PriceText => MoneyConverter.Format(Line.UnitPriceCents);
 
     public string AmountText => MoneyConverter.Format(Line.AmountCents);
+
+    public bool HasReturned => Line.ReturnedThousandths > 0;
+
+    /// <summary>"Devuelto: X de Y" (contracts/ui.md §1).</summary>
+    public string ReturnedText => string.Format(
+        CultureInfo.GetCultureInfo("es-MX"),
+        Strings.Return_Returned,
+        QuantityConverter.Format(Line.ReturnedThousandths, Line.DecimalPlaces),
+        QuantityConverter.Format(Line.QuantityThousandths, Line.DecimalPlaces));
+}
+
+/// <summary>Cancelación o devolución en el historial de una venta (FR-013); solo lectura.</summary>
+public sealed record ReturnHistoryRow(ReturnSummaryDto Item)
+{
+    public string Text => string.Format(
+        CultureInfo.GetCultureInfo("es-MX"),
+        Strings.Return_HistoryItem,
+        Item.Folio,
+        Item.CreatedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture),
+        Item.CreatedByName,
+        Item.AuthorizedByName,
+        MoneyConverter.Format(Item.TotalCents),
+        Item.Kind == ReturnKind.Cancellation ? CompensationText(Strings.Return_KindCancellation) : CompensationText(Strings.Return_KindPartial),
+        Item.Reason);
+
+    private string CompensationText(string kind) =>
+        $"{kind} ({(Item.CreditNoteFolio is { } note ? string.Format(CultureInfo.GetCultureInfo("es-MX"), Strings.Return_CompensationCreditNote, note) : Strings.Return_CompensationRefund)})";
 }
 
 /// <summary>Pago de una venta registrada.</summary>
@@ -54,6 +86,8 @@ public sealed partial class SaleDetailViewModel : FormViewModel
     private readonly OperationRunner _runner;
     private readonly TicketPrintingService _printing;
     private readonly AdminAuthorizationService? _authorization;
+    private readonly ICurrentPermissions? _permissions;
+    private readonly ILicenseState? _license;
 
     private Guid _saleId;
 
@@ -62,10 +96,14 @@ public sealed partial class SaleDetailViewModel : FormViewModel
         OperationRunner runner,
         IDialogService dialogs,
         TicketPrintingService printing,
-        AdminAuthorizationService? authorization = null)
+        AdminAuthorizationService? authorization = null,
+        ICurrentPermissions? permissions = null,
+        ILicenseState? license = null)
         : base(dialogs)
     {
         _authorization = authorization;
+        _permissions = permissions;
+        _license = license;
         _printing = printing;
         _useCases = useCases;
         _runner = runner;
@@ -79,13 +117,32 @@ public sealed partial class SaleDetailViewModel : FormViewModel
 
     public ObservableCollection<SalePaymentRow> Payments { get; } = [];
 
+    public ObservableCollection<ReturnHistoryRow> History { get; } = [];
+
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(Title), nameof(HeaderText), nameof(TotalText), nameof(IsCancelled), nameof(CanCancel), nameof(CancellationText))]
+    [NotifyPropertyChangedFor(
+        nameof(Title),
+        nameof(HeaderText),
+        nameof(TotalText),
+        nameof(IsCancelled),
+        nameof(CanCancel),
+        nameof(CanReturnItems),
+        nameof(IsOutOfReturnWindow),
+        nameof(HasHistory),
+        nameof(ReturnedTotalText),
+        nameof(CancellationText))]
     public partial SaleDetailDto? Detail { get; private set; }
 
-    /// <summary>Formulario de cancelación, mientras esté abierto.</summary>
+    /// <summary>Formulario de devolución o cancelación, mientras esté abierto.</summary>
     [ObservableProperty]
-    public partial CancelSaleViewModel? CancelForm { get; private set; }
+    public partial ReturnSaleViewModel? CancelForm { get; private set; }
+
+    /// <summary>Permiso y módulo de devoluciones: sin ellos solo queda la cancelación básica de siempre.</summary>
+    private bool ReturnsActive =>
+        _license?.IsModuleActive(LicensedModule.Returns) != false
+        && (_permissions is null || _permissions.Has(Permission.ProcessReturns));
+
+    private bool ModuleActive => _license?.IsModuleActive(LicensedModule.Returns) != false;
 
     public string HeaderText => Detail is null
         ? string.Empty
@@ -95,14 +152,44 @@ public sealed partial class SaleDetailViewModel : FormViewModel
             Detail.Folio,
             Detail.CreatedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture),
             Detail.CreatedByName,
-            Detail.Status == SaleStatus.Cancelled ? Strings.Sales_StatusCancelled : Strings.Sales_StatusCompleted);
+            StatusText(Detail));
 
     public string TotalText => Detail is null ? string.Empty : MoneyConverter.Format(Detail.TotalCents);
 
     public bool IsCancelled => Detail?.Status == SaleStatus.Cancelled;
 
-    /// <summary>El botón "Cancelar venta" solo aparece si la venta está completada.</summary>
-    public bool CanCancel => Detail?.Status == SaleStatus.Completed && CancelForm is null;
+    /// <summary>
+    /// "Cancelar venta" aparece con la venta completada. Con Devoluciones activo se oculta si ya hay
+    /// devoluciones parciales, la venta está totalmente devuelta o fuera del plazo (contracts/ui.md §1).
+    /// </summary>
+    public bool CanCancel =>
+        Detail is { Status: SaleStatus.Completed } d
+        && CancelForm is null
+        && (!ModuleActive || (ReturnsActive && d.ReturnedCents == 0 && d.WithinReturnWindow));
+
+    /// <summary>"Devolver artículos": con permiso y módulo, hasta que la venta esté totalmente devuelta o venza el plazo.</summary>
+    public bool CanReturnItems =>
+        Detail is { Status: SaleStatus.Completed } d
+        && CancelForm is null
+        && ReturnsActive
+        && !d.IsFullyReturned
+        && d.WithinReturnWindow;
+
+    public bool IsOutOfReturnWindow => Detail is { Status: SaleStatus.Completed, WithinReturnWindow: false } && ReturnsActive;
+
+    public bool HasHistory => History.Count > 0;
+
+    public string ReturnedTotalText => Detail is { ReturnedCents: > 0 } d
+        ? string.Format(Display, Strings.Return_ReturnedTotal, MoneyConverter.Format(d.ReturnedCents))
+        : string.Empty;
+
+    private static string StatusText(SaleDetailDto detail) => detail switch
+    {
+        { Status: SaleStatus.Cancelled } => Strings.Sales_StatusCancelled,
+        { IsFullyReturned: true } => Strings.Return_StatusFull,
+        { IsPartiallyReturned: true } => Strings.Return_StatusPartial,
+        _ => Strings.Sales_StatusCompleted,
+    };
 
     public string CancellationText => Detail is { Status: SaleStatus.Cancelled } d
         ? string.Format(
@@ -138,15 +225,30 @@ public sealed partial class SaleDetailViewModel : FormViewModel
         return true;
     }
 
-    public void StartCancel()
+    public void StartCancel() => OpenForm(ReturnFormMode.Cancel);
+
+    public void StartReturn() => OpenForm(ReturnFormMode.Items);
+
+    private void OpenForm(ReturnFormMode mode)
     {
         if (Detail is not { Status: SaleStatus.Completed } detail || CancelForm is not null)
         {
             return;
         }
 
-        CancelForm = new CancelSaleViewModel(_useCases, _runner, Dialogs, detail, OnCancelFinishedAsync, CloseCancelForm, _authorization);
+        CancelForm = new ReturnSaleViewModel(
+            _useCases,
+            _runner,
+            Dialogs,
+            detail,
+            mode,
+            OnCancelFinishedAsync,
+            CloseCancelForm,
+            _authorization,
+            _printing,
+            isBasic: !ModuleActive);
         OnPropertyChanged(nameof(CanCancel));
+        OnPropertyChanged(nameof(CanReturnItems));
     }
 
     protected override object CaptureState() => 0;
@@ -155,6 +257,9 @@ public sealed partial class SaleDetailViewModel : FormViewModel
 
     [CommunityToolkit.Mvvm.Input.RelayCommand(CanExecute = nameof(CanCancel))]
     private void CancelSale() => StartCancel();
+
+    [CommunityToolkit.Mvvm.Input.RelayCommand(CanExecute = nameof(CanReturnItems))]
+    private void ReturnItems() => StartReturn();
 
     /// <summary>Reimprime el ticket (con la leyenda REIMPRESIÓN) sin afectar la venta; vale para completadas y canceladas.</summary>
     [CommunityToolkit.Mvvm.Input.RelayCommand(CanExecute = nameof(CanReprint))]
@@ -174,6 +279,9 @@ public sealed partial class SaleDetailViewModel : FormViewModel
     {
         CancelForm = null;
         OnPropertyChanged(nameof(CanCancel));
+        OnPropertyChanged(nameof(CanReturnItems));
+        CancelSaleCommand.NotifyCanExecuteChanged();
+        ReturnItemsCommand.NotifyCanExecuteChanged();
     }
 
     /// <summary>Tras cancelar, o si la venta cambió, vuelve a leerla para mostrar su estado actual.</summary>
@@ -197,8 +305,15 @@ public sealed partial class SaleDetailViewModel : FormViewModel
             Payments.Add(new SalePaymentRow(payment));
         }
 
+        History.Clear();
+        foreach (var item in detail.ReturnHistory)
+        {
+            History.Add(new ReturnHistoryRow(item));
+        }
+
         Detail = detail;
         CancelSaleCommand.NotifyCanExecuteChanged();
+        ReturnItemsCommand.NotifyCanExecuteChanged();
         ReprintCommand.NotifyCanExecuteChanged();
     }
 }

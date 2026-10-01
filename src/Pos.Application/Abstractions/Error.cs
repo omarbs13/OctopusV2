@@ -92,6 +92,18 @@ public sealed record ShiftChanged : Error;
 /// <summary>El módulo no está activo en la licencia (012, FR-013).</summary>
 public sealed record ModuleNotLicensed(LicensedModule Module) : Error;
 
+/// <summary>La venta excede el plazo máximo de devoluciones (013, FR-006a).</summary>
+public sealed record ReturnWindowExpired(int Days) : Error;
+
+/// <summary>Sin líneas, o la cantidad excede lo disponible para devolver (013, FR-009, FR-014).</summary>
+public sealed record NothingToReturn : Error;
+
+/// <summary>El folio de la nota de crédito no existe o no tiene saldo (013, Historia 4).</summary>
+public sealed record CreditNoteNotFound : Error;
+
+/// <summary>El monto excede el saldo de la nota de crédito (013, FR-008).</summary>
+public sealed record InsufficientCreditNote(long AvailableCents) : Error;
+
 /// <summary>El archivo de licencia importado se rechazó; la licencia vigente no cambió (011, FR-012).</summary>
 public sealed record InvalidLicense(LicenseImportRejection Reason) : Error;
 

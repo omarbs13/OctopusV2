@@ -47,6 +47,12 @@ public sealed class SaleLine
     /// <summary>Movimiento <c>SALE_CANCEL</c>, asignado al cancelar la venta.</summary>
     public Guid? CancellationMovementId { get; private set; }
 
+    /// <summary>Milésimas devueltas acumuladas por devoluciones parciales (013).</summary>
+    public long ReturnedQuantity { get; private set; }
+
+    /// <summary>Milésimas que aún se pueden devolver.</summary>
+    public long AvailableToReturn => QuantityThousandths - ReturnedQuantity;
+
     public Money UnitPrice => Money.FromCents(UnitPriceCents);
 
     public Quantity Quantity => Quantity.FromThousandths(QuantityThousandths);
@@ -91,6 +97,9 @@ public sealed class SaleLine
             SaleMovementId = saleMovementId,
         };
     }
+
+    /// <summary>Solo lo llama <see cref="Sale.ApplyReturn"/>.</summary>
+    internal void AddReturned(long thousandths) => ReturnedQuantity += thousandths;
 
     /// <summary>Solo lo llama <see cref="Sale.Cancel"/>.</summary>
     internal void LinkCancellationMovement(Guid movementId) => CancellationMovementId = movementId;

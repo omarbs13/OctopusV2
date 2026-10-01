@@ -17,7 +17,12 @@ public abstract record PrintSource
     /// <summary>Comprobante de un movimiento de efectivo (008, FR-012).</summary>
     public static PrintSource CashMovement(Guid movementId) => new CashMovementSource(movementId);
 
+    /// <summary>Ticket de una nota de crédito recién emitida o su reimpresión (013, FR-007a).</summary>
+    public static PrintSource CreditNote(Guid creditNoteId) => new CreditNoteSource(creditNoteId);
+
     public sealed record SaleSource(Guid SaleId) : PrintSource;
+
+    public sealed record CreditNoteSource(Guid CreditNoteId) : PrintSource;
 
     public sealed record ShiftReportSource(Guid ShiftId) : PrintSource;
 

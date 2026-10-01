@@ -48,7 +48,8 @@ internal sealed class SalesReportReader : ISalesReportReader
             return SalesTotals.Empty;
         }
 
-        var total = await sales.SumAsync(s => s.TotalCents, cancellationToken);
+        // Total neto de devoluciones parciales (013, research §11); la fila de cada venta conserva su importe original.
+        var total = await sales.SumAsync(s => s.TotalCents - s.ReturnedCents, cancellationToken);
         var byMethod = await (
                 from p in _context.SalePayments.AsNoTracking()
                 join s in sales on p.SaleId equals s.Id
@@ -56,11 +57,22 @@ internal sealed class SalesReportReader : ISalesReportReader
                 select new { Method = g.Key, Cents = g.Sum(x => x.AmountCents) })
             .ToListAsync(cancellationToken);
 
-        long Paid(PaymentMethod method) => byMethod.Where(m => m.Method == method).Sum(m => m.Cents);
+        // Lo cobrado por forma de pago menos lo reintegrado por esa misma forma (013). Lo devuelto con
+        // nota de crédito no sale de caja: reduce el total pero no estas columnas.
+        var refunded = await (
+                from f in _context.SaleReturnRefunds.AsNoTracking()
+                join r in _context.SaleReturns.AsNoTracking() on f.SaleReturnId equals r.Id
+                join s in sales on r.SaleId equals s.Id
+                group f by f.Method into g
+                select new { Method = g.Key, Cents = g.Sum(x => x.AmountCents) })
+            .ToListAsync(cancellationToken);
+
+        long Paid(PaymentMethod method) =>
+            byMethod.Where(m => m.Method == method).Sum(m => m.Cents) - refunded.Where(m => m.Method == method).Sum(m => m.Cents);
 
         // Promedio: total / ventas, media hacia arriba (data-model.md).
         var average = (total + (count / 2)) / count;
-        return new SalesTotals(count, total, average, Paid(PaymentMethod.Cash), Paid(PaymentMethod.Card), Paid(PaymentMethod.Transfer));
+        return new SalesTotals(count, total, average, Paid(PaymentMethod.Cash), Paid(PaymentMethod.Card), Paid(PaymentMethod.Transfer), Paid(PaymentMethod.CreditNote));
     }
 
     /// <summary>
@@ -72,7 +84,7 @@ internal sealed class SalesReportReader : ISalesReportReader
         IReadOnlyList<DayWindow> days,
         CancellationToken cancellationToken)
     {
-        var rows = await sales.Select(s => new { s.CreatedAt, s.TotalCents }).ToListAsync(cancellationToken);
+        var rows = await sales.Select(s => new { s.CreatedAt, TotalCents = s.TotalCents - s.ReturnedCents }).ToListAsync(cancellationToken);
         var totals = new long[days.Count];
         var counts = new int[days.Count];
         foreach (var row in rows)

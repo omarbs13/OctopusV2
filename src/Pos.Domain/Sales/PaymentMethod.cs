@@ -8,6 +8,9 @@ public enum PaymentMethod
     Cash,
     Card,
     Transfer,
+
+    /// <summary>Nota de crédito (vale) con saldo; código <c>CREDIT</c> para caber en TEXT(10).</summary>
+    CreditNote,
 }
 
 public static class PaymentMethodExtensions
@@ -18,6 +21,7 @@ public static class PaymentMethodExtensions
         PaymentMethod.Cash => "CASH",
         PaymentMethod.Card => "CARD",
         PaymentMethod.Transfer => "TRANSFER",
+        PaymentMethod.CreditNote => "CREDIT",
         _ => throw new DomainException("La forma de pago no es válida."),
     };
 
@@ -26,6 +30,7 @@ public static class PaymentMethodExtensions
         "CASH" => PaymentMethod.Cash,
         "CARD" => PaymentMethod.Card,
         "TRANSFER" => PaymentMethod.Transfer,
+        "CREDIT" => PaymentMethod.CreditNote,
         _ => throw new DomainException("La forma de pago no es válida."),
     };
 }

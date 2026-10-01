@@ -3,6 +3,9 @@ using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Pos.Application.Abstractions;
+using Pos.Application.CreditNotes;
+using Pos.Application.CreditNotes.GetCreditNoteBalance;
+using Pos.Application.Licensing;
 using Pos.Application.CashShifts;
 using Pos.Application.CashShifts.GetCurrentShift;
 using Pos.Application.Inventory;
@@ -20,6 +23,7 @@ using Pos.Desktop.Diagnostics;
 using Pos.Desktop.Resources;
 using Pos.Desktop.Settings;
 using Pos.Domain.CashShifts;
+using Pos.Domain.Licensing;
 using Pos.Domain.Common;
 using Pos.Domain.Products;
 using Pos.Domain.Sales;
@@ -84,6 +88,7 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
     private readonly AdminAuthorizationService? _authorization;
     private readonly CashShiftDialogs? _shiftDialogs;
     private readonly ICurrentPermissions? _permissions;
+    private readonly ILicenseState? _license;
 
     private CheckoutViewModel? _pendingCheckout;
     private bool _draftChecked;
@@ -98,8 +103,10 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
         AdminAuthorizationService? authorization = null,
         CashShiftDialogs? shiftDialogs = null,
         ICurrentPermissions? permissions = null,
-        DiagnosticContext? diagnostics = null)
+        DiagnosticContext? diagnostics = null,
+        ILicenseState? license = null)
     {
+        _license = license;
         _diagnostics = diagnostics;
         _authorization = authorization;
         _shiftDialogs = shiftDialogs;
@@ -597,7 +604,12 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
         // Los pagos capturados se conservan mientras no cambie el total (US3, escenario 7).
         if (_pendingCheckout is null || _pendingCheckout.Total != Cart.Total)
         {
-            _pendingCheckout = new CheckoutViewModel(new Domain.Sales.Checkout(Cart.Total), ConfirmSaleAsync, CloseCheckout);
+            // La nota de crédito se ofrece solo con el módulo Devoluciones activo (013).
+            _pendingCheckout = new CheckoutViewModel(
+                new Domain.Sales.Checkout(Cart.Total),
+                ConfirmSaleAsync,
+                CloseCheckout,
+                _license?.IsModuleActive(LicensedModule.Returns) != false ? LookupCreditNoteAsync : null);
         }
 
         Checkout = _pendingCheckout;
@@ -605,6 +617,28 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
     }
 
     private void CloseCheckout() => Checkout = null;
+
+    /// <summary>Saldo de una nota de crédito por folio para el cobro; el error ya viene en español.</summary>
+    private async Task<(CreditNoteBalance? Balance, string? Error)> LookupCreditNoteAsync(string folio)
+    {
+        var (completed, result) = await _runner.RunAsync(
+            "ConsultarNotaDeCredito",
+            () => _useCases.RunAsync<GetCreditNoteBalanceHandler, Result<CreditNoteBalance>>(h => h.HandleAsync(folio, CancellationToken.None)),
+            new Dictionary<string, object?>());
+        if (!completed || result is null)
+        {
+            return (null, Strings.Common_UnexpectedError);
+        }
+
+        return result.Error switch
+        {
+            null => (result.Value, null),
+            CreditNoteNotFound => (null, Strings.CreditNote_NotFound),
+            ValidationFailed validation => (null, validation.Errors is [{ } first, ..] ? first.Message : Strings.CreditNote_NotFound),
+            ModuleNotLicensed => (null, Strings.License_ModuleNotLicensed),
+            _ => (null, Strings.Common_UnexpectedError),
+        };
+    }
 
     private async Task ConfirmSaleAsync(CheckoutViewModel checkout)
     {
@@ -662,6 +696,14 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
 
             case ModuleNotLicensed:
                 checkout.ErrorMessage = Strings.License_ModuleNotLicensed;
+                break;
+
+            case CreditNoteNotFound:
+                checkout.ErrorMessage = Strings.CreditNote_NotFound;
+                break;
+
+            case InsufficientCreditNote insufficient:
+                checkout.ErrorMessage = string.Format(Display, Strings.CreditNote_Insufficient, MoneyConverter.Format(insufficient.AvailableCents));
                 break;
 
             default:

@@ -1,12 +1,23 @@
 using System.Reflection;
 using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
+using Pos.Application.Returns;
 using Pos.Application.Sales;
 using Pos.Application.Sales.SaveSaleDraft;
+using Pos.Application.Users.Access;
 using Pos.Domain.Common;
 using Pos.Domain.Inventory;
 using Pos.Domain.Products;
+using Pos.Domain.Returns;
 using Pos.Domain.Users;
+using Pos.Infrastructure.Audit;
+using Pos.Infrastructure.CashShifts;
+using Pos.Infrastructure.CreditNotes;
+using Pos.Infrastructure.Inventory;
 using Pos.Infrastructure.Persistence;
+using Pos.Infrastructure.Returns;
+using Pos.Infrastructure.Sales;
 using Pos.Infrastructure.Tests.TestSupport;
 
 namespace Pos.Infrastructure.Tests.SampleDatabases;
@@ -71,6 +82,9 @@ public sealed class SampleDatabaseGenerator
         // Desde 0.4.0: ventas completadas y canceladas, una existencia negativa y un borrador.
         await SeedSalesAsync(db, adminId, cashierId);
 
+        // Desde 0.8.0: una devolución parcial (el servicio de la venta 1) compensada con una nota de crédito.
+        await SeedReturnAsync(db, adminId);
+
         // Un solo archivo autocontenido: sin WAL pendiente. Primero se liberan las conexiones del pool.
         SqliteConnection.ClearAllPools();
         DatabaseTestHelpers.Execute(db.Directory.Paths.DatabaseFile, "PRAGMA wal_checkpoint(TRUNCATE); PRAGMA journal_mode=DELETE; VACUUM;");
@@ -118,6 +132,47 @@ public sealed class SampleDatabaseGenerator
         await using var draftContext = db.CreateDbContext();
         await SalesTestSupport.SaveDraftHandler(db, draftContext).HandleAsync(
             new SaveSaleDraftCommand(Guid.CreateVersion7(), [new DraftLineDto(draftLine.Id, 2000, draftLine.Price.Cents)]), ct);
+    }
+
+    private static async Task SeedReturnAsync(TestDb db, Guid adminId)
+    {
+        var ct = TestContext.Current.CancellationToken;
+        db.User.UserId = adminId;
+        db.Clock.UtcNow = new DateTime(2026, 9, 30, 14, 0, 0, DateTimeKind.Utc);
+
+        var service = await FindProductAsync(db, SampleData.SaleWithoutInventorySku);
+        await using var context = db.CreateDbContext();
+        var line = await context.SaleLines.AsNoTracking().SingleAsync(l => l.ProductId == service.Id, ct);
+
+        var grants = new AuthorizationGrants(db.Clock);
+        var access = new AllowAllAccessControl();
+        var processor = new SaleReturnProcessor(
+            access,
+            grants,
+            new SaleRepository(context),
+            new ReturnRepository(context),
+            new CreditNoteRepository(context),
+            new InventoryRepository(context),
+            new ReturnCashGate(new CashShiftRepository(context), new SaleRepository(context), access, db.User, SalesTestSupport.ShiftGuardFor(db, context)),
+            new TestReturnsSettingsStore(),
+            new AuditLog(context),
+            new WriteTransactions(context),
+            db.Clock,
+            db.User,
+            NullLogger<SaleReturnProcessor>.Instance);
+
+        var version = (await context.Sales.AsNoTracking().SingleAsync(s => s.Id == line.SaleId, ct)).Version;
+        var result = await processor.ProcessAsync(
+            new ReturnRequest(
+                line.SaleId,
+                version,
+                ReturnKind.Partial,
+                [new ReturnLineRequest(line.Id, line.QuantityThousandths)],
+                SampleData.ReturnReason,
+                ReturnCompensation.CreditNote,
+                grants.Issue(Permission.ApproveReturns, adminId, adminId)),
+            ct);
+        Assert.True(result.IsSuccess, result.Error?.ToString());
     }
 
     private static async Task<Product> FindProductAsync(TestDb db, string sku)
@@ -187,6 +242,9 @@ public static class SampleData
     /// <summary>Desde 0.4.0: 3 ventas (una cancelada), 4 líneas, 3 pagos, un borrador y una entrada de bitácora.</summary>
     public const int SaleCount = 3;
     public const string CancellationReason = "Error de captura";
+
+    /// <summary>Desde 0.8.0: una devolución parcial de la venta 1 con una nota de crédito por lo devuelto.</summary>
+    public const string ReturnReason = "Producto devuelto";
 
     /// <summary>Desde 0.6.0: usuarios de muestra. El administrador hace la venta 1; el cajero, la 2 y la 3 y el borrador.</summary>
     public const string AdminUserName = "admin";

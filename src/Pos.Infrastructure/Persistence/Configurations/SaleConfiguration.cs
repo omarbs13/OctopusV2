@@ -20,6 +20,7 @@ internal sealed class SaleConfiguration : IEntityTypeConfiguration<Sale>
         // Sin llave foránea hacia CashShifts: evita reconstruir Sales en la migración (008, research §5).
         builder.Property(s => s.CashShiftId);
         builder.Property(s => s.TotalCents).IsRequired();
+        builder.Property(s => s.ReturnedCents).IsRequired().HasDefaultValue(0L);
         builder.Property(s => s.Status)
             .HasConversion(status => status.ToCode(), code => SaleStatusExtensions.FromCode(code))
             .HasMaxLength(10)

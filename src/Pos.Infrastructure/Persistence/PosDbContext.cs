@@ -3,8 +3,10 @@ using Microsoft.Extensions.Logging;
 using Pos.Domain.Audit;
 using Pos.Domain.Business;
 using Pos.Domain.CashShifts;
+using Pos.Domain.CreditNotes;
 using Pos.Domain.Inventory;
 using Pos.Domain.Products;
+using Pos.Domain.Returns;
 using Pos.Domain.Sales;
 using Pos.Domain.Users;
 using Pos.Infrastructure.Licensing;
@@ -52,6 +54,16 @@ public class PosDbContext : DbContext
 
     public DbSet<LicenseSealEntity> LicenseSeals => Set<LicenseSealEntity>();
 
+    public DbSet<SaleReturn> SaleReturns => Set<SaleReturn>();
+
+    public DbSet<SaleReturnLine> SaleReturnLines => Set<SaleReturnLine>();
+
+    public DbSet<SaleReturnRefund> SaleReturnRefunds => Set<SaleReturnRefund>();
+
+    public DbSet<CreditNote> CreditNotes => Set<CreditNote>();
+
+    public DbSet<CreditNoteMovement> CreditNoteMovements => Set<CreditNoteMovement>();
+
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
         RejectImmutableChanges();
@@ -92,6 +104,11 @@ public class PosDbContext : DbContext
         modelBuilder.ApplyConfiguration(new CashShiftConfiguration());
         modelBuilder.ApplyConfiguration(new CashMovementConfiguration());
         modelBuilder.ApplyConfiguration(new LicenseSealConfiguration());
+        modelBuilder.ApplyConfiguration(new SaleReturnConfiguration());
+        modelBuilder.ApplyConfiguration(new SaleReturnLineConfiguration());
+        modelBuilder.ApplyConfiguration(new SaleReturnRefundConfiguration());
+        modelBuilder.ApplyConfiguration(new CreditNoteConfiguration());
+        modelBuilder.ApplyConfiguration(new CreditNoteMovementConfiguration());
     }
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
@@ -124,6 +141,28 @@ public class PosDbContext : DbContext
                 && e.Property(nameof(CashShift.Status)).OriginalValue is CashShiftStatus.Closed))
         {
             throw new InvalidOperationException("Un turno cerrado no se puede modificar ni borrar.");
+        }
+
+        if (ChangeTracker.Entries<SaleReturn>().Any(e => e.State is EntityState.Modified or EntityState.Deleted)
+            || ChangeTracker.Entries<SaleReturnLine>().Any(e => e.State is EntityState.Modified or EntityState.Deleted))
+        {
+            throw new InvalidOperationException("Las cancelaciones y devoluciones no se pueden modificar ni borrar.");
+        }
+
+        if (ChangeTracker.Entries<CreditNote>().Any(e => e.State is EntityState.Modified or EntityState.Deleted)
+            || ChangeTracker.Entries<CreditNoteMovement>().Any(e => e.State is EntityState.Modified or EntityState.Deleted))
+        {
+            throw new InvalidOperationException("Las notas de crédito y sus movimientos no se pueden modificar ni borrar.");
+        }
+
+        // Única mutación permitida: PENDING_REVERSAL -> REVERSED, una sola vez (FR-018).
+        if (ChangeTracker.Entries<SaleReturnRefund>().Any(e =>
+                e.State is EntityState.Deleted
+                || (e.State is EntityState.Modified
+                    && !(e.Property(nameof(SaleReturnRefund.Status)).OriginalValue is RefundStatus.PendingReversal
+                        && e.Property(nameof(SaleReturnRefund.Status)).CurrentValue is RefundStatus.Reversed))))
+        {
+            throw new InvalidOperationException("Un reintegro solo puede pasar de pendiente de reversa a reversado.");
         }
 
         if (ChangeTracker.Entries<AuditEntry>().Any(e => e.State is EntityState.Modified or EntityState.Deleted))

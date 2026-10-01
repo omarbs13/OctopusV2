@@ -88,7 +88,10 @@ public sealed class CashShiftRepository : ICashShiftRepository
             shift.ExpectedCashCents ?? 0,
             shift.CountedCashCents ?? 0,
             shift.DifferenceCents ?? 0,
-            shift.ClosingComment);
+            shift.ClosingComment,
+            shift.CashRefundsCents ?? 0,
+            shift.NonCashRefundsCents ?? 0,
+            shift.CreditNotesIssuedCents ?? 0);
     }
 
     public async Task<long> NextNumberAsync(CancellationToken cancellationToken) =>
@@ -155,7 +158,7 @@ public sealed class CashShiftRepository : ICashShiftRepository
             : await _context.Sales.AsNoTracking()
                 .Where(s => s.Status == SaleStatus.Completed && openIds.Contains(s.CashShiftId))
                 .GroupBy(s => s.CashShiftId)
-                .Select(g => new { ShiftId = g.Key, Cents = g.Sum(s => s.TotalCents) })
+                .Select(g => new { ShiftId = g.Key, Cents = g.Sum(s => s.TotalCents - s.ReturnedCents) })
                 .ToDictionaryAsync(x => x.ShiftId!.Value, x => x.Cents, cancellationToken);
 
         var items = rows
@@ -221,7 +224,10 @@ public sealed class CashShiftRepository : ICashShiftRepository
                 shift.ExpectedCashCents ?? 0,
                 shift.CountedCashCents,
                 shift.DifferenceCents,
-                shift.ClosingComment)
+                shift.ClosingComment,
+                shift.CashRefundsCents ?? 0,
+                shift.NonCashRefundsCents ?? 0,
+                shift.CreditNotesIssuedCents ?? 0)
             : new ShiftReconciliationDto(
                 IsSnapshot: false,
                 openShiftTotals.SalesCount,
@@ -236,7 +242,10 @@ public sealed class CashShiftRepository : ICashShiftRepository
                 shift.ExpectedCash(openShiftTotals),
                 CountedCashCents: null,
                 DifferenceCents: null,
-                Comment: null);
+                Comment: null,
+                openShiftTotals.CashRefundsCents,
+                openShiftTotals.NonCashRefundsCents,
+                openShiftTotals.CreditNotesIssuedCents);
 
         return new ShiftDetailDto(
             shift.Id,

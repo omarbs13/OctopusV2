@@ -174,7 +174,7 @@
   <data name="MovementType_AdjustIn" xml:space="preserve"><value>Ajuste positivo</value></data>
   <data name="MovementType_AdjustOut" xml:space="preserve"><value>Ajuste negativo</value></data>
   <data name="MovementType_Sale" xml:space="preserve"><value>Salida por venta</value></data>
-  <data name="MovementType_SaleCancellation" xml:space="preserve"><value>Cancelación de venta</value></data>
+  <data name="MovementType_SaleCancellation" xml:space="preserve"><value>Devolución por venta cancelada</value></data>
   <data name="MovementEditor_Title" xml:space="preserve"><value>Registrar movimiento</value></data>
   <data name="MovementEditor_Product" xml:space="preserve"><value>Producto</value></data>
   <data name="MovementEditor_OnHand" xml:space="preserve"><value>Existencia actual</value></data>
@@ -699,4 +699,92 @@
   <data name="License_Reject_Unreadable" xml:space="preserve"><value>El archivo de licencia no es válido.</value></data>
   <data name="License_Reject_BadSignature" xml:space="preserve"><value>El archivo de licencia no es auténtico o fue modificado.</value></data>
   <data name="License_Reject_OtherMachine" xml:space="preserve"><value>Esa licencia pertenece a otra máquina. La licencia actual no cambió.</value></data>
+  <data name="MovementType_SaleReturn" xml:space="preserve"><value>Devolución de venta</value></data>
+  <data name="Payment_CreditNote" xml:space="preserve"><value>Nota de crédito</value></data>
+  <data name="Auth_OperationReturns" xml:space="preserve"><value>Cancelar o devolver venta</value></data>
+  <data name="Nav_Returns" xml:space="preserve"><value>Devoluciones y vales</value></data>
+  <data name="Return_TitleCancel" xml:space="preserve"><value>Cancelar venta</value></data>
+  <data name="Return_TitleItems" xml:space="preserve"><value>Devolver artículos</value></data>
+  <data name="Return_Warning" xml:space="preserve"><value>Se regresarán las existencias de lo devuelto. Un Administrador debe autorizarlo.</value></data>
+  <data name="Return_SelectAll" xml:space="preserve"><value>Seleccionar todo</value></data>
+  <data name="Return_ColProduct" xml:space="preserve"><value>Producto</value></data>
+  <data name="Return_ColAvailable" xml:space="preserve"><value>Disponible</value></data>
+  <data name="Return_ColReturn" xml:space="preserve"><value>A devolver</value></data>
+  <data name="Return_Reason" xml:space="preserve"><value>Motivo</value></data>
+  <data name="Return_Compensation" xml:space="preserve"><value>Compensación</value></data>
+  <data name="Return_Refund" xml:space="preserve"><value>Reintegro</value></data>
+  <data name="Return_CreditNote" xml:space="preserve"><value>Nota de crédito</value></data>
+  <data name="Return_Summary" xml:space="preserve"><value>Total a devolver: {0}</value></data>
+  <data name="Return_SummaryEmpty" xml:space="preserve"><value>Seleccione lo que se devuelve para ver el monto.</value></data>
+  <data name="Return_BreakdownCash" xml:space="preserve"><value>Efectivo: {0}</value></data>
+  <data name="Return_BreakdownCard" xml:space="preserve"><value>Tarjeta: {0} (se anotará para reversa manual)</value></data>
+  <data name="Return_BreakdownTransfer" xml:space="preserve"><value>Transferencia: {0} (se anotará para reversa manual)</value></data>
+  <data name="Return_BreakdownCredit" xml:space="preserve"><value>Nota de crédito: {0} (se restaura a su saldo)</value></data>
+  <data name="Return_CashUnavailable" xml:space="preserve"><value>No hay efectivo disponible en caja para este reintegro. Elija nota de crédito o registre un ingreso.</value></data>
+  <data name="Return_ConfirmCancel" xml:space="preserve"><value>Cancelar la venta</value></data>
+  <data name="Return_ConfirmItems" xml:space="preserve"><value>Devolver</value></data>
+  <data name="Return_Keep" xml:space="preserve"><value>Conservar</value></data>
+  <data name="Return_Done" xml:space="preserve"><value>Listo. Folio de devolución {0}.</value></data>
+  <data name="Return_DoneNote" xml:space="preserve"><value>Listo. Folio de devolución {0}. Nota de crédito {1}.</value></data>
+  <data name="Return_Changed" xml:space="preserve"><value>La venta cambió; vuelva a abrirla.</value></data>
+  <data name="Return_WindowExpired" xml:space="preserve"><value>La venta tiene más de {0} días y ya no admite devoluciones</value></data>
+  <data name="Return_NothingToReturn" xml:space="preserve"><value>Seleccione al menos un artículo y no exceda la cantidad disponible</value></data>
+  <data name="Return_NotAuthorized" xml:space="preserve"><value>Se necesita la autorización de un Administrador.</value></data>
+  <data name="Return_OutOfWindow" xml:space="preserve"><value>Fuera del plazo de devoluciones</value></data>
+  <data name="Return_Returned" xml:space="preserve"><value>Devuelto: {0} de {1}</value></data>
+  <data name="Return_History" xml:space="preserve"><value>Historial de devoluciones</value></data>
+  <data name="Return_HistoryItem" xml:space="preserve"><value>{0} · {1} · {2} · Autorizó: {3} · {4} · {5}. Motivo: {6}</value></data>
+  <data name="Return_KindCancellation" xml:space="preserve"><value>Cancelación</value></data>
+  <data name="Return_KindPartial" xml:space="preserve"><value>Devolución parcial</value></data>
+  <data name="Return_CompensationRefund" xml:space="preserve"><value>Reintegro</value></data>
+  <data name="Return_CompensationCreditNote" xml:space="preserve"><value>Nota de crédito {0}</value></data>
+  <data name="Return_StatusPartial" xml:space="preserve"><value>Parcialmente devuelta</value></data>
+  <data name="Return_StatusFull" xml:space="preserve"><value>Totalmente devuelta</value></data>
+  <data name="Return_ReturnedTotal" xml:space="preserve"><value>Devuelto: {0}</value></data>
+  <data name="CreditNote_Payment" xml:space="preserve"><value>Nota de crédito</value></data>
+  <data name="CreditNote_Folio" xml:space="preserve"><value>Folio de la nota</value></data>
+  <data name="CreditNote_Apply" xml:space="preserve"><value>Aplicar</value></data>
+  <data name="CreditNote_Balance" xml:space="preserve"><value>Saldo disponible: {0}</value></data>
+  <data name="CreditNote_NotFound" xml:space="preserve"><value>La nota de crédito no existe o no tiene saldo</value></data>
+  <data name="CreditNote_Insufficient" xml:space="preserve"><value>El saldo de la nota es {0}</value></data>
+  <data name="CreditNote_OnlyOne" xml:space="preserve"><value>La venta admite a lo más un pago con nota de crédito.</value></data>
+  <data name="ReturnsAdmin_Title" xml:space="preserve"><value>Devoluciones y vales</value></data>
+  <data name="ReturnsAdmin_TabNotes" xml:space="preserve"><value>Notas de crédito</value></data>
+  <data name="ReturnsAdmin_TabReversals" xml:space="preserve"><value>Reintegros pendientes</value></data>
+  <data name="ReturnsAdmin_TabSettings" xml:space="preserve"><value>Configuración</value></data>
+  <data name="ReturnsAdmin_ColFolio" xml:space="preserve"><value>Folio</value></data>
+  <data name="ReturnsAdmin_ColDate" xml:space="preserve"><value>Fecha</value></data>
+  <data name="ReturnsAdmin_ColAmount" xml:space="preserve"><value>Importe</value></data>
+  <data name="ReturnsAdmin_ColBalance" xml:space="preserve"><value>Saldo</value></data>
+  <data name="ReturnsAdmin_ColSale" xml:space="preserve"><value>Venta de origen</value></data>
+  <data name="ReturnsAdmin_ColReturn" xml:space="preserve"><value>Devolución</value></data>
+  <data name="ReturnsAdmin_ColMethod" xml:space="preserve"><value>Forma de pago</value></data>
+  <data name="ReturnsAdmin_ColStatus" xml:space="preserve"><value>Estado</value></data>
+  <data name="ReturnsAdmin_FolioFilter" xml:space="preserve"><value>Folio</value></data>
+  <data name="ReturnsAdmin_OnlyWithBalance" xml:space="preserve"><value>Solo con saldo</value></data>
+  <data name="ReturnsAdmin_Search" xml:space="preserve"><value>Buscar</value></data>
+  <data name="ReturnsAdmin_NotesEmpty" xml:space="preserve"><value>No hay notas de crédito con esos criterios.</value></data>
+  <data name="ReturnsAdmin_Movements" xml:space="preserve"><value>Movimientos de la nota</value></data>
+  <data name="ReturnsAdmin_Reprint" xml:space="preserve"><value>Reimprimir</value></data>
+  <data name="ReturnsAdmin_MovementIssue" xml:space="preserve"><value>Emisión</value></data>
+  <data name="ReturnsAdmin_MovementRedeem" xml:space="preserve"><value>Uso como pago</value></data>
+  <data name="ReturnsAdmin_MovementRestore" xml:space="preserve"><value>Saldo restaurado</value></data>
+  <data name="ReturnsAdmin_FilterPending" xml:space="preserve"><value>Pendientes</value></data>
+  <data name="ReturnsAdmin_FilterReversed" xml:space="preserve"><value>Reversados</value></data>
+  <data name="ReturnsAdmin_FilterAll" xml:space="preserve"><value>Todos</value></data>
+  <data name="ReturnsAdmin_StatusPending" xml:space="preserve"><value>Pendiente de reversa</value></data>
+  <data name="ReturnsAdmin_StatusReversed" xml:space="preserve"><value>Reversado</value></data>
+  <data name="ReturnsAdmin_ReversalsEmpty" xml:space="preserve"><value>No hay reintegros con ese estado.</value></data>
+  <data name="ReturnsAdmin_MarkReversed" xml:space="preserve"><value>Marcar como reversado</value></data>
+  <data name="ReturnsAdmin_MarkTitle" xml:space="preserve"><value>Marcar como reversado</value></data>
+  <data name="ReturnsAdmin_MarkQuestion" xml:space="preserve"><value>¿Ya hizo la reversa de este reintegro en la terminal bancaria? Esta acción no se puede deshacer.</value></data>
+  <data name="ReturnsAdmin_MarkConfirm" xml:space="preserve"><value>Sí, ya se reversó</value></data>
+  <data name="ReturnsAdmin_Marked" xml:space="preserve"><value>Reintegro marcado como reversado.</value></data>
+  <data name="ReturnsAdmin_WindowDays" xml:space="preserve"><value>Plazo máximo para cancelar o devolver una venta (días)</value></data>
+  <data name="ReturnsAdmin_WindowHelp" xml:space="preserve"><value>Entre 1 y 3650 días. Por omisión, 30.</value></data>
+  <data name="ReturnsAdmin_Save" xml:space="preserve"><value>Guardar</value></data>
+  <data name="ReturnsAdmin_Saved" xml:space="preserve"><value>Plazo guardado.</value></data>
+  <data name="Shift_CashRefunds" xml:space="preserve"><value>Reintegros en efectivo</value></data>
+  <data name="Shift_NonCashRefunds" xml:space="preserve"><value>Reintegros de tarjeta y transferencia pendientes de reversa</value></data>
+  <data name="Shift_CreditNotesIssued" xml:space="preserve"><value>Notas de crédito emitidas</value></data>
 </root>

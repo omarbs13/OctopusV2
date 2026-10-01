@@ -57,7 +57,7 @@ internal sealed class CashCountReportReader : ICashCountReportReader
             : await _context.Sales.AsNoTracking()
                 .Where(s => s.CashShiftId != null && openIds.Contains(s.CashShiftId.Value) && s.Status == SaleStatus.Completed)
                 .GroupBy(s => s.CashShiftId!.Value)
-                .Select(g => new { ShiftId = g.Key, Cents = g.Sum(s => s.TotalCents) })
+                .Select(g => new { ShiftId = g.Key, Cents = g.Sum(s => s.TotalCents - s.ReturnedCents) })
                 .ToDictionaryAsync(x => x.ShiftId, x => x.Cents, cancellationToken);
         var movements = openIds.Count == 0
             ? []

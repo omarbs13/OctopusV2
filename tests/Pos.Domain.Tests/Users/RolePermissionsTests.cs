@@ -8,7 +8,7 @@ public class RolePermissionsTests
     public void Cajero_TieneExactamenteSusPermisos()
     {
         Assert.Equal(
-            [Permission.Sell, Permission.ViewOwnSales, Permission.ViewProducts, Permission.ViewInventory, Permission.OperateShift],
+            [Permission.Sell, Permission.ViewOwnSales, Permission.ViewProducts, Permission.ViewInventory, Permission.OperateShift, Permission.ProcessReturns],
             RolePermissions.For(UserRole.Cashier).Order());
     }
 
@@ -19,10 +19,10 @@ public class RolePermissionsTests
     }
 
     [Fact]
-    public void SoloCancelarVentaCajonYRetiroSeAutorizan()
+    public void SoloCancelarVentaCajonRetiroYAprobarDevolucionesSeAutorizan()
     {
         var authorizable = Enum.GetValues<Permission>().Where(RolePermissions.IsAuthorizable);
 
-        Assert.Equal([Permission.CancelSales, Permission.OpenDrawerWithoutSale, Permission.WithdrawCash], authorizable.Order());
+        Assert.Equal([Permission.CancelSales, Permission.OpenDrawerWithoutSale, Permission.WithdrawCash, Permission.ApproveReturns], authorizable.Order());
     }
 }

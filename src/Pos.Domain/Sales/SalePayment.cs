@@ -26,6 +26,9 @@ public sealed class SalePayment
 
     public string? Reference { get; private set; }
 
+    /// <summary>Nota de crédito usada; solo con <see cref="PaymentMethod.CreditNote"/> (sin llave foránea).</summary>
+    public Guid? CreditNoteId { get; private set; }
+
     public static SalePayment Create(PaymentEntry entry)
     {
         ArgumentNullException.ThrowIfNull(entry);
@@ -51,6 +54,11 @@ public sealed class SalePayment
             throw new DomainException($"La referencia admite hasta {ReferenceMaxLength} caracteres.");
         }
 
+        if (entry.Method == PaymentMethod.CreditNote && reference is null)
+        {
+            throw new DomainException("El pago con nota de crédito requiere el folio.");
+        }
+
         return new SalePayment
         {
             Id = Guid.CreateVersion7(),
@@ -60,5 +68,16 @@ public sealed class SalePayment
             ChangeCents = entry.Change?.Cents,
             Reference = reference,
         };
+    }
+
+    /// <summary>Liga el pago con la nota de crédito usada.</summary>
+    public void LinkCreditNote(Guid creditNoteId)
+    {
+        if (Method != PaymentMethod.CreditNote || creditNoteId == Guid.Empty)
+        {
+            throw new DomainException("Solo un pago con nota de crédito puede ligarse a una nota.");
+        }
+
+        CreditNoteId = creditNoteId;
     }
 }

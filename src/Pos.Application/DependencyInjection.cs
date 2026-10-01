@@ -30,6 +30,16 @@ using Pos.Application.CashShifts.GetShiftDetail;
 using Pos.Application.CashShifts.OpenShift;
 using Pos.Application.CashShifts.RegisterCashMovement;
 using Pos.Application.CashShifts.SearchShifts;
+using Pos.Application.CreditNotes.GetCreditNoteBalance;
+using Pos.Application.CreditNotes.GetCreditNoteDetail;
+using Pos.Application.CreditNotes.SearchCreditNotes;
+using Pos.Application.Returns;
+using Pos.Application.Returns.GetReturnsSettings;
+using Pos.Application.Returns.MarkReversalDone;
+using Pos.Application.Returns.PreviewReturn;
+using Pos.Application.Returns.ReturnSaleItems;
+using Pos.Application.Returns.SaveReturnsSettings;
+using Pos.Application.Returns.SearchPendingReversals;
 using Pos.Application.Sales.CancelSale;
 using Pos.Application.Sales.ConfirmSale;
 using Pos.Application.Sales.DiscardSaleDraft;
@@ -153,6 +163,21 @@ public static class DependencyInjection
         services.AddScoped<GetSaleHandler>();
         services.AddSingleton<IValidator<CancelSaleCommand>, CancelSaleValidator>();
         services.AddScoped<CancelSaleHandler>();
+
+        // Devoluciones y notas de crédito (013)
+        services.AddScoped<ReturnCashGate>();
+        services.AddScoped<SaleReturnProcessor>();
+        services.AddScoped<PreviewReturnHandler>();
+        services.AddSingleton<IValidator<ReturnSaleItemsCommand>, ReturnSaleItemsValidator>();
+        services.AddScoped<ReturnSaleItemsHandler>();
+        services.AddScoped<SearchPendingReversalsHandler>();
+        services.AddScoped<MarkReversalDoneHandler>();
+        services.AddScoped<GetReturnsSettingsHandler>();
+        services.AddSingleton<IValidator<SaveReturnsSettingsCommand>, SaveReturnsSettingsValidator>();
+        services.AddScoped<SaveReturnsSettingsHandler>();
+        services.AddScoped<GetCreditNoteBalanceHandler>();
+        services.AddScoped<SearchCreditNotesHandler>();
+        services.AddScoped<GetCreditNoteDetailHandler>();
         services.AddScoped<GetSalesDashboardHandler>();
 
         // Turnos de caja (008)

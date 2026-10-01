@@ -31,7 +31,8 @@ public sealed record SalesTotals(
     long AverageTicketCents,
     long CashCents,
     long CardCents,
-    long TransferCents)
+    long TransferCents,
+    long CreditNoteCents = 0)
 {
     public static SalesTotals Empty { get; } = new(0, 0, 0, 0, 0, 0);
 }

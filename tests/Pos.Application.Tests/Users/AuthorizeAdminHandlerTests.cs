@@ -112,4 +112,43 @@ public class AuthorizeAdminHandlerTests
         Assert.Equal(admin.Id, entry.AuthorizedBy);
         Assert.Equal(cashier.Id, _auth.Session.User!.Id);
     }
+
+    [Fact]
+    public async Task AprobarDevoluciones_ElAdministradorSeAutorizaConSuPropiaContrasena()
+    {
+        var admin = _auth.AddUser("admin", UserRole.Admin);
+        _auth.SignedIn(admin);
+
+        var grant = await AuthorizeAsync(Permission.ApproveReturns, "admin", AuthFixture.Password);
+
+        Assert.True(grant.IsSuccess, grant.Error?.ToString());
+        Assert.Equal(admin.Id, _auth.Grants.TryConsume(grant.Value, Permission.ApproveReturns, admin.Id));
+    }
+
+    [Fact]
+    public async Task AprobarDevoluciones_UnIntentoFallidoQuedaEnLaBitacoraSinLaContrasena()
+    {
+        Setup();
+
+        var result = await AuthorizeAsync(Permission.ApproveReturns, "admin", "contrasena-secreta");
+
+        Assert.IsType<InvalidCredentials>(result.Error);
+        var entry = Assert.Single(_auth.Audit.Entries, e => e.Action == AuditActions.AdminAuthorizationDenied);
+        Assert.DoesNotContain("contrasena-secreta", entry.Details ?? string.Empty, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AprobarDevoluciones_TrasCincoFallosLaAutorizacionSeBloquea()
+    {
+        Setup();
+
+        for (var i = 0; i < 5; i++)
+        {
+            await AuthorizeAsync(Permission.ApproveReturns, "admin", "mal");
+        }
+
+        var locked = await AuthorizeAsync(Permission.ApproveReturns, "admin", AuthFixture.Password);
+
+        Assert.IsType<LockedOut>(locked.Error);
+    }
 }

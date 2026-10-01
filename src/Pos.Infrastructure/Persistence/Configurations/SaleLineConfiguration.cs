@@ -22,6 +22,7 @@ internal sealed class SaleLineConfiguration : IEntityTypeConfiguration<SaleLine>
         builder.Property(l => l.UnitPriceCents).IsRequired();
         builder.Property(l => l.QuantityThousandths).IsRequired();
         builder.Property(l => l.AmountCents).IsRequired();
+        builder.Property(l => l.ReturnedQuantity).IsRequired().HasDefaultValue(0L);
         builder.Ignore(l => l.UnitPrice);
         builder.Ignore(l => l.Quantity);
         builder.Ignore(l => l.Amount);
