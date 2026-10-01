@@ -53,6 +53,7 @@ public sealed class SaleRepository : ISaleRepository
         _context.Sales
             .Include(s => s.Lines)
             .Include(s => s.Payments)
+            .Include(s => s.Discounts)
             .SingleOrDefaultAsync(s => s.Id == id, cancellationToken);
 
     public void Add(Sale sale) => _context.Sales.Add(sale);
@@ -133,6 +134,7 @@ public sealed class SaleRepository : ISaleRepository
         var sale = await _context.Sales.AsNoTracking()
             .Include(s => s.Lines)
             .Include(s => s.Payments)
+            .Include(s => s.Discounts)
             .AsSplitQuery()
             .SingleOrDefaultAsync(s => s.Id == id, cancellationToken);
         if (sale is null)
@@ -167,6 +169,7 @@ public sealed class SaleRepository : ISaleRepository
 
         var userIds = new[] { sale.CreatedBy, sale.CancelledBy ?? sale.CreatedBy }
             .Concat(returns.SelectMany(r => new[] { r.CreatedBy, r.AuthorizedBy }))
+            .Concat(sale.Discounts.SelectMany(d => new[] { d.AppliedBy, d.AuthorizedBy ?? d.AppliedBy }))
             .Distinct()
             .ToList();
         var names = await _context.Users.AsNoTracking()
@@ -196,7 +199,9 @@ public sealed class SaleRepository : ISaleRepository
                 l.QuantityThousandths,
                 l.AmountCents,
                 l.Id,
-                l.ReturnedQuantity))],
+                l.ReturnedQuantity,
+                l.OriginalAmountCents,
+                l.LineDiscountCents))],
             [.. sale.Payments.OrderBy(p => p.Method).Select(p => new SalePaymentDto(
                 p.Method,
                 p.AmountCents,
@@ -216,7 +221,21 @@ public sealed class SaleRepository : ISaleRepository
                 r.Kind,
                 r.Compensation,
                 r.NoteNumber is { } note ? Pos.Domain.CreditNotes.CreditNoteFolio.Format(note) : null))],
-            Credit: credit);
+            Credit: credit,
+            DiscountCents: sale.DiscountCents,
+            Discounts: [.. sale.Discounts
+                .OrderBy(d => d.Kind)
+                .ThenBy(d => sale.Lines.FirstOrDefault(l => l.Id == d.SaleLineId)?.Position ?? 0)
+                .Select(d => new SaleDiscountDto(
+                    d.Kind,
+                    d.Mode,
+                    d.Value,
+                    d.AmountCents,
+                    d.SaleLineId,
+                    sale.Lines.FirstOrDefault(l => l.Id == d.SaleLineId)?.ProductName,
+                    d.CouponCode,
+                    NameOf(d.AppliedBy),
+                    d.AuthorizedBy is { } authorizer ? NameOf(authorizer) : null))]);
     }
 
     public async Task<ShiftSalesTotals> GetShiftTotalsAsync(Guid shiftId, CancellationToken cancellationToken)

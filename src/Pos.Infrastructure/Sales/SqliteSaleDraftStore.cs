@@ -40,6 +40,14 @@ public sealed class SqliteSaleDraftStore : ISaleDraftStore
 
         try
         {
+            // 015: un borrador con descuento de venta es un objeto { lines, order }; los demás (y los
+            // anteriores a 0.10.0) son la lista de líneas, que admite descuentos de línea opcionales.
+            if (draft.LinesJson.TrimStart().StartsWith('{'))
+            {
+                var stored = JsonSerializer.Deserialize<DraftJson>(draft.LinesJson, Json);
+                return new StoredDraft(draft.DraftId, stored?.Lines ?? [], stored?.Order);
+            }
+
             var lines = JsonSerializer.Deserialize<List<DraftLineDto>>(draft.LinesJson, Json) ?? [];
             return new StoredDraft(draft.DraftId, lines);
         }
@@ -50,7 +58,7 @@ public sealed class SqliteSaleDraftStore : ISaleDraftStore
         }
     }
 
-    public async Task SaveAsync(Guid draftId, IReadOnlyList<DraftLineDto> lines, CancellationToken cancellationToken)
+    public async Task SaveAsync(Guid draftId, IReadOnlyList<DraftLineDto> lines, DraftOrderDiscountDto? orderDiscount, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(lines);
 
@@ -62,7 +70,9 @@ public sealed class SqliteSaleDraftStore : ISaleDraftStore
             return;
         }
 
-        var json = JsonSerializer.Serialize(lines, Json);
+        var json = orderDiscount is null
+            ? JsonSerializer.Serialize(lines, Json)
+            : JsonSerializer.Serialize(new DraftJson(lines, orderDiscount), Json);
         var existing = await _context.SaleDrafts.SingleOrDefaultAsync(d => d.UserId == userId, cancellationToken);
         if (existing is null)
         {
@@ -118,4 +128,7 @@ public sealed class SqliteSaleDraftStore : ISaleDraftStore
         _context.SaleDrafts.Remove(source);
         _context.SaleDrafts.Add(SaleDraft.Create(toUserId, source.DraftId, source.LinesJson, source.UpdatedAt));
     }
+
+    /// <summary>Formato del borrador con descuento de venta (015, data-model "Borrador").</summary>
+    private sealed record DraftJson(IReadOnlyList<DraftLineDto> Lines, DraftOrderDiscountDto? Order);
 }

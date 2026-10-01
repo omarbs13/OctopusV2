@@ -57,18 +57,19 @@ public sealed partial class AuthorizeAdminHandler
         }
 
         var permission = command.Permission;
+        var context = string.IsNullOrWhiteSpace(command.Context) ? string.Empty : $". {Truncate(command.Context.Trim(), ContextMaxLength)}";
         var events = new CredentialEvents(
             RequireAdmin: true,
             OnFailure: (audit, admin, enteredName) => audit.Add(
                 AuditActions.AdminAuthorizationDenied,
                 AuditActions.UserEntity,
                 admin?.Id ?? Guid.Empty,
-                $"Permiso: {permission}. Usuario: {Truncate(enteredName)}"),
+                $"Permiso: {permission}. Usuario: {Truncate(enteredName)}{context}"),
             OnSuccess: (audit, admin) => audit.Add(
                 AuditActions.AdminAuthorizationGranted,
                 AuditActions.UserEntity,
                 admin.Id,
-                $"Permiso: {permission}",
+                $"Permiso: {permission}{context}",
                 authorizedBy: admin.Id));
 
         var verified = await _verifier.VerifyAsync(command.UserName, command.Password, events, cancellationToken);
@@ -82,7 +83,11 @@ public sealed partial class AuthorizeAdminHandler
         return Result.Success(grantId);
     }
 
-    private static string Truncate(string text) => text.Length <= 40 ? text : text[..40];
+    private const int ContextMaxLength = 200;
+
+    private static string Truncate(string text) => Truncate(text, 40);
+
+    private static string Truncate(string text, int max) => text.Length <= max ? text : text[..max];
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Autorización de administrador concedida. Solicitante={RequestedBy} Administrador={AuthorizedBy} Permiso={Permission}")]
     private partial void LogGranted(Guid requestedBy, Guid authorizedBy, Permission permission);

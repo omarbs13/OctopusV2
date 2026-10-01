@@ -19,13 +19,16 @@ public sealed partial class AdminAuthorizationViewModel : ViewModelBase
     private readonly OperationRunner _runner;
     private readonly Permission _permission;
     private readonly Action<Guid?> _finished;
+    private readonly string? _context;
 
     public AdminAuthorizationViewModel(
         UseCases useCases,
         OperationRunner runner,
         Permission permission,
-        Action<Guid?> finished)
+        Action<Guid?> finished,
+        string? context = null)
     {
+        _context = context;
         _useCases = useCases;
         _runner = runner;
         _permission = permission;
@@ -42,6 +45,7 @@ public sealed partial class AdminAuthorizationViewModel : ViewModelBase
             Permission.ApproveReturns => Strings.Auth_OperationReturns,
             Permission.ApproveCreditOverLimit => Strings.Auth_OperationCreditOverLimit,
             Permission.VoidCustomerPayments => Strings.Auth_OperationVoidPayment,
+            Permission.ApproveDiscounts => Strings.Auth_OperationDiscount,
             _ => Strings.Auth_OperationOpenDrawer,
         });
 
@@ -68,7 +72,7 @@ public sealed partial class AdminAuthorizationViewModel : ViewModelBase
         IsBusy = true;
         try
         {
-            var command = new AuthorizeAdminCommand(_permission, UserName, Password);
+            var command = new AuthorizeAdminCommand(_permission, UserName, Password, _context);
             var (completed, result) = await _runner.RunAsync(
                 "AutorizarAdministrador",
                 () => _useCases.RunAsync<AuthorizeAdminHandler, Result<Guid>>(h => h.HandleAsync(command, CancellationToken.None)),

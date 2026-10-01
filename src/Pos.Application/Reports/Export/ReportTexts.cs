@@ -23,6 +23,15 @@ public static class ReportTexts
     public const string Card = "Tarjeta";
     public const string Transfer = "Transferencia";
     public const string OnAccount = "A crédito";
+    public const string TotalDiscounted = "Total descontado";
+    public const string DiscountsTitle = "Reporte de descuentos";
+    public const string DiscountsTableTitle = "Descuentos por venta";
+    public const string DiscountsCount = "Descuentos";
+    public const string KindFilter = "Tipo";
+    public const string ColKind = "Tipo";
+    public const string ColDiscountValue = "Valor";
+    public const string ColAuthorizedBy = "Autorizó";
+    public const string ColCoupon = "Cupón";
     public const string PreviousTotal = "Total del período anterior";
     public const string Variation = "Variación";
     public const string NotCalculable = "No calculable";

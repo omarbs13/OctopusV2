@@ -1,3 +1,4 @@
+using Pos.Domain.Discounts;
 using Pos.Domain.Licensing;
 
 namespace Pos.Application.Abstractions;
@@ -124,6 +125,30 @@ public sealed record CustomerHasBalance(long BalanceCents) : Error;
 /// Mensaje: "El monto debe ser mayor que 0 y no exceder el saldo de {saldo}".
 /// </summary>
 public sealed record PaymentExceedsBalance(long MaxCents) : Error;
+
+/// <summary>El descuento no supera el límite: no se guarda ninguna aprobación (015, ApproveDiscount).</summary>
+public sealed record ApprovalNotNeeded : Error;
+
+/// <summary>
+/// Al cobrar, un descuento manual supera el límite vigente y no tiene una aprobación que lo cubra (015, research §7).
+/// La interfaz señala la línea (<c>ProductId</c>) o la venta y pide la autorización.
+/// </summary>
+public sealed record DiscountApprovalRequired(DiscountScope Scope, Guid? ProductId) : Error;
+
+/// <summary>
+/// El cupón ya no se puede aplicar (015, FR-012): <c>Status</c> nulo si el código no existe. La venta no se
+/// registró; la interfaz retira el cupón, recalcula y avisa.
+/// </summary>
+public sealed record CouponNotValid(string Code, CouponStatus? Status, DateOnly StartsOn, DateOnly EndsOn) : Error;
+
+/// <summary>El descuento global de monto fijo supera el subtotal; la interfaz lo retira y avisa (015, Historia 2, escenario 5).</summary>
+public sealed record OrderDiscountRemoved(long DiscountCents) : Error;
+
+/// <summary>El código del cupón coincide con el código de barras o la clave de un producto (015, casos límite).</summary>
+public sealed record CodeCollidesWithProduct : Error;
+
+/// <summary>Un cupón con usos no admite cambiar código, modalidad ni valor (015, FR-010).</summary>
+public sealed record CouponHasUses : Error;
 
 /// <summary>El archivo de licencia importado se rechazó; la licencia vigente no cambió (011, FR-012).</summary>
 public sealed record InvalidLicense(LicenseImportRejection Reason) : Error;

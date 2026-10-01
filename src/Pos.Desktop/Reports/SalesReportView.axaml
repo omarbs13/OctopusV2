@@ -51,6 +51,8 @@
           <vm:MetricCard Label="{x:Static res:Strings.Reports_Sales_Card}" Value="{Binding CardText}" />
           <vm:MetricCard Label="{x:Static res:Strings.Reports_Sales_Transfer}" Value="{Binding TransferText}" />
           <vm:MetricCard Label="{x:Static res:Strings.Reports_Sales_OnAccount}" Value="{Binding OnAccountText}" />
+          <!-- 015: total descontado del período; no depende de la licencia de Descuentos (FR-023) -->
+          <vm:MetricCard Label="{x:Static res:Strings.Reports_Sales_TotalDiscounted}" Value="{Binding DiscountedText}" />
         </WrapPanel>
 
         <!-- Comparativo -->

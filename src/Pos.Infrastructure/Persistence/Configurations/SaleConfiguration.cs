@@ -21,6 +21,7 @@ internal sealed class SaleConfiguration : IEntityTypeConfiguration<Sale>
         builder.Property(s => s.CashShiftId);
         builder.Property(s => s.TotalCents).IsRequired();
         builder.Property(s => s.ReturnedCents).IsRequired().HasDefaultValue(0L);
+        builder.Property(s => s.DiscountCents).IsRequired().HasDefaultValue(0L);
         builder.Property(s => s.Status)
             .HasConversion(status => status.ToCode(), code => SaleStatusExtensions.FromCode(code))
             .HasMaxLength(10)
@@ -34,6 +35,7 @@ internal sealed class SaleConfiguration : IEntityTypeConfiguration<Sale>
 
         builder.Ignore(s => s.Total);
         builder.Ignore(s => s.Folio);
+        builder.Ignore(s => s.SubtotalCents);
 
         // Las ventas nunca se borran: ninguna relación se elimina en cascada.
         builder.HasMany(s => s.Lines)
@@ -43,6 +45,10 @@ internal sealed class SaleConfiguration : IEntityTypeConfiguration<Sale>
         builder.HasMany(s => s.Payments)
             .WithOne()
             .HasForeignKey(p => p.SaleId)
+            .OnDelete(DeleteBehavior.Restrict);
+        builder.HasMany(s => s.Discounts)
+            .WithOne()
+            .HasForeignKey(d => d.SaleId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(s => s.FolioNumber).HasDatabaseName(FolioIndexName).IsUnique();

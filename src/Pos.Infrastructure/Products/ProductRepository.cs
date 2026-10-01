@@ -34,6 +34,16 @@ public sealed class ProductRepository : IProductRepository
             p => p.DeletedAt == null && p.Barcode == barcode && (excludingId == null || p.Id != excludingId),
             cancellationToken);
 
+    public Task<bool> ExistsWithCodeAsync(string code, CancellationToken cancellationToken)
+    {
+        // El SKU se guarda en mayúsculas; el código de barras solo tiene dígitos.
+        var sku = Product.NormalizeSku(code);
+        var barcode = Product.NormalizeBarcode(code);
+        return _context.Products.AnyAsync(
+            p => p.DeletedAt == null && (p.Sku == sku || (barcode != null && p.Barcode == barcode)),
+            cancellationToken);
+    }
+
     public async Task<ProductPage> SearchAsync(ProductSearch search, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(search);

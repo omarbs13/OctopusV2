@@ -5,6 +5,7 @@ using Pos.Application.Audit;
 using Pos.Application.CashShifts;
 using Pos.Application.CreditNotes;
 using Pos.Application.Customers;
+using Pos.Application.Discounts;
 using Pos.Application.Inventory;
 using Pos.Application.Licensing;
 using Pos.Application.Printing.Ticket;
@@ -13,6 +14,7 @@ using Pos.Application.Receivables;
 using Pos.Domain.Common;
 using Pos.Domain.CreditNotes;
 using Pos.Domain.Customers;
+using Pos.Domain.Discounts;
 using Pos.Domain.Inventory;
 using Pos.Domain.Licensing;
 using Pos.Domain.Products;
@@ -28,7 +30,9 @@ namespace Pos.Application.Sales.ConfirmSale;
 /// líneas con copia de datos, pagos, movimientos <c>SALE</c> y borrado del borrador. Una falla no
 /// consume folio ni deja nada a medias, y el <c>DraftId</c> vuelve idempotente el reintento.
 /// Desde 014 una venta con pago <c>ACCOUNT</c> verifica el crédito del cliente dentro de la misma
-/// transacción y crea su cuenta por cobrar (research §1–§4).
+/// transacción y crea su cuenta por cobrar (research §1–§4). Desde 015 reconstruye el <c>Cart</c> con los
+/// descuentos, revalida el límite vigente y las aprobaciones, revalida y consume el cupón, reparte el
+/// descuento de venta entre las líneas y guarda cada descuento aplicado (015, research §4–§9).
 /// </summary>
 public sealed partial class ConfirmSaleHandler
 {
@@ -47,6 +51,10 @@ public sealed partial class ConfirmSaleHandler
     private readonly ICustomerRepository? _customers;
     private readonly IReceivableRepository? _receivables;
     private readonly ICurrentUser? _currentUser;
+    private readonly IDiscountSettingsStore? _discountSettings;
+    private readonly IDiscountApprovalStore? _approvals;
+    private readonly ICouponRepository? _coupons;
+    private readonly IClock? _clock;
 
     public ConfirmSaleHandler(
         IAccessControl access,
@@ -63,8 +71,16 @@ public sealed partial class ConfirmSaleHandler
         IAuditLog? audit = null,
         ICustomerRepository? customers = null,
         IReceivableRepository? receivables = null,
-        ICurrentUser? currentUser = null)
+        ICurrentUser? currentUser = null,
+        IDiscountSettingsStore? discountSettings = null,
+        IDiscountApprovalStore? approvals = null,
+        ICouponRepository? coupons = null,
+        IClock? clock = null)
     {
+        _discountSettings = discountSettings;
+        _approvals = approvals;
+        _coupons = coupons;
+        _clock = clock;
         _customers = customers;
         _receivables = receivables;
         _currentUser = currentUser;
@@ -110,6 +126,22 @@ public sealed partial class ConfirmSaleHandler
             if (_customers is null || _receivables is null)
             {
                 return Result.Failure<ConfirmedSale>(new ModuleNotLicensed(LicensedModule.CreditAndCustomers));
+            }
+        }
+
+        // 015: aplicar descuentos exige el módulo Descuentos y el permiso ApplyDiscounts (FR-021, FR-022).
+        if (command.HasDiscounts)
+        {
+            var discounts = await _access.CheckAsync(Permission.ApplyDiscounts, cancellationToken);
+            if (!discounts.Allowed)
+            {
+                return Result.Failure<ConfirmedSale>(discounts.Error!);
+            }
+
+            if (_license?.IsModuleActive(LicensedModule.Discounts) == false
+                || _discountSettings is null || _approvals is null || _coupons is null || _currentUser is null)
+            {
+                return Result.Failure<ConfirmedSale>(new ModuleNotLicensed(LicensedModule.Discounts));
             }
         }
 
@@ -195,6 +227,26 @@ public sealed partial class ConfirmSaleHandler
                     Quantity.FromThousandths(l.QuantityThousandths));
             }));
 
+        // 015: los descuentos se aplican con las reglas del dominio; uno inválido rechaza la venta (no se descarta).
+        var applied = await ApplyDiscountsAsync(command, cart, cancellationToken);
+        if (!applied.IsSuccess)
+        {
+            return Result.Failure<ConfirmedSale>(applied.Error);
+        }
+
+        var discounts = applied.Value;
+
+        // 015, research §6: una venta de total 0 no lleva pagos; una con total mayor que 0 sí.
+        if (cart.Total.Cents == 0 && command.Payments.Count > 0)
+        {
+            return Result.Failure<ConfirmedSale>(new ValidationFailed([new FieldError(SaleFields.Payments, SaleMessages.TotalZeroWithoutPayments)]));
+        }
+
+        if (cart.Total.Cents > 0 && command.Payments.Count == 0)
+        {
+            return Result.Failure<ConfirmedSale>(new ValidationFailed([new FieldError(SaleFields.Payments, SaleMessages.PaymentsRequired)]));
+        }
+
         var checkout = BuildCheckout(cart.Total, command.Payments, out var paymentError);
         if (paymentError is not null)
         {
@@ -255,6 +307,7 @@ public sealed partial class ConfirmSaleHandler
         var folioNumber = await _sales.NextFolioNumberAsync(cancellationToken);
         var folio = Folio.Format(folioNumber);
 
+        var allocation = cart.Allocation();
         var lines = new List<SaleLine>();
         foreach (var (line, position) in cart.Lines.Select((l, i) => (l, i + 1)))
         {
@@ -283,15 +336,20 @@ public sealed partial class ConfirmSaleHandler
                 line.DecimalPlaces,
                 line.UnitPrice,
                 line.Quantity,
-                movementId));
+                movementId,
+                line.LineDiscountAmount.Cents,
+                allocation[position - 1]));
         }
 
+        var saleDiscounts = BuildSaleDiscounts(cart, lines, discounts);
         var sale = Sale.Register(
             folioNumber,
             command.DraftId,
             cashShiftId,
             lines,
-            checkout.ToPayments().Select(SalePayment.Create));
+            checkout.ToPayments().Select(SalePayment.Create),
+            saleDiscounts);
+        AuditAuthorizedDiscounts(sale, saleDiscounts);
         if (creditNote is not null)
         {
             await RedeemCreditNoteAsync(sale, creditNote, creditBalance, cancellationToken);
@@ -314,6 +372,11 @@ public sealed partial class ConfirmSaleHandler
         await transaction.CommitAsync(cancellationToken);
 
         LogRegistered(sale.Id, folio, sale.Lines.Count, sale.TotalCents);
+        if (sale.DiscountCents > 0)
+        {
+            LogDiscounts(sale.Id, folio, _currentUser?.UserId, sale.DiscountCents, discounts.Coupon?.Code);
+        }
+
         if (credit is not null)
         {
             LogCreditSale(sale.Id, folio, credit.Customer.Id, _currentUser?.UserId, sale.TotalCents, credit.BalanceCents, credit.Customer.CreditLimitCents, credit.AuthorizedBy);
@@ -402,6 +465,162 @@ public sealed partial class ConfirmSaleHandler
         }
     }
 
+    /// <summary>
+    /// Aplica al <paramref name="cart"/> los descuentos del comando y verifica las aprobaciones contra el
+    /// límite vigente (research §7): cada descuento manual que lo supera necesita la aprobación indicada por
+    /// su <c>ApprovalId</c>, del mismo borrador, solicitante y alcance, que cubra el equivalente actual. No hay
+    /// excepción para el Administrador. El cupón se busca y revalida dentro de la transacción y se consume
+    /// aquí, así que dos ventas no pueden usar el último uso (research §9).
+    /// </summary>
+    private async Task<Result<AppliedDiscounts>> ApplyDiscountsAsync(ConfirmSaleCommand command, Cart cart, CancellationToken cancellationToken)
+    {
+        if (!command.HasDiscounts)
+        {
+            return Result.Success(AppliedDiscounts.None);
+        }
+
+        foreach (var input in command.Lines.Where(l => l.Discount is not null))
+        {
+            var discount = input.Discount!;
+            cart.SetLineDiscount(input.ProductId, new LineDiscount(DiscountValue.Create(discount.Mode, discount.Value), discount.ApprovalId));
+        }
+
+        Coupon? coupon = null;
+        if (command.OrderDiscount is { IsCoupon: true } couponInput)
+        {
+            var code = Coupon.NormalizeCode(couponInput.CouponCode);
+            var today = DiscountDates.LocalToday(Clock);
+            coupon = await _coupons!.FindByCodeAsync(code, cancellationToken);
+            var status = coupon?.StatusOn(today);
+            if (coupon is null || status != CouponStatus.Active)
+            {
+                LogCouponRejected(command.DraftId, code, status);
+                return Result.Failure<AppliedDiscounts>(new CouponNotValid(
+                    coupon?.Code ?? code, status, coupon?.StartsOn ?? today, coupon?.EndsOn ?? today));
+            }
+
+            cart.SetOrderDiscount(new OrderDiscount.CouponApplied(coupon.Id, coupon.Code, coupon.Discount));
+        }
+        else if (command.OrderDiscount is { } manualInput)
+        {
+            var value = DiscountValue.Create(manualInput.Mode, manualInput.Value);
+            if (value.Mode == DiscountMode.Amount && value.Raw > cart.Subtotal.Cents)
+            {
+                return Result.Failure<AppliedDiscounts>(new OrderDiscountRemoved(value.Raw));
+            }
+
+            cart.SetOrderDiscount(new OrderDiscount.Manual(value, manualInput.ApprovalId));
+        }
+
+        var limit = _discountSettings!.Load().LimitBasisPoints;
+        var userId = _currentUser!.UserId;
+        IReadOnlyList<DiscountApproval>? approvals = null;
+        var authorizers = new Dictionary<Guid, Guid>();
+        Guid? orderAuthorizer = null;
+
+        foreach (var line in cart.Lines.Where(l => l.HasDiscount))
+        {
+            var amount = line.LineDiscountAmount.Cents;
+            if (!DiscountMath.ExceedsLimit(amount, line.Amount.Cents, limit))
+            {
+                continue;
+            }
+
+            approvals ??= await _approvals!.ListForDraftAsync(command.DraftId, userId, cancellationToken);
+            var equivalent = DiscountMath.EquivalentBasisPoints(amount, line.Amount.Cents);
+            var approval = approvals.SingleOrDefault(a => a.Id == line.Discount!.ApprovalId);
+            if (approval is null || !approval.Covers(DiscountScope.Line, line.ProductId, equivalent))
+            {
+                LogApprovalRequired(command.DraftId, userId, DiscountScope.Line, line.ProductId, amount, equivalent, limit);
+                return Result.Failure<AppliedDiscounts>(new DiscountApprovalRequired(DiscountScope.Line, line.ProductId));
+            }
+
+            authorizers[line.ProductId] = approval.AuthorizedBy;
+        }
+
+        if (cart.OrderDiscount is OrderDiscount.Manual manual
+            && DiscountMath.ExceedsLimit(cart.OrderDiscountAmount.Cents, cart.Subtotal.Cents, limit))
+        {
+            approvals ??= await _approvals!.ListForDraftAsync(command.DraftId, userId, cancellationToken);
+            var equivalent = DiscountMath.EquivalentBasisPoints(cart.OrderDiscountAmount.Cents, cart.Subtotal.Cents);
+            var approval = approvals.SingleOrDefault(a => a.Id == manual.ApprovalId);
+            if (approval is null || !approval.Covers(DiscountScope.Order, null, equivalent))
+            {
+                LogApprovalRequired(command.DraftId, userId, DiscountScope.Order, null, cart.OrderDiscountAmount.Cents, equivalent, limit);
+                return Result.Failure<AppliedDiscounts>(new DiscountApprovalRequired(DiscountScope.Order, null));
+            }
+
+            orderAuthorizer = approval.AuthorizedBy;
+        }
+
+        // El uso se cuenta al cobrar, en la misma transacción que la venta (FR-014).
+        if (coupon is not null && cart.OrderDiscountAmount.Cents > 0)
+        {
+            coupon.ConsumeUse(DiscountDates.LocalToday(Clock));
+        }
+
+        return Result.Success(new AppliedDiscounts(authorizers, orderAuthorizer, coupon));
+    }
+
+    /// <summary>Un <see cref="SaleDiscount"/> por descuento aplicado, con aplicador y autorizador (FR-015).</summary>
+    private List<SaleDiscount> BuildSaleDiscounts(Cart cart, List<SaleLine> lines, AppliedDiscounts discounts)
+    {
+        var result = new List<SaleDiscount>();
+        if (!cart.HasDiscounts)
+        {
+            return result;
+        }
+
+        var userId = _currentUser!.UserId;
+        var now = Clock.UtcNow;
+        foreach (var (cartLine, saleLine) in cart.Lines.Zip(lines))
+        {
+            if (cartLine.Discount is { } discount)
+            {
+                result.Add(SaleDiscount.ForLine(
+                    saleLine.Id,
+                    discount.Value,
+                    cartLine.LineDiscountAmount.Cents,
+                    userId,
+                    discounts.LineAuthorizers.TryGetValue(cartLine.ProductId, out var authorizer) ? authorizer : null,
+                    now));
+            }
+        }
+
+        var orderAmount = cart.OrderDiscountAmount.Cents;
+        switch (cart.OrderDiscount)
+        {
+            case OrderDiscount.Manual manual when orderAmount > 0:
+                result.Add(SaleDiscount.ForOrder(manual.Value, orderAmount, userId, discounts.OrderAuthorizer, now));
+                break;
+            case OrderDiscount.CouponApplied coupon when orderAmount > 0:
+                result.Add(SaleDiscount.ForCoupon(coupon.CouponId, coupon.Code, coupon.Value, orderAmount, userId, now));
+                break;
+        }
+
+        return result;
+    }
+
+    /// <summary><c>DISCOUNT_APPLIED_AUTHORIZED</c> por cada descuento autorizado: folio, monto, aplicador y autorizador (FR-019).</summary>
+    private void AuditAuthorizedDiscounts(Sale sale, List<SaleDiscount> discounts)
+    {
+        foreach (var discount in discounts.Where(d => d.AuthorizedBy is not null))
+        {
+            var scope = discount.Kind == DiscountKind.Line ? DiscountScope.Line : DiscountScope.Order;
+            var line = discount.SaleLineId is { } lineId ? sale.Lines.Single(l => l.Id == lineId) : null;
+            var baseCents = line?.OriginalAmountCents ?? sale.SubtotalCents;
+            var product = line is null ? string.Empty : $". Producto {line.ProductName}";
+            _audit?.Add(
+                AuditActions.DiscountAppliedAuthorized,
+                AuditActions.SaleEntity,
+                sale.Id,
+                $"Venta {sale.Folio}. {DiscountTexts.Describe(scope, discount.Discount, discount.AmountCents, baseCents)}{product}",
+                discount.AuthorizedBy);
+        }
+    }
+
+    private IClock Clock => _clock ?? SystemUtcClock.Instance;
+
     private static Checkout BuildCheckout(Money total, IReadOnlyList<PaymentInput> payments, out string? error)
     {
         var checkout = new Checkout(total);
@@ -463,6 +682,18 @@ public sealed partial class ConfirmSaleHandler
     private partial void LogRegistered(Guid saleId, string folio, int lines, long totalCents);
 
     [LoggerMessage(Level = LogLevel.Information,
+        Message = "Venta con descuentos. SaleId={SaleId} Folio={Folio} UserId={UserId} DescuentoCents={DiscountCents} Cupon={CouponCode}")]
+    private partial void LogDiscounts(Guid saleId, string folio, Guid? userId, long discountCents, string? couponCode);
+
+    [LoggerMessage(Level = LogLevel.Warning,
+        Message = "Venta no registrada: descuento sin aprobación que lo cubra. DraftId={DraftId} UserId={UserId} Alcance={Scope} ProductId={ProductId} MontoCents={AmountCents} EquivalentePb={Equivalent} LimitePb={Limit}")]
+    private partial void LogApprovalRequired(Guid draftId, Guid userId, DiscountScope scope, Guid? productId, long amountCents, long equivalent, long limit);
+
+    [LoggerMessage(Level = LogLevel.Warning,
+        Message = "Venta no registrada: el cupón ya no es válido. DraftId={DraftId} Cupon={CouponCode} Estado={Status}")]
+    private partial void LogCouponRejected(Guid draftId, string couponCode, CouponStatus? status);
+
+    [LoggerMessage(Level = LogLevel.Information,
         Message = "Venta a crédito registrada. SaleId={SaleId} Folio={Folio} CustomerId={CustomerId} UserId={UserId} TotalCents={TotalCents} SaldoPrevioCents={BalanceCents} LimiteCents={LimitCents} AutorizadoPor={AuthorizedBy}")]
     private partial void LogCreditSale(Guid saleId, string folio, Guid customerId, Guid? userId, long totalCents, long balanceCents, long limitCents, Guid? authorizedBy);
 
@@ -489,3 +720,17 @@ public sealed partial class ConfirmSaleHandler
 
 /// <summary>Crédito aprobado para la venta: cliente, saldo previo, verificación del límite y autorizador del excedente.</summary>
 internal sealed record CreditApproval(Customer Customer, long BalanceCents, CreditCheck Check, Guid? AuthorizedBy);
+
+/// <summary>Autorizadores de los descuentos que superaron el límite (por producto y de la venta) y el cupón consumido.</summary>
+internal sealed record AppliedDiscounts(IReadOnlyDictionary<Guid, Guid> LineAuthorizers, Guid? OrderAuthorizer, Coupon? Coupon)
+{
+    public static AppliedDiscounts None { get; } = new(new Dictionary<Guid, Guid>(), null, null);
+}
+
+/// <summary>Reloj del sistema cuando la composición no inyecta uno (pruebas antiguas); la persistencia fija las fechas.</summary>
+internal sealed class SystemUtcClock : IClock
+{
+    public static SystemUtcClock Instance { get; } = new();
+
+    public DateTime UtcNow => DateTime.UtcNow;
+}

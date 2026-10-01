@@ -123,7 +123,14 @@
                     <TextBlock Grid.Column="1" Text="{Binding Sku}" TextTrimming="CharacterEllipsis" />
                     <TextBlock Grid.Column="2" Text="{Binding QuantityText}" TextAlignment="Right" />
                     <TextBlock Grid.Column="3" Text="{Binding PriceText}" TextAlignment="Right" />
-                    <TextBlock Grid.Column="4" Text="{Binding AmountText}" TextAlignment="Right" FontWeight="SemiBold" />
+                    <!-- 015: con descuento, el original tachado, la etiqueta y el importe final en negrita (FR-008) -->
+                    <StackPanel Grid.Column="4" HorizontalAlignment="Right" VerticalAlignment="Center">
+                      <TextBlock Text="{Binding OriginalAmountText}" TextAlignment="Right" FontSize="12" Opacity="0.7"
+                                 TextDecorations="Strikethrough" IsVisible="{Binding HasDiscount}" />
+                      <TextBlock Text="{Binding DiscountLabel}" TextAlignment="Right" FontSize="12"
+                                 Foreground="{DynamicResource SystemFillColorSuccessBrush}" IsVisible="{Binding HasDiscount}" />
+                      <TextBlock Text="{Binding AmountText}" TextAlignment="Right" FontWeight="SemiBold" />
+                    </StackPanel>
                   </Grid>
                 </Border>
               </DataTemplate>
@@ -137,6 +144,18 @@
 
       <!-- Total y acciones -->
       <StackPanel Grid.Row="0" Grid.Column="1" Spacing="10">
+        <!-- 015: Subtotal, descuento de venta o cupón con su botón para quitarlo, y Total (FR-008) -->
+        <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding HasDiscounts}">
+          <TextBlock Text="{x:Static res:Strings.Discount_Subtotal}" />
+          <TextBlock Grid.Column="1" Text="{Binding SubtotalText}" />
+        </Grid>
+        <Grid ColumnDefinitions="*,Auto,Auto" IsVisible="{Binding HasOrderDiscount}">
+          <TextBlock Text="{Binding OrderDiscountLabel}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+          <TextBlock Grid.Column="1" Text="{Binding OrderDiscountText}" VerticalAlignment="Center" Margin="0,0,4,0" />
+          <Button Grid.Column="2" Content="×" MinWidth="36" MinHeight="36" Command="{Binding RemoveOrderDiscountCommand}"
+                  ToolTip.Tip="{x:Static res:Strings.Discount_RemoveOrder}"
+                  AutomationProperties.Name="{x:Static res:Strings.Discount_RemoveOrder}" />
+        </Grid>
         <TextBlock Text="{x:Static res:Strings.Sale_Total}" FontSize="16" FontWeight="SemiBold" />
         <TextBlock Text="{Binding TotalText}" FontSize="52" FontWeight="Bold" TextWrapping="Wrap" />
         <TextBlock Text="{Binding ItemsText}" Opacity="0.8" />
@@ -158,6 +177,12 @@
                 Command="{Binding CheckoutCommand}" Margin="0,8,0,0" />
         <Button Classes="touch" Content="{x:Static res:Strings.Credit_ChooseCustomer}" Command="{Binding ChooseCustomerCommand}"
                 IsVisible="{Binding CanUseCredit}" />
+        <Button Classes="touch" Content="{x:Static res:Strings.Discount_LineButton}" Command="{Binding OpenLineDiscountCommand}"
+                IsVisible="{Binding CanUseDiscounts}" />
+        <Button Classes="touch" Content="{x:Static res:Strings.Discount_OrderButton}" Command="{Binding OpenOrderDiscountCommand}"
+                IsVisible="{Binding CanUseDiscounts}" />
+        <Button Classes="touch" Content="{x:Static res:Strings.Discount_CouponButton}" Command="{Binding OpenCouponEntryCommand}"
+                IsVisible="{Binding CanUseDiscounts}" />
         <Button Classes="touch" Content="{x:Static res:Strings.Sale_Search}" Command="{Binding SearchCommand}" />
         <Button Classes="touch" Content="{x:Static res:Strings.Sale_Quantity}" Command="{Binding ChangeQuantityCommand}" />
         <Button Classes="touch" Content="{x:Static res:Strings.Sale_Remove}" Command="{Binding RemoveLineCommand}" />
@@ -197,6 +222,16 @@
     <!-- Cliente para la venta a crédito -->
     <Grid Background="#99000000" IsVisible="{Binding CustomerPicker, Converter={x:Static ObjectConverters.IsNotNull}}">
       <ContentControl Content="{Binding CustomerPicker}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+    </Grid>
+
+    <!-- Descuento de línea o de venta (015) -->
+    <Grid Background="#99000000" IsVisible="{Binding DiscountDialog, Converter={x:Static ObjectConverters.IsNotNull}}">
+      <ContentControl Content="{Binding DiscountDialog}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+    </Grid>
+
+    <!-- Aplicar cupón (015) -->
+    <Grid Background="#99000000" IsVisible="{Binding CouponEntry, Converter={x:Static ObjectConverters.IsNotNull}}">
+      <ContentControl Content="{Binding CouponEntry}" HorizontalAlignment="Center" VerticalAlignment="Center" />
     </Grid>
 
     <!-- Motivo para abrir el cajón sin venta -->

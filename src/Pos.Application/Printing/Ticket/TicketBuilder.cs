@@ -1,13 +1,15 @@
 using System.Globalization;
 using Pos.Application.Business;
 using Pos.Application.Sales;
+using Pos.Domain.Discounts;
 using Pos.Domain.Sales;
 
 namespace Pos.Application.Printing.Ticket;
 
 /// <summary>
 /// Arma el ticket como renglones de texto ya ajustados al ancho (32 u 48 columnas) según
-/// <c>contracts/ticket-format.md</c>. Usa los importes guardados en la venta, sin recalcular.
+/// <c>contracts/ticket-format.md</c>. Usa los importes guardados en la venta, sin recalcular. Desde 015
+/// desglosa los descuentos; una venta sin descuentos se imprime exactamente igual que antes.
 /// </summary>
 public static class TicketBuilder
 {
@@ -65,10 +67,20 @@ public static class TicketBuilder
 
         foreach (var line in sale.Lines.OrderBy(l => l.Position))
         {
-            AddSaleLine(lines, line, columns);
+            AddSaleLine(lines, line, sale.DiscountList.FirstOrDefault(d => d.SaleLineId == line.Id && line.Id != Guid.Empty), columns);
         }
 
         lines.Add(Separator(columns));
+        if (sale.HasDiscounts)
+        {
+            // 015: SUBTOTAL (líneas después de su descuento) y el descuento de venta o el cupón antes del TOTAL.
+            lines.Add(new TicketLine(TextWrap.TwoColumns("SUBTOTAL", FormatMoney(sale.SubtotalCents), columns)));
+            if (sale.OrderDiscount is { } order)
+            {
+                lines.Add(new TicketLine(TextWrap.TwoColumns(OrderDiscountLabel(order), FormatMoney(-order.AmountCents), columns)));
+            }
+        }
+
         lines.Add(new TicketLine(TextWrap.TwoColumns("TOTAL", FormatMoney(sale.TotalCents), columns), Bold: true));
         if (sale.Credit is not null)
         {
@@ -78,6 +90,11 @@ public static class TicketBuilder
         else
         {
             AddPayments(lines, sale.Payments, columns);
+        }
+
+        if (sale.HasDiscounts)
+        {
+            lines.Add(new TicketLine(TextWrap.TwoColumns("Usted ahorró:", FormatMoney(sale.DiscountCents), columns), Bold: true));
         }
 
         if (!string.IsNullOrWhiteSpace(profile?.FooterMessage))
@@ -154,9 +171,18 @@ public static class TicketBuilder
         lines.AddRange(TextWrap.Wrap(text, columns).Select(t => new TicketLine(t, TicketAlignment.Center)));
     }
 
-    private static void AddSaleLine(List<TicketLine> lines, SaleLineDto line, int columns)
+    /// <summary>"Descuento 5%", "Descuento" (monto) o "Cupón VERANO10".</summary>
+    private static string OrderDiscountLabel(SaleDiscountDto order) => order.Kind == DiscountKind.Coupon
+        ? $"Cupón {order.CouponCode}"
+        : order.Mode == DiscountMode.Percent ? $"Descuento {order.Discount}" : "Descuento";
+
+    /// <summary>
+    /// La línea muestra su importe original; con descuento propio agrega "Desc. 10%" (o "Desc.") con el
+    /// monto negativo y el importe final de la línea (original − descuento de línea), alineado a la derecha.
+    /// </summary>
+    private static void AddSaleLine(List<TicketLine> lines, SaleLineDto line, SaleDiscountDto? discount, int columns)
     {
-        var amount = FormatMoney(line.AmountCents);
+        var amount = FormatMoney(line.OriginalCents);
         var prefix = FormatQuantity(line.QuantityThousandths, line.DecimalPlaces) + " ";
         var indent = new string(' ', prefix.Length);
         var description = TextWrap.Wrap(line.ProductName, columns - indent.Length);
@@ -173,6 +199,12 @@ public static class TicketBuilder
         }
 
         lines.AddRange(text.Select(t => new TicketLine(t)));
+        if (line.HasLineDiscount)
+        {
+            var label = discount is { Mode: DiscountMode.Percent } ? $"  Desc. {discount.Discount}" : "  Desc.";
+            lines.Add(new TicketLine(TextWrap.TwoColumns(label, FormatMoney(-line.LineDiscountCents), columns)));
+            lines.Add(new TicketLine(TextWrap.Align(FormatMoney(line.AmountAfterLineDiscountCents), columns, TicketAlignment.Right)));
+        }
     }
 
     private static void AddPayments(List<TicketLine> lines, IReadOnlyList<SalePaymentDto> payments, int columns)

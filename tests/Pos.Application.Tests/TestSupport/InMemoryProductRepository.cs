@@ -81,6 +81,14 @@ public sealed class InMemoryProductRepository : IProductRepository
         return Task.FromResult(_stored.Values.Any(p => !p.IsDeleted && p.Id != excludingId && p.Barcode == barcode));
     }
 
+    public Task<bool> ExistsWithCodeAsync(string code, CancellationToken cancellationToken)
+    {
+        ThrowIfFailing();
+        var sku = Product.NormalizeSku(code);
+        var barcode = Product.NormalizeBarcode(code);
+        return Task.FromResult(_stored.Values.Any(p => !p.IsDeleted && (p.Sku == sku || (barcode != null && p.Barcode == barcode))));
+    }
+
     public Task<ProductPage> SearchAsync(ProductSearch search, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(search);

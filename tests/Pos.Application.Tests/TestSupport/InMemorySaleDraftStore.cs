@@ -12,9 +12,9 @@ public sealed class InMemorySaleDraftStore : ISaleDraftStore
     public Task<StoredDraft?> LoadAsync(CancellationToken cancellationToken) =>
         Task.FromResult(Drafts.GetValueOrDefault(CurrentUserId));
 
-    public Task SaveAsync(Guid draftId, IReadOnlyList<DraftLineDto> lines, CancellationToken cancellationToken)
+    public Task SaveAsync(Guid draftId, IReadOnlyList<DraftLineDto> lines, DraftOrderDiscountDto? orderDiscount, CancellationToken cancellationToken)
     {
-        Drafts[CurrentUserId] = new StoredDraft(draftId, lines);
+        Drafts[CurrentUserId] = new StoredDraft(draftId, lines, orderDiscount);
         return Task.CompletedTask;
     }
 

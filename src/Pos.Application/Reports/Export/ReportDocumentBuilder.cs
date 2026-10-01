@@ -1,6 +1,8 @@
 using System.Globalization;
 using Pos.Application.Abstractions;
 using Pos.Application.Business;
+using Pos.Application.Discounts;
+using Pos.Application.Discounts.GetDiscountReport;
 using Pos.Application.Inventory;
 using Pos.Application.Reports.GetCashCountReport;
 using Pos.Application.Reports.GetInventoryReport;
@@ -28,6 +30,7 @@ public sealed class ReportDocumentBuilder
     private readonly IBusinessProfileRepository _business;
     private readonly IUserSession _session;
     private readonly IClock _clock;
+    private readonly GetDiscountReportHandler? _discounts;
 
     public ReportDocumentBuilder(
         GetSalesReportHandler sales,
@@ -36,8 +39,10 @@ public sealed class ReportDocumentBuilder
         GetMyShiftSummaryHandler myShift,
         IBusinessProfileRepository business,
         IUserSession session,
-        IClock clock)
+        IClock clock,
+        GetDiscountReportHandler? discounts = null)
     {
+        _discounts = discounts;
         _sales = sales;
         _cashCount = cashCount;
         _inventory = inventory;
@@ -58,6 +63,7 @@ public sealed class ReportDocumentBuilder
             ReportKind.CashCount => await BuildCashCountAsync(request, cancellationToken),
             ReportKind.Inventory => await BuildInventoryAsync(request, cancellationToken),
             ReportKind.MyShift => await BuildMyShiftAsync(request, cancellationToken),
+            ReportKind.Discounts => await BuildDiscountsAsync(request, cancellationToken),
             _ => Result.Failure<BuiltReport>(new InvalidState("El reporte no se puede exportar.")),
         };
         return built;
@@ -122,6 +128,7 @@ public sealed class ReportDocumentBuilder
             new(ReportTexts.Card, new MoneyCell(totals.CardCents)),
             new(ReportTexts.Transfer, new MoneyCell(totals.TransferCents)),
             new(ReportTexts.OnAccount, new MoneyCell(totals.OnAccountCents)),
+            new(ReportTexts.TotalDiscounted, new MoneyCell(totals.DiscountCents)),
         ];
         if (report.Comparison is { } comparison)
         {
@@ -321,6 +328,80 @@ public sealed class ReportDocumentBuilder
             document,
             $"inventario_{query.AsOfDate:yyyy-MM-dd}",
             $"Reporte: Inventario; Período: {period}; {string.Join("; ", filters)}"));
+    }
+
+    private async Task<Result<BuiltReport>> BuildDiscountsAsync(ExportRequest request, CancellationToken cancellationToken)
+    {
+        if (_discounts is null)
+        {
+            return Result.Failure<BuiltReport>(new InvalidState("El reporte no se puede exportar."));
+        }
+
+        var query = (request.Discounts ?? throw new ArgumentException("Falta el reporte de descuentos.", nameof(request))) with
+        {
+            Page = 1,
+            PageSize = ReportPaging.All,
+        };
+        var result = await _discounts.HandleAsync(query, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return Result.Failure<BuiltReport>(result.Error);
+        }
+
+        var report = result.Value;
+        if (report.Count == 0)
+        {
+            return Result.Failure<BuiltReport>(NoData());
+        }
+
+        var filters = new List<string>();
+        if (query.CashierId is not null)
+        {
+            filters.Add($"{ReportTexts.Cashier}: {report.Rows[0].CashierName}");
+        }
+
+        if (query.Kind is { } kind)
+        {
+            filters.Add($"{ReportTexts.KindFilter}: {DiscountMessages.KindText(kind)}");
+        }
+
+        List<ReportMetric> metrics =
+        [
+            new(ReportTexts.TotalDiscounted, new MoneyCell(report.TotalDiscountCents)),
+            new(ReportTexts.DiscountsCount, new CountCell(report.Count)),
+        ];
+        var table = new ReportTable(
+            ReportTexts.DiscountsTableTitle,
+            [
+                new(ReportTexts.ColFolio, ReportColumnType.Text),
+                new(ReportTexts.ColDate, ReportColumnType.Date),
+                new(ReportTexts.ColCashier, ReportColumnType.Text),
+                new(ReportTexts.ColKind, ReportColumnType.Text),
+                new(ReportTexts.ColDiscountValue, ReportColumnType.Text),
+                new(ReportTexts.ColAmount, ReportColumnType.Money),
+                new(ReportTexts.ColAuthorizedBy, ReportColumnType.Text),
+                new(ReportTexts.ColCoupon, ReportColumnType.Text),
+            ],
+            [.. report.Rows.Select(r => (IReadOnlyList<ReportCell>)
+            [
+                new TextCell(r.Folio),
+                new DateCell(r.CreatedAtUtc),
+                new TextCell(r.CashierName),
+                new TextCell(DiscountMessages.KindText(r.Kind)),
+                new TextCell(Pos.Domain.Discounts.DiscountValue.Create(r.Mode, r.Value).ToString()),
+                new MoneyCell(r.AmountCents),
+                r.AuthorizedByName is { } authorizer ? new TextCell(authorizer) : EmptyCell.Instance,
+                r.CouponCode is { } coupon ? new TextCell(coupon) : EmptyCell.Instance,
+            ])]);
+
+        var period = PeriodText(query.Period.FromDate, query.Period.ToDate);
+        var document = await CompleteAsync(
+            new PartialDocument(ReportTexts.DiscountsTitle, period, filters, metrics, [table], []),
+            cancellationToken);
+        return Result.Success(new BuiltReport(
+            document,
+            $"descuentos_{query.Period.FromDate:yyyy-MM-dd}_{query.Period.ToDate:yyyy-MM-dd}",
+            $"Reporte: Descuentos; Período: {period}; {string.Join("; ", filters)}"));
     }
 
     private async Task<Result<BuiltReport>> BuildMyShiftAsync(ExportRequest request, CancellationToken cancellationToken)

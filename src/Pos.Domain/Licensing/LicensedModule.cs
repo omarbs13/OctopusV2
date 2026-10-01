@@ -8,4 +8,7 @@ public enum LicensedModule
     CreditAndCustomers,
     CashShifts,
     Returns,
+
+    /// <summary>Descuentos por línea, globales, cupones y reporte de descuentos (015).</summary>
+    Discounts,
 }

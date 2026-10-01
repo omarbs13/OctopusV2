@@ -87,6 +87,17 @@ public partial class PointOfSaleView : UserControl
                 e.Handled = true;
                 break;
 
+            // 015: F7 descuento de la línea; Shift+F7 descuento de la venta (contracts/ui.md).
+            case Key.F7 when e.KeyModifiers == KeyModifiers.Shift:
+                vm.OpenOrderDiscountCommand.Execute(null);
+                e.Handled = true;
+                break;
+
+            case Key.F7:
+                vm.OpenLineDiscountCommand.Execute(null);
+                e.Handled = true;
+                break;
+
             case Key.F12:
                 vm.CheckoutCommand.Execute(null);
                 e.Handled = true;

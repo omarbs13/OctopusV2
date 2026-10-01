@@ -14,6 +14,8 @@ public static class ModuleAccess
         Permission.ManageCustomers or Permission.SellOnCredit or Permission.RegisterCustomerPayments
             or Permission.ManageCustomerCredit or Permission.ApproveCreditOverLimit or Permission.VoidCustomerPayments
             or Permission.ViewReceivables => LicensedModule.CreditAndCustomers,
+        Permission.ApplyDiscounts or Permission.ApproveDiscounts or Permission.ManageDiscounts
+            or Permission.ViewDiscountReport => LicensedModule.Discounts,
         _ => null,
     };
 }

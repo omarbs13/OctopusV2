@@ -21,6 +21,7 @@ Atajos del Punto de venta (todos tienen también un botón de al menos 48 px, pa
 | Supr | Quitar la línea seleccionada |
 | F12 | Cobrar |
 | F8 | Cancelar la venta en curso (pide confirmación) |
+| F7 / Shift+F7 | Descuento de la línea seleccionada / descuento a la venta (0.10.0, [descuentos.md](descuentos.md)) |
 
 En el cobro: **Enter** o **F12** confirman, **Esc** regresa a la venta conservando los pagos, **F5**
 pone el monto exacto y **1 a 6** los billetes de $20, $50, $100, $200, $500 y $1,000.
@@ -97,6 +98,9 @@ turnos y bitácora. Con el módulo inactivo sigue la cancelación básica:
 - Forma de pago nueva (0.9.0): **A crédito** (código `ACCOUNT`), siempre el único pago de su venta. Su
   cancelación o devolución reduce el saldo del cliente en lugar de reintegrar
   ([clientes-y-credito.md](clientes-y-credito.md)).
+- Desde 0.10.0 `SaleLines.AmountCents` es el importe **neto** pagado (original menos descuentos), así
+  que cancelaciones y devoluciones devuelven lo pagado. La cancelación completa devuelve el uso del cupón
+  ([descuentos.md](descuentos.md)).
 
 ## Consultar la bitácora de auditoría (`AuditEntries`)
 

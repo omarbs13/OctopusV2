@@ -16,6 +16,9 @@ public static class ModuleCatalog
 
     private static readonly Guid ReturnsId = new("2b1ab797-3339-43ef-a135-022f998177ca");
 
+    /// <summary>Descuentos y promociones (015). La herramienta de licencias del proveedor debe conocerlo (docs/descuentos.md).</summary>
+    private static readonly Guid DiscountsId = new("01a0f957-082e-72cb-9c5a-9cc8fbee6772");
+
     private static readonly Dictionary<LicensedModule, Guid> ById = new Dictionary<LicensedModule, Guid>
     {
         [LicensedModule.Inventory] = InventoryId,
@@ -23,6 +26,7 @@ public static class ModuleCatalog
         [LicensedModule.CreditAndCustomers] = CreditAndCustomersId,
         [LicensedModule.CashShifts] = CashShiftsId,
         [LicensedModule.Returns] = ReturnsId,
+        [LicensedModule.Discounts] = DiscountsId,
     };
 
     public static IReadOnlyList<LicensedModule> All { get; } = Enum.GetValues<LicensedModule>();

@@ -1,4 +1,5 @@
 using Pos.Domain.Common;
+using Pos.Domain.Discounts;
 using Pos.Domain.Sales;
 
 namespace Pos.Domain.Tests.Sales;
@@ -41,6 +42,31 @@ public class SaleTests
         Assert.Throws<DomainException>(() => Sale.Register(1, Guid.NewGuid(), Guid.NewGuid(), [], [Cash("10.00")]));
         Assert.Throws<DomainException>(() =>
             Sale.Register(1, Guid.NewGuid(), Guid.NewGuid(), [Line(1, "10.00", "2")], [Cash("10.00"), Cash("10.00")]));
+    }
+
+    [Fact]
+    public void Register_with_total_zero_has_no_payments_and_keeps_the_discounts()
+    {
+        // 015, research §6: un descuento del 100 % autorizado deja la venta en $0.00, sin pagos.
+        var line = SaleLine.Create(1, Guid.NewGuid(), "Refresco", "REF-1", "H87", 0, M("10.00"), Quantity.FromThousandths(1000), null, lineDiscountCents: 1000);
+        var discount = SaleDiscount.ForLine(line.Id, DiscountValue.Percent(10_000), 1000, Guid.NewGuid(), Guid.NewGuid(), DateTime.UtcNow);
+
+        var sale = Sale.Register(1, Guid.NewGuid(), Guid.NewGuid(), [line], [], [discount]);
+
+        Assert.Equal(0, sale.TotalCents);
+        Assert.Equal(1000, sale.DiscountCents);
+        Assert.Empty(sale.Payments);
+        Assert.Throws<DomainException>(() => Sale.Register(1, Guid.NewGuid(), Guid.NewGuid(), [line], [Cash("1.00")], [discount]));
+    }
+
+    [Fact]
+    public void Register_rejects_discounts_that_do_not_match_the_lines()
+    {
+        var line = SaleLine.Create(1, Guid.NewGuid(), "Refresco", "REF-1", "H87", 0, M("10.00"), Quantity.FromThousandths(1000), null, lineDiscountCents: 100);
+        var wrong = SaleDiscount.ForLine(line.Id, DiscountValue.Amount(200), 200, Guid.NewGuid(), null, DateTime.UtcNow);
+
+        Assert.Throws<DomainException>(() => Sale.Register(1, Guid.NewGuid(), Guid.NewGuid(), [line], [Cash("9.00")]));
+        Assert.Throws<DomainException>(() => Sale.Register(1, Guid.NewGuid(), Guid.NewGuid(), [line], [Cash("9.00")], [wrong]));
     }
 
     [Fact]

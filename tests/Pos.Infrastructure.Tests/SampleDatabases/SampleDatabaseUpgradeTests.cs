@@ -80,6 +80,7 @@ public sealed class SampleDatabaseUpgradeTests
         AssertReports(connection);
         AssertReturns(connection, sampleFile);
         AssertCredit(connection, sampleFile);
+        AssertDiscounts(connection, sampleFile);
         await AssertLegacyCancelledCashAsync(db, connection, sampleFile);
 
         foreach (var index in new[] { "IX_Products_Sku", "IX_Products_Barcode", "IX_Products_NameSearch" })
@@ -148,15 +149,18 @@ public sealed class SampleDatabaseUpgradeTests
             return;
         }
 
-        // Desde 0.9.0 hay además una venta a crédito (la 4) del producto sin inventario.
+        // Desde 0.9.0 hay además una venta a crédito (la 4) del producto sin inventario; desde 0.10.0, dos
+        // ventas con descuento (la 5 y la 6) de una línea cada una.
         var creditSales = HasCredit(sampleFile) ? SampleData.CreditSaleCount : 0;
-        Assert.Equal(SampleData.SaleCount + creditSales, Scalar<long>(connection, "SELECT COUNT(*) FROM Sales"));
+        var discountSales = HasDiscounts(sampleFile) ? SampleData.DiscountSaleCount : 0;
+        var extraSales = creditSales + discountSales;
+        Assert.Equal(SampleData.SaleCount + extraSales, Scalar<long>(connection, "SELECT COUNT(*) FROM Sales"));
         Assert.Equal(
-            HasCredit(sampleFile) ? "1,2,3,4" : "1,2,3",
+            string.Join(',', Enumerable.Range(1, SampleData.SaleCount + extraSales)),
             Scalar<string>(connection, "SELECT group_concat(FolioNumber) FROM (SELECT FolioNumber FROM Sales ORDER BY FolioNumber)"));
         Assert.Equal(1, Scalar<long>(connection, $"SELECT COUNT(*) FROM Sales WHERE Status = 'CANCELLED' AND CancellationReason = '{SampleData.CancellationReason}' AND CancelledAt IS NOT NULL"));
-        Assert.Equal(4 + creditSales, Scalar<long>(connection, "SELECT COUNT(*) FROM SaleLines"));
-        Assert.Equal(3 + creditSales, Scalar<long>(connection, "SELECT COUNT(*) FROM SalePayments"));
+        Assert.Equal(4 + extraSales, Scalar<long>(connection, "SELECT COUNT(*) FROM SaleLines"));
+        Assert.Equal(3 + extraSales, Scalar<long>(connection, "SELECT COUNT(*) FROM SalePayments"));
         Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM SaleDrafts"));
         Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM AuditEntries WHERE Action = 'SALE_CANCELLED' AND EntityType = 'Sale'"));
         Assert.Equal(
@@ -197,7 +201,9 @@ public sealed class SampleDatabaseUpgradeTests
             // Las ventas conservan a su cajero: el administrador hizo la 1 y el cajero la 2 y la 3 (con su
             // borrador); desde 0.9.0 el cajero también hizo la venta a crédito.
             Assert.Equal(1, Scalar<long>(connection, $"SELECT COUNT(*) FROM Sales s JOIN Users u ON u.Id = s.CreatedBy WHERE u.UserName = '{SampleData.AdminUserName}'"));
-            Assert.Equal(HasCredit(sampleFile) ? 3 : 2, Scalar<long>(connection, $"SELECT COUNT(*) FROM Sales s JOIN Users u ON u.Id = s.CreatedBy WHERE u.UserName = '{SampleData.CashierUserName}'"));
+            Assert.Equal(
+                2 + (HasCredit(sampleFile) ? SampleData.CreditSaleCount : 0) + (HasDiscounts(sampleFile) ? SampleData.DiscountSaleCount : 0),
+                Scalar<long>(connection, $"SELECT COUNT(*) FROM Sales s JOIN Users u ON u.Id = s.CreatedBy WHERE u.UserName = '{SampleData.CashierUserName}'"));
             Assert.Equal(1, Scalar<long>(connection, $"SELECT COUNT(*) FROM SaleDrafts d JOIN Users u ON u.Id = d.UserId WHERE u.UserName = '{SampleData.CashierUserName}'"));
             return;
         }
@@ -224,7 +230,7 @@ public sealed class SampleDatabaseUpgradeTests
             Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM CashShifts WHERE Status = 'CLOSED' AND CountedCashCents IS NOT NULL"));
             Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM CashShifts WHERE Status = 'OPEN' AND ExpectedCashCents IS NULL"));
             Assert.Equal(
-                SampleData.SaleCount + (HasCredit(sampleFile) ? SampleData.CreditSaleCount : 0),
+                SampleData.SaleCount + (HasCredit(sampleFile) ? SampleData.CreditSaleCount : 0) + (HasDiscounts(sampleFile) ? SampleData.DiscountSaleCount : 0),
                 Scalar<long>(connection, "SELECT COUNT(*) FROM Sales WHERE CashShiftId IS NOT NULL"));
             return;
         }
@@ -381,7 +387,60 @@ public sealed class SampleDatabaseUpgradeTests
         Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM AuditEntries WHERE Action = 'CUSTOMER_PAYMENT_REGISTERED'"));
     }
 
+    /// <summary>
+    /// 015: las tablas de descuentos existen; en las bases anteriores a 0.10.0 cada línea queda con su importe
+    /// original igual al registrado y sin descuentos. La de 0.10.0 conserva su cupón, sus dos ventas con
+    /// descuento (una autorizada por el administrador) y cuadra: Σ líneas = total y descontado = Σ descuentos.
+    /// </summary>
+    private static void AssertDiscounts(SqliteConnection connection, string sampleFile)
+    {
+        Assert.Equal(
+            0,
+            Scalar<long>(connection, """
+                SELECT COUNT(*) FROM SaleLines
+                WHERE AmountCents <> OriginalAmountCents - LineDiscountCents - OrderDiscountCents
+                """));
+        Assert.Equal(
+            0,
+            Scalar<long>(connection, """
+                SELECT COUNT(*) FROM Sales s
+                WHERE s.DiscountCents <> IFNULL((SELECT SUM(d.AmountCents) FROM SaleDiscounts d WHERE d.SaleId = s.Id), 0)
+                   OR s.DiscountCents <> (SELECT SUM(l.OriginalAmountCents - l.AmountCents) FROM SaleLines l WHERE l.SaleId = s.Id)
+                """));
+
+        if (!HasDiscounts(sampleFile))
+        {
+            foreach (var table in new[] { "Coupons", "SaleDiscounts", "DiscountApprovals" })
+            {
+                Assert.Equal(0, Scalar<long>(connection, $"SELECT COUNT(*) FROM {table}"));
+            }
+
+            Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM SaleLines WHERE OriginalAmountCents <> AmountCents"));
+            Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM Sales WHERE DiscountCents <> 0"));
+            return;
+        }
+
+        Assert.Equal(1, Scalar<long>(connection, $"SELECT COUNT(*) FROM Coupons WHERE Code = '{SampleData.CouponCode}' AND UsesCount = 1 AND UsageLimit = 5 AND IsActive = 1"));
+        Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM DiscountApprovals"));
+        Assert.Equal(
+            SampleData.LineDiscountCents + SampleData.CouponDiscountCents,
+            Scalar<long>(connection, "SELECT SUM(DiscountCents) FROM Sales"));
+        Assert.Equal(
+            1,
+            Scalar<long>(connection, $"""
+                SELECT COUNT(*) FROM SaleDiscounts d JOIN Users u ON u.Id = d.AuthorizedBy
+                WHERE d.Kind = 'LINE' AND d.AmountCents = {SampleData.LineDiscountCents} AND u.UserName = '{SampleData.AdminUserName}'
+                """));
+        Assert.Equal(
+            1,
+            Scalar<long>(connection, $"SELECT COUNT(*) FROM SaleDiscounts WHERE Kind = 'COUPON' AND CouponCode = '{SampleData.CouponCode}' AND AuthorizedBy IS NULL"));
+        Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM AuditEntries WHERE Action = 'DISCOUNT_APPLIED_AUTHORIZED'"));
+        Assert.Contains("\"discount\"", Scalar<string>(connection, "SELECT LinesJson FROM SaleDrafts"), StringComparison.Ordinal);
+    }
+
     private static bool HasSales(string sampleFile) => VersionOf(sampleFile) >= new Version(0, 4, 0);
+
+    private static bool HasDiscounts(string sampleFile) => VersionOf(sampleFile) >= new Version(0, 10, 0);
 
     private static bool HasCredit(string sampleFile) => VersionOf(sampleFile) >= new Version(0, 9, 0);
 

@@ -203,3 +203,24 @@ La migración `CustomersAndCredit` **no reconstruye ninguna tabla**:
 turnos cerrados antes de 0.9.0 queden con el bloque en nulo. `SampleDatabaseUpgradeTests` migra de
 `v0.1.0.db` a `v0.9.0.db`, verifica que las tablas nuevas existan (vacías, salvo en `v0.9.0.db`) y que en
 toda cuenta el saldo sea igual al original más su libro. Ver [clientes-y-credito.md](clientes-y-credito.md).
+
+## 0.10.0: descuentos y cupones (`DiscountsAndCoupons`)
+
+La base de ejemplo `v0.10.0.db` trae, además de lo anterior, el cupón `MUESTRA10` (10 %, 5 usos, 1
+usado), dos ventas del cajero con descuento (la 5, con un descuento de línea de $15.00 autorizado por el
+administrador, y la 6, con el cupón) y una venta conservada con un descuento de línea del 5 %. La
+migración `DiscountsAndCoupons` **no reconstruye ninguna tabla**:
+
+- Crea `Coupons` (índice único `IX_Coupons_Code`), `DiscountApprovals` y `SaleDiscounts`. Las llaves
+  foráneas (`Restrict`) van solo de `SaleDiscounts` hacia `Sales` y `Coupons`.
+- Agrega cuatro columnas `NOT NULL DEFAULT 0` con `ALTER TABLE ... ADD`: `Sales.DiscountCents`,
+  `SaleLines.OriginalAmountCents`, `SaleLines.LineDiscountCents` y `SaleLines.OrderDiscountCents`.
+- **Rellena un dato**: `UPDATE "SaleLines" SET "OriginalAmountCents" = "AmountCents"`, agregado a mano
+  con `migrationBuilder.Sql` después de las columnas (es la única excepción a "no se editan a mano": EF
+  no genera actualizaciones de datos). En las ventas anteriores el importe original es el registrado.
+
+`DiscountsMigrationTests` revisa el SQL (sin `DROP TABLE` ni `ef_temp_`, exactamente cuatro `ALTER
+TABLE` y el `UPDATE`) y que al migrar `v0.9.0.db` toda línea quede con `OriginalAmountCents =
+AmountCents` y sin descuentos. `SampleDatabaseUpgradeTests` migra de `v0.1.0.db` a `v0.10.0.db`, verifica
+que las tablas nuevas existan (vacías, salvo en `v0.10.0.db`) y que en toda venta las líneas sumen el
+total y el descontado sea la suma de sus descuentos. Ver [descuentos.md](descuentos.md).

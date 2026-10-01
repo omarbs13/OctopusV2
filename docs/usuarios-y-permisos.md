@@ -37,10 +37,18 @@ Los permisos se asignan a los roles en un solo lugar: `src/Pos.Domain/Users/Role
 | Vender a crédito sobre el límite (`ApproveCreditOverLimit`) | ✔ | con autorización |
 | Anular abonos (`VoidCustomerPayments`) | con su contraseña | con autorización |
 | Reportes > Créditos (`ViewReceivables`) | ✔ | |
+| Aplicar descuentos y cupones en la venta (`ApplyDiscounts`) | ✔ | ✔ |
+| Descuentos sobre el límite (`ApproveDiscounts`) | ✔ (sin contraseña) | con autorización |
+| Cupones y límite de descuento (`ManageDiscounts`) | ✔ | |
+| Descuentos > Reporte (`ViewDiscountReport`) | ✔ | |
 
 Los 7 permisos de clientes y crédito (0.9.0) pertenecen al módulo **Crédito y clientes** de la licencia:
 sin él no aparecen en el menú y los casos de uso devuelven "módulo no activo". La anulación de abonos
 exige la autorización siempre, también al Administrador. Ver [clientes-y-credito.md](clientes-y-credito.md).
+
+Los 4 permisos de descuentos (0.10.0) pertenecen al módulo **Descuentos y promociones**. Un descuento que
+supera el límite queda con aprobación guardada y autorizador registrado, también cuando lo aplica el
+Administrador. Ver [descuentos.md](descuentos.md).
 
 Los permisos se verifican en los casos de uso, releyendo al usuario de la base en cada operación
 restringida: un usuario desactivado o con otro rol pierde el acceso aunque su sesión siga abierta. El

@@ -20,6 +20,12 @@ public interface IProductRepository
     /// <summary>Indica si otro producto no borrado usa el código de barras.</summary>
     Task<bool> BarcodeExistsAsync(string barcode, Guid? excludingId, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Indica si un producto no borrado tiene como código de barras o SKU el texto dado, comparado sin
+    /// distinguir mayúsculas ni espacios de los extremos (015: el código de un cupón no puede coincidir).
+    /// </summary>
+    Task<bool> ExistsWithCodeAsync(string code, CancellationToken cancellationToken);
+
     /// <summary>Página de productos visibles según los criterios, ordenada por nombre y SKU.</summary>
     Task<ProductPage> SearchAsync(ProductSearch search, CancellationToken cancellationToken);
 

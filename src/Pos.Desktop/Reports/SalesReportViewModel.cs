@@ -78,6 +78,10 @@ public sealed partial class SalesReportViewModel : ReportPageViewModel
     [ObservableProperty]
     public partial string OnAccountText { get; private set; } = string.Empty;
 
+    /// <summary>"Total descontado" del período (015, FR-018).</summary>
+    [ObservableProperty]
+    public partial string DiscountedText { get; private set; } = string.Empty;
+
     [ObservableProperty]
     public partial bool HasComparison { get; private set; }
 
@@ -200,6 +204,7 @@ public sealed partial class SalesReportViewModel : ReportPageViewModel
         CardText = MoneyConverter.Format(totals.CardCents);
         TransferText = MoneyConverter.Format(totals.TransferCents);
         OnAccountText = MoneyConverter.Format(totals.OnAccountCents);
+        DiscountedText = MoneyConverter.Format(totals.DiscountCents);
 
         HasComparison = report.Comparison is not null;
         if (report.Comparison is { } comparison)

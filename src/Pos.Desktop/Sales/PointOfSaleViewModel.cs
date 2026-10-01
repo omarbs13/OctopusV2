@@ -7,6 +7,10 @@ using Pos.Application.CreditNotes;
 using Pos.Application.CreditNotes.GetCreditNoteBalance;
 using Pos.Application.Customers;
 using Pos.Application.Customers.GetCustomerCreditStatus;
+using Pos.Application.Discounts;
+using Pos.Application.Discounts.ApproveDiscount;
+using Pos.Application.Discounts.ResolveCoupon;
+using Pos.Application.Discounts.Settings.GetDiscountSettings;
 using Pos.Application.Licensing;
 using Pos.Application.CashShifts;
 using Pos.Application.CashShifts.GetCurrentShift;
@@ -27,6 +31,7 @@ using Pos.Desktop.Settings;
 using Pos.Domain.CashShifts;
 using Pos.Domain.Licensing;
 using Pos.Domain.Common;
+using Pos.Domain.Discounts;
 using Pos.Domain.Products;
 using Pos.Domain.Sales;
 using Pos.Domain.Users;
@@ -55,7 +60,18 @@ public sealed record CartLineRow(CartLine Line)
 
     public string PriceText => MoneyConverter.Format(Line.UnitPrice.Cents);
 
-    public string AmountText => MoneyConverter.Format(Line.Amount.Cents);
+    /// <summary>Importe final de la línea: después de su descuento (015).</summary>
+    public string AmountText => MoneyConverter.Format(Line.NetBeforeOrder.Cents);
+
+    /// <summary>Importe original, tachado cuando la línea tiene descuento (FR-008).</summary>
+    public string OriginalAmountText => MoneyConverter.Format(Line.Amount.Cents);
+
+    public bool HasDiscount => Line.HasDiscount;
+
+    /// <summary>"-10%" o "-$15.00".</summary>
+    public string DiscountLabel => Line.Discount is { } discount
+        ? "-" + (discount.Value.IsPercent ? discount.Value.ToString() : MoneyConverter.Format(discount.Value.Raw))
+        : string.Empty;
 
     public bool IsUnavailable => Line.IsUnavailable;
 
@@ -188,6 +204,38 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
     [ObservableProperty]
     public partial CustomerPickerViewModel? CustomerPicker { get; private set; }
 
+    /// <summary>Diálogo de descuento de línea o de venta, mientras esté abierto (015).</summary>
+    [ObservableProperty]
+    public partial DiscountDialogViewModel? DiscountDialog { get; private set; }
+
+    /// <summary>Captura de "Aplicar cupón", mientras esté abierta (015).</summary>
+    [ObservableProperty]
+    public partial CouponEntryViewModel? CouponEntry { get; private set; }
+
+    [ObservableProperty]
+    public partial string SubtotalText { get; private set; } = string.Empty;
+
+    /// <summary>"Descuento (10%)" o "Cupón VERANO10".</summary>
+    [ObservableProperty]
+    public partial string OrderDiscountLabel { get; private set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string OrderDiscountText { get; private set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial bool HasOrderDiscount { get; private set; }
+
+    /// <summary>Con algún descuento el pie muestra Subtotal, el descuento de venta y Total (FR-008).</summary>
+    [ObservableProperty]
+    public partial bool HasDiscounts { get; private set; }
+
+    /// <summary>Descuentos y cupones con <c>ApplyDiscounts</c> y el módulo Descuentos y promociones activo (FR-022).</summary>
+    public bool CanUseDiscounts =>
+        (_permissions?.Has(Permission.ApplyDiscounts) ?? false) && _license?.IsModuleActive(LicensedModule.Discounts) != false;
+
+    /// <summary>El Administrador aprueba sus propios descuentos sin capturar contraseña (FR-005).</summary>
+    private bool CanApproveDiscounts => _permissions?.Has(Permission.ApproveDiscounts) ?? false;
+
     /// <summary>
     /// Cliente elegido para vender a crédito. No se guarda en el borrador (<c>SaleDrafts</c> no cambia):
     /// si la venta se recupera tras un cierre inesperado, el cliente se vuelve a elegir (contracts/ui.md).
@@ -214,7 +262,8 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
     public partial string? QuantityEditError { get; private set; }
 
     /// <summary>Hay una ventana modal sobre la venta (selector o cobro): los atajos de captura no aplican.</summary>
-    public bool IsModalOpen => Chooser is not null || Checkout is not null || DrawerReason is not null || CustomerPicker is not null;
+    public bool IsModalOpen => Chooser is not null || Checkout is not null || DrawerReason is not null || CustomerPicker is not null
+        || DiscountDialog is not null || CouponEntry is not null;
 
     public bool HasLastSale => LastSaleText is not null;
 
@@ -247,6 +296,7 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
 
     public override async Task OnActivatedAsync()
     {
+        OnPropertyChanged(nameof(CanUseDiscounts));
         await RefreshShiftAsync();
         FocusCaptureRequested?.Invoke(this, EventArgs.Empty);
     }
@@ -390,6 +440,10 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
     partial void OnDrawerReasonChanged(DrawerReasonViewModel? value) => OnModalChanged();
 
     partial void OnCustomerPickerChanged(CustomerPickerViewModel? value) => OnModalChanged();
+
+    partial void OnDiscountDialogChanged(DiscountDialogViewModel? value) => OnModalChanged();
+
+    partial void OnCouponEntryChanged(CouponEntryViewModel? value) => OnModalChanged();
 
     /// <summary>"Cliente…": abre el buscador de clientes con crédito.</summary>
     [RelayCommand]
@@ -549,6 +603,7 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
         IsEditingQuantity = false;
         QuantityEditError = null;
         RefreshCart(row.ProductId);
+        NotifyOrderDiscountRemoved();
         SaveDraft();
         FocusCaptureRequested?.Invoke(this, EventArgs.Empty);
     }
@@ -573,6 +628,7 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
         var index = Lines.IndexOf(row);
         Cart.Remove(row.ProductId);
         RefreshCart(Cart.Lines.Count == 0 ? null : Cart.Lines[Math.Min(index, Cart.Lines.Count - 1)].ProductId);
+        NotifyOrderDiscountRemoved();
         SaveDraft();
     }
 
@@ -634,6 +690,7 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
             Money.FromCents(l.CurrentPriceCents),
             ToUnavailable(l.NotSellableReason))));
         RefreshCart();
+        NotifyOrderDiscountRemoved();
         SaveDraft();
 
         if (!Cart.CanCheckout)
@@ -730,10 +787,20 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
 
         var command = new ConfirmSaleCommand(
             Cart.DraftId,
-            [.. Cart.Lines.Select(l => new ConfirmLineInput(l.ProductId, l.Quantity.Thousandths, l.UnitPrice.Cents))],
+            [.. Cart.Lines.Select(l => new ConfirmLineInput(
+                l.ProductId,
+                l.Quantity.Thousandths,
+                l.UnitPrice.Cents,
+                l.Discount is { } d ? new LineDiscountInput(d.Value.Mode, d.Value.Raw, d.ApprovalId) : null))],
             [.. checkout.ToPayments().Select(p => new PaymentInput(p.Method, p.Amount.Cents, p.Received?.Cents, p.Reference))],
             checkout.CustomerId,
-            checkout.OverLimitGrantId);
+            checkout.OverLimitGrantId,
+            Cart.OrderDiscount switch
+            {
+                OrderDiscount.Manual m => OrderDiscountInput.Manual(m.Value.Mode, m.Value.Raw, m.ApprovalId),
+                OrderDiscount.CouponApplied c => OrderDiscountInput.Coupon(c.Code),
+                _ => null,
+            });
         checkout.OverLimitGrantId = null;
         var hadCash = command.Payments.Any(p => p.Method == PaymentMethod.Cash);
 
@@ -810,9 +877,385 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
                 checkout.ErrorMessage = Strings.Credit_NotEligible;
                 break;
 
+            case DiscountApprovalRequired required:
+                // 015: el límite bajó o el descuento cambió; se señala, se pide autorización y se reintenta una vez.
+                await ReauthorizeAndRetryAsync(checkout, required, allowAuthorization);
+                break;
+
+            case CouponNotValid invalid:
+                // 015, FR-012: se retira el cupón, se recalcula y no se cobra hasta que el cajero confirme de nuevo.
+                RemoveOrderDiscountBeforeRetry(invalid.Status is { } status
+                    ? DiscountMessages.CouponRejected(invalid.Code, status, invalid.StartsOn, invalid.EndsOn) ?? Strings.Sale_NotRegistered
+                    : DiscountMessages.CouponNotFound(invalid.Code));
+                break;
+
+            case OrderDiscountRemoved removed:
+                RemoveOrderDiscountBeforeRetry(DiscountMessages.OrderDiscountRemoved(MoneyConverter.Format(removed.DiscountCents)));
+                break;
+
             default:
                 checkout.ErrorMessage = Strings.Sale_NotRegistered;
                 break;
+        }
+    }
+
+    /// <summary>F7: descuento de la línea seleccionada en % o $ (015, Historia 1).</summary>
+    [RelayCommand]
+    private void OpenLineDiscount()
+    {
+        if (!CanUseDiscounts || IsModalOpen || IsSaleBlocked)
+        {
+            return;
+        }
+
+        if (SelectedLine is not { } row)
+        {
+            ShowStatus(Strings.Discount_SelectLine, warning: true);
+            return;
+        }
+
+        var line = row.Line;
+        DiscountDialog = new DiscountDialogViewModel(
+            Strings.Discount_LineTitle,
+            line.Amount.Cents,
+            line.Discount?.Value,
+            value => ApplyLineDiscountAsync(line.ProductId, value),
+            line.Discount is null ? null : () => RemoveLineDiscount(line.ProductId),
+            CloseDiscountDialog);
+    }
+
+    /// <summary>Shift+F7: descuento de la venta sobre el subtotal (015, Historia 2).</summary>
+    [RelayCommand]
+    private void OpenOrderDiscount()
+    {
+        if (!CanUseDiscounts || IsModalOpen || IsSaleBlocked || Cart.Lines.Count == 0)
+        {
+            return;
+        }
+
+        DiscountDialog = new DiscountDialogViewModel(
+            Strings.Discount_OrderTitle,
+            Cart.Subtotal.Cents,
+            (Cart.OrderDiscount as OrderDiscount.Manual)?.Value,
+            ApplyOrderDiscountAsync,
+            Cart.OrderDiscount is null ? null : () =>
+            {
+                CloseDiscountDialog();
+                RemoveOrderDiscount();
+            },
+            CloseDiscountDialog);
+    }
+
+    /// <summary>"Aplicar cupón": captura el código y sigue el mismo flujo que el campo de productos (FR-011).</summary>
+    [RelayCommand]
+    private void OpenCouponEntry()
+    {
+        if (!CanUseDiscounts || IsModalOpen || IsSaleBlocked || Cart.Lines.Count == 0)
+        {
+            return;
+        }
+
+        CouponEntry = new CouponEntryViewModel(
+            async code =>
+            {
+                var error = await ResolveAndApplyCouponAsync(code);
+                if (error is null)
+                {
+                    CouponEntry = null;
+                }
+
+                return error;
+            },
+            () => CouponEntry = null);
+    }
+
+    /// <summary>Botón del pie: quita el descuento de la venta o el cupón sin pedir autorización (FR-007).</summary>
+    [RelayCommand]
+    private void RemoveOrderDiscount()
+    {
+        if (Cart.OrderDiscount is null)
+        {
+            return;
+        }
+
+        Cart.SetOrderDiscount(null);
+        RefreshCart();
+        SaveDraft();
+    }
+
+    private void CloseDiscountDialog() => DiscountDialog = null;
+
+    private void RemoveLineDiscount(Guid productId)
+    {
+        CloseDiscountDialog();
+        Cart.SetLineDiscount(productId, null);
+        RefreshCart(productId);
+        SaveDraft();
+    }
+
+    /// <summary>Aplica el descuento a la línea, con autorización si supera el límite; devuelve el error o nulo.</summary>
+    private async Task<string?> ApplyLineDiscountAsync(Guid productId, DiscountValue value)
+    {
+        if (Cart.Lines.FirstOrDefault(l => l.ProductId == productId) is not { } line)
+        {
+            return Strings.Discount_SelectLine;
+        }
+
+        var approval = await AuthorizeIfNeededAsync(DiscountScope.Line, productId, value, line.Amount.Cents, line.Name);
+        if (!approval.Proceed)
+        {
+            return approval.Error;
+        }
+
+        try
+        {
+            Cart.SetLineDiscount(productId, new LineDiscount(value, approval.ApprovalId));
+        }
+        catch (DomainException ex)
+        {
+            return ex.Message;
+        }
+
+        CloseDiscountDialog();
+        RefreshCart(productId);
+        NotifyOrderDiscountRemoved();
+        SaveDraft();
+        return null;
+    }
+
+    /// <summary>Aplica el descuento de venta; si ya hay un cupón pregunta si se reemplaza (FR-013).</summary>
+    private async Task<string?> ApplyOrderDiscountAsync(DiscountValue value)
+    {
+        if (Cart.OrderDiscount is OrderDiscount.CouponApplied coupon
+            && !await _dialogs.ConfirmAsync(
+                Strings.Discount_ReplaceTitle,
+                string.Format(Display, Strings.Discount_ReplaceCoupon, coupon.Code),
+                Strings.Discount_Replace))
+        {
+            CloseDiscountDialog();
+            return null;
+        }
+
+        var approval = await AuthorizeIfNeededAsync(DiscountScope.Order, null, value, Cart.Subtotal.Cents, null);
+        if (!approval.Proceed)
+        {
+            return approval.Error;
+        }
+
+        try
+        {
+            Cart.SetOrderDiscount(new OrderDiscount.Manual(value, approval.ApprovalId));
+        }
+        catch (DomainException ex)
+        {
+            return ex.Message;
+        }
+
+        CloseDiscountDialog();
+        RefreshCart();
+        SaveDraft();
+        return null;
+    }
+
+    /// <summary>Busca el código con <c>ResolveCoupon</c> y lo aplica; devuelve la causa si no se aplicó.</summary>
+    private async Task<string?> ResolveAndApplyCouponAsync(string code)
+    {
+        var query = new ResolveCouponQuery(code);
+        var (completed, result) = await _runner.RunAsync(
+            "BuscarCupon",
+            () => _useCases.RunAsync<ResolveCouponHandler, Result<CouponLookupDto?>>(h => h.HandleAsync(query, CancellationToken.None)));
+        if (!completed || result is null)
+        {
+            return Strings.Common_UnexpectedError;
+        }
+
+        return result.Error switch
+        {
+            null when result.Value is { } coupon => await ApplyCouponAsync(coupon),
+            null => DiscountMessages.CouponNotFound(Coupon.NormalizeCode(code)),
+            ValidationFailed validation => validation.Errors is [{ } first, ..] ? first.Message : Strings.Common_UnexpectedError,
+            ModuleNotLicensed => Strings.License_ModuleNotLicensed,
+            Forbidden => Strings.Common_Forbidden,
+            _ => Strings.Common_UnexpectedError,
+        };
+    }
+
+    /// <summary>
+    /// Aplica un cupón encontrado: sin autorización ni límite (FR-013). Rechaza uno no vigente o un segundo
+    /// cupón con la causa; con un descuento manual pregunta si se reemplaza. Vacío = el cajero no confirmó.
+    /// </summary>
+    private async Task<string?> ApplyCouponAsync(CouponLookupDto coupon)
+    {
+        if (coupon.Status != CouponStatus.Active)
+        {
+            return DiscountMessages.CouponRejected(coupon);
+        }
+
+        switch (Cart.OrderDiscount)
+        {
+            case OrderDiscount.CouponApplied existing:
+                return DiscountMessages.CouponAlreadyApplied(existing.Code);
+            case OrderDiscount.Manual when !await _dialogs.ConfirmAsync(
+                Strings.Discount_ReplaceTitle,
+                string.Format(Display, Strings.Discount_ReplaceManual, coupon.Code),
+                Strings.Discount_Replace):
+                return string.Empty;
+        }
+
+        try
+        {
+            Cart.SetOrderDiscount(new OrderDiscount.CouponApplied(coupon.CouponId, coupon.Code, coupon.Discount));
+        }
+        catch (DomainException ex)
+        {
+            return ex.Message;
+        }
+
+        RefreshCart();
+        SaveDraft();
+        ShowStatus(string.Format(Display, Strings.Discount_CouponApplied, coupon.Code), warning: false);
+        return null;
+    }
+
+    /// <summary>
+    /// Si el descuento supera el límite vigente pide la autorización (FR-005): el Administrador aprueba sin
+    /// contraseña; un Cajero pasa por el diálogo de 007, cuyo intento queda en la bitácora con el descuento
+    /// (FR-019). Guarda la aprobación con <c>ApproveDiscount</c> y devuelve su id.
+    /// </summary>
+    private async Task<(bool Proceed, Guid? ApprovalId, string? Error)> AuthorizeIfNeededAsync(
+        DiscountScope scope,
+        Guid? productId,
+        DiscountValue value,
+        long baseCents,
+        string? productName)
+    {
+        long amount;
+        try
+        {
+            amount = DiscountMath.Amount(baseCents, value);
+        }
+        catch (DomainException ex)
+        {
+            return (false, null, ex.Message);
+        }
+
+        var (loaded, settings) = await _runner.RunAsync(
+            "LeerLimiteDeDescuento",
+            () => _useCases.RunAsync<GetDiscountSettingsHandler, Result<DiscountSettings>>(h => h.HandleAsync(CancellationToken.None)));
+        if (!loaded || settings is not { IsSuccess: true })
+        {
+            return (false, null, settings?.Error is ModuleNotLicensed ? Strings.License_ModuleNotLicensed : Strings.Discount_SettingsUnavailable);
+        }
+
+        if (!DiscountMath.ExceedsLimit(amount, baseCents, settings.Value.LimitBasisPoints))
+        {
+            return (true, null, null);
+        }
+
+        Guid? grant = null;
+        if (!CanApproveDiscounts)
+        {
+            var description = DiscountTexts.Describe(scope, value, amount, baseCents)
+                + (productName is null ? string.Empty : $". Producto {productName}")
+                + $". Venta en curso {Cart.DraftId}";
+            grant = _authorization is null ? null : await _authorization.RequestAsync(Permission.ApproveDiscounts, description);
+            if (grant is null)
+            {
+                return (false, null, Strings.Discount_NotAuthorized);
+            }
+        }
+
+        var command = new ApproveDiscountCommand(Cart.DraftId, scope, productId, value.Mode, value.Raw, baseCents, grant);
+        var (completed, result) = await _runner.RunAsync(
+            "AprobarDescuento",
+            () => _useCases.RunAsync<ApproveDiscountHandler, Result<DiscountApprovalDto>>(h => h.HandleAsync(command, CancellationToken.None)),
+            new Dictionary<string, object?> { ["DraftId"] = Cart.DraftId, ["Scope"] = scope.ToString() });
+        if (!completed || result is null)
+        {
+            return (false, null, Strings.Common_UnexpectedError);
+        }
+
+        return result.Error switch
+        {
+            null => (true, result.Value.ApprovalId, null),
+            ApprovalNotNeeded => (true, null, null),
+            Forbidden => (false, null, Strings.Discount_NotAuthorized),
+            ModuleNotLicensed => (false, null, Strings.License_ModuleNotLicensed),
+            ValidationFailed validation => (false, null, validation.Errors is [{ } first, ..] ? first.Message : Strings.Common_UnexpectedError),
+            _ => (false, null, Strings.Common_UnexpectedError),
+        };
+    }
+
+    /// <summary>
+    /// <c>DiscountApprovalRequired</c> al cobrar: señala la línea o la venta, pide la autorización con el
+    /// límite vigente y reintenta el cobro una sola vez (contracts/ui.md).
+    /// </summary>
+    private async Task ReauthorizeAndRetryAsync(CheckoutViewModel checkout, DiscountApprovalRequired required, bool allowAuthorization)
+    {
+        var line = required.ProductId is { } productId ? Cart.Lines.FirstOrDefault(l => l.ProductId == productId) : null;
+        checkout.ErrorMessage = line is not null
+            ? string.Format(Display, Strings.Discount_ApprovalRequiredLine, line.Name)
+            : Strings.Discount_ApprovalRequiredOrder;
+        if (line is not null)
+        {
+            SelectedLine = Lines.FirstOrDefault(l => l.ProductId == line.ProductId);
+        }
+
+        if (!allowAuthorization)
+        {
+            return;
+        }
+
+        (bool Proceed, Guid? ApprovalId, string? Error) approval;
+        if (line is { Discount: { } discount })
+        {
+            approval = await AuthorizeIfNeededAsync(DiscountScope.Line, line.ProductId, discount.Value, line.Amount.Cents, line.Name);
+            if (approval.Proceed)
+            {
+                Cart.SetLineDiscount(line.ProductId, discount with { ApprovalId = approval.ApprovalId });
+            }
+        }
+        else if (Cart.OrderDiscount is OrderDiscount.Manual manual)
+        {
+            approval = await AuthorizeIfNeededAsync(DiscountScope.Order, null, manual.Value, Cart.Subtotal.Cents, null);
+            if (approval.Proceed)
+            {
+                Cart.SetOrderDiscount(manual with { ApprovalId = approval.ApprovalId });
+            }
+        }
+        else
+        {
+            return;
+        }
+
+        if (!approval.Proceed)
+        {
+            checkout.ErrorMessage = approval.Error;
+            return;
+        }
+
+        RefreshCart(line?.ProductId);
+        SaveDraft();
+        await ConfirmSaleAsync(checkout, allowAuthorization: false);
+    }
+
+    /// <summary>Retira el descuento de venta o el cupón, recalcula y cierra el cobro con el aviso (FR-012).</summary>
+    private void RemoveOrderDiscountBeforeRetry(string message)
+    {
+        Cart.SetOrderDiscount(null);
+        CloseCheckout();
+        _pendingCheckout = null;
+        RefreshCart();
+        SaveDraft();
+        ShowStatus(message, warning: true);
+    }
+
+    /// <summary>Aviso cuando el último cambio retiró el descuento global de monto fijo (Historia 2, escenario 5).</summary>
+    private void NotifyOrderDiscountRemoved()
+    {
+        if (Cart.LastRemovedOrderDiscount is { } removed)
+        {
+            ShowStatus(DiscountMessages.OrderDiscountRemoved(MoneyConverter.Format(removed.Value.Raw)), warning: true);
         }
     }
 
@@ -830,6 +1273,7 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
             Money.FromCents(l.CurrentPriceCents),
             ToUnavailable(l.NotSellableReason))));
         RefreshCart();
+        NotifyOrderDiscountRemoved();
         SaveDraft();
     }
 
@@ -898,6 +1342,16 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
                     () => Chooser = null);
                 break;
 
+            case LookupKind.Coupon when lookup.Coupon is { } coupon:
+                // 015, FR-011: un código de cupón en el campo de productos aplica el cupón.
+                var error = await ApplyCouponAsync(coupon);
+                if (!string.IsNullOrEmpty(error))
+                {
+                    ShowStatus(error, warning: true);
+                }
+
+                break;
+
             default:
                 ShowStatus(string.Format(Display, Strings.Sale_ProductNotFound, text), warning: true);
                 break;
@@ -960,7 +1414,11 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
                 l.TracksInventory,
                 Money.FromCents(l.CurrentPriceCents),
                 Quantity.FromThousandths(l.QuantityThousandths),
-                ToUnavailable(l.NotSellableReason))));
+                ToUnavailable(l.NotSellableReason),
+                l.Discount is { } d ? new LineDiscount(DiscountValue.Create(d.Mode, d.Value), d.ApprovalId) : null)),
+                draft.OrderDiscount is { IsCoupon: false, Mode: { } mode, Value: { } value } manual
+                    ? new OrderDiscount.Manual(DiscountValue.Create(mode, value), manual.ApprovalId)
+                    : null);
         }
         catch (DomainException ex)
         {
@@ -982,7 +1440,21 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
         if (recover)
         {
             Cart = restored;
+            if (draft.OrderDiscount is { IsCoupon: true, Code: { } code })
+            {
+                // El cupón de la venta conservada se revalida al retomarla (FR-012).
+                var error = await ResolveAndApplyCouponAsync(code);
+                if (!string.IsNullOrEmpty(error))
+                {
+                    ShowStatus(error, warning: true);
+                }
+            }
+
             RefreshCart();
+            if (draft.DiscountsDropped)
+            {
+                ShowStatus(DiscountMessages.DiscountsDropped, warning: true);
+            }
         }
         else
         {
@@ -995,15 +1467,25 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
             "DescartarBorradorDeVenta",
             () => _useCases.RunAsync<DiscardSaleDraftHandler, Result>(h => h.HandleAsync(CancellationToken.None)));
 
-    private Task<Result> SaveDraftAsync(Guid draftId, IReadOnlyList<DraftLineDto> lines) =>
+    private Task<Result> SaveDraftAsync(Guid draftId, IReadOnlyList<DraftLineDto> lines, DraftOrderDiscountDto? order) =>
         _useCases.RunAsync<SaveSaleDraftHandler, Result>(
-            h => h.HandleAsync(new SaveSaleDraftCommand(draftId, lines), CancellationToken.None));
+            h => h.HandleAsync(new SaveSaleDraftCommand(draftId, lines, order), CancellationToken.None));
 
-    /// <summary>Guarda el borrador tras cada cambio relevante, sin retraso (FR-010, SC-004).</summary>
+    /// <summary>Guarda el borrador tras cada cambio relevante, sin retraso (FR-010, SC-004), con sus descuentos y aprobaciones (015).</summary>
     private void SaveDraft() =>
         _autosaver.Save(
             Cart.DraftId,
-            [.. Cart.Lines.Select(l => new DraftLineDto(l.ProductId, l.Quantity.Thousandths, l.UnitPrice.Cents))]);
+            [.. Cart.Lines.Select(l => new DraftLineDto(
+                l.ProductId,
+                l.Quantity.Thousandths,
+                l.UnitPrice.Cents,
+                l.Discount is { } d ? new DraftDiscountDto(d.Value.Mode, d.Value.Raw, d.ApprovalId) : null))],
+            Cart.OrderDiscount switch
+            {
+                OrderDiscount.Manual m => DraftOrderDiscountDto.Manual(m.Value.Mode, m.Value.Raw, m.ApprovalId),
+                OrderDiscount.CouponApplied c => DraftOrderDiscountDto.ForCoupon(c.Code),
+                _ => null,
+            });
 
     /// <summary>Vuelve a presentar el <see cref="Cart"/>; con <paramref name="select"/>, deja esa línea seleccionada.</summary>
     private void RefreshCart(Guid? select = null)
@@ -1019,6 +1501,17 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
         HasLines = Lines.Count > 0;
         HasUnavailableLines = Cart.Lines.Any(l => l.IsUnavailable);
         TotalText = MoneyConverter.Format(Cart.Total.Cents);
+        SubtotalText = MoneyConverter.Format(Cart.Subtotal.Cents);
+        HasDiscounts = Cart.HasDiscounts;
+        HasOrderDiscount = Cart.OrderDiscount is not null;
+        OrderDiscountText = MoneyConverter.Format(-Cart.OrderDiscountAmount.Cents);
+        OrderDiscountLabel = Cart.OrderDiscount switch
+        {
+            OrderDiscount.CouponApplied c => string.Format(Display, Strings.Discount_CouponLabel, c.Code),
+            OrderDiscount.Manual { Value.IsPercent: true } m => string.Format(Display, Strings.Discount_OrderLabel, m.Value),
+            OrderDiscount.Manual => Strings.Discount_OrderLabelAmount,
+            _ => string.Empty,
+        };
         ItemsText = string.Format(Display, Strings.Sale_Items, Cart.Lines.Count);
         UpdateCanCheckout();
 

@@ -5,6 +5,7 @@ using Pos.Application.Business;
 using Pos.Application.CashShifts;
 using Pos.Application.CreditNotes;
 using Pos.Application.Customers;
+using Pos.Application.Discounts;
 using Pos.Application.Diagnostics;
 using Pos.Application.Inventory;
 using Pos.Application.Printing;
@@ -23,6 +24,7 @@ using Pos.Infrastructure.Business;
 using Pos.Infrastructure.CashShifts;
 using Pos.Infrastructure.CreditNotes;
 using Pos.Infrastructure.Customers;
+using Pos.Infrastructure.Discounts;
 using Pos.Infrastructure.Diagnostics;
 using Pos.Infrastructure.Inventory;
 using Pos.Infrastructure.Persistence;
@@ -59,6 +61,7 @@ public static class DependencyInjection
         services.AddSingleton<IReportSettingsStore, PreferencesReportSettingsStore>();
         services.AddSingleton<IReturnsSettingsStore, PreferencesReturnsSettingsStore>();
         services.AddSingleton<IReceivablesSettingsStore, PreferencesReceivablesSettingsStore>();
+        services.AddSingleton<IDiscountSettingsStore, PreferencesDiscountSettingsStore>();
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddSingleton<AuditingInterceptor>();
 
@@ -92,6 +95,9 @@ public static class DependencyInjection
         services.AddScoped<ICustomerRepository, CustomerRepository>();
         services.AddScoped<IReceivableRepository, ReceivableRepository>();
         services.AddScoped<ICustomerPaymentRepository, CustomerPaymentRepository>();
+        services.AddScoped<ICouponRepository, CouponRepository>();
+        services.AddScoped<IDiscountApprovalStore, DiscountApprovalStore>();
+        services.AddScoped<IDiscountReportReader, DiscountReportReader>();
         services.AddScoped<ISalesReportReader, SalesReportReader>();
         services.AddScoped<ICashCountReportReader, CashCountReportReader>();
         services.AddScoped<IInventoryReportReader, InventoryReportReader>();

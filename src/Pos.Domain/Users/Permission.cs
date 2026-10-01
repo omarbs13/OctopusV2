@@ -56,4 +56,16 @@ public enum Permission
 
     /// <summary>Ver "Reportes > Créditos" (014); solo el Administrador.</summary>
     ViewReceivables,
+
+    /// <summary>Aplicar descuentos de línea, globales y cupones en la venta (015); Cajero y Administrador.</summary>
+    ApplyDiscounts,
+
+    /// <summary>Autorizar un descuento que supera el límite (015); solo el Administrador, autorizable.</summary>
+    ApproveDiscounts,
+
+    /// <summary>Gestionar cupones y el límite de descuento (015); solo el Administrador.</summary>
+    ManageDiscounts,
+
+    /// <summary>Ver "Descuentos > Reporte" (015); solo el Administrador.</summary>
+    ViewDiscountReport,
 }

@@ -21,7 +21,12 @@ internal sealed class SaleLineConfiguration : IEntityTypeConfiguration<SaleLine>
         builder.Property(l => l.DecimalPlaces).IsRequired();
         builder.Property(l => l.UnitPriceCents).IsRequired();
         builder.Property(l => l.QuantityThousandths).IsRequired();
+        // 015: AmountCents es el importe neto; las ventas anteriores copian AmountCents en OriginalAmountCents.
         builder.Property(l => l.AmountCents).IsRequired();
+        builder.Property(l => l.OriginalAmountCents).IsRequired().HasDefaultValue(0L);
+        builder.Property(l => l.LineDiscountCents).IsRequired().HasDefaultValue(0L);
+        builder.Property(l => l.OrderDiscountCents).IsRequired().HasDefaultValue(0L);
+        builder.Ignore(l => l.AmountAfterLineDiscountCents);
         builder.Property(l => l.ReturnedQuantity).IsRequired().HasDefaultValue(0L);
         builder.Ignore(l => l.UnitPrice);
         builder.Ignore(l => l.Quantity);

@@ -21,6 +21,7 @@ public static class SaleMessages
     public const string TooManyLines = "La venta admite hasta 500 líneas.";
     public const string OnAccountExclusive = "La venta a crédito debe tener un único pago por el total.";
     public const string CustomerRequired = "Elija el cliente de la venta a crédito.";
+    public const string TotalZeroWithoutPayments = "Una venta de total $0.00 se cobra sin pagos.";
 
     public static string Shortfall(string amount) => $"Faltan {amount} para cubrir la venta.";
 }

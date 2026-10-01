@@ -19,6 +19,7 @@ public static class RolePermissions
         Permission.ManageCustomers,
         Permission.SellOnCredit,
         Permission.RegisterCustomerPayments,
+        Permission.ApplyDiscounts,
     }.ToFrozenSet();
 
     private static readonly FrozenSet<Permission> Authorizable = new[]
@@ -29,6 +30,7 @@ public static class RolePermissions
         Permission.ApproveReturns,
         Permission.ApproveCreditOverLimit,
         Permission.VoidCustomerPayments,
+        Permission.ApproveDiscounts,
     }.ToFrozenSet();
 
     public static IReadOnlySet<Permission> For(UserRole role) => role switch

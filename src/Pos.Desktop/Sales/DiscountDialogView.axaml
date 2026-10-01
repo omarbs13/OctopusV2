@@ -1,0 +1,47 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Pos.Desktop.Sales"
+             xmlns:res="using:Pos.Desktop.Resources"
+             xmlns:forms="using:Pos.Desktop.Forms"
+             x:Class="Pos.Desktop.Sales.DiscountDialogView"
+             x:DataType="vm:DiscountDialogViewModel">
+
+  <UserControl.KeyBindings>
+    <KeyBinding Gesture="Escape" Command="{Binding CloseCommand}" />
+  </UserControl.KeyBindings>
+
+  <Border Padding="16" CornerRadius="6" BorderThickness="1" Width="420"
+          Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+          BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
+    <StackPanel Spacing="10">
+      <TextBlock Text="{Binding Title}" FontSize="18" FontWeight="SemiBold" />
+      <TextBlock Text="{Binding BaseText}" Opacity="0.8" />
+
+      <ComboBox HorizontalAlignment="Stretch" MinHeight="44"
+                ItemsSource="{Binding Modes}" SelectedItem="{Binding SelectedMode}"
+                DisplayMemberBinding="{Binding Label, x:DataType=vm:DiscountModeOption}" />
+
+      <StackPanel Spacing="4">
+        <forms:FieldLabel Text="{x:Static res:Strings.Discount_Value}" IsRequired="True" />
+        <TextBox x:Name="ValueBox" Text="{Binding ValueText}" MaxLength="12" MinHeight="44" FontSize="18">
+          <TextBox.KeyBindings>
+            <KeyBinding Gesture="Enter" Command="{Binding ApplyCommand}" />
+          </TextBox.KeyBindings>
+        </TextBox>
+        <TextBlock Text="{Binding PreviewText}" FontWeight="SemiBold" />
+        <TextBlock Text="{Binding ErrorMessage}" FontSize="12" TextWrapping="Wrap"
+                   Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                   IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+      </StackPanel>
+
+      <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+        <Button MinHeight="44" Content="{x:Static res:Strings.Discount_RemoveLine}" Command="{Binding RemoveCommand}"
+                IsVisible="{Binding CanRemove}" />
+        <Button Classes="accent" MinHeight="44" MinWidth="110"
+                Content="{x:Static res:Strings.Discount_Apply}" Command="{Binding ApplyCommand}" />
+        <Button MinHeight="44" MinWidth="110"
+                Content="{x:Static res:Strings.Common_Cancel}" Command="{Binding CloseCommand}" />
+      </StackPanel>
+    </StackPanel>
+  </Border>
+</UserControl>

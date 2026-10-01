@@ -22,6 +22,7 @@ internal static class LicenseMessages
         LicensedModule.AdvancedReports => Strings.Module_AdvancedReports,
         LicensedModule.CreditAndCustomers => Strings.Module_CreditAndCustomers,
         LicensedModule.CashShifts => Strings.Module_CashShifts,
+        LicensedModule.Discounts => Strings.Module_Discounts,
         _ => Strings.Module_Returns,
     };
 

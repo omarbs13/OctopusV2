@@ -11,6 +11,7 @@ public class RolePermissionsTests
             [
                 Permission.Sell, Permission.ViewOwnSales, Permission.ViewProducts, Permission.ViewInventory, Permission.OperateShift,
                 Permission.ProcessReturns, Permission.ManageCustomers, Permission.SellOnCredit, Permission.RegisterCustomerPayments,
+                Permission.ApplyDiscounts,
             ],
             RolePermissions.For(UserRole.Cashier).Order());
     }
@@ -22,14 +23,14 @@ public class RolePermissionsTests
     }
 
     [Fact]
-    public void SoloCancelarVentaCajonRetiroAprobarDevolucionesExcederLimiteYAnularAbonosSeAutorizan()
+    public void SoloCancelarVentaCajonRetiroAprobarDevolucionesExcederLimiteAnularAbonosYAprobarDescuentosSeAutorizan()
     {
         var authorizable = Enum.GetValues<Permission>().Where(RolePermissions.IsAuthorizable);
 
         Assert.Equal(
             [
                 Permission.CancelSales, Permission.OpenDrawerWithoutSale, Permission.WithdrawCash, Permission.ApproveReturns,
-                Permission.ApproveCreditOverLimit, Permission.VoidCustomerPayments,
+                Permission.ApproveCreditOverLimit, Permission.VoidCustomerPayments, Permission.ApproveDiscounts,
             ],
             authorizable.Order());
     }

@@ -70,9 +70,21 @@ internal sealed class SalesReportReader : ISalesReportReader
         long Paid(PaymentMethod method) =>
             byMethod.Where(m => m.Method == method).Sum(m => m.Cents) - refunded.Where(m => m.Method == method).Sum(m => m.Cents);
 
+        // 015: total descontado de las ventas completadas; no depende de la licencia del módulo Descuentos (FR-023).
+        var discounted = await sales.SumAsync(s => s.DiscountCents, cancellationToken);
+
         // Promedio: total / ventas, media hacia arriba (data-model.md).
         var average = (total + (count / 2)) / count;
-        return new SalesTotals(count, total, average, Paid(PaymentMethod.Cash), Paid(PaymentMethod.Card), Paid(PaymentMethod.Transfer), Paid(PaymentMethod.CreditNote), Paid(PaymentMethod.OnAccount));
+        return new SalesTotals(
+            count,
+            total,
+            average,
+            Paid(PaymentMethod.Cash),
+            Paid(PaymentMethod.Card),
+            Paid(PaymentMethod.Transfer),
+            Paid(PaymentMethod.CreditNote),
+            Paid(PaymentMethod.OnAccount),
+            discounted);
     }
 
     /// <summary>

@@ -1,3 +1,4 @@
+using Pos.Application.Discounts;
 using Pos.Application.Reports.GetCashCountReport;
 using Pos.Application.Reports.GetInventoryReport;
 using Pos.Application.Reports.GetSalesReport;
@@ -10,6 +11,9 @@ public enum ReportKind
     CashCount,
     Inventory,
     MyShift,
+
+    /// <summary>Reporte de descuentos (015, FR-018).</summary>
+    Discounts,
 }
 
 public enum ExportFormat
@@ -34,6 +38,8 @@ public sealed record ExportRequest
 
     public InventoryReportQuery? Inventory { get; init; }
 
+    public DiscountReportQuery? Discounts { get; init; }
+
     /// <summary>Turno propio de "Mi turno"; nulo para el turno abierto.</summary>
     public Guid? ShiftId { get; init; }
 
@@ -45,6 +51,9 @@ public sealed record ExportRequest
 
     public static ExportRequest ForInventory(InventoryReportQuery query, ExportFormat format) =>
         new() { Kind = ReportKind.Inventory, Format = format, Inventory = query };
+
+    public static ExportRequest ForDiscounts(DiscountReportQuery query, ExportFormat format) =>
+        new() { Kind = ReportKind.Discounts, Format = format, Discounts = query };
 
     public static ExportRequest ForMyShift(Guid? shiftId) =>
         new() { Kind = ReportKind.MyShift, Format = ExportFormat.Pdf, ShiftId = shiftId };

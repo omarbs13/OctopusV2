@@ -40,7 +40,7 @@ public sealed partial class SaveSaleDraftHandler
             }
             else
             {
-                await _drafts.SaveAsync(command.DraftId, command.Lines, cancellationToken);
+                await _drafts.SaveAsync(command.DraftId, command.Lines, command.OrderDiscount, cancellationToken);
             }
 
             return Result.Success();

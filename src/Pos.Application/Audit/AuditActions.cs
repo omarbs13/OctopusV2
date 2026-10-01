@@ -44,6 +44,13 @@ public static class AuditActions
     public const string CustomerPaymentRegistered = "CUSTOMER_PAYMENT_REGISTERED";
     public const string CustomerPaymentVoided = "CUSTOMER_PAYMENT_VOIDED";
     public const string CreditSettingsChanged = "CREDIT_SETTINGS_CHANGED";
+    public const string DiscountAuthorized = "DISCOUNT_AUTHORIZED";
+    public const string DiscountAppliedAuthorized = "DISCOUNT_APPLIED_AUTHORIZED";
+    public const string CouponCreated = "COUPON_CREATED";
+    public const string CouponUpdated = "COUPON_UPDATED";
+    public const string CouponDeactivated = "COUPON_DEACTIVATED";
+    public const string CouponUseReleased = "COUPON_USE_RELEASED";
+    public const string DiscountLimitChanged = "DISCOUNT_LIMIT_CHANGED";
 
     public const string UserEntity = "User";
     public const string CashShiftEntity = "CashShift";
@@ -56,6 +63,9 @@ public static class AuditActions
     public const string CustomerEntity = "Customer";
     public const string CustomerPaymentEntity = "CustomerPayment";
     public const string ReceivablesSettingsEntity = "ReceivablesSettings";
+    public const string DiscountApprovalEntity = "DiscountApproval";
+    public const string CouponEntity = "Coupon";
+    public const string DiscountSettingsEntity = "DiscountSettings";
 
     /// <summary>Texto en español de cada evento, en el orden en que se ofrece en el filtro.</summary>
     public static readonly IReadOnlyDictionary<string, string> All = new Dictionary<string, string>
@@ -99,6 +109,13 @@ public static class AuditActions
         [CustomerPaymentRegistered] = "Abono registrado",
         [CustomerPaymentVoided] = "Abono anulado",
         [CreditSettingsChanged] = "Plazo de pago modificado",
+        [DiscountAuthorized] = "Descuento autorizado",
+        [DiscountAppliedAuthorized] = "Venta con descuento autorizado",
+        [CouponCreated] = "Cupón creado",
+        [CouponUpdated] = "Cupón modificado",
+        [CouponDeactivated] = "Cupón desactivado",
+        [CouponUseReleased] = "Uso de cupón devuelto",
+        [DiscountLimitChanged] = "Límite de descuento modificado",
     }.ToFrozenDictionary();
 
     /// <summary>Texto en español del evento; el código tal cual si no está en el catálogo.</summary>

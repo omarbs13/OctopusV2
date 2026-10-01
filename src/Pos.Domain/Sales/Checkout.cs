@@ -43,7 +43,8 @@ public sealed class Checkout
 
     public Money Shortfall => Money.FromCents(Math.Max(0, Pending.Cents - Received.Cents));
 
-    public bool CanConfirm => Total.Cents > 0 && Shortfall.Cents == 0;
+    /// <summary>015: una venta de total 0 (descuento del 100 % autorizado) se confirma sin pagos (research §6).</summary>
+    public bool CanConfirm => Total.Cents == 0 ? _payments.Count == 0 && Received.Cents == 0 : Shortfall.Cents == 0;
 
     /// <summary>Venta a crédito: un único pago <see cref="PaymentMethod.OnAccount"/> por el total (014).</summary>
     public bool IsOnAccount => _payments.Any(p => p.Method == PaymentMethod.OnAccount);

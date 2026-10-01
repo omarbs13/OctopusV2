@@ -438,6 +438,103 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.ToTable("Customers", (string)null);
                 });
 
+            modelBuilder.Entity("Pos.Domain.Discounts.Coupon", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly>("EndsOn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Mode")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly>("StartsOn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("UsageLimit")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("UsesCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("Value")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Coupons_Code");
+
+                    b.ToTable("Coupons", (string)null);
+                });
+
+            modelBuilder.Entity("Pos.Domain.Discounts.DiscountApproval", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("ApprovedBasisPoints")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("AuthorizedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("DraftId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("ProductId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("RequestedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Scope")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DraftId", "RequestedBy")
+                        .HasDatabaseName("IX_DiscountApprovals_Draft");
+
+                    b.ToTable("DiscountApprovals", (string)null);
+                });
+
             modelBuilder.Entity("Pos.Domain.Inventory.InventoryMovement", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1088,6 +1185,11 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("TEXT");
 
+                    b.Property<long>("DiscountCents")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(0L);
+
                     b.Property<Guid>("DraftId")
                         .HasColumnType("TEXT");
 
@@ -1142,6 +1244,63 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.ToTable("Sales", (string)null);
                 });
 
+            modelBuilder.Entity("Pos.Domain.Sales.SaleDiscount", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("AmountCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("AppliedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("AuthorizedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CouponCode")
+                        .HasMaxLength(30)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("CouponId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Mode")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("SaleId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("SaleLineId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("Value")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CouponId")
+                        .HasDatabaseName("IX_SaleDiscounts_Coupon");
+
+                    b.HasIndex("SaleId")
+                        .HasDatabaseName("IX_SaleDiscounts_Sale");
+
+                    b.HasIndex("CreatedAt", "Id")
+                        .HasDatabaseName("IX_SaleDiscounts_CreatedAt");
+
+                    b.ToTable("SaleDiscounts", (string)null);
+                });
+
             modelBuilder.Entity("Pos.Domain.Sales.SaleDraft", b =>
                 {
                     b.Property<Guid>("UserId")
@@ -1176,6 +1335,21 @@ namespace Pos.Infrastructure.Persistence.Migrations
 
                     b.Property<int>("DecimalPlaces")
                         .HasColumnType("INTEGER");
+
+                    b.Property<long>("LineDiscountCents")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(0L);
+
+                    b.Property<long>("OrderDiscountCents")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(0L);
+
+                    b.Property<long>("OriginalAmountCents")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(0L);
 
                     b.Property<int>("Position")
                         .HasColumnType("INTEGER");
@@ -1525,6 +1699,20 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Pos.Domain.Sales.SaleDiscount", b =>
+                {
+                    b.HasOne("Pos.Domain.Discounts.Coupon", null)
+                        .WithMany()
+                        .HasForeignKey("CouponId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Pos.Domain.Sales.Sale", null)
+                        .WithMany("Discounts")
+                        .HasForeignKey("SaleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Pos.Domain.Sales.SaleLine", b =>
                 {
                     b.HasOne("Pos.Domain.Inventory.InventoryMovement", null)
@@ -1583,6 +1771,8 @@ namespace Pos.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Pos.Domain.Sales.Sale", b =>
                 {
+                    b.Navigation("Discounts");
+
                     b.Navigation("Lines");
 
                     b.Navigation("Payments");

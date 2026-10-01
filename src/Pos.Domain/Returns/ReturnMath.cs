@@ -31,48 +31,12 @@ public static class ReturnMath
     public static IReadOnlyList<long> Allocate(long totalCents, IReadOnlyList<long> remainingCents)
     {
         ArgumentNullException.ThrowIfNull(remainingCents);
-        var sum = remainingCents.Sum();
-        if (totalCents < 0 || remainingCents.Any(r => r < 0) || totalCents > sum)
+        if (totalCents < 0 || remainingCents.Any(r => r < 0) || totalCents > remainingCents.Sum())
         {
             throw new DomainException("El monto a devolver excede lo pagado.");
         }
 
-        var result = new long[remainingCents.Count];
-        if (totalCents == 0)
-        {
-            return result;
-        }
-
-        var fractions = new Int128[remainingCents.Count];
-        long assigned = 0;
-        for (var i = 0; i < remainingCents.Count; i++)
-        {
-            var product = (Int128)totalCents * remainingCents[i];
-            result[i] = (long)(product / sum);
-            fractions[i] = product % sum;
-            assigned += result[i];
-        }
-
-        var order = Enumerable.Range(0, remainingCents.Count)
-            .OrderByDescending(i => fractions[i])
-            .ThenBy(i => i)
-            .ToList();
-        var leftover = totalCents - assigned;
-        foreach (var index in order)
-        {
-            if (leftover == 0)
-            {
-                break;
-            }
-
-            if (result[index] < remainingCents[index])
-            {
-                result[index]++;
-                leftover--;
-            }
-        }
-
-        return result;
+        return Proportional.Allocate(totalCents, remainingCents);
     }
 
     private static long Cumulative(long amountCents, long soldThousandths, long thousandths) =>

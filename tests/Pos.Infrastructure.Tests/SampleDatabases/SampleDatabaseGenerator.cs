@@ -3,6 +3,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Pos.Application.Customers.CreateCustomer;
+using Pos.Application.Discounts.Coupons.SaveCoupon;
 using Pos.Application.Receivables;
 using Pos.Application.Receivables.RegisterCustomerPayment;
 using Pos.Application.Returns;
@@ -12,6 +13,7 @@ using Pos.Application.Sales.SaveSaleDraft;
 using Pos.Application.Users.Access;
 using Pos.Domain.Common;
 using Pos.Domain.Customers;
+using Pos.Domain.Discounts;
 using Pos.Domain.Inventory;
 using Pos.Domain.Products;
 using Pos.Domain.Returns;
@@ -21,6 +23,7 @@ using Pos.Infrastructure.Audit;
 using Pos.Infrastructure.CashShifts;
 using Pos.Infrastructure.CreditNotes;
 using Pos.Infrastructure.Customers;
+using Pos.Infrastructure.Discounts;
 using Pos.Infrastructure.Inventory;
 using Pos.Infrastructure.Persistence;
 using Pos.Infrastructure.Products;
@@ -96,6 +99,9 @@ public sealed class SampleDatabaseGenerator
 
         // Desde 0.9.0: un cliente con crédito, una venta a crédito del cajero y un abono en efectivo.
         await SeedCreditAsync(db, cashierId);
+
+        // Desde 0.10.0: un cupón, una venta con descuento de línea autorizado, una con cupón y un borrador con descuento.
+        await SeedDiscountsAsync(db, adminId, cashierId);
 
         // Un solo archivo autocontenido: sin WAL pendiente. Primero se liberan las conexiones del pool.
         SqliteConnection.ClearAllPools();
@@ -267,6 +273,88 @@ public sealed class SampleDatabaseGenerator
             new SaveSaleDraftCommand(Guid.CreateVersion7(), [new DraftLineDto(draftLine.Id, 2000, draftLine.Price.Cents)]), ct);
     }
 
+    private static async Task SeedDiscountsAsync(TestDb db, Guid adminId, Guid cashierId)
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var access = new AllowAllAccessControl();
+
+        db.User.UserId = adminId;
+        db.Clock.UtcNow = new DateTime(2026, 9, 30, 16, 0, 0, DateTimeKind.Utc);
+        await using (var context = db.CreateDbContext())
+        {
+            var created = await new SaveCouponHandler(
+                access,
+                new CouponRepository(context),
+                new ProductRepository(context),
+                new AuditLog(context),
+                new WriteTransactions(context),
+                new SaveCouponValidator(),
+                NullLogger<SaveCouponHandler>.Instance)
+                .HandleAsync(new SaveCouponCommand(null, SampleData.CouponCode, DiscountMode.Percent, "10", new DateOnly(2026, 9, 1), new DateOnly(2026, 12, 31), 5), ct);
+            Assert.True(created.IsSuccess, created.Error?.ToString());
+        }
+
+        // El cajero vende con su turno abierto: un descuento de $15.00 (15 %) autorizado por el administrador.
+        db.User.UserId = cashierId;
+        var service = await FindProductAsync(db, SampleData.SaleWithoutInventorySku);
+        var couponProduct = await FindProductAsync(db, SampleData.CouponProductSku);
+        await SalesTestSupport.EnsureShiftAsync(db);
+        db.Clock.UtcNow = new DateTime(2026, 9, 30, 16, 5, 0, DateTimeKind.Utc);
+        var draftId = Guid.CreateVersion7();
+        var approval = DiscountApproval.Create(draftId, cashierId, adminId, DiscountScope.Line, service.Id, 1_500, db.Clock.UtcNow);
+        await using (var context = db.CreateDbContext())
+        {
+            context.DiscountApprovals.Add(approval);
+            await context.SaveChangesAsync(ct);
+        }
+
+        await SellWithDiscountsAsync(db, new ConfirmSaleCommand(
+            draftId,
+            [new ConfirmLineInput(service.Id, 2_000, service.Price.Cents, new LineDiscountInput(DiscountMode.Amount, SampleData.LineDiscountCents, approval.Id))],
+            [new PaymentInput(PaymentMethod.Cash, 0, (2 * service.Price.Cents) - SampleData.LineDiscountCents, null)]));
+
+        db.Clock.UtcNow = new DateTime(2026, 9, 30, 16, 10, 0, DateTimeKind.Utc);
+        await SellWithDiscountsAsync(db, new ConfirmSaleCommand(
+            Guid.CreateVersion7(),
+            [new ConfirmLineInput(couponProduct.Id, 1_000, couponProduct.Price.Cents)],
+            [new PaymentInput(PaymentMethod.Cash, 0, couponProduct.Price.Cents - SampleData.CouponDiscountCents, null)],
+            OrderDiscount: OrderDiscountInput.Coupon(SampleData.CouponCode)));
+
+        // Venta conservada del cajero con un descuento de línea del 5 %, que no necesita aprobación.
+        var draftLine = await FindProductAsync(db, SampleData.ImageSku);
+        await using var draftContext = db.CreateDbContext();
+        await SalesTestSupport.SaveDraftHandler(db, draftContext).HandleAsync(
+            new SaveSaleDraftCommand(
+                Guid.CreateVersion7(),
+                [new DraftLineDto(draftLine.Id, 2000, draftLine.Price.Cents, new DraftDiscountDto(DiscountMode.Percent, 500))]),
+            ct);
+    }
+
+    private static async Task SellWithDiscountsAsync(TestDb db, ConfirmSaleCommand command)
+    {
+        await using var context = db.CreateDbContext();
+        var sold = await new ConfirmSaleHandler(
+            new AllowAllAccessControl(),
+            new ProductRepository(context),
+            new InventoryRepository(context),
+            new SaleRepository(context),
+            new SqliteSaleDraftStore(context, db.Clock, db.User),
+            SalesTestSupport.ShiftGuardFor(db, context),
+            new WriteTransactions(context),
+            new ConfirmSaleValidator(),
+            NullLogger<ConfirmSaleHandler>.Instance,
+            null,
+            new CreditNoteRepository(context),
+            new AuditLog(context),
+            currentUser: db.User,
+            discountSettings: new TestDiscountSettingsStore(),
+            approvals: new DiscountApprovalStore(context),
+            coupons: new CouponRepository(context),
+            clock: db.Clock)
+            .HandleAsync(command, TestContext.Current.CancellationToken);
+        Assert.True(sold.IsSuccess, sold.Error?.ToString());
+    }
+
     private static async Task<Product> FindProductAsync(TestDb db, string sku)
     {
         await using var context = db.CreateDbContext();
@@ -348,6 +436,17 @@ public static class SampleData
     /// <summary>Desde 0.9.0: la venta a crédito es de 2 piezas del producto sin inventario ($50.00 c/u).</summary>
     public const long CreditSaleQuantityThousandths = 2_000;
     public const long CreditBalanceCents = 10_000 - CreditPaymentCents;
+
+    /// <summary>Desde 0.10.0: dos ventas con descuento del cajero (la 5 y la 6), un cupón y un borrador con descuento.</summary>
+    public const int DiscountSaleCount = 2;
+    public const string CouponCode = "MUESTRA10";
+
+    /// <summary>Desde 0.10.0: la venta 6 es de 1 pieza de este producto ($60.00) con el cupón del 10 %.</summary>
+    public const string CouponProductSku = "MUE-006";
+
+    /// <summary>Desde 0.10.0: la venta 5 son 2 piezas del producto sin inventario ($100.00) con $15.00 autorizados.</summary>
+    public const long LineDiscountCents = 1_500;
+    public const long CouponDiscountCents = 600;
 
     /// <summary>Desde 0.6.0: usuarios de muestra. El administrador hace la venta 1; el cajero, la 2 y la 3 y el borrador.</summary>
     public const string AdminUserName = "admin";

@@ -32,7 +32,14 @@ public sealed record SaleLineRow(SaleLineDto Line)
 
     public string PriceText => MoneyConverter.Format(Line.UnitPriceCents);
 
-    public string AmountText => MoneyConverter.Format(Line.AmountCents);
+    /// <summary>Importe final de la línea: original − descuento de línea (015); no incluye la parte del descuento de venta.</summary>
+    public string AmountText => MoneyConverter.Format(Line.AmountAfterLineDiscountCents);
+
+    public bool HasLineDiscount => Line.HasLineDiscount;
+
+    public string OriginalText => MoneyConverter.Format(Line.OriginalCents);
+
+    public string LineDiscountText => MoneyConverter.Format(-Line.LineDiscountCents);
 
     public bool HasReturned => Line.ReturnedThousandths > 0;
 
@@ -121,6 +128,15 @@ public sealed partial class SaleDetailViewModel : FormViewModel
     public ObservableCollection<SaleLineRow> Lines { get; } = [];
 
     public ObservableCollection<SalePaymentRow> Payments { get; } = [];
+
+    /// <summary>Descuentos de la venta (015, FR-017).</summary>
+    public ObservableCollection<SaleDiscountRow> Discounts { get; } = [];
+
+    [ObservableProperty]
+    public partial bool HasDiscounts { get; private set; }
+
+    [ObservableProperty]
+    public partial string DiscountSummaryText { get; private set; } = string.Empty;
 
     public ObservableCollection<ReturnHistoryRow> History { get; } = [];
 
@@ -337,6 +353,17 @@ public sealed partial class SaleDetailViewModel : FormViewModel
             Payments.Add(new SalePaymentRow(payment));
         }
 
+        Discounts.Clear();
+        foreach (var discount in detail.DiscountList)
+        {
+            Discounts.Add(new SaleDiscountRow(discount));
+        }
+
+        HasDiscounts = detail.HasDiscounts;
+        DiscountSummaryText = detail.HasDiscounts
+            ? $"{Strings.SaleDetail_Subtotal}: {MoneyConverter.Format(detail.SubtotalCents)} · {Strings.SaleDetail_TotalSaved}: {MoneyConverter.Format(detail.DiscountCents)}"
+            : string.Empty;
+
         History.Clear();
         foreach (var item in detail.ReturnHistory)
         {
@@ -348,4 +375,23 @@ public sealed partial class SaleDetailViewModel : FormViewModel
         ReturnItemsCommand.NotifyCanExecuteChanged();
         ReprintCommand.NotifyCanExecuteChanged();
     }
+}
+
+/// <summary>Descuento de una venta registrada con tipo, valor, monto, aplicador y autorizador (015, FR-017).</summary>
+public sealed record SaleDiscountRow(SaleDiscountDto Discount)
+{
+    public string KindText => Pos.Application.Discounts.DiscountMessages.KindText(Discount.Kind);
+
+    /// <summary>Producto de la línea o código del cupón.</summary>
+    public string DetailText => Discount.ProductName ?? Discount.CouponCode ?? string.Empty;
+
+    public string ValueText => Discount.Mode == Pos.Domain.Discounts.DiscountMode.Percent
+        ? Discount.Discount.ToString()
+        : MoneyConverter.Format(Discount.Value);
+
+    public string AmountText => MoneyConverter.Format(-Discount.AmountCents);
+
+    public string AppliedBy => Discount.AppliedByName;
+
+    public string AuthorizedBy => Discount.AuthorizedByName ?? string.Empty;
 }

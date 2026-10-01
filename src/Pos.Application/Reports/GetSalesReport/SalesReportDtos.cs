@@ -24,7 +24,10 @@ public sealed record SalesReportQuery(
     public const int DefaultPageSize = 100;
 }
 
-/// <summary>Totales de ventas completadas; todo en centavos. <c>OnAccountCents</c> son las ventas a crédito (014), incluidas en el total.</summary>
+/// <summary>
+/// Totales de ventas completadas; todo en centavos. <c>OnAccountCents</c> son las ventas a crédito (014),
+/// incluidas en el total. <c>DiscountCents</c> es el total descontado del período (015, FR-018).
+/// </summary>
 public sealed record SalesTotals(
     int SalesCount,
     long TotalCents,
@@ -33,7 +36,8 @@ public sealed record SalesTotals(
     long CardCents,
     long TransferCents,
     long CreditNoteCents = 0,
-    long OnAccountCents = 0)
+    long OnAccountCents = 0,
+    long DiscountCents = 0)
 {
     public static SalesTotals Empty { get; } = new(0, 0, 0, 0, 0, 0);
 }

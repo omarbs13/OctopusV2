@@ -51,16 +51,6 @@ public sealed class CustomersMigrationTests
     }
 
     [Fact]
-    public async Task CustomersAndCredit_EsLaUltimaMigracion()
-    {
-        using var db = await TestDb.CreateAsync();
-        await using var context = db.CreateDbContext();
-
-        Assert.EndsWith("_CustomersAndCredit", context.Database.GetMigrations().Last(), StringComparison.Ordinal);
-        Assert.Empty(await context.Database.GetPendingMigrationsAsync(TestContext.Current.CancellationToken));
-    }
-
-    [Fact]
     public async Task TurnosCerradosAntesDe090_QuedanConElBloqueCreditoEnNulo()
     {
         using var dir = new TempDataDirectory();

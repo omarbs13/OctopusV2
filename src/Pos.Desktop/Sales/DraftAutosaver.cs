@@ -10,26 +10,26 @@ namespace Pos.Desktop.Sales;
 /// </summary>
 public sealed class DraftAutosaver
 {
-    private readonly Func<Guid, IReadOnlyList<DraftLineDto>, Task> _save;
+    private readonly Func<Guid, IReadOnlyList<DraftLineDto>, DraftOrderDiscountDto?, Task> _save;
     private readonly ILogger _logger;
     private readonly object _gate = new();
 
-    private (Guid DraftId, IReadOnlyList<DraftLineDto> Lines)? _pending;
+    private (Guid DraftId, IReadOnlyList<DraftLineDto> Lines, DraftOrderDiscountDto? Order)? _pending;
     private Task _running = Task.CompletedTask;
     private bool _draining;
 
-    public DraftAutosaver(Func<Guid, IReadOnlyList<DraftLineDto>, Task> save, ILogger logger)
+    public DraftAutosaver(Func<Guid, IReadOnlyList<DraftLineDto>, DraftOrderDiscountDto?, Task> save, ILogger logger)
     {
         _save = save;
         _logger = logger;
     }
 
-    /// <summary>Pide guardar el estado actual; sin líneas equivale a descartar el borrador.</summary>
-    public void Save(Guid draftId, IReadOnlyList<DraftLineDto> lines)
+    /// <summary>Pide guardar el estado actual con sus descuentos (015); sin líneas equivale a descartar el borrador.</summary>
+    public void Save(Guid draftId, IReadOnlyList<DraftLineDto> lines, DraftOrderDiscountDto? order = null)
     {
         lock (_gate)
         {
-            _pending = (draftId, lines);
+            _pending = (draftId, lines, order);
             if (_draining)
             {
                 return;
@@ -64,7 +64,7 @@ public sealed class DraftAutosaver
     {
         while (true)
         {
-            (Guid DraftId, IReadOnlyList<DraftLineDto> Lines) item;
+            (Guid DraftId, IReadOnlyList<DraftLineDto> Lines, DraftOrderDiscountDto? Order) item;
             lock (_gate)
             {
                 if (_pending is not { } next)
@@ -79,7 +79,7 @@ public sealed class DraftAutosaver
 
             try
             {
-                await _save(item.DraftId, item.Lines);
+                await _save(item.DraftId, item.Lines, item.Order);
             }
 #pragma warning disable CA1031 // El borrador es de apoyo: una falla no debe interrumpir la venta.
             catch (Exception ex)

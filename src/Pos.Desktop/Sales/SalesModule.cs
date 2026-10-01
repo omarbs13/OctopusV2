@@ -26,6 +26,8 @@ public static class SalesModule
         services.AddComponentView<ReturnSaleViewModel, ReturnSaleView>();
         services.AddComponentView<CheckoutViewModel, CheckoutView>();
         services.AddComponentView<CustomerPickerViewModel, CustomerPickerView>();
+        services.AddComponentView<DiscountDialogViewModel, DiscountDialogView>();
+        services.AddComponentView<CouponEntryViewModel, CouponEntryView>();
 
         // Tarjetas de Inicio: comparten una sola consulta por activación.
         services.AddScoped<SalesDashboardSource>();

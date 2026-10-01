@@ -1,4 +1,5 @@
 using Pos.Domain.Common;
+using Pos.Domain.Discounts;
 using Pos.Domain.Returns;
 
 namespace Pos.Domain.Sales;
@@ -13,6 +14,7 @@ public sealed class Sale
 
     private readonly List<SaleLine> _lines = [];
     private readonly List<SalePayment> _payments = [];
+    private readonly List<SaleDiscount> _discounts = [];
 
     private Sale()
     {
@@ -29,6 +31,9 @@ public sealed class Sale
     public Guid? CashShiftId { get; private set; }
 
     public long TotalCents { get; private set; }
+
+    /// <summary>Suma de todos los descuentos de la venta (015); 0 en las ventas sin descuentos y en las anteriores a 0.10.0.</summary>
+    public long DiscountCents { get; private set; }
 
     /// <summary>Suma de lo devuelto por devoluciones parciales (013); 0 por defecto. Solo lo cambia <see cref="ApplyReturn"/>.</summary>
     public long ReturnedCents { get; private set; }
@@ -55,6 +60,12 @@ public sealed class Sale
 
     public IReadOnlyList<SalePayment> Payments => _payments;
 
+    /// <summary>Descuentos aplicados (015, FR-015); inmutables una vez cobrada la venta.</summary>
+    public IReadOnlyList<SaleDiscount> Discounts => _discounts;
+
+    /// <summary>Σ de los importes de las líneas después de su descuento propio (015): el SUBTOTAL del ticket.</summary>
+    public long SubtotalCents => _lines.Sum(l => l.AmountAfterLineDiscountCents);
+
     public Money Total => Money.FromCents(TotalCents);
 
     /// <summary>Venta vigente con parte de lo vendido devuelto.</summary>
@@ -70,12 +81,14 @@ public sealed class Sale
         Guid draftId,
         Guid? cashShiftId,
         IEnumerable<SaleLine> lines,
-        IEnumerable<SalePayment> payments)
+        IEnumerable<SalePayment> payments,
+        IEnumerable<SaleDiscount>? discounts = null)
     {
         ArgumentNullException.ThrowIfNull(lines);
         ArgumentNullException.ThrowIfNull(payments);
         var lineList = lines.ToList();
         var paymentList = payments.ToList();
+        var discountList = discounts?.ToList() ?? [];
 
         if (folioNumber < 1)
         {
@@ -92,10 +105,38 @@ public sealed class Sale
             throw new DomainException("La venta debe tener al menos una línea.");
         }
 
+        // 015: con un descuento del 100 % autorizado el total puede ser 0 (research §6).
         var total = lineList.Sum(l => l.AmountCents);
-        if (total is <= 0 or > Money.MaxCents)
+        if (total is < 0 or > Money.MaxCents)
         {
-            throw new DomainException("El total de la venta debe ser mayor que 0 y no exceder el máximo permitido.");
+            throw new DomainException("El total de la venta no puede ser negativo ni exceder el máximo permitido.");
+        }
+
+        if (total == 0 && paymentList.Count > 0)
+        {
+            throw new DomainException("Una venta de total 0 no lleva pagos.");
+        }
+
+        if (total > 0 && paymentList.Count == 0)
+        {
+            throw new DomainException("La venta debe tener al menos un pago.");
+        }
+
+        var discountTotal = lineList.Sum(l => l.OriginalAmountCents - l.AmountCents);
+        if (total == 0 && discountTotal == 0)
+        {
+            throw new DomainException("El total de la venta debe ser mayor que 0.");
+        }
+        if (discountTotal != discountList.Sum(d => d.AmountCents))
+        {
+            throw new DomainException("Los descuentos de la venta no coinciden con los importes de las líneas.");
+        }
+
+        var lineIds = lineList.Select(l => l.Id).ToHashSet();
+        if (discountList.Any(d => d.SaleLineId is { } lineId && !lineIds.Contains(lineId))
+            || discountList.Count(d => d.Kind != DiscountKind.Line) > 1)
+        {
+            throw new DomainException("Los descuentos de la venta no son válidos.");
         }
 
         if (paymentList.Sum(p => p.AmountCents) != total)
@@ -126,11 +167,13 @@ public sealed class Sale
             DraftId = draftId,
             CashShiftId = cashShiftId,
             TotalCents = total,
+            DiscountCents = discountTotal,
             Status = SaleStatus.Completed,
             Version = 1,
         };
         sale._lines.AddRange(lineList);
         sale._payments.AddRange(paymentList);
+        sale._discounts.AddRange(discountList);
         return sale;
     }
 

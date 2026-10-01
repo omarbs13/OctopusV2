@@ -21,7 +21,12 @@ public sealed class AdminAuthorizationService
         _runner = runner;
     }
 
-    public Task<Guid?> RequestAsync(Permission permission)
+    /// <param name="permission">Permiso que se autoriza.</param>
+    /// <param name="context">
+    /// Descripción de la operación (por ejemplo, el descuento y su monto) que se agrega a la bitácora del
+    /// intento, correcto o fallido (015, FR-019). Nunca incluye la contraseña.
+    /// </param>
+    public Task<Guid?> RequestAsync(Permission permission, string? context = null)
     {
         var completion = new TaskCompletionSource<Guid?>(TaskCreationOptions.RunContinuationsAsynchronously);
         _modal.Show(new AdminAuthorizationViewModel(
@@ -32,7 +37,8 @@ public sealed class AdminAuthorizationService
             {
                 _modal.Close();
                 completion.TrySetResult(grant);
-            }));
+            },
+            context));
         return completion.Task;
     }
 }

@@ -31,9 +31,10 @@ public sealed class ConfirmSaleValidator : AbstractValidator<ConfirmSaleCommand>
                 .InclusiveBetween(0, Money.MaxCents).WithMessage(SaleMessages.PriceInvalid);
         }).OverridePropertyName(SaleFields.Lines);
 
+        // 015: una venta de total 0 no lleva pagos; el manejador exige pagos si el total es mayor que 0.
         RuleFor(c => c.Payments)
             .Cascade(CascadeMode.Stop)
-            .NotEmpty().WithMessage(SaleMessages.PaymentsRequired)
+            .NotNull().WithMessage(SaleMessages.PaymentsRequired)
             .Must(payments => payments.Count(p => p.Method == PaymentMethod.Cash) <= 1)
             .WithMessage(SaleMessages.PaymentInvalid)
             .Must(payments => payments.All(IsWellFormed)).WithMessage(SaleMessages.PaymentInvalid)

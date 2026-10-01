@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using Pos.Application.Abstractions;
 using Pos.Application.Audit;
 using Pos.Application.CreditNotes;
+using Pos.Application.Discounts;
 using Pos.Application.Inventory;
 using Pos.Application.Licensing;
 using Pos.Application.Printing.Ticket;
@@ -56,6 +57,7 @@ public sealed partial class SaleReturnProcessor
     private readonly ILogger<SaleReturnProcessor> _logger;
     private readonly ILicenseState? _license;
     private readonly CreditSettlementService? _creditSettlement;
+    private readonly CouponUseRelease? _couponRelease;
 
     public SaleReturnProcessor(
         IAccessControl access,
@@ -72,9 +74,11 @@ public sealed partial class SaleReturnProcessor
         ICurrentUser currentUser,
         ILogger<SaleReturnProcessor> logger,
         ILicenseState? license = null,
-        CreditSettlementService? creditSettlement = null)
+        CreditSettlementService? creditSettlement = null,
+        CouponUseRelease? couponRelease = null)
     {
         _creditSettlement = creditSettlement;
+        _couponRelease = couponRelease;
         _access = access;
         _grants = grants;
         _sales = sales;
@@ -230,6 +234,12 @@ public sealed partial class SaleReturnProcessor
         {
             sale.EnsureCanCancelInFull();
             sale.Cancel(reason, now, _currentUser.UserId);
+
+            // 015: la cancelación completa devuelve el uso del cupón; la devolución parcial no.
+            if (_couponRelease is not null)
+            {
+                await _couponRelease.ReleaseForCancelledSaleAsync(sale, cancellationToken);
+            }
         }
         else
         {

@@ -1,6 +1,7 @@
 using FluentValidation;
 using Microsoft.Extensions.Logging;
 using Pos.Application.Abstractions;
+using Pos.Application.Discounts;
 using Pos.Application.Audit;
 using Pos.Application.CashShifts;
 using Pos.Application.Users.Access;
@@ -42,6 +43,7 @@ public sealed partial class CancelSaleHandler
     private readonly ILicenseState? _license;
     private readonly SaleReturnProcessor? _processor;
     private readonly CreditSettlementService? _creditSettlement;
+    private readonly CouponUseRelease? _couponRelease;
 
     public CancelSaleHandler(
         IAccessControl access,
@@ -56,9 +58,11 @@ public sealed partial class CancelSaleHandler
         ILogger<CancelSaleHandler> logger,
         ILicenseState? license = null,
         SaleReturnProcessor? processor = null,
-        CreditSettlementService? creditSettlement = null)
+        CreditSettlementService? creditSettlement = null,
+        CouponUseRelease? couponRelease = null)
     {
         _creditSettlement = creditSettlement;
+        _couponRelease = couponRelease;
         _license = license;
         _processor = processor;
         _access = access;
@@ -172,6 +176,12 @@ public sealed partial class CancelSaleHandler
 
         var reason = command.Reason.Trim();
         sale.Cancel(reason, _clock.UtcNow, _currentUser.UserId);
+        if (_couponRelease is not null)
+        {
+            // 015: la cancelación completa devuelve el uso del cupón (FR-014).
+            await _couponRelease.ReleaseForCancelledSaleAsync(sale, cancellationToken);
+        }
+
         if (isCredit && remaining > 0)
         {
             // Sin registro de devolución, el origen de los movimientos de la cuenta es la propia venta.

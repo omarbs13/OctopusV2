@@ -9,6 +9,7 @@ using Pos.Desktop.CashShifts;
 using Pos.Application.Users.Session;
 using Pos.Desktop.Common;
 using Pos.Desktop.Customers;
+using Pos.Desktop.Discounts;
 using Pos.Desktop.Diagnostics;
 using Pos.Desktop.Home;
 using Pos.Desktop.Inventory;
@@ -91,6 +92,7 @@ internal static class HostBuilder
         services.AddCustomersModule();
         services.AddReturnsModule();
         services.AddReportsModule();
+        services.AddDiscountsModule();
         services.AddAdministrationModule();
         services.AddSettingsModule();
         services.AddLicenseModule();

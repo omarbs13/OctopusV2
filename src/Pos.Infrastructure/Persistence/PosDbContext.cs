@@ -6,6 +6,7 @@ using Pos.Domain.Business;
 using Pos.Domain.CashShifts;
 using Pos.Domain.CreditNotes;
 using Pos.Domain.Customers;
+using Pos.Domain.Discounts;
 using Pos.Domain.Inventory;
 using Pos.Domain.Products;
 using Pos.Domain.Receivables;
@@ -86,6 +87,12 @@ public class PosDbContext : DbContext
 
     public DbSet<CustomerPayment> CustomerPayments => Set<CustomerPayment>();
 
+    public DbSet<Coupon> Coupons => Set<Coupon>();
+
+    public DbSet<DiscountApproval> DiscountApprovals => Set<DiscountApproval>();
+
+    public DbSet<SaleDiscount> SaleDiscounts => Set<SaleDiscount>();
+
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
         RejectImmutableChanges();
@@ -135,6 +142,9 @@ public class PosDbContext : DbContext
         modelBuilder.ApplyConfiguration(new ReceivableConfiguration());
         modelBuilder.ApplyConfiguration(new ReceivableEntryConfiguration());
         modelBuilder.ApplyConfiguration(new CustomerPaymentConfiguration());
+        modelBuilder.ApplyConfiguration(new CouponConfiguration());
+        modelBuilder.ApplyConfiguration(new DiscountApprovalConfiguration());
+        modelBuilder.ApplyConfiguration(new SaleDiscountConfiguration());
     }
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
@@ -190,6 +200,13 @@ public class PosDbContext : DbContext
                         && e.Property(nameof(SaleReturnRefund.Status)).CurrentValue is RefundStatus.Reversed))))
         {
             throw new InvalidOperationException("Un reintegro solo puede pasar de pendiente de reversa a reversado.");
+        }
+
+        // 015: los descuentos de una venta registrada y las aprobaciones de descuento son inmutables.
+        if (ChangeTracker.Entries<SaleDiscount>().Any(e => e.State is EntityState.Modified or EntityState.Deleted)
+            || ChangeTracker.Entries<DiscountApproval>().Any(e => e.State is EntityState.Modified or EntityState.Deleted))
+        {
+            throw new InvalidOperationException("Los descuentos de una venta y sus aprobaciones no se pueden modificar ni borrar.");
         }
 
         // 014: el libro de las cuentas por cobrar es inmutable y una cuenta nunca se borra (se cancela).

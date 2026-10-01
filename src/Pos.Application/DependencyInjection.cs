@@ -40,6 +40,16 @@ using Pos.Application.Customers.GetCustomer;
 using Pos.Application.Customers.SearchCustomers;
 using Pos.Application.Customers.SetCustomerActive;
 using Pos.Application.Customers.UpdateCustomer;
+using Pos.Application.Discounts;
+using Pos.Application.Discounts.ApproveDiscount;
+using Pos.Application.Discounts.Coupons.GetCoupon;
+using Pos.Application.Discounts.Coupons.SaveCoupon;
+using Pos.Application.Discounts.Coupons.SearchCoupons;
+using Pos.Application.Discounts.Coupons.SetCouponActive;
+using Pos.Application.Discounts.GetDiscountReport;
+using Pos.Application.Discounts.ResolveCoupon;
+using Pos.Application.Discounts.Settings.GetDiscountSettings;
+using Pos.Application.Discounts.Settings.SaveDiscountSettings;
 using Pos.Application.Receivables;
 using Pos.Application.Receivables.GetReceivablesSettings;
 using Pos.Application.Receivables.ListCustomerPayments;
@@ -244,6 +254,21 @@ public static class DependencyInjection
         services.AddScoped<GetInventoryReportHandler>();
         services.AddScoped<GetReportSettingsHandler>();
         services.AddScoped<SaveReportSettingsHandler>();
+
+        // Descuentos y promociones (015)
+        services.AddSingleton<IValidator<ApproveDiscountCommand>, ApproveDiscountValidator>();
+        services.AddScoped<ApproveDiscountHandler>();
+        services.AddScoped<GetDiscountSettingsHandler>();
+        services.AddSingleton<IValidator<SaveDiscountSettingsCommand>, SaveDiscountSettingsValidator>();
+        services.AddScoped<SaveDiscountSettingsHandler>();
+        services.AddScoped<ResolveCouponHandler>();
+        services.AddSingleton<IValidator<SaveCouponCommand>, SaveCouponValidator>();
+        services.AddScoped<SaveCouponHandler>();
+        services.AddScoped<SearchCouponsHandler>();
+        services.AddScoped<GetCouponHandler>();
+        services.AddScoped<SetCouponActiveHandler>();
+        services.AddScoped<CouponUseRelease>();
+        services.AddScoped<GetDiscountReportHandler>();
 
         // Datos del negocio
         services.AddScoped<GetBusinessProfileHandler>();
