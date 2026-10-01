@@ -28,6 +28,8 @@ Los permisos se asignan a los roles en un solo lugar: `src/Pos.Domain/Users/Role
 | Consultar la bitácora (`ViewAuditLog`) | ✔ | |
 | Configuración: negocio, impresora, seguridad (`ManageSettings`) | ✔ | |
 | Exportar el diagnóstico (`ExportDiagnostics`) | ✔ | |
+| Reportes de ventas y arqueo, alertas de Inicio (`ViewReports`) | ✔ | |
+| Mi turno: ver y exportar el resumen del propio turno (`OperateShift`) | ✔ | ✔ |
 
 Los permisos se verifican en los casos de uso, releyendo al usuario de la base en cada operación
 restringida: un usuario desactivado o con otro rol pierde el acceso aunque su sesión siga abierta. El

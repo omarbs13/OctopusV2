@@ -26,9 +26,12 @@ public static class AuditActions
     public const string ShiftCashCounted = "SHIFT_CASH_COUNTED";
     public const string ShiftClosed = "SHIFT_CLOSED";
     public const string ShiftClosedByAdmin = "SHIFT_CLOSED_BY_ADMIN";
+    public const string ReportExported = "REPORT_EXPORTED";
+    public const string ReportSettingsChanged = "REPORT_SETTINGS_CHANGED";
 
     public const string UserEntity = "User";
     public const string CashShiftEntity = "CashShift";
+    public const string ReportEntity = "Report";
 
     /// <summary>Texto en español de cada evento, en el orden en que se ofrece en el filtro.</summary>
     public static readonly IReadOnlyDictionary<string, string> All = new Dictionary<string, string>
@@ -54,6 +57,8 @@ public static class AuditActions
         [ShiftCashCounted] = "Conteo de caja",
         [ShiftClosed] = "Turno cerrado",
         [ShiftClosedByAdmin] = "Turno cerrado por administrador",
+        [ReportExported] = "Reporte exportado",
+        [ReportSettingsChanged] = "Configuración de reportes modificada",
     }.ToFrozenDictionary();
 
     /// <summary>Texto en español del evento; el código tal cual si no está en el catálogo.</summary>

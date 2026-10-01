@@ -58,6 +58,17 @@ using Pos.Application.Users.SignIn;
 using Pos.Application.Users.StartSession;
 using Pos.Application.Users.UpdateUser;
 using Pos.Application.Users.VerifySessionPassword;
+using Pos.Application.Reports;
+using Pos.Application.Reports.Export;
+using Pos.Application.Reports.GetCashCountReport;
+using Pos.Application.Reports.GetInventoryReport;
+using Pos.Application.Reports.GetMyShiftSummary;
+using Pos.Application.Reports.GetReportAlerts;
+using Pos.Application.Reports.GetReportSettings;
+using Pos.Application.Reports.GetSalesReport;
+using Pos.Application.Reports.ListMyShifts;
+using Pos.Application.Reports.SaveReportSettings;
+using Pos.Application.Reports.SetProductCritical;
 using Pos.Application.Users.Access;
 using Pos.Application.Users.Session;
 
@@ -151,6 +162,20 @@ public static class DependencyInjection
         services.AddScoped<CloseShiftHandler>();
         services.AddScoped<SearchShiftsHandler>();
         services.AddScoped<GetShiftDetailHandler>();
+
+        // Reportes y análisis (009)
+        services.AddSingleton(_ => ReportPeriodResolver.ForLocalZone());
+        services.AddScoped<GetSalesReportHandler>();
+        services.AddScoped<GetCashCountReportHandler>();
+        services.AddScoped<GetReportAlertsHandler>();
+        services.AddScoped<SetProductCriticalHandler>();
+        services.AddScoped<GetMyShiftSummaryHandler>();
+        services.AddScoped<ListMyShiftsHandler>();
+        services.AddScoped<ReportDocumentBuilder>();
+        services.AddScoped<ExportReportHandler>();
+        services.AddScoped<GetInventoryReportHandler>();
+        services.AddScoped<GetReportSettingsHandler>();
+        services.AddScoped<SaveReportSettingsHandler>();
 
         // Datos del negocio
         services.AddScoped<GetBusinessProfileHandler>();

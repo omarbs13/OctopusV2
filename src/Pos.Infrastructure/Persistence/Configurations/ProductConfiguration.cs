@@ -43,6 +43,9 @@ internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.Property(p => p.TracksInventory).IsRequired().HasDefaultValue(false);
         builder.Property(p => p.MinimumStockThousandths).HasColumnName("MinimumStock");
         builder.Ignore(p => p.MinimumStock);
+
+        // Los productos existentes quedan como "no crítico" (009); AddColumn sin reconstruir la tabla.
+        builder.Property(p => p.IsCritical).IsRequired().HasDefaultValue(false);
         builder.Property(p => p.CreatedAt).IsRequired();
         builder.Property(p => p.CreatedBy).IsRequired();
         builder.Property(p => p.UpdatedAt).IsRequired();

@@ -6,6 +6,8 @@ using Pos.Application.CashShifts;
 using Pos.Application.Diagnostics;
 using Pos.Application.Inventory;
 using Pos.Application.Printing;
+using Pos.Application.Reports;
+using Pos.Application.Reports.Export;
 using Pos.Application.Products;
 using Pos.Application.Sales;
 using Pos.Application.Audit;
@@ -23,6 +25,7 @@ using Pos.Infrastructure.Printing.Linux;
 using Pos.Infrastructure.Printing.Windows;
 using Pos.Infrastructure.Platform;
 using Pos.Infrastructure.Products;
+using Pos.Infrastructure.Reports;
 using Pos.Infrastructure.Security;
 using Pos.Infrastructure.Users;
 using Pos.Infrastructure.Sales;
@@ -43,6 +46,7 @@ public static class DependencyInjection
         services.AddSingleton<IPreferencesStore, JsonFilePreferencesStore>();
         services.AddSingleton<IPrintingSettingsStore, PreferencesPrintingSettingsStore>();
         services.AddSingleton<ISecuritySettingsStore, PreferencesSecuritySettingsStore>();
+        services.AddSingleton<IReportSettingsStore, PreferencesReportSettingsStore>();
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddSingleton<AuditingInterceptor>();
 
@@ -71,11 +75,18 @@ public static class DependencyInjection
         services.AddScoped<ISaleRepository, SaleRepository>();
         services.AddScoped<ISaleDraftStore, SqliteSaleDraftStore>();
         services.AddScoped<ICashShiftRepository, CashShiftRepository>();
+        services.AddScoped<ISalesReportReader, SalesReportReader>();
+        services.AddScoped<ICashCountReportReader, CashCountReportReader>();
+        services.AddScoped<IInventoryReportReader, InventoryReportReader>();
+        services.AddScoped<IReportAlertsReader, ReportAlertsReader>();
         services.AddScoped<IWriteTransactions, WriteTransactions>();
         services.AddScoped<IAuditLog, AuditLog>();
         services.AddScoped<IAuditLogReader, AuditLogReader>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddSingleton<IImageProcessor, SkiaImageProcessor>();
+        services.AddSingleton<IChartRenderer, ChartRenderer>();
+        services.AddSingleton<IPdfReportWriter, PdfReportWriter>();
+        services.AddSingleton<IXlsxReportWriter, XlsxReportWriter>();
         services.AddSingleton<IDatabaseMaintenance, SqliteDatabaseMaintenance>();
         services.AddSingleton<IBackupService, SqliteBackupService>();
         services.AddSingleton<IDiagnosticsExporter>(sp => new ZipDiagnosticsExporter(

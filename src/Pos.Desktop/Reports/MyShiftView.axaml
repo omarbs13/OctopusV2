@@ -1,0 +1,81 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Pos.Desktop.Reports"
+             xmlns:res="using:Pos.Desktop.Resources"
+             x:Class="Pos.Desktop.Reports.MyShiftView"
+             x:DataType="vm:MyShiftViewModel">
+
+  <ScrollViewer>
+    <StackPanel Spacing="12" Margin="0,0,12,0">
+      <TextBlock Text="{x:Static res:Strings.Reports_MyShift_Title}" FontSize="22" FontWeight="SemiBold" />
+
+      <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsBusy}" />
+
+      <!-- Sin turno abierto: lista de los más recientes -->
+      <TextBlock Text="{Binding Message}" TextWrapping="Wrap" IsVisible="{Binding !HasSummary}" />
+      <StackPanel Spacing="4" IsVisible="{Binding ShowList}">
+        <TextBlock Text="{x:Static res:Strings.Reports_MyShift_Recent}" FontWeight="SemiBold" />
+        <ListBox ItemsSource="{Binding Recent}" SelectedItem="{Binding SelectedShift}">
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:MyShiftListEntry">
+              <Grid ColumnDefinitions="120,170,120,*" MinHeight="40">
+                <TextBlock Grid.Column="0" Text="{Binding Folio}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" Text="{Binding DateText}" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="2" Text="{Binding StatusText}" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="3" Text="{Binding TotalText}" TextAlignment="Right" VerticalAlignment="Center" />
+              </Grid>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </StackPanel>
+
+      <!-- Resumen del turno -->
+      <StackPanel Spacing="12" IsVisible="{Binding HasSummary}">
+        <StackPanel Orientation="Horizontal" Spacing="16">
+          <TextBlock Text="{Binding FolioText}" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center" />
+          <TextBlock Text="{Binding PeriodText}" VerticalAlignment="Center" />
+          <Button MinHeight="44" Content="{x:Static res:Strings.Reports_ExportPdf}" Command="{Binding ExportPdfCommand}" />
+        </StackPanel>
+
+        <WrapPanel>
+          <vm:MetricCard Label="{x:Static res:Strings.Reports_MyShift_Float}" Value="{Binding FloatText}" />
+          <vm:MetricCard Label="{x:Static res:Strings.Reports_MyShift_Sales}" Value="{Binding SalesText}" />
+          <vm:MetricCard Label="{x:Static res:Strings.Reports_MyShift_SalesTotal}" Value="{Binding SalesTotalText}" />
+          <vm:MetricCard Label="{x:Static res:Strings.Reports_MyShift_Deposits}" Value="{Binding DepositsText}" />
+          <vm:MetricCard Label="{x:Static res:Strings.Reports_MyShift_Withdrawals}" Value="{Binding WithdrawalsText}" />
+        </WrapPanel>
+
+        <WrapPanel IsVisible="{Binding ShowCashCount}">
+          <vm:MetricCard Label="{x:Static res:Strings.Reports_MyShift_Expected}" Value="{Binding ExpectedText}" />
+          <vm:MetricCard Label="{x:Static res:Strings.Reports_MyShift_Counted}" Value="{Binding CountedText}" />
+          <vm:MetricCard Label="{x:Static res:Strings.Reports_MyShift_Difference}" Value="{Binding DifferenceText}" />
+        </WrapPanel>
+        <TextBlock Text="{x:Static res:Strings.Reports_MyShift_BlindNote}" Opacity="0.8" TextWrapping="Wrap"
+                   IsVisible="{Binding IsOpenShift}" />
+
+        <TextBlock Text="{x:Static res:Strings.Reports_MyShift_Movements}" FontWeight="SemiBold" />
+        <Grid ColumnDefinitions="170,110,120,*" Margin="12,0">
+          <Grid.Styles>
+            <Style Selector="TextBlock"><Setter Property="FontWeight" Value="SemiBold" /></Style>
+          </Grid.Styles>
+          <TextBlock Grid.Column="0" Text="{x:Static res:Strings.Reports_MyShift_ColDate}" />
+          <TextBlock Grid.Column="1" Text="{x:Static res:Strings.Reports_MyShift_ColType}" />
+          <TextBlock Grid.Column="2" Text="{x:Static res:Strings.Reports_MyShift_ColAmount}" TextAlignment="Right" />
+          <TextBlock Grid.Column="3" Text="{x:Static res:Strings.Reports_MyShift_ColReason}" Margin="12,0,0,0" />
+        </Grid>
+        <ItemsControl ItemsSource="{Binding Movements}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:MyShiftMovementItem">
+              <Grid ColumnDefinitions="170,110,120,*" Margin="12,0" MinHeight="32">
+                <TextBlock Grid.Column="0" Text="{Binding DateText}" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" Text="{Binding TypeText}" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="2" Text="{Binding AmountText}" TextAlignment="Right" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="3" Text="{Binding Reason}" TextTrimming="CharacterEllipsis" Margin="12,0,0,0" VerticalAlignment="Center" />
+              </Grid>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

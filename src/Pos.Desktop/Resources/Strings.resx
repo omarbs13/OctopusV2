@@ -533,4 +533,133 @@
   <data name="Card_ShiftSince" xml:space="preserve"><value>Desde {0}</value></data>
   <data name="Card_ShiftSold" xml:space="preserve"><value>Total vendido {0}</value></data>
   <data name="Card_NoShift" xml:space="preserve"><value>No hay turno abierto</value></data>
+  <data name="Nav_Reports" xml:space="preserve"><value>Reportes</value></data>
+  <data name="Nav_ReportSales" xml:space="preserve"><value>Ventas</value></data>
+  <data name="Nav_ReportCashCount" xml:space="preserve"><value>Arqueo</value></data>
+  <data name="Nav_ReportInventory" xml:space="preserve"><value>Inventario</value></data>
+  <data name="Nav_MyShift" xml:space="preserve"><value>Mi turno</value></data>
+  <data name="Reports_PresetToday" xml:space="preserve"><value>Hoy</value></data>
+  <data name="Reports_PresetYesterday" xml:space="preserve"><value>Ayer</value></data>
+  <data name="Reports_PresetLast7Days" xml:space="preserve"><value>Últimos 7 días</value></data>
+  <data name="Reports_PresetThisMonth" xml:space="preserve"><value>Este mes</value></data>
+  <data name="Reports_PresetPreviousMonth" xml:space="preserve"><value>Mes anterior</value></data>
+  <data name="Reports_PresetCustom" xml:space="preserve"><value>Personalizado</value></data>
+  <data name="Reports_From" xml:space="preserve"><value>Desde</value></data>
+  <data name="Reports_To" xml:space="preserve"><value>Hasta</value></data>
+  <data name="Reports_Query" xml:space="preserve"><value>Consultar</value></data>
+  <data name="Reports_PeriodEndBeforeStart" xml:space="preserve"><value>La fecha final no puede ser anterior a la inicial.</value></data>
+  <data name="Reports_PeriodTooLong" xml:space="preserve"><value>El período no puede superar 366 días.</value></data>
+  <data name="Reports_PeriodRequired" xml:space="preserve"><value>Elija la fecha inicial y la final.</value></data>
+  <data name="Reports_NoData" xml:space="preserve"><value>Sin datos en este período</value></data>
+  <data name="Reports_Loading" xml:space="preserve"><value>Consultando…</value></data>
+  <data name="Reports_Exporting" xml:space="preserve"><value>Generando el archivo…</value></data>
+  <data name="Reports_ExportPdf" xml:space="preserve"><value>Exportar PDF</value></data>
+  <data name="Reports_ExportExcel" xml:space="preserve"><value>Exportar Excel</value></data>
+  <data name="Reports_ExportSaved" xml:space="preserve"><value>Reporte guardado en {0}</value></data>
+  <data name="Reports_ExportFailed" xml:space="preserve"><value>No se pudo generar el reporte. Puede intentar de nuevo.</value></data>
+  <data name="Reports_MissingBusiness" xml:space="preserve"><value>Faltan los datos del negocio. El archivo se generó sin encabezado; capturelos en Configuración &gt; Datos del negocio.</value></data>
+  <data name="Reports_PageSummary" xml:space="preserve"><value>Mostrando {0} de {1} · página {2} de {3}</value></data>
+  <data name="Reports_Cashier" xml:space="preserve"><value>Cajero</value></data>
+  <data name="Reports_CashierAll" xml:space="preserve"><value>Todos</value></data>
+  <data name="Reports_Compare" xml:space="preserve"><value>Comparar con el período anterior</value></data>
+  <data name="Reports_NotCalculable" xml:space="preserve"><value>No calculable</value></data>
+  <data name="Reports_Sales_Title" xml:space="preserve"><value>Reporte de ventas</value></data>
+  <data name="Reports_Sales_Total" xml:space="preserve"><value>Total vendido</value></data>
+  <data name="Reports_Sales_Count" xml:space="preserve"><value>Ventas</value></data>
+  <data name="Reports_Sales_Average" xml:space="preserve"><value>Ticket promedio</value></data>
+  <data name="Reports_Sales_Cash" xml:space="preserve"><value>Efectivo</value></data>
+  <data name="Reports_Sales_Card" xml:space="preserve"><value>Tarjeta</value></data>
+  <data name="Reports_Sales_Transfer" xml:space="preserve"><value>Transferencia</value></data>
+  <data name="Reports_Sales_Previous" xml:space="preserve"><value>Período anterior</value></data>
+  <data name="Reports_Sales_Current" xml:space="preserve"><value>Período actual</value></data>
+  <data name="Reports_Sales_Variation" xml:space="preserve"><value>Variación</value></data>
+  <data name="Reports_Sales_ChartTitle" xml:space="preserve"><value>Ventas por día</value></data>
+  <data name="Reports_Sales_ColFolio" xml:space="preserve"><value>Folio</value></data>
+  <data name="Reports_Sales_ColDate" xml:space="preserve"><value>Fecha y hora</value></data>
+  <data name="Reports_Sales_ColCashier" xml:space="preserve"><value>Cajero</value></data>
+  <data name="Reports_Sales_ColTotal" xml:space="preserve"><value>Total</value></data>
+  <data name="Reports_CashCount_Title" xml:space="preserve"><value>Arqueo de caja</value></data>
+  <data name="Reports_CashCount_Threshold" xml:space="preserve"><value>Alertar si la diferencia supera (%)</value></data>
+  <data name="Reports_CashCount_SaveThreshold" xml:space="preserve"><value>Guardar umbral</value></data>
+  <data name="Reports_CashCount_ThresholdInvalid" xml:space="preserve"><value>Escriba un porcentaje entre 0.01 y 100.</value></data>
+  <data name="Reports_CashCount_ThresholdSaved" xml:space="preserve"><value>Umbral guardado.</value></data>
+  <data name="Reports_CashCount_ClosedShifts" xml:space="preserve"><value>Turnos cerrados</value></data>
+  <data name="Reports_CashCount_TotalSold" xml:space="preserve"><value>Total vendido</value></data>
+  <data name="Reports_CashCount_Accumulated" xml:space="preserve"><value>Diferencia acumulada</value></data>
+  <data name="Reports_CashCount_Alerts" xml:space="preserve"><value>Turnos con diferencia sobre el umbral: {0}</value></data>
+  <data name="Reports_CashCount_ChartTitle" xml:space="preserve"><value>Diferencia por turno</value></data>
+  <data name="Reports_CashCount_InProgress" xml:space="preserve"><value>En curso</value></data>
+  <data name="Reports_CashCount_ColShift" xml:space="preserve"><value>Turno</value></data>
+  <data name="Reports_CashCount_ColCashier" xml:space="preserve"><value>Cajero</value></data>
+  <data name="Reports_CashCount_ColOpened" xml:space="preserve"><value>Apertura</value></data>
+  <data name="Reports_CashCount_ColClosed" xml:space="preserve"><value>Cierre</value></data>
+  <data name="Reports_CashCount_ColFloat" xml:space="preserve"><value>Fondo</value></data>
+  <data name="Reports_CashCount_ColSold" xml:space="preserve"><value>Vendido</value></data>
+  <data name="Reports_CashCount_ColDeposits" xml:space="preserve"><value>Ingresos</value></data>
+  <data name="Reports_CashCount_ColWithdrawals" xml:space="preserve"><value>Retiros</value></data>
+  <data name="Reports_CashCount_ColExpected" xml:space="preserve"><value>Esperado</value></data>
+  <data name="Reports_CashCount_ColCounted" xml:space="preserve"><value>Contado</value></data>
+  <data name="Reports_CashCount_ColDifference" xml:space="preserve"><value>Diferencia</value></data>
+  <data name="Reports_CashCount_ColPercent" xml:space="preserve"><value>%</value></data>
+  <data name="Reports_Inventory_Title" xml:space="preserve"><value>Inventario</value></data>
+  <data name="Reports_Inventory_AsOf" xml:space="preserve"><value>Existencias al cierre del {0}</value></data>
+  <data name="Reports_Inventory_Note" xml:space="preserve"><value>Existencias al cierre de la fecha. Mínimos y datos del producto: valores actuales.</value></data>
+  <data name="Reports_Inventory_Search" xml:space="preserve"><value>Buscar por nombre o SKU</value></data>
+  <data name="Reports_Inventory_Status" xml:space="preserve"><value>Estado</value></data>
+  <data name="Reports_Inventory_Total" xml:space="preserve"><value>Total de productos</value></data>
+  <data name="Reports_Inventory_Active" xml:space="preserve"><value>Activos</value></data>
+  <data name="Reports_Inventory_Low" xml:space="preserve"><value>Existencia baja</value></data>
+  <data name="Reports_Inventory_Out" xml:space="preserve"><value>Sin existencia</value></data>
+  <data name="Reports_Inventory_ChartTitle" xml:space="preserve"><value>Distribución de existencias</value></data>
+  <data name="Reports_Inventory_Normal" xml:space="preserve"><value>Normal</value></data>
+  <data name="Reports_Inventory_ColName" xml:space="preserve"><value>Nombre</value></data>
+  <data name="Reports_Inventory_ColSku" xml:space="preserve"><value>SKU</value></data>
+  <data name="Reports_Inventory_ColOnHand" xml:space="preserve"><value>Existencia</value></data>
+  <data name="Reports_Inventory_ColMinimum" xml:space="preserve"><value>Mínimo</value></data>
+  <data name="Reports_Inventory_ColUnit" xml:space="preserve"><value>Unidad</value></data>
+  <data name="Reports_Inventory_ColStatus" xml:space="preserve"><value>Estado</value></data>
+  <data name="Reports_Inventory_NoMatches" xml:space="preserve"><value>No hay productos que coincidan.</value></data>
+  <data name="Reports_NoPermission" xml:space="preserve"><value>No tiene permiso para este reporte.</value></data>
+  <data name="Reports_SaveTitle" xml:space="preserve"><value>Guardar reporte</value></data>
+  <data name="Reports_MissingBusinessTitle" xml:space="preserve"><value>Datos del negocio</value></data>
+  <data name="Reports_GoToBusiness" xml:space="preserve"><value>Ir a Datos del negocio</value></data>
+  <data name="Reports_Close" xml:space="preserve"><value>Cerrar</value></data>
+  <data name="Reports_MyShift_Title" xml:space="preserve"><value>Mi turno</value></data>
+  <data name="Reports_MyShift_Float" xml:space="preserve"><value>Fondo inicial</value></data>
+  <data name="Reports_MyShift_Sales" xml:space="preserve"><value>Ventas realizadas</value></data>
+  <data name="Reports_MyShift_SalesTotal" xml:space="preserve"><value>Total vendido</value></data>
+  <data name="Reports_MyShift_Deposits" xml:space="preserve"><value>Ingresos</value></data>
+  <data name="Reports_MyShift_Withdrawals" xml:space="preserve"><value>Retiros</value></data>
+  <data name="Reports_MyShift_Expected" xml:space="preserve"><value>Efectivo esperado</value></data>
+  <data name="Reports_MyShift_Counted" xml:space="preserve"><value>Efectivo contado</value></data>
+  <data name="Reports_MyShift_Difference" xml:space="preserve"><value>Diferencia</value></data>
+  <data name="Reports_MyShift_Movements" xml:space="preserve"><value>Movimientos de efectivo</value></data>
+  <data name="Reports_MyShift_ColDate" xml:space="preserve"><value>Fecha y hora</value></data>
+  <data name="Reports_MyShift_ColType" xml:space="preserve"><value>Tipo</value></data>
+  <data name="Reports_MyShift_ColAmount" xml:space="preserve"><value>Importe</value></data>
+  <data name="Reports_MyShift_ColReason" xml:space="preserve"><value>Motivo</value></data>
+  <data name="Reports_MyShift_NoOpen" xml:space="preserve"><value>No tiene un turno abierto. Elija uno de sus turnos recientes para ver su resumen.</value></data>
+  <data name="Reports_MyShift_NoShifts" xml:space="preserve"><value>Aún no tiene turnos.</value></data>
+  <data name="Reports_MyShift_Recent" xml:space="preserve"><value>Mis turnos recientes</value></data>
+  <data name="Reports_MyShift_Open" xml:space="preserve"><value>Abierto</value></data>
+  <data name="Reports_MyShift_Closed" xml:space="preserve"><value>Cerrado</value></data>
+  <data name="Reports_MyShift_OpenedSince" xml:space="preserve"><value>Abierto desde {0}</value></data>
+  <data name="Reports_MyShift_ClosedAt" xml:space="preserve"><value>Abierto {0} · Cerrado {1}</value></data>
+  <data name="Reports_MyShift_BlindNote" xml:space="preserve"><value>El efectivo esperado y la diferencia se muestran cuando el turno se cierra.</value></data>
+  <data name="Reports_MyShift_MovementIn" xml:space="preserve"><value>Ingreso</value></data>
+  <data name="Reports_MyShift_MovementOut" xml:space="preserve"><value>Retiro</value></data>
+  <data name="Editor_IsCritical" xml:space="preserve"><value>Producto crítico</value></data>
+  <data name="Editor_IsCriticalHint" xml:space="preserve"><value>Aparece en las alertas de Inicio cuando su existencia es baja o se agota.</value></data>
+  <data name="Stock_MarkCritical" xml:space="preserve"><value>Marcar como crítico</value></data>
+  <data name="Stock_UnmarkCritical" xml:space="preserve"><value>Quitar marca de crítico</value></data>
+  <data name="Stock_Critical" xml:space="preserve"><value>Crítico</value></data>
+  <data name="Stock_CriticalMarked" xml:space="preserve"><value>Producto marcado como crítico.</value></data>
+  <data name="Stock_CriticalUnmarked" xml:space="preserve"><value>Se quitó la marca de crítico.</value></data>
+  <data name="Card_Alerts" xml:space="preserve"><value>Alertas</value></data>
+  <data name="Card_NoAlerts" xml:space="preserve"><value>No hay alertas</value></data>
+  <data name="Card_AlertsCash" xml:space="preserve"><value>Diferencias de arqueo ({0})</value></data>
+  <data name="Card_AlertsCritical" xml:space="preserve"><value>Productos críticos con existencia baja ({0})</value></data>
+  <data name="Card_AlertsMore" xml:space="preserve"><value>y {0} más</value></data>
+  <data name="Card_AlertsCashLine" xml:space="preserve"><value>{0} · {1} · {2:dd/MM} · {3}</value></data>
+  <data name="Card_AlertsCriticalLine" xml:space="preserve"><value>{0} ({1}): {2} {3}</value></data>
 </root>

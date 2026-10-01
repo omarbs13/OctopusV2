@@ -73,7 +73,8 @@ public sealed class SampleDatabaseUpgradeTests
         AssertInventory(connection, sampleFile);
         AssertSales(connection, sampleFile);
         AssertUsers(connection, sampleFile);
-        AssertCashShifts(connection);
+        AssertCashShifts(connection, sampleFile);
+        AssertReports(connection);
 
         foreach (var index in new[] { "IX_Products_Sku", "IX_Products_Barcode", "IX_Products_NameSearch" })
         {
@@ -164,7 +165,7 @@ public sealed class SampleDatabaseUpgradeTests
     private static void AssertUsers(SqliteConnection connection, string sampleFile)
     {
         // Desde 0.6.0 la base de ejemplo ya trae un administrador y un cajero además de "Sistema".
-        Assert.Equal(sampleFile == "v0.6.0.db" ? 3 : 1, Scalar<long>(connection, "SELECT COUNT(*) FROM Users"));
+        Assert.Equal(sampleFile is "v0.6.0.db" or "v0.7.0.db" ? 3 : 1, Scalar<long>(connection, "SELECT COUNT(*) FROM Users"));
         Assert.Equal(
             1,
             Scalar<long>(connection, $"""
@@ -181,7 +182,7 @@ public sealed class SampleDatabaseUpgradeTests
             return;
         }
 
-        if (sampleFile == "v0.6.0.db")
+        if (sampleFile is "v0.6.0.db" or "v0.7.0.db")
         {
             // Las ventas conservan a su cajero: el administrador hizo la 1 y el cajero la 2 y la 3 (con su borrador).
             Assert.Equal(1, Scalar<long>(connection, $"SELECT COUNT(*) FROM Sales s JOIN Users u ON u.Id = s.CreatedBy WHERE u.UserName = '{SampleData.AdminUserName}'"));
@@ -203,8 +204,18 @@ public sealed class SampleDatabaseUpgradeTests
     /// 008: las ventas anteriores quedan sin turno (<c>CashShiftId</c> nulo), no hay turnos y el índice
     /// único filtrado garantiza un solo turno abierto por caja.
     /// </summary>
-    private static void AssertCashShifts(SqliteConnection connection)
+    private static void AssertCashShifts(SqliteConnection connection, string sampleFile)
     {
+        if (sampleFile == "v0.7.0.db")
+        {
+            // Desde 0.7.0 la base de ejemplo ya trae turnos (uno cerrado y uno abierto) y sus ventas.
+            Assert.Equal(2, Scalar<long>(connection, "SELECT COUNT(*) FROM CashShifts"));
+            Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM CashShifts WHERE Status = 'CLOSED' AND CountedCashCents IS NOT NULL"));
+            Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM CashShifts WHERE Status = 'OPEN' AND ExpectedCashCents IS NULL"));
+            Assert.Equal(SampleData.SaleCount, Scalar<long>(connection, "SELECT COUNT(*) FROM Sales WHERE CashShiftId IS NOT NULL"));
+            return;
+        }
+
         Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM Sales WHERE CashShiftId IS NOT NULL"));
         Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM CashShifts"));
         Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM CashMovements"));
@@ -214,7 +225,19 @@ public sealed class SampleDatabaseUpgradeTests
             StringComparison.Ordinal);
     }
 
-    private static bool HasSales(string sampleFile) => sampleFile is "v0.4.0.db" or "v0.5.0.db" or "v0.6.0.db";
+    /// <summary>
+    /// 009: los productos existentes quedan sin marca de crítico y el índice de existencias por fecha
+    /// existe; la migración solo agrega una columna y un índice.
+    /// </summary>
+    private static void AssertReports(SqliteConnection connection)
+    {
+        Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM Products WHERE IsCritical <> 0"));
+        Assert.Equal(
+            1,
+            Scalar<long>(connection, "SELECT COUNT(*) FROM sqlite_master WHERE type = 'index' AND name = 'IX_InventoryMovements_Product_CreatedAt'"));
+    }
+
+    private static bool HasSales(string sampleFile) => sampleFile is "v0.4.0.db" or "v0.5.0.db" or "v0.6.0.db" or "v0.7.0.db";
 
     private static T Scalar<T>(SqliteConnection connection, string sql)
     {

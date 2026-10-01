@@ -56,6 +56,9 @@ public sealed partial class Product
 
     public Quantity? MinimumStock => MinimumStockThousandths is { } m ? Quantity.FromThousandths(m) : null;
 
+    /// <summary>Marca de producto crítico: aparece en las alertas de Inicio cuando su existencia es baja (009).</summary>
+    public bool IsCritical { get; private set; }
+
     public DateTime CreatedAt { get; private set; }
 
     public Guid CreatedBy { get; private set; }
@@ -127,6 +130,9 @@ public sealed partial class Product
         ApplyInventory(tracksInventory, minimumStock);
         IsActive = isActive;
     }
+
+    /// <summary>Marca o desmarca el producto como crítico; no exige movimientos ni cambia otros campos.</summary>
+    public void MarkCritical(bool isCritical) => IsCritical = isCritical;
 
     /// <summary>Asigna o reemplaza la imagen (ya optimizada) del producto.</summary>
     public void SetImage(byte[] content, byte[] thumbnail, int width, int height)

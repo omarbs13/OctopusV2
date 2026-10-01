@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using Pos.Application.Abstractions;
 using Pos.Application.Inventory;
 using Pos.Application.Inventory.SearchStock;
+using Pos.Application.Reports.SetProductCritical;
 using Pos.Desktop.Common;
 using Pos.Desktop.Forms;
 using Pos.Desktop.Navigation;
@@ -29,6 +30,8 @@ public sealed record StockRow(StockItemDto Item)
     public string UnitName => Item.UnitName;
 
     public bool IsActive => Item.IsActive;
+
+    public bool IsCritical => Item.IsCritical;
 
     public StockStatus Status => Item.Status;
 
@@ -65,6 +68,7 @@ public sealed partial class StockViewModel : PageViewModel, INavigationArgumentR
         ICurrentPermissions? permissions = null)
     {
         CanRegisterMovements = permissions?.Has(Permission.RegisterMovements) ?? true;
+        CanManageProducts = permissions?.Has(Permission.ManageProducts) ?? true;
         _useCases = useCases;
         _runner = runner;
         _editorFactory = editorFactory;
@@ -84,6 +88,9 @@ public sealed partial class StockViewModel : PageViewModel, INavigationArgumentR
 
     /// <summary>Puede registrar movimientos de inventario; el Cajero solo consulta (FR-010).</summary>
     public bool CanRegisterMovements { get; }
+
+    /// <summary>Puede marcar productos como críticos (009); requiere <c>ManageProducts</c>.</summary>
+    public bool CanManageProducts { get; }
 
     public IReadOnlyList<StockFilterOption> FilterOptions { get; }
 
@@ -133,7 +140,12 @@ public sealed partial class StockViewModel : PageViewModel, INavigationArgumentR
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(RegisterMovementCommand))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleCriticalCommand))]
+    [NotifyPropertyChangedFor(nameof(CriticalActionText))]
     public partial StockRow? SelectedRow { get; set; }
+
+    /// <summary>Texto de la acción sobre el producto seleccionado: marcar o quitar la marca de crítico.</summary>
+    public string CriticalActionText => SelectedRow is { IsCritical: true } ? Strings.Stock_UnmarkCritical : Strings.Stock_MarkCritical;
 
     public override Task OnActivatedAsync() => SearchAsync();
 
@@ -214,6 +226,31 @@ public sealed partial class StockViewModel : PageViewModel, INavigationArgumentR
         editor.Saved += (_, movement) => _ = OnMovementSavedAsync(movement);
         editor.Closed += (_, _) => _ = SearchAsync();
         await Forms.OpenAsync(editor, FormPresentation.SidePanel);
+    }
+
+    /// <summary>Marca o quita la marca de crítico del producto seleccionado (009, Historia 7).</summary>
+    [RelayCommand(CanExecute = nameof(HasSelection))]
+    private async Task ToggleCriticalAsync()
+    {
+        if (!CanManageProducts || SelectedRow is not { } row)
+        {
+            return;
+        }
+
+        var mark = !row.IsCritical;
+        var (completed, result) = await _runner.RunAsync(
+            "MarcarProductoCritico",
+            () => _useCases.RunAsync<SetProductCriticalHandler, Result>(
+                h => h.HandleAsync(new SetProductCriticalCommand(row.ProductId, mark), CancellationToken.None)),
+            new Dictionary<string, object?> { ["ProductId"] = row.ProductId, ["IsCritical"] = mark });
+        if (!completed || result is not { IsSuccess: true })
+        {
+            return;
+        }
+
+        StatusMessage = mark ? Strings.Stock_CriticalMarked : Strings.Stock_CriticalUnmarked;
+        await SearchAsync();
+        SelectedRow = Rows.FirstOrDefault(r => r.ProductId == row.ProductId);
     }
 
     private bool HasSelection() => SelectedRow is not null;

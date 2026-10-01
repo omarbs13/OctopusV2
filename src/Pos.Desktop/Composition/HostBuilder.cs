@@ -11,6 +11,7 @@ using Pos.Desktop.Home;
 using Pos.Desktop.Inventory;
 using Pos.Desktop.Navigation;
 using Pos.Desktop.Products;
+using Pos.Desktop.Reports;
 using Pos.Desktop.Sales;
 using Pos.Desktop.Settings;
 using Pos.Desktop.Splash;
@@ -69,6 +70,7 @@ internal static class HostBuilder
         services.AddInventoryModule();
         services.AddSalesModule();
         services.AddCashShiftsModule();
+        services.AddReportsModule();
         services.AddAdministrationModule();
         services.AddSettingsModule();
         services.AddHelpModule();

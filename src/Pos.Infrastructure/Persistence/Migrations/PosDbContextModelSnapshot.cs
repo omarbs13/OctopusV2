@@ -314,6 +314,9 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.HasIndex("CreatedAt", "Id")
                         .HasDatabaseName("IX_InventoryMovements_CreatedAt");
 
+                    b.HasIndex("ProductId", "CreatedAt")
+                        .HasDatabaseName("IX_InventoryMovements_Product_CreatedAt");
+
                     b.HasIndex("ProductId", "Sequence")
                         .IsUnique()
                         .HasDatabaseName("IX_InventoryMovements_Product_Sequence");
@@ -377,6 +380,11 @@ namespace Pos.Infrastructure.Persistence.Migrations
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsCritical")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
 
                     b.Property<long?>("MinimumStockThousandths")
                         .HasColumnType("INTEGER")

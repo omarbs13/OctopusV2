@@ -22,4 +22,5 @@ public enum Permission
     OperateShift,
     WithdrawCash,
     ManageShifts,
+    ViewReports,
 }

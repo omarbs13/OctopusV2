@@ -1,0 +1,41 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Pos.Desktop.Reports"
+             xmlns:res="using:Pos.Desktop.Resources"
+             x:Class="Pos.Desktop.Reports.PeriodPickerView"
+             x:DataType="vm:PeriodPickerViewModel">
+  <StackPanel Spacing="8">
+    <ListBox ItemsSource="{Binding Presets}"
+             SelectedItem="{Binding SelectedPreset}"
+             SelectionMode="Single">
+      <ListBox.ItemsPanel>
+        <ItemsPanelTemplate>
+          <WrapPanel Orientation="Horizontal" />
+        </ItemsPanelTemplate>
+      </ListBox.ItemsPanel>
+      <ListBox.ItemTemplate>
+        <DataTemplate x:DataType="vm:PeriodPresetOption">
+          <TextBlock Text="{Binding Label}" Margin="8,4" />
+        </DataTemplate>
+      </ListBox.ItemTemplate>
+    </ListBox>
+
+    <StackPanel Orientation="Horizontal" Spacing="12" IsVisible="{Binding IsCustom}">
+      <StackPanel Spacing="4">
+        <TextBlock Text="{x:Static res:Strings.Reports_From}" FontWeight="SemiBold" />
+        <CalendarDatePicker SelectedDate="{Binding CustomFrom}" />
+      </StackPanel>
+      <StackPanel Spacing="4">
+        <TextBlock Text="{x:Static res:Strings.Reports_To}" FontWeight="SemiBold" />
+        <CalendarDatePicker SelectedDate="{Binding CustomTo}" />
+      </StackPanel>
+      <Button VerticalAlignment="Bottom" MinHeight="44"
+              Content="{x:Static res:Strings.Reports_Query}"
+              Command="{Binding QueryCustomCommand}" />
+    </StackPanel>
+
+    <TextBlock Text="{Binding ValidationMessage}"
+               Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+               IsVisible="{Binding ShowValidation}" />
+  </StackPanel>
+</UserControl>

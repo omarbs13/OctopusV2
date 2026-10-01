@@ -84,6 +84,11 @@
       <TextBlock Classes="error" Text="{Binding MinimumStockError}" IsVisible="{Binding MinimumStockError, Converter={x:Static ObjectConverters.IsNotNull}}" />
     </StackPanel>
 
+    <StackPanel Classes="field" IsVisible="{Binding TracksInventory}">
+      <CheckBox Content="{x:Static res:Strings.Editor_IsCritical}" IsChecked="{Binding IsCritical}" />
+      <TextBlock Text="{x:Static res:Strings.Editor_IsCriticalHint}" TextWrapping="Wrap" FontSize="12" Opacity="0.75" />
+    </StackPanel>
+
     <StackPanel Classes="field">
       <forms:FieldLabel Text="{x:Static res:Strings.Editor_OnHand}" />
       <TextBlock Text="{Binding OnHandText}" />

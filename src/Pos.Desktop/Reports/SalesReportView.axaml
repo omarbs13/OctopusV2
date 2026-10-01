@@ -1,0 +1,115 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Pos.Desktop.Reports"
+             xmlns:res="using:Pos.Desktop.Resources"
+             xmlns:sales="using:Pos.Desktop.Sales"
+             xmlns:rep="using:Pos.Application.Reports.GetSalesReport"
+             x:Class="Pos.Desktop.Reports.SalesReportView"
+             x:DataType="vm:SalesReportViewModel">
+
+  <ScrollViewer>
+    <StackPanel Spacing="12" Margin="0,0,12,0">
+      <TextBlock Text="{x:Static res:Strings.Reports_Sales_Title}" FontSize="22" FontWeight="SemiBold" />
+
+      <!-- Filtros -->
+      <ContentControl Content="{Binding Picker}" />
+      <StackPanel Orientation="Horizontal" Spacing="16">
+        <StackPanel Spacing="4" MinWidth="220">
+          <TextBlock Text="{x:Static res:Strings.Reports_Cashier}" FontWeight="SemiBold" />
+          <ComboBox HorizontalAlignment="Stretch"
+                    ItemsSource="{Binding CashierOptions}"
+                    SelectedItem="{Binding SelectedCashier}"
+                    DisplayMemberBinding="{Binding Label, x:DataType=sales:CashierOption}" />
+        </StackPanel>
+        <ToggleSwitch VerticalAlignment="Bottom"
+                      IsChecked="{Binding Compare}"
+                      OnContent="{x:Static res:Strings.Reports_Compare}"
+                      OffContent="{x:Static res:Strings.Reports_Compare}" />
+      </StackPanel>
+
+      <!-- Exportar: Excel y PDF; se deshabilitan sin datos o mientras se genera -->
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <Button MinHeight="44" Content="{x:Static res:Strings.Reports_ExportPdf}" Command="{Binding ExportPdfCommand}" />
+        <Button MinHeight="44" Content="{x:Static res:Strings.Reports_ExportExcel}" Command="{Binding ExportExcelCommand}" />
+        <TextBlock Text="{x:Static res:Strings.Reports_Exporting}" IsVisible="{Binding IsExporting}" VerticalAlignment="Center" />
+        <ProgressBar IsIndeterminate="True" Width="120" IsVisible="{Binding IsExporting}" />
+      </StackPanel>
+
+      <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsBusy}" />
+
+      <!-- Sin datos -->
+      <TextBlock Text="{x:Static res:Strings.Reports_NoData}" IsVisible="{Binding IsEmpty}"
+                 FontSize="16" Margin="0,24" HorizontalAlignment="Center" />
+
+      <StackPanel Spacing="12" IsVisible="{Binding HasData}">
+        <!-- Tarjetas -->
+        <WrapPanel>
+          <vm:MetricCard Label="{x:Static res:Strings.Reports_Sales_Total}" Value="{Binding TotalText}" />
+          <vm:MetricCard Label="{x:Static res:Strings.Reports_Sales_Count}" Value="{Binding CountText}" />
+          <vm:MetricCard Label="{x:Static res:Strings.Reports_Sales_Average}" Value="{Binding AverageText}" />
+          <vm:MetricCard Label="{x:Static res:Strings.Reports_Sales_Cash}" Value="{Binding CashText}" />
+          <vm:MetricCard Label="{x:Static res:Strings.Reports_Sales_Card}" Value="{Binding CardText}" />
+          <vm:MetricCard Label="{x:Static res:Strings.Reports_Sales_Transfer}" Value="{Binding TransferText}" />
+        </WrapPanel>
+
+        <!-- Comparativo -->
+        <WrapPanel IsVisible="{Binding HasComparison}">
+          <vm:MetricCard Label="{x:Static res:Strings.Reports_Sales_Previous}" Value="{Binding PreviousText}" />
+          <vm:MetricCard Label="{x:Static res:Strings.Reports_Sales_Current}" Value="{Binding TotalText}" />
+          <vm:MetricCard Label="{x:Static res:Strings.Reports_Sales_Variation}" Value="{Binding VariationText}" />
+        </WrapPanel>
+
+        <!-- Gráfica -->
+        <ContentControl Content="{Binding Chart}" />
+
+        <!-- Tabla -->
+        <Grid ColumnDefinitions="140,170,*,140" Margin="12,0,12,0">
+          <Button Grid.Column="0" Classes="flat" Content="{Binding FolioHeader}" FontWeight="SemiBold"
+                  Command="{Binding SortByCommand}" CommandParameter="{x:Static rep:SalesReportSort.Folio}" />
+          <Button Grid.Column="1" Classes="flat" Content="{Binding DateHeader}" FontWeight="SemiBold"
+                  Command="{Binding SortByCommand}" CommandParameter="{x:Static rep:SalesReportSort.Date}" />
+          <Button Grid.Column="2" Classes="flat" Content="{Binding CashierHeader}" FontWeight="SemiBold"
+                  Command="{Binding SortByCommand}" CommandParameter="{x:Static rep:SalesReportSort.Cashier}" />
+          <Button Grid.Column="3" Classes="flat" Content="{Binding TotalHeader}" FontWeight="SemiBold"
+                  HorizontalAlignment="Right"
+                  Command="{Binding SortByCommand}" CommandParameter="{x:Static rep:SalesReportSort.Total}" />
+        </Grid>
+        <ItemsControl ItemsSource="{Binding Rows}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:SalesReportRowItem">
+              <Grid ColumnDefinitions="140,170,*,140" Margin="12,0" MinHeight="36">
+                <TextBlock Grid.Column="0" Text="{Binding Folio}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" Text="{Binding DateText}" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="2" Text="{Binding Cashier}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="3" Text="{Binding TotalText}" TextAlignment="Right" VerticalAlignment="Center" />
+              </Grid>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <!-- Paginación -->
+        <Grid ColumnDefinitions="*,Auto">
+          <TextBlock VerticalAlignment="Center" Text="{Binding PageSummary}" />
+          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+            <Button MinWidth="44" MinHeight="44" Command="{Binding FirstPageCommand}"
+                    AutomationProperties.Name="{x:Static res:Strings.Products_FirstPage}">
+              <PathIcon Data="{StaticResource Icon.PageFirst}" />
+            </Button>
+            <Button MinWidth="44" MinHeight="44" Command="{Binding PreviousPageCommand}"
+                    AutomationProperties.Name="{x:Static res:Strings.Products_PreviousPage}">
+              <PathIcon Data="{StaticResource Icon.PagePrevious}" />
+            </Button>
+            <Button MinWidth="44" MinHeight="44" Command="{Binding NextPageCommand}"
+                    AutomationProperties.Name="{x:Static res:Strings.Products_NextPage}">
+              <PathIcon Data="{StaticResource Icon.PageNext}" />
+            </Button>
+            <Button MinWidth="44" MinHeight="44" Command="{Binding LastPageCommand}"
+                    AutomationProperties.Name="{x:Static res:Strings.Products_LastPage}">
+              <PathIcon Data="{StaticResource Icon.PageLast}" />
+            </Button>
+          </StackPanel>
+        </Grid>
+      </StackPanel>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

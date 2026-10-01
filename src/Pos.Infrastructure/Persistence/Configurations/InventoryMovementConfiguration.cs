@@ -41,6 +41,9 @@ internal sealed class InventoryMovementConfiguration : IEntityTypeConfiguration<
             .IsUnique();
         builder.HasIndex(m => new { m.CreatedAt, m.Id })
             .HasDatabaseName("IX_InventoryMovements_CreatedAt");
+        // Existencia de un producto a una fecha pasada (009, research §2).
+        builder.HasIndex(m => new { m.ProductId, m.CreatedAt })
+            .HasDatabaseName("IX_InventoryMovements_Product_CreatedAt");
         builder.HasIndex(m => new { m.Type, m.CreatedAt })
             .HasDatabaseName("IX_InventoryMovements_Type_CreatedAt");
     }

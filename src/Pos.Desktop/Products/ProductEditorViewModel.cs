@@ -7,6 +7,7 @@ using Pos.Application.Products.GetProduct;
 using Pos.Application.Products.ListUnitsOfMeasure;
 using Pos.Application.Products.PrepareProductImage;
 using Pos.Application.Products.UpdateProduct;
+using Pos.Application.Reports.SetProductCritical;
 using Pos.Desktop.Common;
 using Pos.Desktop.Forms;
 using Pos.Desktop.Resources;
@@ -29,6 +30,7 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
 
     private Guid? _productId;
     private int _expectedVersion;
+    private bool _loadedIsCritical;
     private long? _onHandThousandths;
 
     /// <summary>Cambio de imagen pendiente; se aplica solo al guardar (003, FR-025).</summary>
@@ -65,6 +67,10 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(OnHandText))]
     public partial bool TracksInventory { get; set; }
+
+    /// <summary>Producto crítico (009): sus existencias bajas aparecen en las alertas de Inicio.</summary>
+    [ObservableProperty]
+    public partial bool IsCritical { get; set; }
 
     /// <summary>Existencia mínima capturada; vacío significa sin mínimo.</summary>
     [ObservableProperty]
@@ -200,12 +206,41 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
 
         if (result.IsSuccess)
         {
-            OnSaved(result.Value);
+            var saved = result.Value;
+            if (IsCritical != _loadedIsCritical && !await SaveCriticalAsync(saved.Id))
+            {
+                return false;
+            }
+
+            _loadedIsCritical = IsCritical;
+            OnSaved(saved with { IsCritical = IsCritical });
             return true;
         }
 
         await ShowErrorAsync(result.Error);
         return false;
+    }
+
+    /// <summary>La marca de crítico se guarda aparte, con su caso de uso, solo cuando cambió (009).</summary>
+    private async Task<bool> SaveCriticalAsync(Guid productId)
+    {
+        var (completed, result) = await _runner.RunAsync(
+            "MarcarProductoCritico",
+            () => _useCases.RunAsync<SetProductCriticalHandler, Result>(
+                h => h.HandleAsync(new SetProductCriticalCommand(productId, IsCritical), CancellationToken.None)),
+            new Dictionary<string, object?> { ["ProductId"] = productId });
+        if (!completed || result is null)
+        {
+            return false;
+        }
+
+        if (!result.IsSuccess)
+        {
+            await ShowErrorAsync(result.Error);
+            return false;
+        }
+
+        return true;
     }
 
     /// <summary>Valores como se guardarían: revertir un cambio o escribir el SKU en minúsculas no cuenta como cambio.</summary>
@@ -218,7 +253,8 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
         IsActive,
         _imageChange,
         TracksInventory,
-        TracksInventory ? MinimumStockText.Trim() : string.Empty);
+        TracksInventory ? MinimumStockText.Trim() : string.Empty,
+        TracksInventory && IsCritical);
 
     [RelayCommand(CanExecute = nameof(CanChangeImage))]
     private async Task SelectImageAsync()
@@ -328,6 +364,8 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
         UnitCode = product.UnitCode;
         IsActive = product.IsActive;
         TracksInventory = product.TracksInventory;
+        IsCritical = product.IsCritical;
+        _loadedIsCritical = product.IsCritical;
         MinimumStockText = product.MinimumStockThousandths is { } minimum
             ? Quantity.FromThousandths(minimum).ToEditableString(product.DecimalPlaces)
             : string.Empty;
@@ -387,4 +425,5 @@ internal sealed record ProductFormState(
     bool IsActive,
     ProductImageChange Image,
     bool TracksInventory,
-    string MinimumStock);
+    string MinimumStock,
+    bool IsCritical);

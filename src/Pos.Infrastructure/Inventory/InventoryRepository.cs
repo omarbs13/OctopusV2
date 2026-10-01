@@ -90,6 +90,7 @@ public sealed class InventoryRepository : IInventoryRepository
                 Minimum = x.Row.Product.MinimumStockThousandths,
                 x.Row.Product.IsActive,
                 x.Row.HasMovements,
+                x.Row.Product.IsCritical,
             })
             .ToListAsync(cancellationToken);
 
@@ -108,7 +109,8 @@ public sealed class InventoryRepository : IInventoryRepository
                     StockLevel.FromThousandths(i.OnHand),
                     i.Minimum is { } m ? Quantity.FromThousandths(m) : null),
                 i.IsActive,
-                i.HasMovements))
+                i.HasMovements,
+                i.IsCritical))
             .ToList();
         return new StockPage(dtos, total, page, search.PageSize);
     }

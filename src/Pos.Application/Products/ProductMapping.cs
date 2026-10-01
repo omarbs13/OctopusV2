@@ -26,6 +26,7 @@ public static class ProductMapping
             product.MinimumStockThousandths,
             product.TracksInventory ? stock?.OnHandThousandths ?? 0 : null,
             stock is not null,
-            UnitOfMeasure.Find(product.UnitCode)?.DecimalPlaces ?? 0);
+            UnitOfMeasure.Find(product.UnitCode)?.DecimalPlaces ?? 0,
+            product.IsCritical);
     }
 }

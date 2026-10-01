@@ -20,7 +20,8 @@ public sealed record ProductDto(
     long? MinimumStockThousandths = null,
     long? OnHandThousandths = null,
     bool HasMovements = false,
-    int DecimalPlaces = 0);
+    int DecimalPlaces = 0,
+    bool IsCritical = false);
 
 /// <summary>Fila del listado de productos.</summary>
 public sealed record ProductListItemDto(

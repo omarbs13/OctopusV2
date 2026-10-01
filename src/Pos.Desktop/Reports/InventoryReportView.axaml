@@ -1,0 +1,115 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Pos.Desktop.Reports"
+             xmlns:res="using:Pos.Desktop.Resources"
+             xmlns:rep="using:Pos.Application.Reports.GetInventoryReport"
+             x:Class="Pos.Desktop.Reports.InventoryReportView"
+             x:DataType="vm:InventoryReportViewModel">
+
+  <ScrollViewer>
+    <StackPanel Spacing="12" Margin="0,0,12,0">
+      <TextBlock Text="{x:Static res:Strings.Reports_Inventory_Title}" FontSize="22" FontWeight="SemiBold" />
+
+      <ContentControl Content="{Binding Picker}" />
+      <TextBlock Text="{Binding AsOfText}" FontWeight="SemiBold" />
+      <TextBlock Text="{x:Static res:Strings.Reports_Inventory_Note}" Opacity="0.8" TextWrapping="Wrap" />
+
+      <!-- Exportar: Excel y PDF; se deshabilitan sin datos o mientras se genera -->
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <Button MinHeight="44" Content="{x:Static res:Strings.Reports_ExportPdf}" Command="{Binding ExportPdfCommand}" />
+        <Button MinHeight="44" Content="{x:Static res:Strings.Reports_ExportExcel}" Command="{Binding ExportExcelCommand}" />
+        <TextBlock Text="{x:Static res:Strings.Reports_Exporting}" IsVisible="{Binding IsExporting}" VerticalAlignment="Center" />
+        <ProgressBar IsIndeterminate="True" Width="120" IsVisible="{Binding IsExporting}" />
+      </StackPanel>
+
+      <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsBusy}" />
+
+      <TextBlock Text="{x:Static res:Strings.Reports_NoData}" IsVisible="{Binding IsEmpty}"
+                 FontSize="16" Margin="0,24" HorizontalAlignment="Center" />
+
+      <StackPanel Spacing="12" IsVisible="{Binding HasData}">
+        <WrapPanel>
+          <vm:MetricCard Label="{x:Static res:Strings.Reports_Inventory_Total}" Value="{Binding TotalText}" />
+          <vm:MetricCard Label="{x:Static res:Strings.Reports_Inventory_Active}" Value="{Binding ActiveText}" />
+          <vm:MetricCard Label="{x:Static res:Strings.Reports_Inventory_Low}" Value="{Binding LowText}" />
+          <vm:MetricCard Label="{x:Static res:Strings.Reports_Inventory_Out}" Value="{Binding OutText}" />
+        </WrapPanel>
+
+        <ContentControl Content="{Binding Chart}" />
+
+        <!-- Filtros de la tabla -->
+        <StackPanel Orientation="Horizontal" Spacing="16">
+          <StackPanel Spacing="4" MinWidth="200">
+            <TextBlock Text="{x:Static res:Strings.Reports_Inventory_Status}" FontWeight="SemiBold" />
+            <ComboBox HorizontalAlignment="Stretch"
+                      ItemsSource="{Binding StatusOptions}"
+                      SelectedItem="{Binding SelectedStatus}"
+                      DisplayMemberBinding="{Binding Label, x:DataType=vm:InventoryStatusOption}" />
+          </StackPanel>
+          <StackPanel Spacing="4" MinWidth="280">
+            <TextBlock Text="{x:Static res:Strings.Reports_Inventory_Search}" FontWeight="SemiBold" />
+            <TextBox Text="{Binding SearchText}" PlaceholderText="{x:Static res:Strings.Reports_Inventory_Search}" />
+          </StackPanel>
+        </StackPanel>
+
+        <!-- Tabla -->
+        <Grid ColumnDefinitions="*,140,120,120,120,130" Margin="12,0">
+          <Button Grid.Column="0" Classes="flat" Content="{Binding NameHeader}" FontWeight="SemiBold"
+                  Command="{Binding SortByCommand}" CommandParameter="{x:Static rep:InventoryReportSort.Name}" />
+          <Button Grid.Column="1" Classes="flat" Content="{Binding SkuHeader}" FontWeight="SemiBold"
+                  Command="{Binding SortByCommand}" CommandParameter="{x:Static rep:InventoryReportSort.Sku}" />
+          <Button Grid.Column="2" Classes="flat" Content="{Binding OnHandHeader}" FontWeight="SemiBold"
+                  HorizontalAlignment="Right"
+                  Command="{Binding SortByCommand}" CommandParameter="{x:Static rep:InventoryReportSort.OnHand}" />
+          <TextBlock Grid.Column="3" Text="{x:Static res:Strings.Reports_Inventory_ColMinimum}" FontWeight="SemiBold"
+                     TextAlignment="Right" VerticalAlignment="Center" />
+          <TextBlock Grid.Column="4" Text="{x:Static res:Strings.Reports_Inventory_ColUnit}" FontWeight="SemiBold"
+                     Margin="12,0,0,0" VerticalAlignment="Center" />
+          <TextBlock Grid.Column="5" Text="{x:Static res:Strings.Reports_Inventory_ColStatus}" FontWeight="SemiBold"
+                     VerticalAlignment="Center" />
+        </Grid>
+        <ItemsControl ItemsSource="{Binding Rows}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:InventoryReportRowItem">
+              <Grid ColumnDefinitions="*,140,120,120,120,130" Margin="12,0" MinHeight="36">
+                <Grid.Styles>
+                  <Style Selector="TextBlock"><Setter Property="VerticalAlignment" Value="Center" /></Style>
+                </Grid.Styles>
+                <TextBlock Grid.Column="0" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                <TextBlock Grid.Column="1" Text="{Binding Sku}" />
+                <TextBlock Grid.Column="2" Text="{Binding OnHandText}" TextAlignment="Right" FontWeight="SemiBold" />
+                <TextBlock Grid.Column="3" Text="{Binding MinimumText}" TextAlignment="Right" />
+                <TextBlock Grid.Column="4" Text="{Binding Unit}" Margin="12,0,0,0" />
+                <TextBlock Grid.Column="5" Text="{Binding StatusText}" />
+              </Grid>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <TextBlock Text="{x:Static res:Strings.Reports_Inventory_NoMatches}" IsVisible="{Binding NoMatches}"
+                   HorizontalAlignment="Center" Margin="0,12" />
+
+        <Grid ColumnDefinitions="*,Auto">
+          <TextBlock VerticalAlignment="Center" Text="{Binding PageSummary}" />
+          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+            <Button MinWidth="44" MinHeight="44" Command="{Binding FirstPageCommand}"
+                    AutomationProperties.Name="{x:Static res:Strings.Products_FirstPage}">
+              <PathIcon Data="{StaticResource Icon.PageFirst}" />
+            </Button>
+            <Button MinWidth="44" MinHeight="44" Command="{Binding PreviousPageCommand}"
+                    AutomationProperties.Name="{x:Static res:Strings.Products_PreviousPage}">
+              <PathIcon Data="{StaticResource Icon.PagePrevious}" />
+            </Button>
+            <Button MinWidth="44" MinHeight="44" Command="{Binding NextPageCommand}"
+                    AutomationProperties.Name="{x:Static res:Strings.Products_NextPage}">
+              <PathIcon Data="{StaticResource Icon.PageNext}" />
+            </Button>
+            <Button MinWidth="44" MinHeight="44" Command="{Binding LastPageCommand}"
+                    AutomationProperties.Name="{x:Static res:Strings.Products_LastPage}">
+              <PathIcon Data="{StaticResource Icon.PageLast}" />
+            </Button>
+          </StackPanel>
+        </Grid>
+      </StackPanel>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

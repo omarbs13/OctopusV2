@@ -4,8 +4,9 @@ Punto de venta de escritorio para Windows y Linux, en .NET 10 con Avalonia y SQL
 Funciona sin conexión a internet. Las reglas del proyecto están en la
 [constitución](.specify/memory/constitution.md).
 
-Versión actual: **0.5.0**. Incluye catálogo de productos, control de inventario y el módulo de
-ventas (Punto de venta, cobro, ventas realizadas, cancelación y datos reales en Inicio).
+Versión actual: **0.7.0**. Incluye catálogo de productos, control de inventario, el módulo de
+ventas (Punto de venta, cobro, ventas realizadas, cancelación y datos reales en Inicio), turnos de caja,
+usuarios y roles, y reportes de ventas, arqueo e inventario exportables a PDF y Excel.
 
 ## Prerrequisitos
 
@@ -79,6 +80,7 @@ de la suite si se rompe una regla.
 - [Migraciones de la base de datos](docs/migraciones.md)
 - [Cómo agregar una funcionalidad](docs/agregar-funcionalidad.md)
 - [Módulo de ventas: atajos, folio, recuperación y cancelación](docs/ventas.md)
+- [Reportes y análisis: cifras, permisos, umbral de alerta y exportación](docs/reportes.md)
 
 ## Integración continua
 

@@ -74,7 +74,8 @@ public sealed record StockItemDto(
     long? MinimumThousandths,
     StockStatus Status,
     bool IsActive,
-    bool HasMovements = false);
+    bool HasMovements = false,
+    bool IsCritical = false);
 
 public sealed record StockPage(IReadOnlyList<StockItemDto> Items, long TotalCount, int Page, int PageSize)
 {
