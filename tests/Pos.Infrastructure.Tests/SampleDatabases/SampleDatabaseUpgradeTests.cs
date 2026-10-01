@@ -51,6 +51,9 @@ public sealed class SampleDatabaseUpgradeTests
         Assert.Equal(SampleData.AccentedName, Scalar<string>(connection, $"SELECT Name FROM Products WHERE Sku = '{SampleData.AccentedSku}'"));
         Assert.Equal(SampleData.AccentedPriceCents, Scalar<long>(connection, $"SELECT PriceCents FROM Products WHERE Sku = '{SampleData.AccentedSku}'"));
 
+        // 012: la tabla del sello de licencia queda creada y vacía; el sello se siembra al primer arranque.
+        Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM LicenseSeals"));
+
         // 003: unidad de medida (clarificación 1) e índices filtrados tras reconstruir Products.
         Assert.Equal(8, Scalar<long>(connection, "SELECT COUNT(*) FROM UnitsOfMeasure"));
         Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM Products WHERE UnitCode IS NULL OR UnitCode NOT IN (SELECT Code FROM UnitsOfMeasure)"));

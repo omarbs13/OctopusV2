@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Security.Cryptography;
 using System.Text.Json;
 using Pos.Application.Abstractions;
@@ -9,7 +8,7 @@ namespace Pos.Infrastructure.Licensing;
 
 /// <summary>
 /// Verifica sin conexión la firma ECDSA P-256 del proveedor y que la licencia sea de esta máquina
-/// (011, research §3). La app solo conoce la clave pública.
+/// (012, research §5). La app solo conoce la clave pública.
 /// </summary>
 public sealed class EcdsaLicenseVerifier : ILicenseVerifier
 {
@@ -19,7 +18,7 @@ public sealed class EcdsaLicenseVerifier : ILicenseVerifier
 
     public const string DevelopmentKeyVariable = "POS_LICENSE_DEV_PUBLIC_KEY";
 
-    private const int SupportedFormat = 1;
+    private const int SupportedFormat = 2;
     private const long MaxFileBytes = 16 * 1024;
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -43,7 +42,7 @@ public sealed class EcdsaLicenseVerifier : ILicenseVerifier
         }
 
         if (file.Format != SupportedFormat || string.IsNullOrWhiteSpace(file.MachineId) || file.IssuedUtc is null
-            || string.IsNullOrWhiteSpace(file.Signature) || !TryParseUntil(file.ValidUntil, out var until))
+            || string.IsNullOrWhiteSpace(file.Signature) || file.Modules is null)
         {
             return Rejected(LicenseImportRejection.Unreadable);
         }
@@ -59,14 +58,27 @@ public sealed class EcdsaLicenseVerifier : ILicenseVerifier
         }
 
         var issued = file.IssuedUtc.Value.ToUniversalTime();
-        if (!IsSigned(LicenseCanonical.Build(file.Format, file.MachineId, issued, until), signature))
+        if (!IsSigned(LicenseCanonical.Build(file.Format, file.MachineId, issued, file.Modules), signature))
         {
             return Rejected(LicenseImportRejection.BadSignature);
         }
 
-        return string.Equals(file.MachineId, machineId, StringComparison.Ordinal)
-            ? new LicenseVerification.Valid(new LicenseGrant(file.MachineId, issued, until, file.Signature))
-            : Rejected(LicenseImportRejection.OtherMachine);
+        if (!string.Equals(file.MachineId, machineId, StringComparison.Ordinal))
+        {
+            return Rejected(LicenseImportRejection.OtherMachine);
+        }
+
+        // Los identificadores desconocidos se ignoran (FR-008).
+        var modules = new HashSet<LicensedModule>();
+        foreach (var id in file.Modules)
+        {
+            if (ModuleCatalog.TryGetModule(id, out var module))
+            {
+                modules.Add(module);
+            }
+        }
+
+        return new LicenseVerification.Valid(new ExtendedGrant(modules, issued));
     }
 
     private static LicenseVerification.Rejected Rejected(LicenseImportRejection reason) => new LicenseVerification.Rejected(reason);
@@ -97,27 +109,10 @@ public sealed class EcdsaLicenseVerifier : ILicenseVerifier
             file = JsonSerializer.Deserialize<LicenseFileDto>(File.ReadAllText(path), JsonOptions);
             return file is not null;
         }
-        catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
+        catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException or NotSupportedException)
         {
             return false;
         }
-    }
-
-    private static bool TryParseUntil(string? text, out DateOnly? until)
-    {
-        until = null;
-        if (text is null)
-        {
-            return true;
-        }
-
-        if (DateOnly.TryParseExact(text, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
-        {
-            until = date;
-            return true;
-        }
-
-        return false;
     }
 
     private bool IsSigned(byte[] content, byte[] signature)
@@ -134,5 +129,5 @@ public sealed class EcdsaLicenseVerifier : ILicenseVerifier
         }
     }
 
-    private sealed record LicenseFileDto(int Format, string? MachineId, DateTime? IssuedUtc, string? ValidUntil, string? Signature);
+    private sealed record LicenseFileDto(int Format, string? MachineId, DateTime? IssuedUtc, List<Guid>? Modules, string? Signature);
 }

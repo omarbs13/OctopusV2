@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Pos.Application.Abstractions;
+using Pos.Application.Licensing;
 using Pos.Desktop.Auth;
 using Pos.Desktop.Common;
 
@@ -83,30 +84,34 @@ public sealed partial class MenuItemViewModel : ViewModelBase
 /// en ventanas angostas (FR-012 a FR-018). La elección del operador se guarda; la contracción
 /// automática nunca se guarda.
 /// </summary>
-public sealed partial class MenuViewModel : ViewModelBase
+public sealed partial class MenuViewModel : ViewModelBase, IDisposable
 {
     public const string PreferencesKey = "navigation";
     public const double AutoCollapseWidth = 1000;
 
+    private readonly NavigationRegistry _registry;
     private readonly Navigator _navigator;
     private readonly IPreferencesStore _preferences;
+    private readonly ILicenseState? _license;
+    private readonly SynchronizationContext? _context = SynchronizationContext.Current;
     private readonly bool _hasSavedPreferences;
 
     public MenuViewModel(
         NavigationRegistry registry,
         Navigator navigator,
         IPreferencesStore preferences,
-        UserSectionViewModel? userSection = null)
+        UserSectionViewModel? userSection = null,
+        ILicenseState? license = null)
     {
         ArgumentNullException.ThrowIfNull(registry);
         ArgumentNullException.ThrowIfNull(navigator);
+        _registry = registry;
         _navigator = navigator;
         _preferences = preferences;
+        _license = license;
         UserSection = userSection;
 
-        Items = [.. registry.Roots.Select(node => node.Group is { } group
-            ? new MenuItemViewModel(group.Id, group.Title, group.Icon, ActivateAsync, [.. node.Children.Select(ToItem)])
-            : ToItem(node.Entry!))];
+        Items = BuildItems();
 
         var saved = preferences.Load<NavigationPreferences>(PreferencesKey);
         if (saved is not null)
@@ -122,9 +127,24 @@ public sealed partial class MenuViewModel : ViewModelBase
         _navigator.CurrentChanged += (_, _) => SyncCurrent();
         SyncCurrent();
         SyncCollapsed();
+
+        if (_license is not null)
+        {
+            _license.Changed += OnLicenseChanged;
+        }
     }
 
-    public IReadOnlyList<MenuItemViewModel> Items { get; }
+    /// <summary>Opciones visibles; se reconstruye al cambiar la licencia, sin reiniciar (012, FR-017).</summary>
+    [ObservableProperty]
+    public partial IReadOnlyList<MenuItemViewModel> Items { get; private set; }
+
+    public void Dispose()
+    {
+        if (_license is not null)
+        {
+            _license.Changed -= OnLicenseChanged;
+        }
+    }
 
     /// <summary>Sección del usuario conectado al pie del menú; nula si no hay sesión (pruebas).</summary>
     public UserSectionViewModel? UserSection { get; }
@@ -169,6 +189,38 @@ public sealed partial class MenuViewModel : ViewModelBase
         {
             await _navigator.NavigateAsync(item.Id);
         }
+    }
+
+    private IReadOnlyList<MenuItemViewModel> BuildItems() =>
+        [.. _registry.Roots.Select(node => node.Group is { } group
+            ? new MenuItemViewModel(group.Id, group.Title, group.Icon, ActivateAsync, [.. node.Children.Select(ToItem)])
+            : ToItem(node.Entry!))];
+
+    private void OnLicenseChanged(object? sender, EventArgs e)
+    {
+        if (_context is null)
+        {
+            RebuildItems();
+        }
+        else
+        {
+            _context.Post(_ => RebuildItems(), null);
+        }
+    }
+
+    private void RebuildItems()
+    {
+        var expanded = Groups.Where(g => g.IsExpanded).Select(g => g.Id).ToHashSet();
+        _registry.Rebuild();
+        var items = BuildItems();
+        foreach (var group in items.Where(i => i.IsGroup && expanded.Contains(i.Id)))
+        {
+            group.IsExpanded = true;
+        }
+
+        Items = items;
+        SyncCurrent();
+        SyncCollapsed();
     }
 
     private MenuItemViewModel ToItem(NavigationEntry entry) =>

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Pos.Application.Abstractions;
 using Pos.Application.CashShifts;
 using Pos.Application.Inventory.RegisterMovement;
+using Pos.Application.Licensing;
 using Pos.Application.Sales;
 using Pos.Application.Sales.CancelSale;
 using Pos.Application.Sales.ConfirmSale;
@@ -27,7 +28,7 @@ public static class SalesTestSupport
 {
     private static readonly SemaphoreSlim ShiftGate = new(1, 1);
 
-    public static ConfirmSaleHandler ConfirmHandler(TestDb db, PosDbContext context, ISaleRepository? sales = null) =>
+    public static ConfirmSaleHandler ConfirmHandler(TestDb db, PosDbContext context, ISaleRepository? sales = null, ILicenseState? license = null) =>
         new(new AllowAllAccessControl(), 
             new ProductRepository(context),
             new InventoryRepository(context),
@@ -36,9 +37,10 @@ public static class SalesTestSupport
             ShiftGuardFor(db, context),
             new WriteTransactions(context),
             new ConfirmSaleValidator(),
-            NullLogger<ConfirmSaleHandler>.Instance);
+            NullLogger<ConfirmSaleHandler>.Instance,
+            license);
 
-    public static CancelSaleHandler CancelHandler(TestDb db, PosDbContext context, ISaleRepository? sales = null) =>
+    public static CancelSaleHandler CancelHandler(TestDb db, PosDbContext context, ISaleRepository? sales = null, ILicenseState? license = null) =>
         new(new AllowAllAccessControl(), 
             sales ?? new SaleRepository(context),
             new CashShiftRepository(context),
@@ -48,7 +50,8 @@ public static class SalesTestSupport
             db.Clock,
             db.User,
             new CancelSaleValidator(),
-            NullLogger<CancelSaleHandler>.Instance);
+            NullLogger<CancelSaleHandler>.Instance,
+            license);
 
     public static ShiftGuard ShiftGuardFor(TestDb db, PosDbContext context) =>
         new(new CashShiftRepository(context), db.User, new UserRepository(context), new SqliteSaleDraftStore(context, db.Clock, db.User));

@@ -1,3 +1,5 @@
+using Pos.Domain.Licensing;
+
 namespace Pos.Application.Abstractions;
 
 /// <summary>Error de negocio devuelto por un caso de uso. Las fallas inesperadas son excepciones.</summary>
@@ -87,8 +89,8 @@ public sealed record HeldSaleWillBeDiscarded(string OwnerName) : Error;
 /// <summary>El efectivo esperado cambió entre el conteo y el cierre; hay que revisar las cifras (008, research §8).</summary>
 public sealed record ShiftChanged : Error;
 
-/// <summary>Período de evaluación o licencia vencidos: el sistema está en modo lectura (011, FR-007).</summary>
-public sealed record LicenseExpired(string ContactPhone, string ContactEmail) : Error;
+/// <summary>El módulo no está activo en la licencia (012, FR-013).</summary>
+public sealed record ModuleNotLicensed(LicensedModule Module) : Error;
 
 /// <summary>El archivo de licencia importado se rechazó; la licencia vigente no cambió (011, FR-012).</summary>
 public sealed record InvalidLicense(LicenseImportRejection Reason) : Error;
@@ -103,7 +105,4 @@ public enum LicenseImportRejection
 
     /// <summary>La licencia corresponde a otra máquina.</summary>
     OtherMachine,
-
-    /// <summary>Es anterior a la licencia vigente.</summary>
-    Older,
 }

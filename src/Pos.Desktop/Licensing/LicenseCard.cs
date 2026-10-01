@@ -1,4 +1,4 @@
-using System.Globalization;
+using Pos.Application.Licensing;
 using Pos.Application.Licensing.GetLicenseStatus;
 using Pos.Desktop.Common;
 using Pos.Desktop.Home;
@@ -8,14 +8,14 @@ using Pos.Domain.Licensing;
 namespace Pos.Desktop.Licensing;
 
 /// <summary>
-/// "Período de evaluación" (011, FR-006): días restantes y contacto; en modo lectura indica que el
-/// sistema solo consulta; con 5 días o menos agrega el aviso de vencimiento próximo (FR-013).
+/// Tarjeta de licencia de Inicio (012): días restantes de la evaluación con los avisos exactos de 5 y 1
+/// día (FR-015, FR-016) o, en modo modular, los módulos activos. Avisa si el archivo se regeneró.
 /// </summary>
-public sealed class LicenseCard(OperationRunner runner, UseCases useCases) : DashboardCard(runner)
+public sealed class LicenseCard(OperationRunner runner, UseCases useCases, LicenseBootstrapper bootstrapper) : DashboardCard(runner)
 {
-    private bool _licensed;
+    private bool _modular;
 
-    public override string Title => _licensed ? Strings.License_CardTitleLicensed : Strings.License_CardTitle;
+    public override string Title => _modular ? Strings.License_CardTitleModular : Strings.License_CardTitle;
 
     public override string Icon => "Icon.Info";
 
@@ -26,36 +26,34 @@ public sealed class LicenseCard(OperationRunner runner, UseCases useCases) : Das
     protected override async Task LoadCoreAsync()
     {
         var status = await useCases.RunAsync<GetLicenseStatusHandler, LicenseStatusDto>(h => Task.FromResult(h.Handle()));
-        _licensed = status.Kind == LicenseKind.Licensed;
+        _modular = status.Phase == LicensePhase.Modular;
         OnPropertyChanged(nameof(Title));
 
-        var contact = string.Format(CultureInfo.CurrentCulture, Strings.License_Contact, status.ContactPhone, status.ContactEmail);
-        switch (status)
+        var notes = new List<string>();
+        if (bootstrapper.FileWasRegenerated)
         {
-            case { IsReadOnly: true, InvalidReason: { } reason }:
-                SetEmpty($"{ReasonText(reason)} {Strings.License_ReadOnly} {contact}");
+            notes.Add($"{Strings.License_Regenerated} {LicenseMessages.Contact(status)}");
+        }
+
+        if (_modular)
+        {
+            notes.Add(string.Format(System.Globalization.CultureInfo.CurrentCulture, Strings.License_ModulesActive, LicenseMessages.ModulesText(status.ActiveModules)));
+            SetReady(Strings.License_Active, string.Join(" ", notes));
+            return;
+        }
+
+        // Solo con exactamente 5 y 1 día restantes (SC-006); con cualquier otro valor no hay aviso.
+        switch (status.Warning)
+        {
+            case LicenseWarning.Near:
+                notes.Insert(0, Strings.License_NearExpiry);
                 break;
-            case { IsReadOnly: true }:
-                SetEmpty($"{Strings.License_ReadOnly} {contact}");
-                break;
-            case { DaysRemaining: null }:
-                SetReady(Strings.License_Active);
-                break;
-            case { DaysRemaining: { } days, Warning: LicenseWarning.None }:
-                SetReady(DaysText(days), contact);
-                break;
-            case { DaysRemaining: { } days }:
-                SetReady(DaysText(days), $"{NearText(days)} {contact}");
+            case LicenseWarning.Urgent:
+                notes.Insert(0, Strings.License_NearExpiryOne);
                 break;
         }
+
+        notes.Add(Strings.License_AllModules);
+        SetReady(LicenseMessages.DaysText(status.DaysRemaining), string.Join(" ", notes));
     }
-
-    internal static string ReasonText(InvalidLicenseReason reason) =>
-        reason == InvalidLicenseReason.OtherMachine ? Strings.License_InvalidOtherMachine : Strings.License_InvalidCorrupt;
-
-    private static string DaysText(int days) =>
-        days == 1 ? Strings.License_OneDayRemaining : string.Format(CultureInfo.CurrentCulture, Strings.License_DaysRemaining, days);
-
-    private static string NearText(int days) =>
-        days == 1 ? Strings.License_NearExpiryOne : string.Format(CultureInfo.CurrentCulture, Strings.License_NearExpiry, days);
 }

@@ -1,6 +1,6 @@
-using System.Globalization;
 using Microsoft.Extensions.DependencyInjection;
 using Pos.Application.Licensing;
+using Pos.Domain.Licensing;
 using Pos.Desktop.Common;
 using Pos.Desktop.Diagnostics;
 using Pos.Desktop.Resources;
@@ -19,7 +19,6 @@ public sealed class Navigator
     private readonly ILogger _logger;
     private readonly DiagnosticContext? _diagnostics;
     private readonly ILicenseState? _license;
-    private readonly VendorContact _contact;
     private readonly IDialogService? _dialogs;
     private readonly Dictionary<string, PageViewModel> _resolved = [];
 
@@ -29,11 +28,9 @@ public sealed class Navigator
         ILogger logger,
         DiagnosticContext? diagnostics = null,
         ILicenseState? license = null,
-        VendorContact? contact = null,
         IDialogService? dialogs = null)
     {
         _license = license;
-        _contact = contact ?? VendorContact.Default;
         _dialogs = dialogs;
         _registry = registry;
         _services = services;
@@ -41,8 +38,7 @@ public sealed class Navigator
         _diagnostics = diagnostics;
 
         // La pantalla segura es el Punto de venta (FR-004); la sesión vigente es la última que se registra.
-        // Con la licencia vencida el Punto de venta está bloqueado: la pantalla segura es Inicio (011).
-        _diagnostics?.SetSafeScreenAction(() => NavigateAsync(_license?.Current.IsReadOnly == true ? Home.HomeModule.PageId : SafeScreenId));
+        _diagnostics?.SetSafeScreenAction(() => NavigateAsync(SafeScreenId));
     }
 
     /// <summary>Opción a la que se regresa cuando la pantalla actual no puede continuar tras un error.</summary>
@@ -79,9 +75,11 @@ public sealed class Navigator
             return false;
         }
 
-        if (entry.Permission is { } required && _license?.IsBlocked(required) == true)
+        // 012: el acceso directo o el atajo a un módulo sin licencia se rechaza sin modificar nada.
+        if (entry.Permission is { } required && ModuleAccess.Required(required) is { } module
+            && _license?.IsModuleActive(module) == false)
         {
-            await ShowLicenseExpiredAsync();
+            await ShowModuleNotLicensedAsync();
             return false;
         }
 
@@ -112,9 +110,6 @@ public sealed class Navigator
     public Task<bool> CanLeaveCurrentAsync() =>
         CurrentPage is ILeaveGuard guard ? guard.CanLeaveAsync() : Task.FromResult(true);
 
-    private Task ShowLicenseExpiredAsync() =>
-        _dialogs?.ShowMessageAsync(
-            Strings.Common_InfoTitle,
-            string.Format(CultureInfo.CurrentCulture, Strings.License_Expired, _contact.Phone, _contact.Email))
-        ?? Task.CompletedTask;
+    private Task ShowModuleNotLicensedAsync() =>
+        _dialogs?.ShowMessageAsync(Strings.Common_InfoTitle, Strings.License_ModuleNotLicensed) ?? Task.CompletedTask;
 }

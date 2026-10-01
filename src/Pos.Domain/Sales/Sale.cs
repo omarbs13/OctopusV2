@@ -58,7 +58,7 @@ public sealed class Sale
     public static Sale Register(
         long folioNumber,
         Guid draftId,
-        Guid cashShiftId,
+        Guid? cashShiftId,
         IEnumerable<SaleLine> lines,
         IEnumerable<SalePayment> payments)
     {

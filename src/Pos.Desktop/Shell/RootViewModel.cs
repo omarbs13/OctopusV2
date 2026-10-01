@@ -1,9 +1,6 @@
-using System.Globalization;
-using Microsoft.Extensions.DependencyInjection;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Pos.Application.Abstractions;
-using Pos.Application.Licensing.GetLicenseStatus;
 using Pos.Application.Security;
 using Pos.Application.Security.GetSecuritySettings;
 using Pos.Application.Users;
@@ -13,7 +10,6 @@ using Pos.Application.Users.StartSession;
 using Pos.Desktop.Auth;
 using Pos.Desktop.Common;
 using Pos.Desktop.Resources;
-using Pos.Domain.Licensing;
 using Serilog;
 
 namespace Pos.Desktop.Shell;
@@ -173,20 +169,7 @@ public sealed partial class RootViewModel : ViewModelBase, ISessionActions, ISes
             });
 
     private void ShowLogin(string? userName) =>
-        Content = new LoginViewModel(_useCases, _runner, OnSignedInAsync, userName, LicenseLoginWarning());
-
-    /// <summary>Aviso rojo del login: queda 1 día o menos, o el sistema ya está en modo lectura (011, FR-013).</summary>
-    private string? LicenseLoginWarning()
-    {
-        var status = _root.GetRequiredService<GetLicenseStatusHandler>().Handle();
-        var contact = string.Format(CultureInfo.CurrentCulture, Strings.License_Contact, status.ContactPhone, status.ContactEmail);
-        return status switch
-        {
-            { IsReadOnly: true } => $"{Strings.License_ReadOnly} {contact}",
-            { Warning: LicenseWarning.Urgent } => $"{Strings.License_NearExpiryOne} {contact}",
-            _ => null,
-        };
-    }
+        Content = new LoginViewModel(_useCases, _runner, OnSignedInAsync, userName);
 
     private async Task OnSignedInAsync(SignInOutcome outcome)
     {

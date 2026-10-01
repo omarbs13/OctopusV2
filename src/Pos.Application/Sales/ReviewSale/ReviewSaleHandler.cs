@@ -1,7 +1,9 @@
 using Pos.Application.Abstractions;
 using Pos.Application.Inventory;
+using Pos.Application.Licensing;
 using Pos.Application.Products;
 using Pos.Application.Users.Access;
+using Pos.Domain.Licensing;
 using Pos.Domain.Users;
 
 namespace Pos.Application.Sales.ReviewSale;
@@ -12,9 +14,15 @@ public sealed class ReviewSaleHandler
     private readonly IAccessControl _access;
     private readonly IProductRepository _products;
     private readonly IInventoryRepository _inventory;
+    private readonly ILicenseState? _license;
 
-    public ReviewSaleHandler(IAccessControl access, IProductRepository products, IInventoryRepository inventory)
+    public ReviewSaleHandler(
+        IAccessControl access,
+        IProductRepository products,
+        IInventoryRepository inventory,
+        ILicenseState? license = null)
     {
+        _license = license;
         _access = access;
         _products = products;
         _inventory = inventory;
@@ -32,13 +40,17 @@ public sealed class ReviewSaleHandler
 
         var ids = query.Lines.Select(l => l.ProductId).Distinct().ToList();
         var products = (await _products.GetManyAsync(ids, includeDeleted: true, cancellationToken)).ToDictionary(p => p.Id);
-        var tracked = products.Values.Where(p => p.TracksInventory).Select(p => p.Id).ToList();
+        // 012: con Inventario sin licencia no se validan existencias.
+        var inventoryActive = _license?.IsModuleActive(LicensedModule.Inventory) != false;
+        var tracked = inventoryActive
+            ? products.Values.Where(p => p.TracksInventory).Select(p => p.Id).ToList()
+            : [];
         var stocks = tracked.Count == 0
             ? new Dictionary<Guid, Pos.Domain.Inventory.ProductStock>()
             : (await _inventory.GetStocksAsync(tracked, cancellationToken)).ToDictionary(s => s.Key, s => s.Value);
 
         var lines = query.Lines
-            .Select(l => SaleReviewer.Review(l.ProductId, l.QuantityThousandths, products.GetValueOrDefault(l.ProductId), stocks))
+            .Select(l => SaleReviewer.Review(l.ProductId, l.QuantityThousandths, products.GetValueOrDefault(l.ProductId), stocks, inventoryActive))
             .ToList();
         return Result.Success(new SaleReview(lines));
     }

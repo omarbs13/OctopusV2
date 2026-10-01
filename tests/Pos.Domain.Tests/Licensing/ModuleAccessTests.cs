@@ -1,0 +1,26 @@
+using Pos.Domain.Licensing;
+using Pos.Domain.Users;
+
+namespace Pos.Domain.Tests.Licensing;
+
+/// <summary>012, FR-021: qué permisos pertenecen a un módulo y cuáles nunca se bloquean.</summary>
+public sealed class ModuleAccessTests
+{
+    [Theory]
+    [InlineData(Permission.ViewInventory, LicensedModule.Inventory)]
+    [InlineData(Permission.RegisterMovements, LicensedModule.Inventory)]
+    [InlineData(Permission.ViewReports, LicensedModule.AdvancedReports)]
+    [InlineData(Permission.OperateShift, LicensedModule.CashShifts)]
+    [InlineData(Permission.WithdrawCash, LicensedModule.CashShifts)]
+    [InlineData(Permission.ManageShifts, LicensedModule.CashShifts)]
+    public void PermisosDeModulo_MapeanASuModulo(Permission permission, LicensedModule expected) =>
+        Assert.Equal(expected, ModuleAccess.Required(permission));
+
+    [Theory]
+    [InlineData(Permission.Sell)]
+    [InlineData(Permission.ManageUsers)]
+    [InlineData(Permission.ManageLicense)]
+    [InlineData(Permission.CancelSales)]
+    public void FuncionesBasicas_NuncaSeBloquean(Permission permission) =>
+        Assert.Null(ModuleAccess.Required(permission));
+}

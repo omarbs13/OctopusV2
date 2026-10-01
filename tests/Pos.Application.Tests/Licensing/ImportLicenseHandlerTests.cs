@@ -10,21 +10,23 @@ using Pos.Domain.Users;
 
 namespace Pos.Application.Tests.Licensing;
 
-/// <summary>011, H4: importar una licencia la aplica sin reiniciar; un rechazo no cambia nada.</summary>
+/// <summary>012, H3: importar suma módulos sin tocar la fecha de inicio; un rechazo no cambia nada.</summary>
 public sealed class ImportLicenseHandlerTests
 {
     private static readonly DateTime Issued = new(2026, 9, 29, 10, 0, 0, DateTimeKind.Utc);
 
     private readonly AuthFixture _auth = new();
     private readonly LicenseState _state;
-    private readonly FakeStore _store = new();
+    private readonly FakeLicenseStore _store = new();
+    private readonly FakeSealStore _seals = new();
     private readonly FakeVerifier _verifier = new();
+    private readonly DateTime _firstRun;
 
     public ImportLicenseHandlerTests()
     {
         _state = new LicenseState(_auth.Clock);
-        var firstRun = _auth.Clock.UtcNow.AddDays(-40);
-        _state.Set(new LicenseRecord(1, "m", firstRun, firstRun, null));
+        _firstRun = _auth.Clock.UtcNow.AddDays(-40);
+        _state.Set(new LicenseRecord(2, "m", _firstRun, _firstRun, 30, new HashSet<LicensedModule>()));
     }
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
@@ -33,6 +35,7 @@ public sealed class ImportLicenseHandlerTests
         new AccessControl(_auth.Session, _auth.Users, _auth.Grants, NullLogger<AccessControl>.Instance),
         _verifier,
         _store,
+        _seals,
         _state,
         new FakeMachine(),
         new FakeAge(),
@@ -41,19 +44,42 @@ public sealed class ImportLicenseHandlerTests
         new GetLicenseStatusHandler(_state, VendorContact.Default),
         NullLogger<ImportLicenseHandler>.Instance);
 
+    private static LicenseVerification.Valid Grant(params LicensedModule[] modules) =>
+        new LicenseVerification.Valid(new ExtendedGrant(modules.ToHashSet(), Issued));
+
     [Fact]
-    public async Task LicenciaValida_LevantaElModoLecturaSinReiniciar()
+    public async Task LicenciaValida_ActivaElModuloSinReiniciarYSinTocarLaFechaDeInicio()
     {
         _auth.SignedIn(_auth.AddUser("admin", UserRole.Admin));
-        Assert.True(_state.Current.IsReadOnly);
-        _verifier.Result = new LicenseVerification.Valid(new LicenseGrant("m", Issued, null, "firma"));
+        Assert.False(_state.IsModuleActive(LicensedModule.Inventory));
+        var changed = 0;
+        _state.Changed += (_, _) => changed++;
+        _verifier.Result = Grant(LicensedModule.Inventory);
 
         var result = await Handler.HandleAsync(new ImportLicenseCommand("a.poslic"), Ct);
 
         Assert.True(result.IsSuccess);
-        Assert.False(_state.Current.IsReadOnly);
-        Assert.NotNull(_store.Saved);
-        Assert.Single(_auth.Audit.Entries);
+        Assert.True(_state.IsModuleActive(LicensedModule.Inventory));
+        Assert.False(_state.IsModuleActive(LicensedModule.AdvancedReports));
+        Assert.Equal(_firstRun, _store.Saved!.FirstRunUtc);
+        Assert.Equal(1, changed);
+        Assert.Contains("1 módulos", Assert.Single(_auth.Audit.Entries).Details);
+    }
+
+    [Fact]
+    public async Task ImportarOtraLicencia_SumaModulos_YRepetirEsIdempotente()
+    {
+        _auth.SignedIn(_auth.AddUser("admin", UserRole.Admin));
+        _verifier.Result = Grant(LicensedModule.Inventory);
+        await Handler.HandleAsync(new ImportLicenseCommand("a.poslic"), Ct);
+        _verifier.Result = Grant(LicensedModule.AdvancedReports);
+        await Handler.HandleAsync(new ImportLicenseCommand("b.poslic"), Ct);
+        _verifier.Result = Grant(LicensedModule.Inventory);
+        await Handler.HandleAsync(new ImportLicenseCommand("a.poslic"), Ct);
+
+        Assert.Equal(2, _state.Record!.Modules.Count);
+        Assert.Contains(LicensedModule.Inventory, _state.Record.Modules);
+        Assert.Contains(LicensedModule.AdvancedReports, _state.Record.Modules);
     }
 
     [Fact]
@@ -65,21 +91,7 @@ public sealed class ImportLicenseHandlerTests
         var result = await Handler.HandleAsync(new ImportLicenseCommand("a.poslic"), Ct);
 
         Assert.Equal(LicenseImportRejection.OtherMachine, Assert.IsType<InvalidLicense>(result.Error).Reason);
-        Assert.True(_state.Current.IsReadOnly);
-        Assert.Null(_store.Saved);
-    }
-
-    [Fact]
-    public async Task LicenciaMasAntiguaQueLaVigente_SeRechaza()
-    {
-        _auth.SignedIn(_auth.AddUser("admin", UserRole.Admin));
-        var current = _state.Record! with { Grant = new LicenseGrant("m", Issued, new DateOnly(2026, 10, 1), "firma") };
-        _state.Set(current);
-        _verifier.Result = new LicenseVerification.Valid(new LicenseGrant("m", Issued.AddDays(-30), null, "firma"));
-
-        var result = await Handler.HandleAsync(new ImportLicenseCommand("a.poslic"), Ct);
-
-        Assert.Equal(LicenseImportRejection.Older, Assert.IsType<InvalidLicense>(result.Error).Reason);
+        Assert.Empty(_state.Record!.Modules);
         Assert.Null(_store.Saved);
     }
 
@@ -87,7 +99,7 @@ public sealed class ImportLicenseHandlerTests
     public async Task SinPermiso_SeRechaza()
     {
         _auth.SignedIn(_auth.AddUser("caja", UserRole.Cashier));
-        _verifier.Result = new LicenseVerification.Valid(new LicenseGrant("m", Issued, null, "firma"));
+        _verifier.Result = Grant(LicensedModule.Inventory);
 
         var result = await Handler.HandleAsync(new ImportLicenseCommand("a.poslic"), Ct);
 
@@ -95,29 +107,10 @@ public sealed class ImportLicenseHandlerTests
         Assert.Null(_store.Saved);
     }
 
-    private sealed class FakeStore : ILicenseStore
-    {
-        public LicenseRecord? Saved { get; private set; }
-
-        public LicenseLoadResult Load() => new LicenseLoadResult.Missing();
-
-        public void Save(LicenseRecord record) => Saved = record;
-    }
-
     private sealed class FakeVerifier : ILicenseVerifier
     {
         public LicenseVerification Result { get; set; } = new LicenseVerification.Rejected(LicenseImportRejection.Unreadable);
 
         public LicenseVerification Verify(string filePath, string machineId) => Result;
-    }
-
-    private sealed class FakeMachine : IMachineIdProvider
-    {
-        public string GetMachineId() => "m";
-    }
-
-    private sealed class FakeAge : IInstallationAgeReader
-    {
-        public Task<DateTime?> GetFirstUserCreatedUtcAsync(CancellationToken cancellationToken) => Task.FromResult<DateTime?>(null);
     }
 }

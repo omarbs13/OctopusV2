@@ -1,13 +1,11 @@
 namespace Pos.Domain.Licensing;
 
 /// <summary>
-/// Reglas de la licencia (011, research §4). Los días se cuentan por fecha de calendario local y
-/// con 0 días restantes el sistema ya está vencido.
+/// Reglas de la evaluación (012). Los días se cuentan por fecha de calendario local: el día 1 quedan 30,
+/// el día 30 queda 1 y el día 31 ya es modular.
 /// </summary>
 public static class LicenseEvaluator
 {
-    public const int TrialDays = 30;
-
     public const int NearDays = 5;
 
     public const int UrgentDays = 1;
@@ -20,29 +18,20 @@ public static class LicenseEvaluator
         // Un reloj atrasado no devuelve días: la fecha efectiva nunca es anterior a la última vista.
         var effective = nowUtc > record.LastSeenUtc ? nowUtc : record.LastSeenUtc;
         var today = ToLocalDate(effective, zone);
-
-        if (record.Grant is { ValidUntil: null })
-        {
-            return new LicenseStatus(LicenseKind.Licensed, null, false, LicenseWarning.None);
-        }
-
-        var remaining = record.Grant is { ValidUntil: { } until }
-            ? until.DayNumber - today.DayNumber
-            : TrialDays - (today.DayNumber - ToLocalDate(record.FirstRunUtc, zone).DayNumber);
+        var remaining = record.TrialDays - (today.DayNumber - ToLocalDate(record.FirstRunUtc, zone).DayNumber);
 
         if (remaining <= 0)
         {
-            return new LicenseStatus(LicenseKind.Expired, 0, true, LicenseWarning.None);
+            return new LicenseStatus(LicensePhase.Modular, 0, LicenseWarning.None, record.Modules);
         }
 
-        var warning = remaining <= UrgentDays
-            ? LicenseWarning.Urgent
-            : remaining <= NearDays ? LicenseWarning.Near : LicenseWarning.None;
-        return new LicenseStatus(
-            record.Grant is null ? LicenseKind.Trial : LicenseKind.Licensed,
-            remaining,
-            false,
-            warning);
+        var warning = remaining switch
+        {
+            NearDays => LicenseWarning.Near,
+            UrgentDays => LicenseWarning.Urgent,
+            _ => LicenseWarning.None,
+        };
+        return new LicenseStatus(LicensePhase.Trial, remaining, warning, record.Modules);
     }
 
     private static DateOnly ToLocalDate(DateTime utc, TimeZoneInfo zone) =>

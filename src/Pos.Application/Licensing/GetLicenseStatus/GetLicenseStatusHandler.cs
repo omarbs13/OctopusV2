@@ -3,17 +3,15 @@ using Pos.Domain.Licensing;
 namespace Pos.Application.Licensing.GetLicenseStatus;
 
 public sealed record LicenseStatusDto(
-    LicenseKind Kind,
-    int? DaysRemaining,
-    bool IsReadOnly,
+    LicensePhase Phase,
+    int DaysRemaining,
     LicenseWarning Warning,
+    IReadOnlyList<LicensedModule> ActiveModules,
     string ContactPhone,
-    string ContactEmail,
-    InvalidLicenseReason? InvalidReason);
+    string ContactEmail);
 
 /// <summary>
-/// Estado de la licencia para la tarjeta de Inicio, el login y Acerca de (011). No exige permiso:
-/// el login lo consulta antes de iniciar sesión y solo expone días y contacto.
+/// Estado de la licencia para la tarjeta de Inicio y Acerca de (012). No exige permiso y no accede a disco.
 /// </summary>
 public sealed class GetLicenseStatusHandler
 {
@@ -30,12 +28,11 @@ public sealed class GetLicenseStatusHandler
     {
         var status = _state.Current;
         return new LicenseStatusDto(
-            status.Kind,
+            status.Phase,
             status.DaysRemaining,
-            status.IsReadOnly,
             status.Warning,
+            _state.EnabledModules.ToArray(),
             _contact.Phone,
-            _contact.Email,
-            status.InvalidReason);
+            _contact.Email);
     }
 }

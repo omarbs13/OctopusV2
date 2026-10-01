@@ -863,6 +863,20 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Pos.Infrastructure.Licensing.LicenseSealEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<byte[]>("Payload")
+                        .IsRequired()
+                        .HasColumnType("BLOB");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("LicenseSeals", (string)null);
+                });
+
             modelBuilder.Entity("Pos.Domain.CashShifts.CashMovement", b =>
                 {
                     b.HasOne("Pos.Domain.CashShifts.CashShift", null)

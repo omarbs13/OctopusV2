@@ -12,7 +12,7 @@ namespace Pos.Application.Licensing.ImportLicense;
 public sealed record ImportLicenseCommand(string FilePath);
 
 /// <summary>
-/// Importa una licencia firmada y la aplica de inmediato, sin reiniciar (011, FR-011, FR-012). Un
+/// Importa una licencia extendida y suma sus módulos de inmediato, sin reiniciar (012, FR-010, FR-011, FR-017). Un
 /// rechazo conserva la licencia vigente; importar queda en la bitácora sin el contenido del archivo.
 /// </summary>
 public sealed partial class ImportLicenseHandler
@@ -20,6 +20,7 @@ public sealed partial class ImportLicenseHandler
     private readonly IAccessControl _access;
     private readonly ILicenseVerifier _verifier;
     private readonly ILicenseStore _store;
+    private readonly ILicenseSealStore _seals;
     private readonly ILicenseState _state;
     private readonly IMachineIdProvider _machine;
     private readonly IInstallationAgeReader _age;
@@ -32,6 +33,7 @@ public sealed partial class ImportLicenseHandler
         IAccessControl access,
         ILicenseVerifier verifier,
         ILicenseStore store,
+        ILicenseSealStore seals,
         ILicenseState state,
         IMachineIdProvider machine,
         IInstallationAgeReader age,
@@ -43,6 +45,7 @@ public sealed partial class ImportLicenseHandler
         _access = access;
         _verifier = verifier;
         _store = store;
+        _seals = seals;
         _state = state;
         _machine = machine;
         _age = age;
@@ -71,16 +74,18 @@ public sealed partial class ImportLicenseHandler
 
         var grant = ((LicenseVerification.Valid)verification).Grant;
         var current = _state.Record;
-        if (current?.Grant is { } active && grant.IssuedAtUtc < active.IssuedAtUtc)
-        {
-            LogRejected(LicenseImportRejection.Older);
-            return Result.Failure<LicenseStatusDto>(new InvalidLicense(LicenseImportRejection.Older));
-        }
-
         var now = _clock.UtcNow;
         var firstRun = current?.FirstRunUtc ?? await EarliestEvidenceAsync(now, cancellationToken);
         var lastSeen = current is not null && current.LastSeenUtc > now ? current.LastSeenUtc : now;
-        var record = new LicenseRecord(1, _machine.GetMachineId(), firstRun, lastSeen, grant);
+        var modules = new HashSet<LicensedModule>(current?.Modules ?? new HashSet<LicensedModule>());
+        modules.UnionWith(grant.Modules);
+        var record = new LicenseRecord(
+            LicenseRecord.CurrentVersion,
+            _machine.GetMachineId(),
+            firstRun,
+            lastSeen,
+            current?.TrialDays ?? LicenseRecord.DefaultTrialDays,
+            modules);
 
         try
         {
@@ -92,14 +97,15 @@ public sealed partial class ImportLicenseHandler
             return Result.Failure<LicenseStatusDto>(new InvalidLicense(LicenseImportRejection.Unreadable));
         }
 
+        await _seals.WriteAsync(new LicenseSeal(record.FirstRunUtc, record.LastSeenUtc), cancellationToken);
         _state.Set(record);
         _audit.Add(
             AuditActions.LicenseImported,
             AuditActions.LicenseEntity,
             Guid.CreateVersion7(),
-            grant.ValidUntil is { } until ? $"Vigente hasta {until:yyyy-MM-dd}" : "Sin vencimiento");
+            $"{grant.Modules.Count} módulos activados");
         await _audit.SaveAsync(cancellationToken);
-        LogImported(grant.ValidUntil);
+        LogImported(grant.Modules.Count);
 
         return Result.Success(_status.Handle());
     }
@@ -116,6 +122,6 @@ public sealed partial class ImportLicenseHandler
     [LoggerMessage(Level = LogLevel.Warning, Message = "No se pudo guardar el archivo de licencia importado")]
     private partial void LogNotSaved(Exception ex);
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "Licencia importada. Vigente hasta {ValidUntil}")]
-    private partial void LogImported(DateOnly? validUntil);
+    [LoggerMessage(Level = LogLevel.Information, Message = "Licencia importada. Módulos activados: {Count}")]
+    private partial void LogImported(int count);
 }

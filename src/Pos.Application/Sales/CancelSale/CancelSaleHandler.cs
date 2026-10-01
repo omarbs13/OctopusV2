@@ -5,8 +5,10 @@ using Pos.Application.Audit;
 using Pos.Application.CashShifts;
 using Pos.Application.Users.Access;
 using Pos.Application.Inventory;
+using Pos.Application.Licensing;
 using Pos.Application.Products;
 using Pos.Domain.CashShifts;
+using Pos.Domain.Licensing;
 using Pos.Domain.Sales;
 using Pos.Domain.Users;
 
@@ -30,6 +32,7 @@ public sealed partial class CancelSaleHandler
     private readonly ICurrentUser _currentUser;
     private readonly IValidator<CancelSaleCommand> _validator;
     private readonly ILogger<CancelSaleHandler> _logger;
+    private readonly ILicenseState? _license;
 
     public CancelSaleHandler(
         IAccessControl access,
@@ -41,8 +44,10 @@ public sealed partial class CancelSaleHandler
         IClock clock,
         ICurrentUser currentUser,
         IValidator<CancelSaleCommand> validator,
-        ILogger<CancelSaleHandler> logger)
+        ILogger<CancelSaleHandler> logger,
+        ILicenseState? license = null)
     {
+        _license = license;
         _access = access;
         _sales = sales;
         _shifts = shifts;
@@ -90,28 +95,35 @@ public sealed partial class CancelSaleHandler
         }
 
         // 008: solo se cancelan ventas del turno abierto actual (incluye rechazar las anteriores a 0.6.0, sin turno).
-        var shift = await _shifts.GetOpenAsync(CashRegister.Default, cancellationToken);
-        if (shift is null || sale.CashShiftId != shift.Id)
+        // 012: con Turnos sin licencia se omite esta regla y la de efectivo (no hay turno que controlar).
+        if (_license?.IsModuleActive(LicensedModule.CashShifts) != false)
         {
-            return Result.Failure(new InvalidState(CashShiftMessages.SaleFromClosedShift));
-        }
-
-        var saleCash = await _sales.GetCashAppliedAsync(sale.Id, cancellationToken);
-        if (saleCash > 0)
-        {
-            var expected = shift.ExpectedCash(await _sales.GetShiftTotalsAsync(shift.Id, cancellationToken));
-            if (!CashShiftMath.CanRefund(expected, saleCash))
+            var shift = await _shifts.GetOpenAsync(CashRegister.Default, cancellationToken);
+            if (shift is null || sale.CashShiftId != shift.Id)
             {
-                // Nunca se revela el monto esperado, a ningún rol (clarificación 1).
-                LogInsufficientCash(sale.Id, shift.Id);
-                return Result.Failure(new InsufficientCash(null));
+                return Result.Failure(new InvalidState(CashShiftMessages.SaleFromClosedShift));
+            }
+
+            var saleCash = await _sales.GetCashAppliedAsync(sale.Id, cancellationToken);
+            if (saleCash > 0)
+            {
+                var expected = shift.ExpectedCash(await _sales.GetShiftTotalsAsync(shift.Id, cancellationToken));
+                if (!CashShiftMath.CanRefund(expected, saleCash))
+                {
+                    // Nunca se revela el monto esperado, a ningún rol (clarificación 1).
+                    LogInsufficientCash(sale.Id, shift.Id);
+                    return Result.Failure(new InsufficientCash(null));
+                }
             }
         }
 
         var reason = command.Reason.Trim();
         sale.Cancel(reason, _clock.UtcNow, _currentUser.UserId);
 
-        var withMovement = sale.Lines.Where(l => l.SaleMovementId is not null).ToList();
+        var inventoryActive = _license?.IsModuleActive(LicensedModule.Inventory) != false;
+        var withMovement = inventoryActive
+            ? sale.Lines.Where(l => l.SaleMovementId is not null).ToList()
+            : [];
         var stocks = withMovement.Count == 0
             ? new Dictionary<Guid, Pos.Domain.Inventory.ProductStock>()
             : (await _inventory.GetStocksAsync([.. withMovement.Select(l => l.ProductId).Distinct()], cancellationToken))

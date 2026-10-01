@@ -3,9 +3,11 @@ using Microsoft.Extensions.Logging;
 using Pos.Application.Abstractions;
 using Pos.Application.CashShifts;
 using Pos.Application.Inventory;
+using Pos.Application.Licensing;
 using Pos.Application.Products;
 using Pos.Domain.Common;
 using Pos.Domain.Inventory;
+using Pos.Domain.Licensing;
 using Pos.Domain.Products;
 using Pos.Domain.Sales;
 using Pos.Application.Users.Access;
@@ -29,6 +31,7 @@ public sealed partial class ConfirmSaleHandler
     private readonly IWriteTransactions _transactions;
     private readonly IValidator<ConfirmSaleCommand> _validator;
     private readonly ILogger<ConfirmSaleHandler> _logger;
+    private readonly ILicenseState? _license;
 
     public ConfirmSaleHandler(
         IAccessControl access,
@@ -39,8 +42,10 @@ public sealed partial class ConfirmSaleHandler
         ShiftGuard shiftGuard,
         IWriteTransactions transactions,
         IValidator<ConfirmSaleCommand> validator,
-        ILogger<ConfirmSaleHandler> logger)
+        ILogger<ConfirmSaleHandler> logger,
+        ILicenseState? license = null)
     {
+        _license = license;
         _access = access;
         _products = products;
         _inventory = inventory;
@@ -76,21 +81,33 @@ public sealed partial class ConfirmSaleHandler
         }
 
         // 008: solo el dueño del turno abierto vende; se verifica dentro de la transacción (research §5).
-        var shiftResult = await _shiftGuard.RequireOwnOpenShiftAsync(cancellationToken);
-        if (!shiftResult.IsSuccess)
+        // 012: con Turnos sin licencia la venta se registra sin turno y sin error (FR-021).
+        Guid? shiftId = null;
+        if (_license?.IsModuleActive(LicensedModule.CashShifts) != false)
         {
-            return Result.Failure<ConfirmedSale>(shiftResult.Error);
+            var shiftResult = await _shiftGuard.RequireOwnOpenShiftAsync(cancellationToken);
+            if (!shiftResult.IsSuccess)
+            {
+                return Result.Failure<ConfirmedSale>(shiftResult.Error);
+            }
+
+            shiftId = shiftResult.Value.Id;
         }
+
+        // 012: con Inventario sin licencia no se validan existencias ni se generan movimientos.
+        var inventoryActive = _license?.IsModuleActive(LicensedModule.Inventory) != false;
 
         var ids = command.Lines.Select(l => l.ProductId).ToList();
         var products = (await _products.GetManyAsync(ids, includeDeleted: true, cancellationToken)).ToDictionary(p => p.Id);
-        var tracked = products.Values.Where(p => p.TracksInventory).Select(p => p.Id).ToList();
+        var tracked = inventoryActive
+            ? products.Values.Where(p => p.TracksInventory).Select(p => p.Id).ToList()
+            : [];
         var stocks = tracked.Count == 0
             ? []
             : (await _inventory.GetStocksAsync(tracked, cancellationToken)).ToDictionary(s => s.Key, s => s.Value);
 
         var reviews = command.Lines
-            .Select(l => SaleReviewer.Review(l.ProductId, l.QuantityThousandths, products.GetValueOrDefault(l.ProductId), stocks))
+            .Select(l => SaleReviewer.Review(l.ProductId, l.QuantityThousandths, products.GetValueOrDefault(l.ProductId), stocks, inventoryActive))
             .ToList();
         var changed = reviews.Zip(command.Lines).Any(x =>
             x.First.NotSellableReason is not null || x.First.CurrentPriceCents != x.Second.ExpectedUnitPriceCents);
@@ -102,7 +119,7 @@ public sealed partial class ConfirmSaleHandler
 
         try
         {
-            return await RegisterAsync(command, shiftResult.Value.Id, products, stocks, transaction, cancellationToken);
+            return await RegisterAsync(command, shiftId, inventoryActive, products, stocks, transaction, cancellationToken);
         }
         catch (DomainException ex)
         {
@@ -113,7 +130,8 @@ public sealed partial class ConfirmSaleHandler
 
     private async Task<Result<ConfirmedSale>> RegisterAsync(
         ConfirmSaleCommand command,
-        Guid cashShiftId,
+        Guid? cashShiftId,
+        bool inventoryActive,
         Dictionary<Guid, Product> products,
         Dictionary<Guid, ProductStock> stocks,
         IWriteTransaction transaction,
@@ -156,7 +174,7 @@ public sealed partial class ConfirmSaleHandler
         foreach (var (line, position) in cart.Lines.Select((l, i) => (l, i + 1)))
         {
             Guid? movementId = null;
-            if (line.TracksInventory)
+            if (line.TracksInventory && inventoryActive)
             {
                 if (!stocks.TryGetValue(line.ProductId, out var stock))
                 {

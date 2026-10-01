@@ -6,34 +6,37 @@ using Pos.Domain.Licensing;
 
 namespace Pos.Desktop.Licensing;
 
-/// <summary>Textos de licencia vencida con el contacto del proveedor (011, FR-007).</summary>
+/// <summary>Textos de la licencia modular (012); nunca muestran los identificadores de los módulos.</summary>
 internal static class LicenseMessages
 {
-    public static string Expired(LicenseExpired error) =>
-        string.Format(CultureInfo.CurrentCulture, Strings.License_Expired, error.ContactPhone, error.ContactEmail);
-
     public static string Rejection(LicenseImportRejection reason) => reason switch
     {
         LicenseImportRejection.BadSignature => Strings.License_Reject_BadSignature,
         LicenseImportRejection.OtherMachine => Strings.License_Reject_OtherMachine,
-        LicenseImportRejection.Older => Strings.License_Reject_Older,
         _ => Strings.License_Reject_Unreadable,
     };
 
-    /// <summary>Resumen de una línea del estado vigente para Administración de licencia.</summary>
-    public static string Summary(LicenseStatusDto status)
+    public static string ModuleName(LicensedModule module) => module switch
     {
-        var contact = string.Format(CultureInfo.CurrentCulture, Strings.License_Contact, status.ContactPhone, status.ContactEmail);
-        return status switch
-        {
-            { InvalidReason: { } reason } => $"{LicenseCard.ReasonText(reason)} {Strings.License_ReadOnly} {contact}",
-            { IsReadOnly: true } => $"{Strings.License_ReadOnly} {contact}",
-            { DaysRemaining: null } => Strings.License_SummaryUnlimited,
-            { Kind: LicenseKind.Licensed, DaysRemaining: { } days } => string.Format(CultureInfo.CurrentCulture, Strings.License_SummaryLicensed, DaysText(days)),
-            { DaysRemaining: { } days } => string.Format(CultureInfo.CurrentCulture, Strings.License_SummaryTrial, DaysText(days)),
-            _ => string.Empty,
-        };
-    }
+        LicensedModule.Inventory => Strings.Module_Inventory,
+        LicensedModule.AdvancedReports => Strings.Module_AdvancedReports,
+        LicensedModule.CreditAndCustomers => Strings.Module_CreditAndCustomers,
+        LicensedModule.CashShifts => Strings.Module_CashShifts,
+        _ => Strings.Module_Returns,
+    };
 
-    private static string DaysText(int days) => days == 1 ? "1 día" : string.Format(CultureInfo.CurrentCulture, "{0} días", days);
+    /// <summary>Nombres de los módulos activos, o "ninguno".</summary>
+    public static string ModulesText(IReadOnlyList<LicensedModule> modules) =>
+        modules.Count == 0 ? Strings.License_NoModules : string.Join(", ", modules.Select(ModuleName));
+
+    /// <summary>Resumen de una línea del estado vigente para Administración de licencia.</summary>
+    public static string Summary(LicenseStatusDto status) => status.Phase == LicensePhase.Trial
+        ? string.Format(CultureInfo.CurrentCulture, Strings.License_SummaryTrial, DaysText(status.DaysRemaining))
+        : string.Format(CultureInfo.CurrentCulture, Strings.License_SummaryModular, string.Format(CultureInfo.CurrentCulture, Strings.License_ModulesActive, ModulesText(status.ActiveModules)));
+
+    public static string Contact(LicenseStatusDto status) =>
+        string.Format(CultureInfo.CurrentCulture, Strings.License_Contact, status.ContactPhone, status.ContactEmail);
+
+    internal static string DaysText(int days) =>
+        days == 1 ? Strings.License_OneDayRemaining : string.Format(CultureInfo.CurrentCulture, Strings.License_DaysRemaining, days);
 }

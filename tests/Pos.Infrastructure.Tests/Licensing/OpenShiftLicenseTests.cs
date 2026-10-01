@@ -5,13 +5,11 @@ using Pos.Infrastructure.Tests.TestSupport;
 
 namespace Pos.Infrastructure.Tests.Licensing;
 
-/// <summary>011, H3 y FR-010: con la licencia vencida no se abren turnos, pero uno abierto se puede cerrar.</summary>
+/// <summary>012, H4: con Turnos sin licencia no se abren turnos; el rechazo lo da el control de acceso.</summary>
 public sealed class OpenShiftLicenseTests : IAsyncLifetime
 {
     private TestDb _db = null!;
     private ShiftTestSupport _shifts = null!;
-
-    private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     public async ValueTask InitializeAsync()
     {
@@ -26,18 +24,13 @@ public sealed class OpenShiftLicenseTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Vencida_NoAbreTurno_PeroPermiteCerrarElQueEstabaAbierto()
+    public async Task TurnosSinLicencia_NoAbreTurno()
     {
         var state = new LicenseState(_db.Clock);
-        var firstRun = _db.Clock.UtcNow.AddDays(-3);
-        state.Set(new LicenseRecord(1, "m", firstRun, firstRun, null));
+        var firstRun = _db.Clock.UtcNow.AddDays(-60);
+        state.Set(new LicenseRecord(2, "m", firstRun, firstRun, 30, new HashSet<LicensedModule>()));
         _shifts.License = state;
-        var shift = (await _shifts.OpenAsync(0, confirmZero: true)).Value;
 
-        state.Set(new LicenseRecord(1, "m", firstRun.AddDays(-60), firstRun.AddDays(-60), null));
-
-        Assert.IsType<LicenseExpired>((await _shifts.OpenAsync(0, confirmZero: true)).Error);
-        var count = await _shifts.CountAsync(shift.ShiftId, 0);
-        Assert.True((await _shifts.CloseAsync(shift.ShiftId, count.Value.Version, 0, count.Value.ExpectedCents)).IsSuccess);
+        Assert.IsType<ModuleNotLicensed>((await _shifts.OpenAsync(0, confirmZero: true)).Error);
     }
 }

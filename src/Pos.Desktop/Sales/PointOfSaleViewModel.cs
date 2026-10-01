@@ -660,8 +660,8 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
                 checkout.ErrorMessage = validation.Errors is [{ } first, ..] ? first.Message : Strings.Sale_NotRegistered;
                 break;
 
-            case LicenseExpired expired:
-                checkout.ErrorMessage = Licensing.LicenseMessages.Expired(expired);
+            case ModuleNotLicensed:
+                checkout.ErrorMessage = Strings.License_ModuleNotLicensed;
                 break;
 
             default:

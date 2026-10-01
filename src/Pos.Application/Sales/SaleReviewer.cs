@@ -11,7 +11,8 @@ internal static class SaleReviewer
         Guid productId,
         long quantityThousandths,
         Product? product,
-        IReadOnlyDictionary<Guid, ProductStock> stocks)
+        IReadOnlyDictionary<Guid, ProductStock> stocks,
+        bool checkStock = true)
     {
         if (product is null)
         {
@@ -20,7 +21,7 @@ internal static class SaleReviewer
 
         long? onHand = null;
         var insufficient = false;
-        if (product.TracksInventory)
+        if (product.TracksInventory && checkStock)
         {
             var level = stocks.TryGetValue(product.Id, out var stock) ? stock.OnHand : StockLevel.Zero;
             onHand = level.Thousandths;

@@ -2,7 +2,6 @@ using FluentValidation;
 using Microsoft.Extensions.Logging;
 using Pos.Application.Abstractions;
 using Pos.Application.Audit;
-using Pos.Application.Licensing;
 using Pos.Application.Printing.Ticket;
 using Pos.Application.Products;
 using Pos.Application.Users.Access;
@@ -27,8 +26,6 @@ public sealed partial class OpenShiftHandler
     private readonly IValidator<OpenShiftCommand> _validator;
     private readonly ShiftGuard _guard;
     private readonly ILogger<OpenShiftHandler> _logger;
-    private readonly ILicenseState? _license;
-    private readonly VendorContact _contact;
 
     public OpenShiftHandler(
         IAccessControl access,
@@ -39,12 +36,8 @@ public sealed partial class OpenShiftHandler
         ICurrentUser currentUser,
         IValidator<OpenShiftCommand> validator,
         ShiftGuard guard,
-        ILogger<OpenShiftHandler> logger,
-        ILicenseState? license = null,
-        VendorContact? contact = null)
+        ILogger<OpenShiftHandler> logger)
     {
-        _license = license;
-        _contact = contact ?? VendorContact.Default;
         _access = access;
         _shifts = shifts;
         _audit = audit;
@@ -64,12 +57,6 @@ public sealed partial class OpenShiftHandler
         if (!access.Allowed)
         {
             return Result.Failure<CurrentShiftSummary>(access.Error!);
-        }
-
-        // Con la licencia vencida no se abren turnos (011, FR-007); cerrar uno ya abierto sí se permite.
-        if (_license?.Current.IsReadOnly == true)
-        {
-            return Result.Failure<CurrentShiftSummary>(new LicenseExpired(_contact.Phone, _contact.Email));
         }
 
         var validation = await _validator.ValidateAsync(command, cancellationToken);

@@ -2,12 +2,13 @@ using Pos.Domain.Licensing;
 
 namespace Pos.Domain.Tests.Licensing;
 
-/// <summary>011, H2 y H3: días restantes y vencimiento.</summary>
+/// <summary>012: evaluación de 30 días con todos los módulos y modo modular después.</summary>
 public sealed class LicenseEvaluatorTests
 {
     private static readonly DateTime FirstRun = new(2026, 9, 1, 12, 0, 0, DateTimeKind.Utc);
 
-    private static LicenseRecord Trial(DateTime? lastSeen = null) => new(1, "m", FirstRun, lastSeen ?? FirstRun, null);
+    private static LicenseRecord Record(DateTime? lastSeen = null, params LicensedModule[] modules) =>
+        new(2, "m", FirstRun, lastSeen ?? FirstRun, 30, modules.ToHashSet());
 
     private static LicenseStatus At(LicenseRecord record, int daysAfterStart) =>
         LicenseEvaluator.Evaluate(record, FirstRun.AddDays(daysAfterStart), TimeZoneInfo.Utc);
@@ -16,65 +17,44 @@ public sealed class LicenseEvaluatorTests
     [InlineData(0, 30)]
     [InlineData(12, 18)]
     [InlineData(29, 1)]
-    public void Evaluacion_CuentaLosDiasRestantes(int daysAfterStart, int expected)
+    public void Evaluacion_ActivaTodosLosModulosHastaElDia30(int daysAfterStart, int expected)
     {
-        var status = At(Trial(), daysAfterStart);
+        var status = At(Record(), daysAfterStart);
 
-        Assert.Equal(LicenseKind.Trial, status.Kind);
+        Assert.Equal(LicensePhase.Trial, status.Phase);
         Assert.Equal(expected, status.DaysRemaining);
-        Assert.False(status.IsReadOnly);
+        Assert.All(ModuleCatalog.All, m => Assert.True(status.IsModuleActive(m)));
     }
 
     [Theory]
     [InlineData(30)]
     [InlineData(45)]
-    public void Evaluacion_ConCeroDiasRestantes_YaEstaVencida(int daysAfterStart)
+    public void Dia31_EsModularYSoloQuedanLosComprados(int daysAfterStart)
     {
-        var status = At(Trial(), daysAfterStart);
+        var status = At(Record(null, LicensedModule.Inventory), daysAfterStart);
 
-        Assert.Equal(LicenseKind.Expired, status.Kind);
-        Assert.True(status.IsReadOnly);
+        Assert.Equal(LicensePhase.Modular, status.Phase);
+        Assert.Equal(0, status.DaysRemaining);
+        Assert.True(status.IsModuleActive(LicensedModule.Inventory));
+        Assert.False(status.IsModuleActive(LicensedModule.CashShifts));
+        Assert.Equal(LicenseWarning.None, status.Warning);
     }
 
     [Theory]
+    [InlineData(24, LicenseWarning.None)]
     [InlineData(25, LicenseWarning.Near)]
+    [InlineData(26, LicenseWarning.None)]
+    [InlineData(28, LicenseWarning.None)]
     [InlineData(29, LicenseWarning.Urgent)]
     [InlineData(10, LicenseWarning.None)]
-    public void Evaluacion_AvisaACincoYUnDia(int daysAfterStart, LicenseWarning expected) =>
-        Assert.Equal(expected, At(Trial(), daysAfterStart).Warning);
+    public void Aviso_SoloConExactamenteCincoYUnDia(int daysAfterStart, LicenseWarning expected) =>
+        Assert.Equal(expected, At(Record(), daysAfterStart).Warning);
 
     [Fact]
     public void RelojRetrasado_NoDevuelveDias()
     {
-        var record = Trial(lastSeen: FirstRun.AddDays(20));
-
-        var status = At(record, 5);
+        var status = At(Record(lastSeen: FirstRun.AddDays(20)), 5);
 
         Assert.Equal(10, status.DaysRemaining);
     }
-
-    [Fact]
-    public void Concesion_ConFechaDeFin_CuentaHastaEsaFecha()
-    {
-        var grant = new LicenseGrant("m", FirstRun, new DateOnly(2026, 12, 1), "firma");
-        var record = Trial() with { Grant = grant };
-
-        Assert.Equal(DaysUntil(record, new DateOnly(2026, 12, 1)), At(record, 31).DaysRemaining);
-        Assert.Equal(LicenseKind.Expired, LicenseEvaluator.Evaluate(record, new DateTime(2026, 12, 1, 12, 0, 0, DateTimeKind.Utc), TimeZoneInfo.Utc).Kind);
-    }
-
-    [Fact]
-    public void Concesion_SinVencimiento_NuncaVence()
-    {
-        var record = Trial() with { Grant = new LicenseGrant("m", FirstRun, null, "firma") };
-
-        var status = At(record, 4000);
-
-        Assert.Equal(LicenseKind.Licensed, status.Kind);
-        Assert.Null(status.DaysRemaining);
-        Assert.False(status.IsReadOnly);
-    }
-
-    private static int DaysUntil(LicenseRecord record, DateOnly end) =>
-        end.DayNumber - DateOnly.FromDateTime(FirstRun.AddDays(31)).DayNumber;
 }

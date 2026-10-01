@@ -96,8 +96,8 @@ public sealed partial class OpenShiftViewModel : ViewModelBase
                     ErrorMessage = Strings.Common_Forbidden;
                     break;
 
-                case LicenseExpired expired:
-                    ErrorMessage = Licensing.LicenseMessages.Expired(expired);
+                case ModuleNotLicensed:
+                    ErrorMessage = Strings.License_ModuleNotLicensed;
                     break;
 
                 default:

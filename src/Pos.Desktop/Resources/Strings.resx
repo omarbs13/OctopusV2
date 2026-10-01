@@ -668,17 +668,25 @@
   <data name="Session_ThemeLight" xml:space="preserve"><value>Claro</value></data>
   <data name="Session_ThemeDark" xml:space="preserve"><value>Oscuro</value></data>
   <data name="License_CardTitle" xml:space="preserve"><value>Período de evaluación</value></data>
-  <data name="License_CardTitleLicensed" xml:space="preserve"><value>Licencia</value></data>
+  <data name="License_Contact" xml:space="preserve"><value>Contacto: {0} / {1}</value></data>
+  <data name="License_Active" xml:space="preserve"><value>Modo modular</value></data>
+  <data name="License_CardTitleModular" xml:space="preserve"><value>Licencia</value></data>
   <data name="License_DaysRemaining" xml:space="preserve"><value>{0} días restantes</value></data>
   <data name="License_OneDayRemaining" xml:space="preserve"><value>1 día restante</value></data>
-  <data name="License_Active" xml:space="preserve"><value>Licencia activa</value></data>
-  <data name="License_Contact" xml:space="preserve"><value>Contacto: {0} / {1}</value></data>
-  <data name="License_ReadOnly" xml:space="preserve"><value>Sistema en modo lectura. Contacte para activación.</value></data>
-  <data name="License_Expired" xml:space="preserve"><value>Período de evaluación vencido. Contacte a {0} / {1}.</value></data>
-  <data name="License_InvalidOtherMachine" xml:space="preserve"><value>La licencia de esta carpeta de datos pertenece a otra máquina.</value></data>
-  <data name="License_InvalidCorrupt" xml:space="preserve"><value>El archivo de licencia no es válido.</value></data>
-  <data name="License_NearExpiry" xml:space="preserve"><value>Quedan {0} días. Contacte para renovar.</value></data>
-  <data name="License_NearExpiryOne" xml:space="preserve"><value>Queda 1 día. Contacte para renovar.</value></data>
+  <data name="License_ModulesActive" xml:space="preserve"><value>Módulos activos: {0}</value></data>
+  <data name="License_NoModules" xml:space="preserve"><value>ninguno</value></data>
+  <data name="License_AllModules" xml:space="preserve"><value>Todos los módulos activos durante la evaluación</value></data>
+  <data name="License_ModuleNotLicensed" xml:space="preserve"><value>Este módulo no está activo en tu licencia.</value></data>
+  <data name="License_NearExpiry" xml:space="preserve"><value>Te quedan 5 días de acceso a todos los módulos.</value></data>
+  <data name="License_NearExpiryOne" xml:space="preserve"><value>Mañana vence el período de evaluación.</value></data>
+  <data name="License_Regenerated" xml:space="preserve"><value>El archivo de licencia no era válido o faltaba y se regeneró. La evaluación continúa; si ya había comprado módulos, se reactivan al importar de nuevo su licencia extendida.</value></data>
+  <data name="License_SummaryTrial" xml:space="preserve"><value>Período de evaluación: {0} restantes, con todos los módulos.</value></data>
+  <data name="License_SummaryModular" xml:space="preserve"><value>Licencia modular. {0}</value></data>
+  <data name="Module_Inventory" xml:space="preserve"><value>Inventario</value></data>
+  <data name="Module_AdvancedReports" xml:space="preserve"><value>Reportes avanzados</value></data>
+  <data name="Module_CreditAndCustomers" xml:space="preserve"><value>Crédito y clientes</value></data>
+  <data name="Module_CashShifts" xml:space="preserve"><value>Turnos y arqueo</value></data>
+  <data name="Module_Returns" xml:space="preserve"><value>Devoluciones</value></data>
   <data name="License_AdminTitle" xml:space="preserve"><value>Administración de licencia</value></data>
   <data name="License_Import" xml:space="preserve"><value>Importar licencia…</value></data>
   <data name="License_ImportTitle" xml:space="preserve"><value>Seleccionar archivo de licencia</value></data>
@@ -691,8 +699,4 @@
   <data name="License_Reject_Unreadable" xml:space="preserve"><value>El archivo de licencia no es válido.</value></data>
   <data name="License_Reject_BadSignature" xml:space="preserve"><value>El archivo de licencia no es auténtico o fue modificado.</value></data>
   <data name="License_Reject_OtherMachine" xml:space="preserve"><value>Esa licencia pertenece a otra máquina. La licencia actual no cambió.</value></data>
-  <data name="License_Reject_Older" xml:space="preserve"><value>Esa licencia es anterior a la que ya está en uso. La licencia actual no cambió.</value></data>
-  <data name="License_SummaryTrial" xml:space="preserve"><value>Período de evaluación: {0} restantes.</value></data>
-  <data name="License_SummaryLicensed" xml:space="preserve"><value>Licencia vigente: {0} restantes.</value></data>
-  <data name="License_SummaryUnlimited" xml:space="preserve"><value>Licencia activa sin vencimiento.</value></data>
 </root>

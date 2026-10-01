@@ -29,6 +29,7 @@ public static class AuditActions
     public const string ReportExported = "REPORT_EXPORTED";
     public const string ReportSettingsChanged = "REPORT_SETTINGS_CHANGED";
     public const string LicenseImported = "LICENSE_IMPORTED";
+    public const string LicenseRecovered = "LICENSE_RECOVERED";
 
     public const string UserEntity = "User";
     public const string CashShiftEntity = "CashShift";
@@ -62,6 +63,7 @@ public static class AuditActions
         [ReportExported] = "Reporte exportado",
         [ReportSettingsChanged] = "Configuración de reportes modificada",
         [LicenseImported] = "Licencia importada",
+        [LicenseRecovered] = "Licencia regenerada",
     }.ToFrozenDictionary();
 
     /// <summary>Texto en español del evento; el código tal cual si no está en el catálogo.</summary>

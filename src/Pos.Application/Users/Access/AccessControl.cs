@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using Pos.Application.Abstractions;
 using Pos.Application.Licensing;
 using Pos.Application.Users.Session;
+using Pos.Domain.Licensing;
 using Pos.Domain.Users;
 
 namespace Pos.Application.Users.Access;
@@ -31,18 +32,15 @@ public sealed partial class AccessControl : IAccessControl
     private readonly IAuthorizationGrants _grants;
     private readonly ILogger<AccessControl> _logger;
     private readonly ILicenseState? _license;
-    private readonly VendorContact _contact;
 
     public AccessControl(
         IUserSession session,
         IUserRepository users,
         IAuthorizationGrants grants,
         ILogger<AccessControl> logger,
-        ILicenseState? license = null,
-        VendorContact? contact = null)
+        ILicenseState? license = null)
     {
         _license = license;
-        _contact = contact ?? VendorContact.Default;
         _session = session;
         _users = users;
         _grants = grants;
@@ -54,11 +52,11 @@ public sealed partial class AccessControl : IAccessControl
 
     public async Task<AccessDecision> CheckAsync(Permission permission, Guid? authorizationGrantId, CancellationToken cancellationToken)
     {
-        // Modo lectura por licencia vencida (011): se bloquea antes de revisar roles.
-        if (_license?.IsBlocked(permission) == true)
+        // Módulo sin licencia (012): se rechaza antes de revisar roles y sin tocar datos.
+        if (InactiveModule(permission) is { } module)
         {
             LogLicenseBlocked(_session.User?.Id, permission);
-            return AccessDecision.Deny(new LicenseExpired(_contact.Phone, _contact.Email));
+            return AccessDecision.Deny(new ModuleNotLicensed(module));
         }
 
         var sessionUser = _session.User;
@@ -87,14 +85,22 @@ public sealed partial class AccessControl : IAccessControl
 
     public async Task<bool> HasAsync(Permission permission, CancellationToken cancellationToken)
     {
+        if (InactiveModule(permission) is not null)
+        {
+            return false;
+        }
+
         var sessionUser = _session.User;
         var user = sessionUser is null ? null : await _users.GetAsync(sessionUser.Id, cancellationToken);
         return user is { IsActive: true, IsSystem: false } && RolePermissions.Has(user.Role, permission);
     }
 
+    private LicensedModule? InactiveModule(Permission permission) =>
+        ModuleAccess.Required(permission) is { } module && _license?.IsModuleActive(module) == false ? module : null;
+
     [LoggerMessage(Level = LogLevel.Warning, Message = "Operación rechazada por permisos. UserId={UserId} Permiso={Permission}")]
     private partial void LogDenied(Guid? userId, Permission permission);
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "Operación bloqueada por licencia vencida. UserId={UserId} Permiso={Permission}")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Operación bloqueada: módulo sin licencia. UserId={UserId} Permiso={Permission}")]
     private partial void LogLicenseBlocked(Guid? userId, Permission permission);
 }

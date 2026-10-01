@@ -21,9 +21,6 @@
     <StackPanel Spacing="12">
       <TextBlock Text="{x:Static res:Strings.Auth_LoginTitle}" FontSize="22" FontWeight="SemiBold" />
 
-      <TextBlock Classes="error" FontSize="14" FontWeight="SemiBold" Text="{Binding LicenseWarning}"
-                 IsVisible="{Binding LicenseWarning, Converter={x:Static ObjectConverters.IsNotNull}}" />
-
       <StackPanel Spacing="4">
         <forms:FieldLabel Text="{x:Static res:Strings.Auth_UserName}" IsRequired="True" />
         <TextBox x:Name="UserNameBox" Text="{Binding UserName}" MaxLength="40" MinHeight="44">

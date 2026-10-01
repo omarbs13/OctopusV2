@@ -86,8 +86,7 @@ public sealed class ShiftTestSupport
             _db.User,
             new OpenShiftValidator(),
             Guard(context),
-            NullLogger<OpenShiftHandler>.Instance,
-            License).HandleAsync(new OpenShiftCommand(floatCents, confirmZero), Ct);
+            NullLogger<OpenShiftHandler>.Instance).HandleAsync(new OpenShiftCommand(floatCents, confirmZero), Ct);
     }
 
     public async Task<Result<RegisteredMovement>> MoveAsync(

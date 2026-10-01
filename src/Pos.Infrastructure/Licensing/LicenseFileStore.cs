@@ -9,13 +9,14 @@ using Pos.Domain.Licensing;
 namespace Pos.Infrastructure.Licensing;
 
 /// <summary>
-/// <c>license.lic</c> (011, research §2): encabezado (marca, versión, huella del ID de máquina), nonce,
+/// <c>license.lic</c> (012, contracts §2; la versión 1 de 011 solo se lee para migrar): encabezado (marca, versión, huella del ID de máquina), nonce,
 /// etiqueta y contenido cifrado con AES-256-GCM. La clave sale de HKDF con el ID de máquina, así que
 /// copiarlo a otra máquina o editarlo lo invalida.
 /// </summary>
 public sealed partial class LicenseFileStore : ILicenseStore
 {
-    private const int CurrentVersion = 1;
+    private const int CurrentVersion = 2;
+    private const int LegacyVersion = 1;
     private const int FingerprintLength = 8;
     private const int NonceLength = 12;
     private const int TagLength = 16;
@@ -49,21 +50,30 @@ public sealed partial class LicenseFileStore : ILicenseStore
             var bytes = File.ReadAllBytes(file);
             var machineId = _machine.GetMachineId();
             if (bytes.Length < HeaderLength + NonceLength + TagLength || !bytes.AsSpan(0, Magic.Length).SequenceEqual(Magic)
-                || bytes[Magic.Length] != CurrentVersion)
+                || bytes[Magic.Length] is not (CurrentVersion or LegacyVersion))
             {
-                return Invalid(InvalidLicenseReason.Corrupt);
+                return Unusable("formato");
             }
 
             if (!bytes.AsSpan(Magic.Length + 1, FingerprintLength).SequenceEqual(Fingerprint(machineId)))
             {
-                return Invalid(InvalidLicenseReason.OtherMachine);
+                return Unusable("otra máquina");
             }
 
+            var version = bytes[Magic.Length];
             var content = Decrypt(bytes, machineId);
+            if (version == LegacyVersion)
+            {
+                var legacy = JsonSerializer.Deserialize<LegacyContent>(content, JsonOptions);
+                return legacy is null || !string.Equals(legacy.MachineId, machineId, StringComparison.Ordinal)
+                    ? Unusable("contenido")
+                    : new LicenseLoadResult.LegacyV1(legacy.ToLegacy());
+            }
+
             var data = JsonSerializer.Deserialize<FileContent>(content, JsonOptions);
             if (data is null || !string.Equals(data.MachineId, machineId, StringComparison.Ordinal))
             {
-                return Invalid(InvalidLicenseReason.OtherMachine);
+                return Unusable("contenido");
             }
 
             return new LicenseLoadResult.Loaded(data.ToRecord());
@@ -71,8 +81,7 @@ public sealed partial class LicenseFileStore : ILicenseStore
         catch (Exception ex) when (ex is CryptographicException or JsonException or FormatException or IOException
             or UnauthorizedAccessException or ArgumentException)
         {
-            LogUnreadable(ex.GetType().Name);
-            return Invalid(InvalidLicenseReason.Corrupt);
+            return Unusable(ex.GetType().Name);
         }
     }
 
@@ -126,47 +135,56 @@ public sealed partial class LicenseFileStore : ILicenseStore
     private static byte[] Fingerprint(string machineId) =>
         SHA256.HashData(Encoding.UTF8.GetBytes("fp:" + machineId))[..FingerprintLength];
 
-    private LicenseLoadResult.Invalid Invalid(InvalidLicenseReason reason)
+    private LicenseLoadResult.Unusable Unusable(string reason)
     {
-        LogInvalid(reason);
-        return new LicenseLoadResult.Invalid(reason);
+        LogUnusable(reason);
+        return new LicenseLoadResult.Unusable();
     }
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "El archivo de licencia no es válido: {Reason}")]
-    private partial void LogInvalid(InvalidLicenseReason reason);
+    [LoggerMessage(Level = LogLevel.Warning, Message = "El archivo de licencia es inutilizable: {Reason}")]
+    private partial void LogUnusable(string reason);
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "No se pudo leer el archivo de licencia ({ErrorType})")]
-    private partial void LogUnreadable(string errorType);
-
-    private sealed record FileContent(string MachineId, DateTime FirstRunUtc, DateTime LastSeenUtc, GrantContent? Grant)
+    private sealed record FileContent(string MachineId, DateTime FirstRunUtc, DateTime LastSeenUtc, int TrialDays, List<Guid> Modules)
     {
         public static FileContent From(LicenseRecord record) => new(
             record.MachineId,
             record.FirstRunUtc,
             record.LastSeenUtc,
-            record.Grant is null
-                ? null
-                : new GrantContent(
-                    record.Grant.MachineId,
-                    record.Grant.IssuedAtUtc,
-                    record.Grant.ValidUntil?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
-                    record.Grant.Signature));
+            record.TrialDays,
+            [.. record.Modules.Select(ModuleCatalog.IdOf)]);
 
-        public LicenseRecord ToRecord() => new(
-            CurrentVersion,
-            MachineId,
-            DateTime.SpecifyKind(FirstRunUtc, DateTimeKind.Utc),
-            DateTime.SpecifyKind(LastSeenUtc, DateTimeKind.Utc),
-            Grant is null
-                ? null
-                : new LicenseGrant(
-                    Grant.MachineId,
-                    DateTime.SpecifyKind(Grant.IssuedAtUtc, DateTimeKind.Utc),
-                    Grant.ValidUntil is null
-                        ? null
-                        : DateOnly.ParseExact(Grant.ValidUntil, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
-                    Grant.Signature));
+        public LicenseRecord ToRecord()
+        {
+            // Los identificadores desconocidos se ignoran (FR-008).
+            var modules = new HashSet<LicensedModule>();
+            foreach (var id in Modules ?? [])
+            {
+                if (ModuleCatalog.TryGetModule(id, out var module))
+                {
+                    modules.Add(module);
+                }
+            }
+
+            return new LicenseRecord(
+                CurrentVersion,
+                MachineId,
+                DateTime.SpecifyKind(FirstRunUtc, DateTimeKind.Utc),
+                DateTime.SpecifyKind(LastSeenUtc, DateTimeKind.Utc),
+                TrialDays,
+                modules);
+        }
     }
 
-    private sealed record GrantContent(string MachineId, DateTime IssuedAtUtc, string? ValidUntil, string Signature);
+    private sealed record LegacyContent(string MachineId, DateTime FirstRunUtc, DateTime LastSeenUtc, LegacyGrant? Grant)
+    {
+        public LegacyLicense ToLegacy() => new(
+            DateTime.SpecifyKind(FirstRunUtc, DateTimeKind.Utc),
+            DateTime.SpecifyKind(LastSeenUtc, DateTimeKind.Utc),
+            Grant is not null,
+            Grant?.ValidUntil is { } text
+                ? DateOnly.ParseExact(text, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)
+                : null);
+    }
+
+    private sealed record LegacyGrant(string? ValidUntil);
 }

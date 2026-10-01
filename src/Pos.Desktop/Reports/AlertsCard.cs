@@ -33,9 +33,9 @@ public sealed class AlertsCard(OperationRunner runner, UseCases useCases) : Dash
     protected override async Task LoadCoreAsync()
     {
         var result = await useCases.RunAsync<GetReportAlertsHandler, Result<ReportAlerts>>(h => h.HandleAsync(CancellationToken.None));
-        if (result.Error is LicenseExpired)
+        if (result.Error is ModuleNotLicensed)
         {
-            // Modo lectura: los reportes están bloqueados (011); Inicio ya lo explica en su tarjeta.
+            // Reportes sin licencia (012): la tarjeta se oculta sin mostrar error.
             SetEmpty(Strings.Card_Unavailable);
             return;
         }

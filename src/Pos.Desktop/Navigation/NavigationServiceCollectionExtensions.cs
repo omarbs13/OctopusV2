@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Microsoft.Extensions.DependencyInjection;
+using Pos.Application.Licensing;
 using Pos.Desktop.Common;
 using Pos.Desktop.Home;
 using Pos.Domain.Users;
@@ -16,7 +17,8 @@ public static class NavigationServiceCollectionExtensions
         services.AddScoped(sp => new NavigationRegistry(
             sp.GetServices<NavigationGroup>(),
             sp.GetServices<NavigationEntry>(),
-            sp.GetService<ICurrentPermissions>() is { } permissions ? permissions.Has : null));
+            sp.GetService<ICurrentPermissions>() is { } permissions ? permissions.Has : null,
+            sp.GetService<ILicenseState>() is { } license ? license.IsModuleActive : null));
         services.AddScoped<Navigator>();
         services.AddSingleton<RegisteredViewLocator>();
         services.AddScoped<MenuViewModel>();

@@ -7,6 +7,7 @@ using Pos.Domain.Inventory;
 using Pos.Domain.Products;
 using Pos.Domain.Sales;
 using Pos.Domain.Users;
+using Pos.Infrastructure.Licensing;
 using Pos.Infrastructure.Persistence.Configurations;
 
 namespace Pos.Infrastructure.Persistence;
@@ -49,6 +50,8 @@ public class PosDbContext : DbContext
 
     public DbSet<CashMovement> CashMovements => Set<CashMovement>();
 
+    public DbSet<LicenseSealEntity> LicenseSeals => Set<LicenseSealEntity>();
+
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
         RejectImmutableChanges();
@@ -88,6 +91,7 @@ public class PosDbContext : DbContext
         modelBuilder.ApplyConfiguration(new UserConfiguration());
         modelBuilder.ApplyConfiguration(new CashShiftConfiguration());
         modelBuilder.ApplyConfiguration(new CashMovementConfiguration());
+        modelBuilder.ApplyConfiguration(new LicenseSealConfiguration());
     }
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)

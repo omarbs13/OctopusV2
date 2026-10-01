@@ -93,6 +93,7 @@ public static class DependencyInjection
         services.AddSingleton<IBackupService, SqliteBackupService>();
         services.AddSingleton<IMachineIdProvider, MachineIdProvider>();
         services.AddSingleton<ILicenseStore, LicenseFileStore>();
+        services.AddSingleton<ILicenseSealStore, LicenseSealStore>();
         services.AddSingleton<IInstallationAgeReader, InstallationAgeReader>();
         services.AddSingleton<ILicenseVerifier, EcdsaLicenseVerifier>();
         services.AddSingleton<IDiagnosticsExporter>(sp => new ZipDiagnosticsExporter(

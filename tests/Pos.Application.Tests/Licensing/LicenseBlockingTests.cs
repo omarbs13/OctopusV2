@@ -8,55 +8,50 @@ using Pos.Domain.Users;
 
 namespace Pos.Application.Tests.Licensing;
 
-/// <summary>011, H3: en modo lectura se bloquean venta, reportes y usuarios; la consulta sigue disponible.</summary>
+/// <summary>012, H4: tras la evaluación se bloquean los módulos no comprados; lo básico sigue disponible.</summary>
 public sealed class LicenseBlockingTests
 {
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    private static (AccessControl Access, AuthFixture Auth) Build(bool expired)
+    private static AccessControl Build(params LicensedModule[] purchased)
     {
         var auth = new AuthFixture();
         var state = new LicenseState(auth.Clock);
-        var firstRun = auth.Clock.UtcNow.AddDays(expired ? -40 : -3);
-        state.Set(new LicenseRecord(1, "m", firstRun, firstRun, null));
-        var access = new AccessControl(auth.Session, auth.Users, auth.Grants, NullLogger<AccessControl>.Instance, state);
+        var firstRun = auth.Clock.UtcNow.AddDays(-40);
+        state.Set(new LicenseRecord(2, "m", firstRun, firstRun, 30, purchased.ToHashSet()));
         auth.SignedIn(auth.AddUser("admin", UserRole.Admin));
-        return (access, auth);
+        return new AccessControl(auth.Session, auth.Users, auth.Grants, NullLogger<AccessControl>.Instance, state);
     }
 
     [Theory]
-    [InlineData(Permission.Sell)]
+    [InlineData(Permission.ViewInventory)]
     [InlineData(Permission.ViewReports)]
-    [InlineData(Permission.ManageUsers)]
-    public async Task Vencida_BloqueaVentaReportesYUsuarios(Permission permission)
+    [InlineData(Permission.OperateShift)]
+    public async Task ModuloSinLicencia_SeRechazaConModuleNotLicensed(Permission permission)
     {
-        var (access, _) = Build(expired: true);
+        var access = Build();
 
         var decision = await access.CheckAsync(permission, Ct);
 
         Assert.False(decision.Allowed);
-        Assert.IsType<LicenseExpired>(decision.Error);
+        Assert.IsType<ModuleNotLicensed>(decision.Error);
+        Assert.False(await access.HasAsync(permission, Ct));
     }
 
     [Theory]
+    [InlineData(Permission.Sell)]
+    [InlineData(Permission.ManageUsers)]
     [InlineData(Permission.ViewProducts)]
-    [InlineData(Permission.ViewInventory)]
-    [InlineData(Permission.ViewAllSales)]
-    [InlineData(Permission.OperateShift)]
     [InlineData(Permission.ManageLicense)]
-    public async Task Vencida_PermiteConsultarCerrarTurnoYActivar(Permission permission)
-    {
-        var (access, _) = Build(expired: true);
-
-        Assert.True((await access.CheckAsync(permission, Ct)).Allowed);
-    }
+    public async Task FuncionesBasicas_SiguenDisponibles(Permission permission) =>
+        Assert.True((await Build().CheckAsync(permission, Ct)).Allowed);
 
     [Fact]
-    public async Task EnEvaluacion_TodoSePermite()
+    public async Task ModuloComprado_SePermiteYLosDemasNo()
     {
-        var (access, _) = Build(expired: false);
+        var access = Build(LicensedModule.Inventory);
 
-        Assert.True((await access.CheckAsync(Permission.Sell, Ct)).Allowed);
-        Assert.True((await access.CheckAsync(Permission.ViewReports, Ct)).Allowed);
+        Assert.True((await access.CheckAsync(Permission.ViewInventory, Ct)).Allowed);
+        Assert.False((await access.CheckAsync(Permission.ViewReports, Ct)).Allowed);
     }
 }

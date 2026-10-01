@@ -1,38 +1,43 @@
 using Pos.Application.Abstractions;
 using Pos.Domain.Licensing;
-using Pos.Domain.Users;
 
 namespace Pos.Application.Licensing;
 
 /// <summary>
 /// Estado de la licencia en memoria. <see cref="Current"/> se recalcula con el reloj en cada lectura,
-/// sin acceso a disco, así que cruzar la medianoche bloquea sin reiniciar (011, FR-007).
+/// sin acceso a disco, así que cruzar la medianoche aplica el cambio sin reiniciar (012).
 /// </summary>
 public interface ILicenseState
 {
     LicenseStatus Current { get; }
 
-    /// <summary>Licencia local vigente; nula si el archivo es inválido o aún no se cargó.</summary>
+    /// <summary>Licencia local vigente; nula si aún no se cargó.</summary>
     LicenseRecord? Record { get; }
+
+    /// <summary>Módulos que hoy están activos (todos durante la evaluación).</summary>
+    IReadOnlyCollection<LicensedModule> EnabledModules { get; }
+
+    /// <summary>Se dispara al reemplazar el registro (importar) o al cambiar de fase.</summary>
+    event EventHandler? Changed;
+
+    bool IsModuleActive(LicensedModule module);
 
     void Set(LicenseRecord record);
 
-    void SetInvalid(InvalidLicenseReason reason);
-
-    /// <summary>En modo lectura se bloquean la venta, los reportes y la administración de usuarios.</summary>
-    bool IsBlocked(Permission permission);
+    /// <summary>Vuelve a evaluar con el reloj y dispara <see cref="Changed"/> si cambió la fase.</summary>
+    void Refresh();
 }
 
 public sealed class LicenseState : ILicenseState
 {
-    private static readonly LicenseStatus Unrestricted = new(LicenseKind.Trial, LicenseEvaluator.TrialDays, false, LicenseWarning.None);
-
     private readonly IClock _clock;
     private readonly Lock _gate = new();
     private LicenseRecord? _record;
-    private InvalidLicenseReason? _invalid;
+    private LicensePhase? _lastPhase;
 
     public LicenseState(IClock clock) => _clock = clock;
+
+    public event EventHandler? Changed;
 
     public LicenseRecord? Record
     {
@@ -50,40 +55,39 @@ public sealed class LicenseState : ILicenseState
     {
         get
         {
-            LicenseRecord? record;
-            InvalidLicenseReason? invalid;
-            lock (_gate)
-            {
-                (record, invalid) = (_record, _invalid);
-            }
-
-            if (invalid is { } reason)
-            {
-                return LicenseStatus.Invalid(reason);
-            }
-
-            return record is null ? Unrestricted : LicenseEvaluator.Evaluate(record, _clock.UtcNow, TimeZoneInfo.Local);
+            var record = Record;
+            return record is null
+                ? new LicenseStatus(LicensePhase.Trial, LicenseRecord.DefaultTrialDays, LicenseWarning.None, new HashSet<LicensedModule>())
+                : LicenseEvaluator.Evaluate(record, _clock.UtcNow, TimeZoneInfo.Local);
         }
     }
+
+    public IReadOnlyCollection<LicensedModule> EnabledModules =>
+        ModuleCatalog.All.Where(IsModuleActive).ToArray();
+
+    public bool IsModuleActive(LicensedModule module) => Current.IsModuleActive(module);
 
     public void Set(LicenseRecord record)
     {
         ArgumentNullException.ThrowIfNull(record);
         lock (_gate)
         {
-            (_record, _invalid) = (record, null);
+            _record = record;
         }
+
+        _lastPhase = Current.Phase;
+        Changed?.Invoke(this, EventArgs.Empty);
     }
 
-    public void SetInvalid(InvalidLicenseReason reason)
+    public void Refresh()
     {
-        lock (_gate)
+        var phase = Current.Phase;
+        if (_lastPhase is { } last && last == phase)
         {
-            (_record, _invalid) = (null, reason);
+            return;
         }
-    }
 
-    public bool IsBlocked(Permission permission) =>
-        permission is Permission.Sell or Permission.ViewReports or Permission.ManageUsers
-        && Current.IsReadOnly;
+        _lastPhase = phase;
+        Changed?.Invoke(this, EventArgs.Empty);
+    }
 }
