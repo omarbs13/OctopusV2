@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<title>Manual de usuario · POS</title>
+<style>
+  @page {
+    size: Letter;
+    margin: 22mm 18mm 20mm 18mm;
+    @top-left { content: "POS · Manual de usuario"; font-size: 8pt; color: #6B7785; }
+    @top-right { content: string(capitulo); font-size: 8pt; color: #6B7785; }
+    @bottom-right { content: "Página " counter(page) " de " counter(pages); font-size: 8pt; color: #6B7785; }
+    @bottom-left { content: "Versión {{VERSION}}"; font-size: 8pt; color: #6B7785; }
+  }
+  @page portada { margin: 0; @top-left { content: none } @top-right { content: none }
+                  @bottom-right { content: none } @bottom-left { content: none } }
+  :root { --acento: #1565C0; --tinta: #1F2933; --tenue: #6B7785; --linea: #D5DCE3; --fondo: #F3F5F8; }
+  html { font-family: "Noto Sans", "DejaVu Sans", sans-serif; font-size: 10pt; color: var(--tinta); line-height: 1.5; }
+  body { counter-reset: cap; }
+  h1 { string-set: capitulo content(); page-break-before: always; font-size: 21pt; color: var(--acento);
+       margin: 0 0 4mm; padding-bottom: 3mm; border-bottom: 2px solid var(--acento); counter-increment: cap;
+       counter-reset: sec; }
+  h1.num::before { content: counter(cap) ". "; }
+  h1.apendice { counter-increment: none; }
+  h1.apendice::before { content: none; }
+  h2 { font-size: 13.5pt; margin: 7mm 0 2mm; color: var(--tinta); counter-increment: sec; page-break-after: avoid; }
+  h1.num ~ h2::before { content: counter(cap) "." counter(sec) "  "; color: var(--acento); }
+  h3 { font-size: 11pt; margin: 5mm 0 1.5mm; page-break-after: avoid; }
+  p { margin: 0 0 2.5mm; text-align: justify; hyphens: auto; }
+  ul, ol { margin: 0 0 3mm; padding-left: 6mm; }
+  li { margin-bottom: 1mm; }
+  code { font-family: "DejaVu Sans Mono", monospace; font-size: 8.5pt; background: var(--fondo); padding: 0 1mm; border-radius: 2px; }
+  kbd { font-family: "DejaVu Sans Mono", monospace; font-size: 8.5pt; border: 1px solid #AAB4BF; border-bottom-width: 2px;
+        border-radius: 3px; padding: 0 1.2mm; background: #FFF; white-space: nowrap; }
+  .ruta { font-weight: bold; color: var(--acento); }
+  .tabla { width: 100%; border-collapse: collapse; margin: 2mm 0 4mm; font-size: 9pt; page-break-inside: auto; }
+  .tabla th { background: var(--fondo); text-align: left; padding: 1.5mm 2mm; border-bottom: 1.5px solid var(--linea); }
+  .tabla td { padding: 1.5mm 2mm; border-bottom: 1px solid var(--linea); vertical-align: top; }
+  .tabla tr { page-break-inside: avoid; }
+  .tabla td.c, .tabla th.c { text-align: center; }
+  .caja { border-left: 4px solid; padding: 2.5mm 3.5mm; margin: 3mm 0; border-radius: 0 4px 4px 0; page-break-inside: avoid; }
+  .caja b.t { display: block; margin-bottom: 1mm; }
+  .nota { background: #EAF2FC; border-color: var(--acento); }
+  .aviso { background: #FFF4E5; border-color: #E65100; }
+  .consejo { background: #EAF6EC; border-color: #2E7D32; }
+  .etiquetas { margin: -1mm 0 3mm; }
+  .etq { display: inline-block; font-size: 7.5pt; font-weight: bold; padding: 0.4mm 2mm; border-radius: 8px; margin-right: 1.5mm; }
+  .etq.admin { background: #FDECEA; color: #B71C1C; }
+  .etq.todos { background: #EAF6EC; color: #1B5E20; }
+  .etq.mod { background: #EDE7F6; color: #4527A0; }
+  ol.pasos { counter-reset: paso; list-style: none; padding-left: 0; }
+  ol.pasos > li { counter-increment: paso; position: relative; padding-left: 9mm; margin-bottom: 2mm; }
+  ol.pasos > li::before { content: counter(paso); position: absolute; left: 0; top: 0; width: 6mm; height: 6mm;
+       border-radius: 50%; background: var(--acento); color: #fff; font-weight: bold; font-size: 8.5pt; text-align: center; line-height: 6mm; }
+  /* Capturas */
+  figure.captura { margin: 4mm 0 5mm; page-break-inside: avoid; }
+  figure.captura figcaption { font-size: 8.5pt; color: var(--tenue); margin-top: 1.5mm; text-align: center; }
+  figure.real img { max-width: 100%; max-height: 150mm; display: block; margin: 0 auto; border: 1px solid var(--linea); }
+  figure.pendiente { border: 2px dashed #9AA5B1; border-radius: 6px; padding: 3mm 4mm; background: #FAFBFC; }
+  .ph-cabecera { display: flex; justify-content: space-between; font-size: 8pt; }
+  .ph-id { font-family: "DejaVu Sans Mono", monospace; font-weight: bold; color: #fff; background: #E65100; padding: 0.3mm 2mm; border-radius: 3px; }
+  .ph-estado { color: #E65100; font-weight: bold; letter-spacing: 0.5px; }
+  .ph-titulo { font-weight: bold; font-size: 10.5pt; margin: 2mm 0 1mm; }
+  .ph-instr { font-size: 9pt; color: #3E4C59; }
+  .ph-archivo { font-size: 8.5pt; color: var(--tenue); margin-top: 1.5mm; }
+  .wire { margin-top: 3mm; text-align: center; }
+  .wire svg { max-width: 100%; height: auto; }
+  .wire-etiqueta { font-size: 7.5pt; color: var(--tenue); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 1.5mm; }
+  /* Portada */
+  .portada { page: portada; height: 279mm; background: var(--acento); color: #fff; position: relative; }
+  .portada .bloque { position: absolute; left: 22mm; right: 22mm; top: 80mm; }
+  .portada .marca { font-size: 13pt; letter-spacing: 3px; opacity: 0.85; }
+  .portada .titulo { font-size: 38pt; font-weight: bold; line-height: 1.1; margin: 6mm 0; }
+  .portada .sub { font-size: 13pt; opacity: 0.9; }
+  .portada .pie { position: absolute; left: 22mm; bottom: 22mm; font-size: 10pt; opacity: 0.9; }
+  .portada .logo { position: absolute; right: 22mm; top: 24mm; width: 40mm; height: 40mm; border: 2px dashed rgba(255,255,255,0.6);
+                   border-radius: 8px; font-size: 8pt; text-align: center; padding-top: 15mm; box-sizing: border-box; opacity: 0.85; }
+  /* Índice */
+  .toc { list-style: none; padding: 0; }
+  .toc li { margin: 0; }
+  .toc li.toc-1 { font-weight: bold; margin-top: 2.5mm; }
+  .toc li.toc-2 { padding-left: 7mm; font-size: 9pt; }
+  .toc a { color: var(--tinta); text-decoration: none; }
+  .toc a::after { content: leader(".") target-counter(attr(href), page); }
+  a { color: var(--acento); text-decoration: none; }
+  .tabla.capturas td { font-size: 8.5pt; }
+  .mini { color: var(--tenue); font-size: 8pt; }
+  .ok { color: #2E7D32; font-weight: bold; }
+  .falta { color: #E65100; font-weight: bold; }
+  .dos-col { columns: 2; column-gap: 8mm; }
+  .leyenda { font-size: 9pt; list-style: none; padding-left: 0; }
+  .leyenda li { margin-bottom: 0.5mm; }
+  .numero { display: inline-block; width: 4.5mm; height: 4.5mm; border-radius: 50%; background: #E65100; color: #fff;
+            font-size: 7pt; font-weight: bold; text-align: center; line-height: 4.5mm; margin-right: 1mm; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================ PORTADA -->
+<section class="portada">
+  <div class="logo">Logotipo<br/>(opcional)</div>
+  <div class="bloque">
+    <div class="marca">PUNTO DE VENTA</div>
+    <div class="titulo">Manual de usuario</div>
+    <div class="sub">Guía completa para cajeros y administradores</div>
+  </div>
+  <div class="pie">Versión del sistema {{VERSION}} · Documento generado el {{FECHA}}</div>
+</section>
+
+<!-- ============================================================ ÍNDICE -->
+<h1 class="apendice" id="indice" style="string-set: capitulo 'Índice'">Índice</h1>
+{{INDICE}}
+
+<!-- ============================================================ CÓMO USAR -->
+<h1 class="apendice" id="como-usar">Cómo usar este manual</h1>
+
+<p>Este manual explica, paso a paso, cómo operar el sistema de punto de venta: desde la primera
+instalación hasta el cierre de caja, los reportes y la administración. Está pensado para dos tipos
+de lectores:</p>
+<ul>
+  <li><b>Cajeros</b>: pueden ir directo a los capítulos <a href="#cap-primeros-pasos">Primeros pasos</a>,
+    <a href="#cap-caja">Caja y turnos</a> y <a href="#cap-pdv">Punto de venta</a>.</li>
+  <li><b>Administradores</b>: conviene leer el manual completo, empezando por
+    <a href="#cap-puesta">Puesta en marcha</a>.</li>
+</ul>
+
+<h3>Convenciones</h3>
+<table class="tabla">
+  <tr><th style="width:38%">Se ve así</th><th>Significa</th></tr>
+  <tr><td><span class="ruta">Ventas → Punto de venta</span></td><td>Ruta en el menú lateral: primero el grupo y luego la opción.</td></tr>
+  <tr><td><kbd>F12</kbd>, <kbd>Ctrl</kbd>+<kbd>N</kbd></td><td>Tecla o combinación de teclas.</td></tr>
+  <tr><td><b>Guardar</b></td><td>Botón, casilla o campo de la pantalla, con el texto que muestra el sistema.</td></tr>
+  <tr><td><span class="etq admin">Solo Administrador</span></td><td>La función solo está disponible para usuarios con rol Administrador.</td></tr>
+  <tr><td><span class="etq todos">Cajero y Administrador</span></td><td>Disponible para los dos roles.</td></tr>
+  <tr><td><span class="etq mod">Módulo: Crédito y clientes</span></td><td>La función pertenece a un módulo de la licencia; si el módulo no está activo, no aparece en el menú.</td></tr>
+  <tr><td><span class="numero">1</span></td><td>Marcador numerado en un wireframe; el texto que lo acompaña explica esa zona.</td></tr>
+</table>
+
+<div class="caja nota"><b class="t">Sobre las imágenes</b>
+Las capturas de pantalla de este documento aparecen como recuadros punteados con un código
+(por ejemplo <code>IMG-07-01</code>), una descripción de qué capturar y, en las pantallas principales,
+un <i>wireframe</i> orientativo. Al guardar la captura real con ese nombre en la carpeta
+<code>imagenes/</code> y volver a generar el documento, el recuadro se sustituye por la imagen. La lista
+completa está en el <a href="#apendice-capturas">Apéndice D</a>.</div>
+
+<!-- ============================================================ 1. INTRODUCCIÓN -->
+<h1 class="num" id="cap-intro">Introducción</h1>
+
+<h2 id="intro-que-es">¿Qué es el sistema?</h2>
+<p>Es un punto de venta de escritorio para Windows y Linux. Funciona <b>sin conexión a internet</b>:
+toda la información del negocio (productos, ventas, turnos, clientes) se guarda en la misma
+computadora, con respaldos automáticos diarios.</p>
+<p>Con el sistema puede:</p>
+<div class="dos-col">
+<ul>
+  <li>Vender con lector de códigos de barras, teclado o pantalla táctil.</li>
+  <li>Cobrar en efectivo, tarjeta, transferencia, nota de crédito o a crédito.</li>
+  <li>Imprimir tickets y abrir el cajón de dinero.</li>
+  <li>Controlar turnos de caja con arqueo ciego, Corte X y Corte Z.</li>
+  <li>Administrar productos, categorías e imágenes.</li>
+  <li>Llevar el inventario con kárdex y alertas de existencia baja.</li>
+  <li>Registrar compras a proveedores.</li>
+  <li>Aplicar descuentos y cupones.</li>
+  <li>Procesar cancelaciones, devoluciones y notas de crédito.</li>
+  <li>Vender a crédito a clientes y registrar sus abonos.</li>
+  <li>Consultar reportes y exportarlos a PDF o Excel.</li>
+  <li>Revisar una bitácora de auditoría de todas las operaciones.</li>
+</ul>
+</div>
+
+<h2 id="intro-requisitos">Requisitos del equipo</h2>
+<table class="tabla">
+  <tr><th>Elemento</th><th>Requisito</th></tr>
+  <tr><td>Sistema operativo</td><td>Windows 10 o posterior, o Linux con entorno gráfico.</td></tr>
+  <tr><td>Pantalla</td><td>Se recomienda 1280 × 720 o mayor. En ventanas de menos de 1000 px de ancho el menú lateral se contrae solo.</td></tr>
+  <tr><td>Impresora de tickets (opcional)</td><td>Impresora térmica compatible con ESC/POS de 58 u 80 mm, instalada en el sistema operativo.</td></tr>
+  <tr><td>Cajón de dinero (opcional)</td><td>Conectado a la impresora de tickets (puerto RJ11).</td></tr>
+  <tr><td>Lector de códigos (opcional)</td><td>USB o inalámbrico en <b>modo teclado</b> (HID) que envíe <kbd>Enter</kbd> al final de cada lectura.</td></tr>
+</table>
+
+<h2 id="intro-roles">Roles de usuario</h2>
+<p>Cada persona entra con su propio usuario. Existen dos roles:</p>
+<table class="tabla">
+  <tr><th style="width:22%">Rol</th><th>Para quién</th><th>Qué puede hacer</th></tr>
+  <tr><td><b>Administrador</b></td><td>Dueño, gerente o encargado.</td><td>Todo: configuración, usuarios, productos, inventario, compras, reportes, bitácora y autorizar operaciones sensibles.</td></tr>
+  <tr><td><b>Cajero</b></td><td>Personal de mostrador.</td><td>Vender y cobrar, operar su turno, consultar sus propias ventas, consultar productos y existencias, dar de alta clientes y registrar abonos. Las operaciones sensibles requieren la autorización de un Administrador.</td></tr>
+</table>
+<p>El detalle de cada permiso está en el <a href="#apendice-permisos">Apéndice C</a>.</p>
+
+<h3>Autorización de administrador</h3>
+<p>Cuando un Cajero intenta una operación que requiere permiso (por ejemplo, cancelar una venta,
+retirar efectivo o aplicar un descuento mayor al límite), el sistema ofrece <b>Solicitar autorización</b>.
+Un Administrador captura su usuario y contraseña en un diálogo, <b>sin cerrar la sesión del cajero</b>.
+La autorización vale para esa sola operación y vence a los 2 minutos. En la bitácora quedan registrados
+quién pidió la operación y quién la autorizó.</p>
+<figure class="captura" id="IMG-01-01" data-titulo="Diálogo de autorización de administrador" data-wireframe="autorizacion">
+  Con sesión de Cajero, intente cancelar una venta o hacer un retiro para que aparezca el diálogo
+  «Autorización de administrador». Capture solo el diálogo, con el usuario escrito y la contraseña oculta.
+</figure>
+
+<h2 id="intro-modulos">Módulos y licencia</h2>
+<p>Algunas funciones se activan por módulos de la licencia. Durante los primeros <b>30 días</b>
+(período de evaluación) todos los módulos están activos. Después, solo quedan activos los módulos
+contratados (ver <a href="#cap-ayuda">Ayuda, licencia y respaldos</a>).</p>
+<table class="tabla">
+  <tr><th>Módulo</th><th>Incluye</th></tr>
+  <tr><td>Inventario</td><td>Existencias, movimientos, alertas de existencia, proveedores, entrada de mercancía y reporte de compras.</td></tr>
+  <tr><td>Turnos y arqueo</td><td>Turnos de caja, ingresos y retiros, Corte X, Corte Z e histórico de cortes.</td></tr>
+  <tr><td>Devoluciones</td><td>Devoluciones parciales, reintegros, notas de crédito y la pantalla «Devoluciones y vales».</td></tr>
+  <tr><td>Crédito y clientes</td><td>Catálogo de clientes, venta a crédito, abonos y reporte de créditos.</td></tr>
+  <tr><td>Descuentos y promociones</td><td>Descuentos por línea y por venta, cupones y reporte de descuentos.</td></tr>
+</table>
+<div class="caja nota"><b class="t">Lo que nunca se pierde</b>
+Si un módulo deja de estar activo, su opción desaparece del menú, pero la información ya registrada se
+conserva y vuelve a mostrarse al reactivarlo. La venta básica y la cancelación de ventas siempre están
+disponibles.</div>
+
+<!-- ============================================================ 2. PRIMEROS PASOS -->
+<h1 class="num" id="cap-primeros-pasos">Primeros pasos</h1>
+
+<h2 id="pp-arranque">Abrir el sistema</h2>
+<p>Al abrir la aplicación aparece la <b>pantalla de carga</b>, que muestra lo que está haciendo:
+«Verificando la base de datos…», «Respaldando la base de datos…», «Actualizando la base de datos…»
+(después de instalar una versión nueva) y «Preparando…». No cierre la aplicación mientras esté en esta
+pantalla.</p>
+<figure class="captura" id="IMG-02-01" data-titulo="Pantalla de carga">
+  Capture la ventana de carga al iniciar la aplicación, con el logotipo y el mensaje de progreso visibles.
+</figure>
+<div class="caja consejo"><b class="t">Logotipo propio en la pantalla de carga</b>
+Copie un archivo PNG llamado <code>logo.png</code> (de preferencia cuadrado, 320 × 320 px, con fondo
+transparente) en la carpeta de datos del sistema y reinicie. La ubicación de la carpeta se ve en
+<span class="ruta">Ayuda → Acerca de</span>.</div>
+<p>El sistema solo permite <b>una ventana abierta a la vez</b>: si lo abre de nuevo, se muestra la ventana
+existente.</p>
+
+<h2 id="pp-primer-admin">Primera vez: crear el administrador</h2>
+<p>La primera vez que se usa el sistema aparece el asistente <b>Crear administrador</b>. No existe ningún
+usuario ni contraseña de fábrica, y no se puede entrar sin completar este paso.</p>
+<ol class="pasos">
+  <li>Escriba el <b>Nombre completo</b> del administrador.</li>
+  <li>Elija un <b>Usuario</b>: de 3 a 40 caracteres (letras, números, punto, guion o guion bajo).</li>
+  <li>Escriba la <b>Contraseña</b> (mínimo 8 caracteres) y repítala en <b>Confirmar contraseña</b>.</li>
+  <li>Pulse <b>Crear y continuar</b>.</li>
+</ol>
+<figure class="captura" id="IMG-02-02" data-titulo="Asistente «Crear administrador»">
+  En una instalación nueva (o con una carpeta de datos vacía), capture el asistente con los cuatro campos
+  llenos (contraseñas ocultas) y el botón «Crear y continuar».
+</figure>
+<div class="caja aviso"><b class="t">Guarde bien esta contraseña</b>
+No hay recuperación por correo. Si se olvida la contraseña de un usuario, otro Administrador puede
+restablecerla. Por eso se recomienda crear al menos <b>dos administradores</b>.</div>
+
+<h2 id="pp-login">Iniciar sesión</h2>
+<ol class="pasos">
+  <li>Escriba su <b>Usuario</b> <span class="numero">1</span>. No distingue mayúsculas ni acentos.</li>
+  <li>Escriba su <b>Contraseña</b> <span class="numero">2</span>.</li>
+  <li>Pulse <b>Entrar</b> o <kbd>Enter</kbd> <span class="numero">3</span>.</li>
+</ol>
+<figure class="captura" id="IMG-02-03" data-titulo="Pantalla «Iniciar sesión»" data-wireframe="login">
+  Capture la pantalla de inicio de sesión completa, con un usuario escrito y la contraseña oculta.
+</figure>
+<p>Si un administrador le creó el usuario, la contraseña inicial es <b>temporal</b>: al entrar por primera
+vez el sistema pide cambiarla (pantalla <b>Cambiar contraseña</b>: contraseña actual, nueva y confirmación).</p>
+<figure class="captura" id="IMG-02-04" data-titulo="Cambio de contraseña obligatorio">
+  Entre con un usuario recién creado. Capture la pantalla «Cambiar contraseña» con el aviso «Debes cambiar
+  tu contraseña antes de continuar».
+</figure>
+<div class="caja aviso"><b class="t">Bloqueo por intentos fallidos</b>
+Después de <b>5 intentos fallidos seguidos</b> el usuario queda bloqueado <b>5 minutos</b>, incluso si se
+reinicia la aplicación. Para desbloquearlo antes, un Administrador puede restablecer su contraseña.</div>
+
+<h2 id="pp-pantalla">La pantalla principal</h2>
+<p>Después de iniciar sesión se muestra la pantalla <b>Inicio</b>:</p>
+<ul class="leyenda">
+  <li><span class="numero">1</span><b>Área de trabajo</b>: muestra la pantalla elegida en el menú.</li>
+  <li><span class="numero">2</span><b>Menú lateral</b>: agrupa las opciones (Ventas, Caja, Clientes, Reportes, Catálogos…). Pulse un grupo para abrirlo o cerrarlo. El botón <b>☰</b> (o <kbd>Ctrl</kbd>+<kbd>B</kbd>) contrae el menú para ganar espacio. Solo aparecen las opciones que su rol y la licencia permiten.</li>
+  <li><span class="numero">3</span><b>Tarjetas de indicadores</b>: ventas del día, turno actual, productos activos, alertas de existencia, etc.</li>
+  <li><span class="numero">4</span><b>Menú de usuario</b> (al pie del menú lateral): nombre y rol de quien está conectado, con <b>Cambiar contraseña</b>, <b>Cambiar de usuario</b> y <b>Cerrar sesión</b>.</li>
+</ul>
+<figure class="captura" id="IMG-02-05" data-titulo="Pantalla principal: Inicio" data-wireframe="inicio">
+  Con sesión de Administrador y algunas ventas del día, capture la ventana completa en «Inicio»: menú lateral
+  expandido, tarjetas de indicadores y gráficas visibles.
+</figure>
+
+<h3>Tarjetas de Inicio</h3>
+<table class="tabla">
+  <tr><th style="width:30%">Tarjeta</th><th>Qué muestra</th></tr>
+  <tr><td>Ventas del día</td><td>Total vendido y número de ventas. Pulse la tarjeta para abrir <span class="ruta">Ventas realizadas</span>. Un Cajero ve solo sus ventas.</td></tr>
+  <tr><td>Ventas (gráficas)</td><td>Ventas de los últimos 7 días y productos más vendidos.</td></tr>
+  <tr><td>Turno actual</td><td>Folio del turno abierto, desde cuándo y total vendido.</td></tr>
+  <tr><td>Productos activos / Sin existencia</td><td>Tamaño del catálogo y productos agotados.</td></tr>
+  <tr><td>Alertas de existencia</td><td><b>Urgentes</b> (rojo) y <b>En alerta</b> (naranja). Cada cifra abre el reporte de inventario filtrado.</td></tr>
+  <tr><td>Alertas <span class="etq admin">Solo Administrador</span></td><td>Turnos con diferencias de arqueo mayores al umbral en los últimos 7 días y productos críticos con existencia baja.</td></tr>
+  <tr><td>Licencia</td><td>Días restantes del período de evaluación o módulos activos.</td></tr>
+</table>
+
+<h2 id="pp-bloqueo">Bloqueo por inactividad</h2>
+<p>Si nadie usa el sistema durante 15 minutos (configurable), la sesión se bloquea con una capa que pide la
+contraseña del mismo usuario. La pantalla y la venta en curso se conservan. Desde la capa también puede
+pulsar <b>Cambiar de usuario</b>.</p>
+<figure class="captura" id="IMG-02-06" data-titulo="Sesión bloqueada por inactividad">
+  Configure un tiempo de bloqueo de 1 minuto en Configuración → Seguridad, espere y capture la capa
+  «Sesión bloqueada» con el campo de contraseña y los botones «Desbloquear» y «Cambiar de usuario».
+</figure>
+
+<h2 id="pp-salir">Cambiar de usuario y cerrar sesión</h2>
+<p>Use el menú de usuario, al pie del menú lateral. Si hay una venta en curso, el sistema pide confirmación:
+la venta <b>no se pierde</b>, queda guardada a nombre de ese usuario y se le ofrece recuperarla la próxima
+vez que entre.</p>
+
+<!-- ============================================================ 3. PUESTA EN MARCHA -->
+<h1 class="num" id="cap-puesta">Puesta en marcha</h1>
+<div class="etiquetas"><span class="etq admin">Solo Administrador</span></div>
+<p>Antes de empezar a vender, el Administrador debe completar esta lista:</p>
+<table class="tabla">
+  <tr><th class="c" style="width:6%">✔</th><th>Tarea</th><th style="width:34%">Dónde</th></tr>
+  <tr><td class="c">☐</td><td>Capturar los datos del negocio (aparecen en tickets y reportes)</td><td><span class="ruta">Configuración → Datos del negocio</span></td></tr>
+  <tr><td class="c">☐</td><td>Configurar la impresora y hacer una impresión de prueba</td><td><span class="ruta">Configuración → Impresora</span></td></tr>
+  <tr><td class="c">☐</td><td>Ajustar el tiempo de bloqueo por inactividad</td><td><span class="ruta">Configuración → Seguridad</span></td></tr>
+  <tr><td class="c">☐</td><td>Crear los usuarios de cajeros y un segundo administrador</td><td><span class="ruta">Administración → Usuarios</span></td></tr>
+  <tr><td class="c">☐</td><td>Crear las categorías de productos</td><td><span class="ruta">Catálogos → Categorías</span></td></tr>
+  <tr><td class="c">☐</td><td>Dar de alta los productos</td><td><span class="ruta">Catálogos → Productos</span></td></tr>
+  <tr><td class="c">☐</td><td>Registrar el inventario inicial</td><td><span class="ruta">Inventario → Existencias</span></td></tr>
+  <tr><td class="c">☐</td><td>Probar el lector de códigos de barras</td><td><span class="ruta">Ayuda → Probar escáner</span></td></tr>
+  <tr><td class="c">☐</td><td>(Opcional) Proveedores, clientes con crédito, cupones y límite de descuento</td><td>Capítulos 5, 9 y 10</td></tr>
+</table>
+
+<h2 id="pm-negocio">Datos del negocio</h2>
+<p><span class="ruta">Configuración → Datos del negocio</span>. Estos datos aparecen en el encabezado y el pie
+de cada ticket y en el encabezado de los reportes PDF.</p>
+<table class="tabla">
+  <tr><th style="width:30%">Campo</th><th>Descripción</th></tr>
+  <tr><td>Nombre comercial</td><td>Nombre que verá el cliente en el ticket.</td></tr>
+  <tr><td>Dirección y Teléfono</td><td>Datos de contacto del negocio.</td></tr>
+  <tr><td>RFC (opcional)</td><td>Registro fiscal del negocio.</td></tr>
+  <tr><td>Mensaje de pie (opcional)</td><td>Texto al final del ticket, por ejemplo «¡Gracias por su compra!».</td></tr>
+  <tr><td>Logotipo (opcional)</td><td>Imagen que se imprime en el ticket. Use <b>Seleccionar logotipo</b> o <b>Quitar logotipo</b>.</td></tr>
+</table>
+<p>Pulse <b>Guardar</b>. Aparece «Datos guardados.».</p>
+<figure class="captura" id="IMG-03-01" data-titulo="Configuración → Datos del negocio">
+  Capture la pantalla con todos los campos llenos y un logotipo cargado.
+</figure>
+
+<h2 id="pm-impresora">Impresora y cajón</h2>
+<p><span class="ruta">Configuración → Impresora</span>. Esta configuración es <b>propia de cada computadora</b>.</p>
+<table class="tabla">
+  <tr><th style="width:38%">Opción</th><th>Descripción</th></tr>
+  <tr><td>Impresora</td><td>Lista de impresoras instaladas en el sistema operativo. La opción <b>Impresora virtual (archivo de texto)</b> guarda cada ticket como archivo, útil para probar sin hardware.</td></tr>
+  <tr><td>Ancho del papel</td><td>58 mm o 80 mm, según el rollo de la impresora.</td></tr>
+  <tr><td>Imprimir el ticket automáticamente al cobrar</td><td>Si está desactivada, el ticket se imprime solo cuando se pide.</td></tr>
+  <tr><td>Abrir el cajón automáticamente al cobrar en efectivo</td><td>El cajón se abre solo cuando algún pago de la venta es en efectivo.</td></tr>
+</table>
+<ol class="pasos">
+  <li>Elija la impresora y el ancho del papel.</li>
+  <li>Active o desactive la impresión y el cajón automáticos.</li>
+  <li>Pulse <b>Guardar</b> y después <b>Impresión de prueba</b>. Revise que los acentos y la «ñ» salgan bien.</li>
+</ol>
+<figure class="captura" id="IMG-03-02" data-titulo="Configuración → Impresora">
+  Capture la pantalla con una impresora elegida, 80 mm y ambas casillas visibles, junto con los botones
+  «Guardar» e «Impresión de prueba».
+</figure>
+<figure class="captura" id="IMG-03-03" data-titulo="Ticket de prueba impreso">
+  Fotografía o escaneo del ticket de prueba (palabra «PRUEBA», encabezado del negocio y logotipo).
+</figure>
+<div class="caja nota"><b class="t">La venta siempre se registra primero</b>
+Si la impresora o el cajón fallan, la venta ya quedó guardada. Aparece un aviso con <b>Reintentar</b> y
+<b>Continuar sin imprimir</b>; reintentar vuelve a imprimir la misma venta y nunca la duplica.</div>
+
+<h2 id="pm-seguridad">Seguridad</h2>
+<p><span class="ruta">Configuración → Seguridad</span>. Marque <b>Activado</b> y escriba los minutos sin
+actividad tras los cuales se bloquea la sesión (de 1 a 240). Desmarcado, la sesión nunca se bloquea sola.</p>
+<figure class="captura" id="IMG-03-04" data-titulo="Configuración → Seguridad">
+  Capture la pantalla con «Bloquear la sesión tras 15 minutos sin actividad» y la casilla «Activado».
+</figure>
+
+<!-- ============================================================ 4. CATÁLOGOS -->
+<h1 class="num" id="cap-catalogos">Catálogos: productos y categorías</h1>
+
+<h2 id="cat-productos">Lista de productos</h2>
+<div class="etiquetas"><span class="etq todos">Consulta: Cajero y Administrador</span><span class="etq admin">Altas y cambios: Solo Administrador</span></div>
+<p><span class="ruta">Catálogos → Productos</span> muestra el catálogo con imagen, nombre, SKU, código de
+barras, unidad, precio, existencia y estado. Muestra 100 productos por página.</p>
+<ul>
+  <li><b>Buscar</b> (<kbd>Ctrl</kbd>+<kbd>F</kbd>): por nombre, SKU o código de barras.</li>
+  <li><b>Mostrar inactivos</b>: incluye los productos desactivados.</li>
+  <li><b>Nuevo producto</b> (<kbd>Ctrl</kbd>+<kbd>N</kbd>), <b>Editar</b> (<kbd>F2</kbd>) y <b>Borrar</b> (<kbd>Supr</kbd>).</li>
+  <li><b>Ver movimientos</b>: abre el kárdex del producto seleccionado.</li>
+  <li>Paginación: <kbd>Alt</kbd>+<kbd>Inicio</kbd>, <kbd>Alt</kbd>+<kbd>RePág</kbd>, <kbd>Alt</kbd>+<kbd>AvPág</kbd>, <kbd>Alt</kbd>+<kbd>Fin</kbd>.</li>
+</ul>
+<figure class="captura" id="IMG-04-01" data-titulo="Catálogos → Productos">
+  Capture la lista con varios productos (algunos con imagen), el buscador, la casilla «Mostrar inactivos»
+  y los botones de acción.
+</figure>
+
+<h2 id="cat-nuevo">Crear o editar un producto</h2>
+<figure class="captura" id="IMG-04-02" data-titulo="Formulario «Nuevo producto»" data-wireframe="producto">
+  Capture el formulario completo con un producto de ejemplo: datos generales, categoría, imagen cargada y la
+  sección «Inventario» con existencia mínima y punto de reorden.
+</figure>
+<h3>Datos generales <span class="numero">1</span></h3>
+<table class="tabla">
+  <tr><th style="width:28%">Campo</th><th>Reglas</th></tr>
+  <tr><td>Nombre</td><td>Obligatorio. Es lo que aparece en el ticket.</td></tr>
+  <tr><td>SKU</td><td>Clave interna obligatoria y única.</td></tr>
+  <tr><td>Código de barras (opcional)</td><td>De 1 a 48 caracteres: letras, números, espacios interiores y <code>- . $ / + %</code>. Se guarda en mayúsculas. No puede repetirse en otro producto. Puede escanearlo directamente en el campo.</td></tr>
+  <tr><td>Precio</td><td>Precio de venta. Ejemplo: <code>1234.50</code> o <code>1,234.50</code>.</td></tr>
+  <tr><td>Unidad de medida</td><td>Pieza, kilo, litro, etc. Las piezas solo admiten cantidades enteras; las unidades a granel admiten hasta 3 decimales.</td></tr>
+  <tr><td>Categoría</td><td>Opcional. Solo se ofrecen categorías activas. Con muchas opciones puede escribir para buscar.</td></tr>
+  <tr><td>Activo</td><td>Un producto inactivo no se puede vender, pero conserva su historial.</td></tr>
+</table>
+<h3>Imagen <span class="numero">2</span></h3>
+<p>Pulse <b>Seleccionar imagen…</b> y elija un archivo JPG, PNG o WEBP. El sistema la optimiza
+automáticamente. Use <b>Cambiar imagen…</b> o <b>Quitar imagen</b> para modificarla.</p>
+<h3>Inventario <span class="numero">3</span></h3>
+<table class="tabla">
+  <tr><th style="width:28%">Campo</th><th>Descripción</th></tr>
+  <tr><td>Controla inventario</td><td>Si se marca, el sistema lleva la existencia del producto. Desmárquelo para servicios o productos que no se cuentan.</td></tr>
+  <tr><td>Existencia mínima</td><td>Opcional. Al llegar a este nivel o menos, el producto pasa a <b>En alerta</b>.</td></tr>
+  <tr><td>Punto de reorden</td><td>Opcional; debe ser <b>menor</b> que la existencia mínima. Al llegar a este nivel o menos, el producto pasa a <b>Urgente</b>. Puede ser 0 (urgente solo al agotarse).</td></tr>
+  <tr><td>Existencia actual</td><td>Solo lectura. Se cambia con movimientos de inventario o compras.</td></tr>
+  <tr><td>Producto crítico</td><td>Aparece en las alertas de Inicio cuando su existencia es baja o se agota.</td></tr>
+</table>
+<p>Pulse <b>Guardar</b>. Si otro usuario modificó el producto mientras usted lo editaba, el sistema avisa:
+pulse <b>Recargar</b> para ver los datos vigentes.</p>
+<div class="caja nota"><b class="t">Unidad e inventario bloqueados</b>
+Cuando un producto ya tiene movimientos de inventario, no se puede cambiar su unidad ni desactivar el
+control de inventario.</div>
+
+<h2 id="cat-borrar">Desactivar o borrar un producto</h2>
+<p>Para dejar de vender un producto sin perder nada, desmarque <b>Activo</b>. <b>Borrar</b> lo quita del
+catálogo después de confirmar («¿Borrar el producto…? Dejará de aparecer en el catálogo»); sus ventas
+pasadas se conservan en los reportes.</p>
+
+<h2 id="cat-categorias">Categorías</h2>
+<div class="etiquetas"><span class="etq admin">Solo Administrador</span></div>
+<p><span class="ruta">Catálogos → Categorías</span>. Las categorías agrupan productos (un solo nivel) y
+permiten filtrar los reportes de ventas e inventario.</p>
+<ul>
+  <li><b>Nombre</b>: obligatorio, hasta 50 caracteres, único sin distinguir mayúsculas ni acentos («Bebidas» y «BEBÍDAS» son el mismo).</li>
+  <li><b>Descripción</b>: opcional, hasta 200 caracteres.</li>
+  <li><b>Desactivar</b>: la categoría deja de ofrecerse para productos nuevos; los productos que la tienen la conservan. Si tiene productos, el sistema pide confirmación indicando cuántos.</li>
+  <li><b>Eliminar</b>: solo si no tiene productos. Si los tiene, reasígnelos o desactive la categoría.</li>
+</ul>
+<figure class="captura" id="IMG-04-03" data-titulo="Catálogos → Categorías">
+  Capture la lista de categorías con al menos una inactiva y el formulario de categoría abierto.
+</figure>
+<div class="caja nota"><b class="t">Reportes por categoría</b>
+Los reportes usan la categoría que tiene el producto <b>al momento de consultar</b>. Si cambia un producto
+de categoría, sus ventas pasadas también se mueven a la nueva.</div>
+
+<!-- ============================================================ 5. INVENTARIO -->
+<h1 class="num" id="cap-inventario">Inventario y compras</h1>
+<div class="etiquetas"><span class="etq mod">Módulo: Inventario</span></div>
+
+<h2 id="inv-existencias">Existencias</h2>
+<div class="etiquetas"><span class="etq todos">Cajero y Administrador</span></div>
+<p><span class="ruta">Inventario → Existencias</span> lista los productos que controlan inventario con su
+existencia, unidad, mínimo y estado.</p>
+<table class="tabla">
+  <tr><th style="width:24%">Estado</th><th>Significado</th></tr>
+  <tr><td style="color:#2E7D32"><b>Normal</b></td><td>Existencia por encima del mínimo.</td></tr>
+  <tr><td style="color:#E65100"><b>Baja</b></td><td>Existencia mayor que 0 y menor o igual al mínimo.</td></tr>
+  <tr><td style="color:#C62828"><b>Sin existencia</b></td><td>Existencia 0 o negativa (una venta puede dejarla negativa).</td></tr>
+</table>
+<p>Filtros: <b>Todos</b>, <b>Normal</b>, <b>Existencia baja</b>, <b>Sin existencia</b>, <b>En alerta</b> y
+<b>Urgente</b>; casilla <b>Incluir inactivos</b>. El Administrador puede usar <b>Marcar como crítico</b> en
+un producto.</p>
+<figure class="captura" id="IMG-05-01" data-titulo="Inventario → Existencias" data-wireframe="existencias">
+  Capture la lista con productos en los tres estados (Normal, Baja, Sin existencia), el filtro de estado
+  y el botón «Registrar movimiento».
+</figure>
+
+<h2 id="inv-movimiento">Registrar un movimiento</h2>
+<div class="etiquetas"><span class="etq admin">Solo Administrador</span></div>
+<p>Use <b>Registrar movimiento</b> para el inventario inicial y para ajustes.</p>
+<ol class="pasos">
+  <li>Elija el <b>Producto</b>. Se muestra su <b>Existencia actual</b>.</li>
+  <li>Elija el <b>Tipo</b> de movimiento (ver tabla).</li>
+  <li>Escriba la <b>Cantidad</b> (enteros o hasta 3 decimales, según la unidad). El sistema muestra la <b>Existencia resultante</b>.</li>
+  <li>Escriba el <b>Motivo</b> y, si aplica, la <b>Referencia</b> (folio de factura o remisión).</li>
+  <li>Pulse <b>Guardar</b>. Aparece «Movimiento registrado. Existencia: …».</li>
+</ol>
+<table class="tabla">
+  <tr><th style="width:30%">Tipo</th><th>Uso</th></tr>
+  <tr><td>Inventario inicial</td><td>Primera carga de existencia del producto.</td></tr>
+  <tr><td>Entrada</td><td>Mercancía recibida sin registrar una compra.</td></tr>
+  <tr><td>Ajuste positivo / negativo</td><td>Correcciones por conteo físico, merma, caducidad, etc.</td></tr>
+</table>
+<figure class="captura" id="IMG-05-02" data-titulo="Diálogo «Registrar movimiento»">
+  Capture el diálogo con un producto elegido, tipo «Ajuste negativo», cantidad, existencia resultante y motivo.
+</figure>
+<div class="caja nota"><b class="t">Movimientos automáticos</b>
+Las ventas, cancelaciones, devoluciones y compras generan sus propios movimientos («Salida por venta»,
+«Devolución por venta cancelada», «Devolución de venta», «Entrada de compra», «Anulación de compra») y no se
+pueden registrar a mano. Un ajuste negativo no se permite si la existencia ya es negativa: registre primero
+una entrada o un ajuste positivo.</div>
+
+<h2 id="inv-kardex">Movimientos (kárdex)</h2>
+<p><span class="ruta">Inventario → Movimientos</span> muestra el historial: fecha y hora, producto, tipo,
+cantidad, existencia resultante, unidad, motivo, referencia y usuario. Filtre por producto, tipo y rango de
+fechas. En las entradas de compra, la referencia muestra «Factura … · proveedor» y abre el detalle de la compra.</p>
+<figure class="captura" id="IMG-05-03" data-titulo="Inventario → Movimientos">
+  Capture el kárdex filtrado por un producto, con movimientos de varios tipos (inicial, venta, compra, ajuste).
+</figure>
+
+<h2 id="inv-alertas">Alertas de existencia</h2>
+<p>El sistema revisa las existencias <b>al iniciar sesión y cada hora</b>. Si hay productos urgentes o en alerta,
+aparece una notificación abajo a la derecha: <b>Existencia urgente</b> (roja) o <b>Existencia en alerta</b>
+(naranja), con el número de productos. No interrumpen la venta.</p>
+<ul>
+  <li>Pulse la notificación para abrir <span class="ruta">Reportes → Inventario</span> ya filtrado.</li>
+  <li>Pulse <b>×</b> para descartarla.</li>
+  <li>Cada usuario recibe el aviso de un producto <b>una vez al día</b> por nivel; si un producto pasa de «En alerta» a «Urgente», se avisa de nuevo.</li>
+</ul>
+<figure class="captura" id="IMG-05-04" data-titulo="Notificaciones de existencia">
+  Con productos por debajo del mínimo y del punto de reorden, inicie sesión y capture la esquina inferior
+  derecha con las dos notificaciones visibles.
+</figure>
+
+<h2 id="inv-proveedores">Proveedores</h2>
+<div class="etiquetas"><span class="etq admin">Solo Administrador</span></div>
+<p><span class="ruta">Inventario → Proveedores</span>. Busque por nombre o RUC; use <b>Incluir inactivos</b>
+para ver los desactivados.</p>
+<table class="tabla">
+  <tr><th style="width:30%">Campo</th><th>Reglas</th></tr>
+  <tr><td>Nombre</td><td>Obligatorio. Puede repetirse.</td></tr>
+  <tr><td>RUC</td><td>Opcional; si se captura, no puede repetirse (ni siquiera con un proveedor inactivo).</td></tr>
+  <tr><td>Teléfono, Email, Dirección</td><td>Opcionales.</td></tr>
+  <tr><td>Condiciones de pago</td><td><b>Contado</b> o <b>Crédito</b>; con crédito, los <b>Días de crédito</b> (1 a 365) son obligatorios.</td></tr>
+</table>
+<p>Los proveedores no se borran: se desactivan. Un proveedor inactivo no aparece al registrar compras, pero
+sus compras siguen visibles.</p>
+<figure class="captura" id="IMG-05-05" data-titulo="Inventario → Proveedores">
+  Capture la lista de proveedores y, de ser posible, el formulario «Nuevo proveedor» con condiciones de crédito.
+</figure>
+
+<h2 id="inv-compra">Entrada de mercancía (registrar una compra)</h2>
+<div class="etiquetas"><span class="etq admin">Solo Administrador</span></div>
+<p><span class="ruta">Inventario → Entrada de mercancía</span> registra una factura de proveedor y suma la
+existencia de cada producto.</p>
+<ol class="pasos">
+  <li>Elija el <b>Proveedor</b> (solo activos), escriba el <b>Número de factura</b> y la <b>Fecha de factura</b> (no puede ser futura; por omisión, hoy).</li>
+  <li>En el buscador, escriba o escanee el producto y pulse <kbd>Enter</kbd>: se agrega y el cursor pasa a la cantidad.</li>
+  <li>Escriba la <b>Cantidad</b>, pulse <kbd>Tab</kbd>, escriba el <b>Costo unitario</b> (antes de impuestos) y pulse <kbd>Enter</kbd> para volver al buscador.</li>
+  <li>Repita con cada producto. Si agrega uno que ya está, el sistema lleva el cursor a su línea.</li>
+  <li>Escriba los <b>Impuestos</b> de la factura (un solo importe; vacío = $0.00).</li>
+  <li>Revise el <b>Subtotal</b> y el <b>Total</b>, y pulse <b>Registrar compra</b>.</li>
+</ol>
+<figure class="captura" id="IMG-05-06" data-titulo="Inventario → Entrada de mercancía" data-wireframe="compra">
+  Capture una compra a medio registrar con proveedor, factura, tres líneas (una con costo $0.00 marcada como
+  «Bonificación»), impuestos y totales.
+</figure>
+<div class="caja consejo"><b class="t">Bonificaciones</b>
+Una línea con costo <b>$0.00</b> es una bonificación (producto regalado): suma existencia y se marca
+«Bonificación». La compra no puede tener solo bonificaciones.</div>
+<div class="caja aviso"><b class="t">Factura duplicada</b>
+No se puede registrar dos veces la misma factura del mismo proveedor (sin distinguir mayúsculas ni espacios).
+El mensaje indica la fecha de la compra existente y ofrece <b>Ver compra</b>.</div>
+
+<h2 id="inv-anular-compra">Anular o corregir una compra</h2>
+<p>Las compras no se editan. Para corregir un error: abra el detalle de la compra (desde
+<span class="ruta">Reportes → Compras</span> o el kárdex), pulse <b>Anular compra</b>, escriba el
+<b>Motivo</b> y confirme. Después regístrela de nuevo con los datos correctos (puede usar el mismo número
+de factura).</p>
+<p>La anulación resta de la existencia lo que la compra sumó. Se rechaza si algún producto quedaría con
+existencia negativa, está inactivo o ya no controla inventario; el mensaje indica qué productos lo impiden.</p>
+<figure class="captura" id="IMG-05-07" data-titulo="Detalle de compra y diálogo «Anular compra»">
+  Capture el detalle de una compra vigente con el botón «Anular compra» y el diálogo de motivo abierto.
+</figure>
+
+<!-- ============================================================ 6. CAJA Y TURNOS -->
+<h1 class="num" id="cap-caja">Caja y turnos</h1>
+<div class="etiquetas"><span class="etq mod">Módulo: Turnos y arqueo</span></div>
+<p>Un <b>turno</b> es el período de trabajo de un usuario en la caja, desde la apertura hasta el cierre
+(Corte Z). Para vender se necesita un turno abierto <b>propio</b>. Solo puede haber un turno abierto por caja.</p>
+
+<h2 id="caja-abrir">Abrir turno</h2>
+<ol class="pasos">
+  <li>Entre a <span class="ruta">Ventas → Punto de venta</span> (o pulse <kbd>F9</kbd>). Si no hay turno, aparece «No hay un turno abierto».</li>
+  <li>Pulse <b>Abrir turno</b>.</li>
+  <li>Escriba el <b>Fondo inicial</b>: el efectivo con el que empieza para dar cambio.</li>
+  <li>Pulse <b>Abrir turno</b>. Si el fondo es 0, el sistema pide confirmación («Abrir sin fondo»).</li>
+</ol>
+<figure class="captura" id="IMG-06-01" data-titulo="Diálogo «Abrir turno»" data-wireframe="abrir-turno">
+  Capture el diálogo con un fondo inicial escrito.
+</figure>
+<p>Con el turno abierto, el Punto de venta muestra la <b>barra del turno</b> (folio, hora de apertura, usuario y
+número de ventas) con los botones <b>Ingreso</b>, <b>Retiro</b> y <b>Corte Z</b>. Si cierra la aplicación, el
+turno sigue abierto y continúa al volver a entrar.</p>
+<div class="caja aviso"><b class="t">Turno de otro usuario</b>
+Si hay un turno abierto de otra persona, el Punto de venta se bloquea: «Hay un turno abierto de … Debe cerrarse
+antes de vender». El Cajero solo puede cerrar sesión; el Administrador ve <b>Cerrar ese turno</b>.</div>
+
+<h2 id="caja-movimientos">Ingresos y retiros de efectivo</h2>
+<p>Desde la barra del turno:</p>
+<ul>
+  <li><b>Ingreso</b>: efectivo que entra a la caja sin ser venta (por ejemplo, más cambio).</li>
+  <li><b>Retiro</b>: efectivo que sale (pago a un proveedor, depósito al banco). Un Cajero necesita la autorización de un Administrador. No se puede retirar más del efectivo esperado.</li>
+</ul>
+<p>Escriba el <b>Monto</b> y el <b>Motivo</b> y pulse <b>Guardar</b>. Al registrarse, puede pulsar
+<b>Imprimir comprobante</b>. El movimiento recibe un folio como <code>T-000123-02</code>.</p>
+<figure class="captura" id="IMG-06-02" data-titulo="Diálogo «Retiro de efectivo»">
+  Capture el diálogo de retiro con monto y motivo, o el aviso de movimiento registrado con «Imprimir comprobante».
+</figure>
+
+<h2 id="caja-esperado">¿Cómo se calcula el efectivo esperado?</h2>
+<p>El efectivo que debería haber en la caja es:</p>
+<table class="tabla">
+  <tr><td style="width:6%" class="c">+</td><td>Fondo inicial</td></tr>
+  <tr><td class="c">+</td><td>Efectivo de las ventas (lo cobrado, ya descontado el cambio)</td></tr>
+  <tr><td class="c">+</td><td>Ingresos</td></tr>
+  <tr><td class="c">−</td><td>Retiros</td></tr>
+  <tr><td class="c">−</td><td>Reintegros en efectivo por devoluciones o cancelaciones</td></tr>
+  <tr><td class="c">+ / −</td><td>Abonos de clientes en efectivo y sus anulaciones</td></tr>
+</table>
+<p>Los pagos con tarjeta, transferencia, nota de crédito y las ventas a crédito <b>no</b> forman parte del
+efectivo esperado; se reportan por separado.</p>
+
+<h2 id="caja-corte-x">Corte X (lectura parcial)</h2>
+<p><span class="ruta">Caja → Corte X</span>. Muestra las cifras del turno abierto en ese momento (ventas,
+canceladas, formas de pago, devoluciones, crédito, ingresos, retiros y efectivo esperado) <b>sin cerrar el
+turno</b> y sin interrumpir la venta en curso. Puede hacer los que necesite; cada uno recibe un folio
+<code>X-000001</code>. Pulse <b>Imprimir</b> para obtener el ticket «CORTE X — LECTURA PARCIAL - NO ES CIERRE
+DE CAJA».</p>
+<p>El Administrador lo genera directamente; el Cajero necesita la autorización de un Administrador.</p>
+<figure class="captura" id="IMG-06-03" data-titulo="Caja → Corte X">
+  Capture la vista del Corte X con las cifras del turno y el botón «Imprimir».
+</figure>
+
+<h2 id="caja-corte-z">Corte Z (cierre del turno con arqueo ciego)</h2>
+<p><span class="ruta">Caja → Corte Z</span> o el botón <b>Corte Z</b> de la barra del turno. El cierre tiene
+tres pasos:</p>
+<ol class="pasos">
+  <li><b>Conteo</b>: cuente el efectivo de la caja y escríbalo en <b>Efectivo contado en caja</b>. En este paso <b>no</b> se muestra cuánto debería haber (arqueo ciego). Pulse <b>Continuar</b>.</li>
+  <li><b>Cifras</b>: se muestran efectivo esperado, contado y la <b>Diferencia</b> (<span style="color:#2E7D32">Sobrante</span>, <span style="color:#C62828">Faltante</span> o Cuadrado), además de tarjeta y transferencia. Si hay diferencia, el <b>Comentario</b> es obligatorio. <b>Volver a contar</b> regresa al paso 1 (cada conteo queda registrado).</li>
+  <li><b>Cierre</b>: pulse <b>Confirmar Corte Z</b>. El turno se cierra, recibe el folio <code>Z-000001</code> y se imprime el corte. Pulse <b>Terminar</b>.</li>
+</ol>
+<figure class="captura" id="IMG-06-04" data-titulo="Corte Z: conteo, cifras y cierre" data-wireframe="corte-z">
+  Capture los tres pasos del Corte Z (pueden ser tres imágenes combinadas o la del paso «Cifras» con una
+  diferencia y su comentario).
+</figure>
+<div class="caja aviso"><b class="t">Antes de cerrar</b>
+No se puede cerrar un turno mientras su dueño tenga una venta en curso: termínela o cancélela. Si la cifra
+esperada cambia entre el paso 2 y el 3 (por ejemplo, una venta desde otra ventana), aparece «El turno cambió»
+y se muestran las cifras nuevas.</div>
+<p>Un Administrador puede cerrar el turno de otro usuario desde el Punto de venta («Cerrar ese turno») o desde
+<span class="ruta">Ventas → Turnos</span>. Si el dueño dejó una venta guardada, se avisa y se descarta.</p>
+<p>Si la impresora falla, el cierre <b>no</b> se revierte: se ofrece <b>Reintentar</b> y el corte se puede
+reimprimir después.</p>
+<figure class="captura" id="IMG-06-05" data-titulo="Ticket impreso del Corte Z">
+  Fotografía o archivo de la impresora virtual con el ticket «CORTE Z» completo.
+</figure>
+
+<h2 id="caja-historico">Histórico de cortes</h2>
+<div class="etiquetas"><span class="etq admin">Solo Administrador</span></div>
+<p><span class="ruta">Caja → Histórico de cortes</span> lista los Cortes X y Z. Filtre por tipo, fechas (hoy por
+omisión) y usuario. Doble clic o <b>Ver</b> abre el corte con las cifras originales; <b>Reimprimir</b> lo imprime
+con la leyenda «REIMPRESIÓN». Los cortes no se pueden modificar ni borrar.</p>
+<figure class="captura" id="IMG-06-06" data-titulo="Caja → Histórico de cortes">
+  Capture la lista con Cortes X y Z del día y los filtros visibles.
+</figure>
+
+<h2 id="caja-turnos">Turnos y Mi turno</h2>
+<ul>
+  <li><span class="ruta">Ventas → Turnos</span> <span class="etq admin">Solo Administrador</span>: todos los turnos con estado (Abierto/Cerrado), usuario, apertura, cierre, total vendido y diferencia. El detalle tiene las pestañas <b>Ventas</b>, <b>Movimientos</b> y <b>Arqueo</b>, y el botón <b>Reimprimir corte</b>.</li>
+  <li><span class="ruta">Ventas → Mi turno</span> <span class="etq todos">Cajero y Administrador</span>: resumen del turno propio, exportable a PDF.</li>
+</ul>
+<figure class="captura" id="IMG-06-07" data-titulo="Ventas → Turnos (detalle de un turno)">
+  Capture el detalle de un turno cerrado con la pestaña «Arqueo» seleccionada.
+</figure>
+<figure class="captura" id="IMG-06-08" data-titulo="Ventas → Mi turno">
+  Con sesión de Cajero y turno abierto, capture la pantalla «Mi turno».
+</figure>
+
+<!-- ============================================================ 7. PUNTO DE VENTA -->
+<h1 class="num" id="cap-pdv">Punto de venta</h1>
+<div class="etiquetas"><span class="etq todos">Cajero y Administrador</span></div>
+<p>Abra <span class="ruta">Ventas → Punto de venta</span> o pulse <kbd>F9</kbd> desde cualquier pantalla.
+Todas las acciones tienen tecla rápida y también un botón grande para pantallas táctiles.</p>
+<figure class="captura" id="IMG-07-01" data-titulo="Punto de venta con una venta en curso" data-wireframe="punto-de-venta">
+  Con un turno abierto, capture la pantalla completa con 4 o 5 productos en la venta (uno a granel), una
+  línea seleccionada, el total y los botones de acción.
+</figure>
+<ul class="leyenda">
+  <li><span class="numero">1</span><b>Barra del turno</b> con Ingreso, Retiro y Corte Z.</li>
+  <li><span class="numero">2</span><b>Campo de captura</b>: escanee o escriba un código, SKU o nombre y pulse <kbd>Enter</kbd>. Junto a él, <b>Buscar (F2)</b> y <b>Cliente…</b> (venta a crédito).</li>
+  <li><span class="numero">3</span><b>Líneas de la venta</b>: producto, SKU, cantidad, precio e importe.</li>
+  <li><span class="numero">4</span><b>Resumen</b>: artículos, subtotal, descuento, total y <b>Cobrar (F12)</b>.</li>
+  <li><span class="numero">5</span><b>Acciones</b>: cantidad, quitar, descuentos, cupón, abrir cajón y cancelar venta.</li>
+</ul>
+
+<h2 id="pdv-agregar">Agregar productos</h2>
+<ul>
+  <li><b>Con lector de códigos</b>: escanee; el producto se agrega solo. Si el cursor no está en el campo de captura (pero tampoco en otro campo de texto), la lectura se dirige al campo automáticamente.</li>
+  <li><b>Por código o SKU</b>: escríbalo y pulse <kbd>Enter</kbd>.</li>
+  <li><b>Por nombre</b>: escriba parte del nombre y pulse <kbd>Enter</kbd> o <kbd>F2</kbd>. Con varios resultados se abre una lista: muévase con <kbd>↑</kbd>/<kbd>↓</kbd>, elija con <kbd>Enter</kbd> o salga con <kbd>Esc</kbd>.</li>
+  <li>Escanear de nuevo un producto que ya está en la venta suma una unidad a su línea.</li>
+</ul>
+<figure class="captura" id="IMG-07-02" data-titulo="Lista de resultados al buscar por nombre">
+  Escriba un nombre parcial con varias coincidencias (por ejemplo «leche»), pulse F2 y capture la lista de
+  resultados.
+</figure>
+<table class="tabla">
+  <tr><th style="width:34%">Aviso</th><th>Qué hacer</th></tr>
+  <tr><td>Código no encontrado: …</td><td>El código es válido pero ningún producto lo tiene. Busque con <kbd>F2</kbd> por nombre o registre el código en el producto.</td></tr>
+  <tr><td>Código no válido: …</td><td>La lectura trae caracteres no admitidos o está dañada. Vuelva a escanear o revise el lector en <span class="ruta">Ayuda → Probar escáner</span>.</td></tr>
+  <tr><td>Lectura ignorada: cierre la ventana para escanear</td><td>Escaneó con un diálogo abierto. Ciérrelo y vuelva a escanear.</td></tr>
+</table>
+
+<h2 id="pdv-cantidad">Cambiar la cantidad o quitar una línea</h2>
+<ul>
+  <li>Seleccione la línea y pulse <kbd>F4</kbd> (o <kbd>*</kbd> con el campo de captura vacío). Escriba la <b>Nueva cantidad</b>. Los productos a granel admiten hasta 3 decimales (por ejemplo <code>1.250</code> kg).</li>
+  <li>Para quitar la línea seleccionada pulse <kbd>Supr</kbd> o <b>Quitar</b>.</li>
+</ul>
+<div class="caja nota"><b class="t">Existencia insuficiente</b>
+Si vende más de lo que hay, el sistema advierte «La existencia no alcanza para: …» y permite continuar. La
+existencia queda en negativo y el producto aparece «Sin existencia» en el inventario.</div>
+
+<h2 id="pdv-cobrar">Cobrar</h2>
+<p>Pulse <kbd>F12</kbd> o <b>Cobrar (F12)</b>. Se abre la ventana <b>Cobro</b> con el total.</p>
+<figure class="captura" id="IMG-07-03" data-titulo="Ventana «Cobro»" data-wireframe="cobro">
+  Capture la ventana de cobro con un pago en efectivo mayor al total, mostrando el cambio en verde.
+</figure>
+<h3>Efectivo <span class="numero">1</span></h3>
+<ul>
+  <li>Escriba lo que entrega el cliente en <b>Recibido</b>, o use las teclas rápidas: <kbd>F5</kbd> = monto exacto; <kbd>1</kbd> a <kbd>6</kbd> = billetes de $20, $50, $100, $200, $500 y $1,000.</li>
+  <li>El sistema muestra el <b>Cambio</b>. Solo el efectivo da cambio.</li>
+</ul>
+<h3>Tarjeta o transferencia <span class="numero">2</span></h3>
+<ul>
+  <li>Escriba el <b>Monto</b>, elija la forma de pago y, si quiere, la <b>Referencia</b> (número de autorización). Pulse <b>Agregar pago</b>.</li>
+  <li>El sistema solo <b>registra</b> el pago: el cobro se hace en la terminal bancaria. Un pago con tarjeta o transferencia no puede exceder lo pendiente.</li>
+</ul>
+<h3>Pagos mixtos, nota de crédito y crédito <span class="numero">3</span></h3>
+<ul>
+  <li>Puede combinar varias formas de pago hasta cubrir el total; el indicador muestra «Faltan $…» o el cambio. Para quitar un pago, selecciónelo y pulse <kbd>Supr</kbd>.</li>
+  <li><b>Nota de crédito</b>: escriba el <b>Folio de la nota</b> (por ejemplo <code>NC-000012</code>) y pulse <b>Aplicar</b>; se muestra el saldo disponible y se usa el menor entre el saldo y lo pendiente. Máximo una nota por venta.</li>
+  <li><b>Venta a crédito</b>: ver <a href="#cli-venta">Clientes y crédito</a>.</li>
+</ul>
+<p>Confirme con <kbd>Enter</kbd>, <kbd>F12</kbd> o <b>Confirmar cobro</b>. <kbd>Esc</kbd> regresa a la venta
+conservando los pagos capturados. Al confirmar aparece «Venta V-000123 registrada», se imprime el ticket (si está
+configurado) y se abre el cajón si hubo efectivo.</p>
+<figure class="captura" id="IMG-07-04" data-titulo="Ticket de venta impreso">
+  Fotografía o archivo de impresora virtual de un ticket de venta: encabezado del negocio, folio, cajero,
+  productos, total, forma de pago, cambio y pie.
+</figure>
+
+<h2 id="pdv-cancelar">Cancelar la venta en curso</h2>
+<p>Pulse <kbd>F8</kbd> o <b>Cancelar venta (F8)</b> y confirme con <b>Sí, cancelar</b>. Esto solo vacía la
+venta que está capturando; no afecta ventas ya cobradas (para eso vea el
+<a href="#cap-ventas">capítulo 8</a>).</p>
+
+<h2 id="pdv-recuperar">Recuperar una venta sin terminar</h2>
+<p>La venta en curso se guarda después de cada cambio. Si la aplicación se cierra de golpe, se corta la luz o
+cambia de usuario, al volver a abrir el Punto de venta aparece: «Hay una venta sin terminar con N artículos por
+$X. ¿Desea recuperarla?». Elija <b>Recuperar</b> o <b>Descartar</b>.</p>
+<figure class="captura" id="IMG-07-05" data-titulo="Aviso «Venta sin terminar»">
+  Agregue productos, cierre sesión confirmando y vuelva a entrar con el mismo usuario; capture el aviso.
+</figure>
+<p>Las líneas de productos que se desactivaron o eliminaron mientras tanto se recuperan señaladas
+(«Producto inactivo» / «Producto eliminado») y hay que quitarlas antes de cobrar.</p>
+
+<h2 id="pdv-cajon">Abrir el cajón sin venta</h2>
+<p>Pulse <b>Abrir cajón</b>, escriba el motivo (obligatorio) y confirme. Un Cajero necesita la autorización de
+un Administrador. Cada apertura queda en la bitácora con su motivo.</p>
+
+<h2 id="pdv-atajos">Resumen de teclas del Punto de venta</h2>
+<table class="tabla">
+  <tr><th style="width:22%">Tecla</th><th>Acción</th></tr>
+  <tr><td><kbd>F9</kbd></td><td>Ir al Punto de venta desde cualquier pantalla</td></tr>
+  <tr><td><kbd>Enter</kbd></td><td>Agregar el producto escrito o escaneado</td></tr>
+  <tr><td><kbd>F2</kbd></td><td>Buscar por nombre</td></tr>
+  <tr><td><kbd>F4</kbd> o <kbd>*</kbd></td><td>Cambiar la cantidad de la línea seleccionada</td></tr>
+  <tr><td><kbd>Supr</kbd></td><td>Quitar la línea seleccionada</td></tr>
+  <tr><td><kbd>F7</kbd> / <kbd>Shift</kbd>+<kbd>F7</kbd></td><td>Descuento a la línea / descuento a la venta</td></tr>
+  <tr><td><kbd>F12</kbd></td><td>Cobrar</td></tr>
+  <tr><td><kbd>F8</kbd></td><td>Cancelar la venta en curso</td></tr>
+</table>
+
+<!-- ============================================================ 8. VENTAS REALIZADAS -->
+<h1 class="num" id="cap-ventas">Ventas realizadas, cancelaciones y devoluciones</h1>
+
+<h2 id="ven-lista">Consultar ventas</h2>
+<div class="etiquetas"><span class="etq todos">Cajero y Administrador</span></div>
+<p><span class="ruta">Ventas → Ventas realizadas</span> (o la tarjeta «Ventas del día» de Inicio). Un Cajero solo
+ve sus propias ventas; el Administrador ve todas y puede filtrar por <b>Cajero</b>.</p>
+<ul>
+  <li><b>Folio</b>: acepta <code>V-000123</code>, <code>v123</code> o <code>123</code>.</li>
+  <li><b>Estado</b>: Todas, Completadas o Canceladas.</li>
+  <li>Columnas: folio, fecha y hora, cajero, total y formas de pago.</li>
+</ul>
+<figure class="captura" id="IMG-08-01" data-titulo="Ventas → Ventas realizadas">
+  Capture la lista con ventas completadas y al menos una cancelada, con los filtros visibles.
+</figure>
+
+<h2 id="ven-detalle">Detalle de una venta y reimpresión</h2>
+<p>Abra una venta para ver sus productos, pagos (forma, monto, recibido y cambio), descuentos, estado de crédito
+y el historial de devoluciones. <b>Reimprimir</b> imprime el ticket con la leyenda «REIMPRESIÓN» (y «CANCELADA» si
+aplica).</p>
+<figure class="captura" id="IMG-08-02" data-titulo="Detalle de la venta">
+  Capture el detalle de una venta con una devolución parcial, mostrando «Devuelto: X de Y» en una línea, los
+  pagos y los botones «Reimprimir», «Cancelar venta» y «Devolver artículos».
+</figure>
+
+<h2 id="ven-cancelar">Cancelar una venta cobrada</h2>
+<p>Cancela la venta <b>completa</b>: regresa los productos al inventario y devuelve el dinero.</p>
+<ol class="pasos">
+  <li>En el detalle de la venta pulse <b>Cancelar venta</b>.</li>
+  <li>Escriba el <b>Motivo</b> (obligatorio).</li>
+  <li>Elija la <b>Compensación</b>: <b>Reintegro</b> (devolver el dinero) o <b>Nota de crédito</b> (vale para una compra futura).</li>
+  <li>Pulse <b>Cancelar la venta</b>. Un Administrador debe autorizar (también cuando quien opera es Administrador, con su propia contraseña).</li>
+</ol>
+<div class="caja nota"><b class="t">Sin el módulo Devoluciones</b>
+Se conserva la cancelación básica: motivo obligatorio y reintegro, sin notas de crédito ni devoluciones
+parciales. Un Cajero necesita autorización.</div>
+
+<h2 id="ven-devolver">Devolver artículos (devolución parcial)</h2>
+<div class="etiquetas"><span class="etq mod">Módulo: Devoluciones</span></div>
+<ol class="pasos">
+  <li>En el detalle de la venta pulse <b>Devolver artículos</b>.</li>
+  <li>En la columna <b>A devolver</b>, escriba la cantidad de cada producto (no puede exceder la columna <b>Disponible</b>). <b>Seleccionar todo</b> marca todo lo disponible.</li>
+  <li>Escriba el <b>Motivo</b> y elija la <b>Compensación</b>.</li>
+  <li>Revise el <b>Total a devolver</b> y su reparto por forma de pago.</li>
+  <li>Pulse <b>Devolver</b> y pida la autorización del Administrador.</li>
+</ol>
+<figure class="captura" id="IMG-08-03" data-titulo="Diálogo «Devolver artículos»" data-wireframe="devolucion">
+  Capture el diálogo con dos productos a devolver, motivo, compensación «Reintegro» y el total a devolver.
+</figure>
+<h3>¿Cómo se devuelve el dinero?</h3>
+<p>El reintegro se reparte en proporción a las formas de pago de la venta original:</p>
+<table class="tabla">
+  <tr><th style="width:28%">Pago original</th><th>Qué pasa</th></tr>
+  <tr><td>Efectivo</td><td>Sale del efectivo del turno abierto actual. Si no alcanza, el sistema lo rechaza: elija nota de crédito o registre un ingreso.</td></tr>
+  <tr><td>Tarjeta o transferencia</td><td>Queda <b>pendiente de reversa manual</b>: haga la devolución en la terminal bancaria y después márquela como reversada en <span class="ruta">Ventas → Devoluciones y vales</span>.</td></tr>
+  <tr><td>Nota de crédito</td><td>El monto vuelve como saldo a la misma nota.</td></tr>
+  <tr><td>A crédito</td><td>Reduce la deuda del cliente (ver <a href="#cli-devoluciones">capítulo 10</a>).</td></tr>
+</table>
+<div class="caja aviso"><b class="t">Plazo y reglas</b>
+Por omisión, solo se aceptan devoluciones de ventas con <b>30 días</b> o menos (configurable). Un Cajero solo
+puede cancelar o devolver sus propias ventas. Cada operación recibe un folio <code>D-000001</code> y queda en la
+bitácora.</div>
+
+<h2 id="ven-vales">Devoluciones y vales</h2>
+<div class="etiquetas"><span class="etq admin">Solo Administrador</span><span class="etq mod">Módulo: Devoluciones</span></div>
+<p><span class="ruta">Ventas → Devoluciones y vales</span> tiene tres pestañas:</p>
+<ul>
+  <li><b>Notas de crédito</b>: busque por folio, filtre <b>Solo con saldo</b>, vea los movimientos de cada nota (emisión, uso como pago, saldo restaurado) y <b>Reimprimir</b>.</li>
+  <li><b>Reintegros pendientes</b>: devoluciones a tarjeta o transferencia. Después de hacer la reversa en la terminal bancaria, pulse <b>Marcar como reversado</b> y confirme.</li>
+  <li><b>Configuración</b>: <b>Plazo máximo para cancelar o devolver una venta</b> (1 a 3650 días; 30 por omisión).</li>
+</ul>
+<figure class="captura" id="IMG-08-04" data-titulo="Ventas → Devoluciones y vales">
+  Capture la pestaña «Notas de crédito» con varias notas y el panel de movimientos de una nota seleccionada.
+</figure>
+<div class="caja aviso"><b class="t">Cuidado con las notas de crédito</b>
+La nota no está ligada a un cliente: cualquiera que presente el folio puede usarla. No se convierte en
+efectivo y no vence.</div>
+
+<!-- ============================================================ 9. DESCUENTOS -->
+<h1 class="num" id="cap-descuentos">Descuentos y cupones</h1>
+<div class="etiquetas"><span class="etq mod">Módulo: Descuentos y promociones</span></div>
+
+<h2 id="desc-aplicar">Aplicar un descuento en la venta</h2>
+<ul>
+  <li><b>Descuento de una línea</b>: seleccione la línea y pulse <kbd>F7</kbd> o <b>Descuento (F7)</b>.</li>
+  <li><b>Descuento a la venta</b>: pulse <kbd>Shift</kbd>+<kbd>F7</kbd> o <b>Descuento a la venta</b>. Se aplica sobre el subtotal (líneas ya descontadas).</li>
+</ul>
+<p>Elija <b>Porcentaje (%)</b> o <b>Monto fijo ($)</b>, escriba el <b>Valor</b>, revise el <b>Importe final</b> y
+pulse <b>Aplicar</b>. Para quitarlo use <b>Quitar descuento</b>. Solo puede haber un descuento por línea y uno
+por venta.</p>
+<figure class="captura" id="IMG-09-01" data-titulo="Diálogo de descuento">
+  Capture el diálogo «Descuento de la línea» con modalidad porcentaje, valor y la vista previa del importe final.
+</figure>
+<div class="caja nota"><b class="t">Límite de descuento</b>
+Si el descuento supera el límite configurado (10 % por omisión), un Cajero necesita la autorización de un
+Administrador. Un descuento exactamente igual al límite no la requiere.</div>
+
+<h2 id="desc-cupon">Aplicar un cupón</h2>
+<p>Escriba o escanee el código del cupón en el campo de captura, o pulse <b>Aplicar cupón</b>. El cupón aplica un
+descuento a la venta y no se combina con un descuento a la venta manual. El uso se cuenta al cobrar; si la venta
+se cancela por completo, el uso se devuelve.</p>
+
+<h2 id="desc-cupones">Administrar cupones</h2>
+<div class="etiquetas"><span class="etq admin">Solo Administrador</span></div>
+<p><span class="ruta">Descuentos → Cupones</span>: busque por código y filtre por estado. Pulse <b>Nuevo cupón</b>:</p>
+<table class="tabla">
+  <tr><th style="width:30%">Campo</th><th>Reglas</th></tr>
+  <tr><td>Código</td><td>De 3 a 30 caracteres (A–Z, 0–9 y guion). Único y distinto de cualquier SKU o código de barras.</td></tr>
+  <tr><td>Modalidad y Valor</td><td>Porcentaje o monto fijo.</td></tr>
+  <tr><td>Desde / Hasta</td><td>Vigencia; los días de inicio y fin cuentan completos.</td></tr>
+  <tr><td>Límite de usos</td><td>Vacío = sin límite.</td></tr>
+</table>
+<p>Estados posibles: vigente, por iniciar, vencido, agotado e inactivo. Un cupón ya usado solo permite cambiar la
+vigencia, el límite o desactivarlo. Los cupones no se borran.</p>
+<figure class="captura" id="IMG-09-02" data-titulo="Descuentos → Cupones">
+  Capture la lista de cupones con distintos estados y el formulario «Nuevo cupón».
+</figure>
+
+<h2 id="desc-config">Límite y reporte de descuentos</h2>
+<ul>
+  <li><span class="ruta">Descuentos → Configuración</span>: porcentaje máximo de descuento sin autorización.</li>
+  <li><span class="ruta">Descuentos → Reporte</span>: total descontado y detalle por descuento (folio, fecha, cajero, tipo, valor, monto, autorizador y cupón), con filtros de período, cajero y tipo, exportable a PDF o Excel.</li>
+</ul>
+<figure class="captura" id="IMG-09-03" data-titulo="Descuentos → Reporte">
+  Capture el reporte de descuentos de «Este mes» con algunos descuentos autorizados.
+</figure>
+
+<!-- ============================================================ 10. CLIENTES -->
+<h1 class="num" id="cap-clientes">Clientes y crédito</h1>
+<div class="etiquetas"><span class="etq mod">Módulo: Crédito y clientes</span></div>
+
+<h2 id="cli-lista">Lista y alta de clientes</h2>
+<div class="etiquetas"><span class="etq todos">Cajero y Administrador</span></div>
+<p><span class="ruta">Clientes → Clientes</span>: busque por nombre, teléfono o RUC. La lista muestra modalidad,
+límite, saldo y estado. <b>Mostrar inactivos</b> incluye los desactivados.</p>
+<p>Pulse <b>Nuevo cliente</b> y capture <b>Nombre</b> (obligatorio), <b>Teléfono</b>, <b>Email</b> y <b>RUC</b>. En
+la sección <b>Crédito</b>, el Administrador elige la <b>Modalidad</b> (<i>Solo efectivo</i> o <i>Crédito
+disponible</i>) y el <b>Límite de crédito</b>. Un cliente creado por un Cajero queda como «Solo efectivo».</p>
+<figure class="captura" id="IMG-10-01" data-titulo="Clientes → lista y formulario">
+  Capture la lista de clientes y el formulario «Nuevo cliente» con la sección «Crédito».
+</figure>
+
+<h2 id="cli-ficha">Ficha del cliente</h2>
+<p>Pulse <b>Abrir ficha</b>. Muestra límite, saldo pendiente, disponible y días vencido, con las pestañas
+<b>Ventas a crédito</b> y <b>Abonos</b>.</p>
+<figure class="captura" id="IMG-10-02" data-titulo="Ficha del cliente" data-wireframe="cliente">
+  Capture la ficha de un cliente con saldo, una venta vencida y el botón «Registrar abono».
+</figure>
+
+<h2 id="cli-venta">Vender a crédito</h2>
+<ol class="pasos">
+  <li>En el Punto de venta capture los productos.</li>
+  <li>Pulse <b>Cliente…</b> y elija el cliente (solo aparecen clientes activos con crédito).</li>
+  <li>Pulse <kbd>F12</kbd> y en el cobro elija <b>Venta a crédito</b>. El total completo queda como pago «A crédito» (no se combina con otras formas de pago).</li>
+  <li>Confirme. El ticket imprime el nombre del cliente y «A crédito: $X».</li>
+</ol>
+<div class="caja aviso"><b class="t">Límite de crédito</b>
+Si el saldo más la venta supera el límite, el cobro muestra «Excede el límite por $X; requiere autorización» y un
+Cajero necesita la autorización de un Administrador. Si el cliente tiene ventas vencidas, solo se muestra un aviso.</div>
+
+<h2 id="cli-abono">Registrar un abono</h2>
+<p>Desde la ficha del cliente, pulse <b>Registrar abono</b>:</p>
+<ol class="pasos">
+  <li>Revise el <b>Saldo actual</b>.</li>
+  <li>Escriba el <b>Monto</b> (mayor que 0 y no mayor que el saldo) y elija la <b>Forma de pago</b>: efectivo, tarjeta o transferencia. La <b>Referencia</b> es opcional.</li>
+  <li>Pulse <b>Registrar</b>. El abono recibe un folio <code>AB-000001</code> y se imprime el recibo.</li>
+</ol>
+<p>El abono se aplica <b>primero a las ventas más antiguas</b>. Se necesita un turno abierto.</p>
+<figure class="captura" id="IMG-10-03" data-titulo="Diálogo «Registrar abono»">
+  Capture el diálogo con saldo actual, monto, forma de pago y la nota «Se aplicará a las ventas más antiguas primero».
+</figure>
+
+<h2 id="cli-anular">Anular un abono</h2>
+<p>En la pestaña <b>Abonos</b>, elija el abono y pulse <b>Anular</b>. Escriba el motivo; siempre se requiere la
+autorización de un Administrador. El saldo del cliente vuelve a como estaba. No se puede anular un abono si la
+venta a la que se aplicó se canceló o devolvió después.</p>
+
+<h2 id="cli-devoluciones">Devoluciones de ventas a crédito</h2>
+<p>Al cancelar o devolver una venta a crédito, primero se reduce lo que el cliente debe de esa venta. Si ya había
+pagado de más, el excedente se aplica a sus otras ventas pendientes y solo lo que sobre se le devuelve en efectivo.
+Estas ventas no admiten nota de crédito.</p>
+
+<h2 id="cli-desactivar">Desactivar un cliente</h2>
+<div class="etiquetas"><span class="etq admin">Solo Administrador</span></div>
+<p>Solo se puede desactivar un cliente con saldo 0. El cliente inactivo no aparece en el Punto de venta, pero
+conserva su historial.</p>
+
+<!-- ============================================================ 11. REPORTES -->
+<h1 class="num" id="cap-reportes">Reportes</h1>
+
+<h2 id="rep-comun">Uso común</h2>
+<p>Todos los reportes se calculan al consultarlos con los datos vigentes. Elija el período:</p>
+<p><b>Hoy</b> · <b>Ayer</b> · <b>Últimos 7 días</b> · <b>Este mes</b> · <b>Mes anterior</b> ·
+<b>Personalizado</b> (máximo 366 días), y pulse <b>Consultar</b>.</p>
+<p><b>Exportar PDF</b> y <b>Exportar Excel</b> incluyen <b>todos</b> los registros del filtro (no solo la página
+visible). El PDF lleva el encabezado del negocio; si faltan los datos del negocio, el sistema avisa y ofrece
+<b>Ir a Datos del negocio</b>.</p>
+
+<h2 id="rep-ventas">Reporte de ventas</h2>
+<div class="etiquetas"><span class="etq admin">Solo Administrador</span></div>
+<p><span class="ruta">Reportes → Ventas</span>: total vendido, número de ventas, ticket promedio, efectivo,
+tarjeta, transferencia y total descontado; gráfica de ventas por día; comparación con el período anterior
+(<b>Comparar con el período anterior</b>); sección «Ventas por categoría» y detalle por venta. Filtros por
+<b>Cajero</b> y <b>Categoría</b>.</p>
+<figure class="captura" id="IMG-11-01" data-titulo="Reportes → Ventas" data-wireframe="reporte-ventas">
+  Capture el reporte de «Este mes» con las tarjetas, la gráfica y parte de la tabla de detalle.
+</figure>
+
+<h2 id="rep-arqueo">Reporte de arqueo</h2>
+<div class="etiquetas"><span class="etq admin">Solo Administrador</span></div>
+<p><span class="ruta">Reportes → Arqueo</span>: turnos cerrados, total vendido, diferencia acumulada y gráfica de
+diferencia por turno. La tabla muestra por turno: cajero, apertura, cierre, fondo, vendido, ingresos, retiros,
+esperado, contado, diferencia y %. Los turnos abiertos aparecen «En curso».</p>
+<p>En <b>Alertar si la diferencia supera (%)</b> se define el umbral (5 % por omisión) y se guarda con
+<b>Guardar umbral</b>. Los turnos sobre el umbral aparecen en la tarjeta Alertas de Inicio.</p>
+<figure class="captura" id="IMG-11-02" data-titulo="Reportes → Arqueo">
+  Capture el reporte con varios turnos, uno con diferencia sobre el umbral, y la gráfica de barras.
+</figure>
+
+<h2 id="rep-inventario">Reporte de inventario</h2>
+<div class="etiquetas"><span class="etq todos">Cajero y Administrador</span></div>
+<p><span class="ruta">Reportes → Inventario</span>: existencias <b>al cierre de una fecha</b>. Tarjetas de total de
+productos, activos, existencia baja y sin existencia; gráfica de distribución; tabla con existencia, mínimo, punto
+de reorden, unidad, categoría y estado. Filtros por estado (incluye <b>En alerta</b> y <b>Urgente</b>), categoría y
+búsqueda. No muestra costos.</p>
+<figure class="captura" id="IMG-11-03" data-titulo="Reportes → Inventario">
+  Capture el reporte con el filtro «Urgente» aplicado.
+</figure>
+
+<h2 id="rep-compras">Reporte de compras</h2>
+<div class="etiquetas"><span class="etq admin">Solo Administrador</span><span class="etq mod">Módulo: Inventario</span></div>
+<p><span class="ruta">Reportes → Compras</span>: filtros por proveedor, fecha de factura, total mínimo y máximo, e
+<b>Incluir anuladas</b>; pulse <b>Aplicar</b>. El resumen cuenta solo compras vigentes. Doble clic o <kbd>Enter</kbd>
+abre el detalle.</p>
+<figure class="captura" id="IMG-11-04" data-titulo="Reportes → Compras">
+  Capture el reporte con varias compras, una anulada en gris, y el resumen.
+</figure>
+
+<h2 id="rep-creditos">Reporte de créditos</h2>
+<div class="etiquetas"><span class="etq admin">Solo Administrador</span><span class="etq mod">Módulo: Crédito y clientes</span></div>
+<p><span class="ruta">Reportes → Créditos</span>: una fila por cliente con saldo (saldo, límite, último abono,
+días vencido). Filtros <b>Al día</b>, <b>Vencido</b> y <b>Al límite</b>. Aquí también se configura el <b>plazo de
+pago</b> (30 días por omisión) que determina cuándo una venta está vencida.</p>
+<figure class="captura" id="IMG-11-05" data-titulo="Reportes → Créditos">
+  Capture el reporte con clientes al día y vencidos, y el campo del plazo de pago.
+</figure>
+
+<!-- ============================================================ 12. ADMINISTRACIÓN -->
+<h1 class="num" id="cap-admin">Administración</h1>
+<div class="etiquetas"><span class="etq admin">Solo Administrador</span></div>
+
+<h2 id="adm-usuarios">Usuarios</h2>
+<p><span class="ruta">Administración → Usuarios</span>: lista con búsqueda por nombre o usuario y <b>Mostrar
+inactivos</b>.</p>
+<ul>
+  <li><b>Nuevo usuario</b>: nombre completo, usuario, rol (Administrador o Cajero), activo y <b>Contraseña inicial</b>. El usuario deberá cambiarla al iniciar sesión.</li>
+  <li><b>Editar</b>: cambia nombre, usuario, rol o estado.</li>
+  <li><b>Restablecer contraseña</b>: asigna una contraseña temporal nueva y desbloquea al usuario.</li>
+</ul>
+<figure class="captura" id="IMG-12-01" data-titulo="Administración → Usuarios">
+  Capture la lista de usuarios con al menos un Administrador, un Cajero y un usuario inactivo, y el
+  formulario «Nuevo usuario».
+</figure>
+<div class="caja nota"><b class="t">Reglas</b>
+Los usuarios no se borran: se desactivan y conservan su historial. Siempre debe quedar al menos un administrador
+activo, y nadie puede desactivarse ni quitarse el rol a sí mismo. Al desactivar a un usuario se descarta la venta
+que haya dejado guardada.</div>
+
+<h2 id="adm-bitacora">Bitácora de auditoría</h2>
+<p><span class="ruta">Administración → Bitácora</span> registra quién hizo qué y cuándo: accesos, ventas,
+cancelaciones, descuentos, cambios de productos y precios, usuarios, turnos, compras, configuración y
+exportaciones. Es de solo lectura: nadie puede modificarla ni borrarla.</p>
+<ol class="pasos">
+  <li>Elija el rango <b>Desde</b>/<b>Hasta</b> (inicia en hoy), el <b>Usuario</b>, el <b>Tipo de evento</b> y la <b>Entidad</b>, y pulse <b>Buscar</b>.</li>
+  <li>Seleccione una entrada para ver su detalle: motivo, tabla <b>Campo / Antes / Después</b> y detalles.</li>
+  <li><b>Ver historial del registro</b> muestra todos los cambios de ese producto, usuario, venta, etc., del más antiguo al más reciente.</li>
+  <li><b>Exportar PDF</b> o <b>Exportar Excel</b> guarda todas las entradas del filtro.</li>
+</ol>
+<figure class="captura" id="IMG-12-02" data-titulo="Administración → Bitácora" data-wireframe="bitacora">
+  Capture la bitácora con un cambio de precio seleccionado y la tabla «Campo / Antes / Después» visible.
+</figure>
+
+<!-- ============================================================ 13. AYUDA -->
+<h1 class="num" id="cap-ayuda">Ayuda, licencia y respaldos</h1>
+
+<h2 id="ayu-acerca">Acerca de</h2>
+<p><span class="ruta">Ayuda → Acerca de</span> muestra la versión, el sistema operativo y la <b>carpeta de
+datos</b> (con <b>Copiar ruta</b>).</p>
+<p><b>Exportar diagnóstico…</b> <span class="etq admin">Solo Administrador</span> genera un archivo
+<code>.zip</code> con los registros de los últimos 30 días para soporte técnico. La casilla <b>Incluir respaldo de
+la base de datos</b> agrega una copia de la información (sin imágenes de productos); márquela solo si soporte lo
+pide.</p>
+<figure class="captura" id="IMG-13-01" data-titulo="Ayuda → Acerca de">
+  Capture la pantalla con la versión, la carpeta de datos, «Exportar diagnóstico…» y la tarjeta de licencia.
+</figure>
+
+<h2 id="ayu-escaner">Probar el escáner</h2>
+<p><span class="ruta">Ayuda → Probar escáner</span> (todos los roles). Escanee un código; la pantalla muestra:</p>
+<table class="tabla">
+  <tr><th style="width:24%">Dato</th><th>Qué revisar</th></tr>
+  <tr><td>Texto leído</td><td>Debe coincidir con lo impreso en la etiqueta.</td></tr>
+  <tr><td>Formato</td><td>EAN-13, EAN-8, CODE128 / CODE39 o «Formato no reconocido».</td></tr>
+  <tr><td>Terminó con</td><td>Debe decir <b>Enter</b>. Si dice Tab o «Sin Enter», configure el lector para enviar Enter.</td></tr>
+  <tr><td>Velocidad</td><td>«Escáner» si la lectura llegó rápido; «Escritura manual» si no.</td></tr>
+  <tr><td>Producto</td><td>El producto que tiene ese código, o «Sin producto con este código».</td></tr>
+</table>
+<p>Esta pantalla no modifica la venta en curso. Guarda las últimas 10 lecturas (botón <b>Borrar</b>).</p>
+<figure class="captura" id="IMG-13-02" data-titulo="Ayuda → Probar escáner">
+  Escanee dos o tres códigos (uno registrado y uno no) y capture la pantalla con el historial de lecturas.
+</figure>
+<div class="caja consejo"><b class="t">Si los códigos con letras o guiones fallan</b>
+Si los códigos numéricos se leen bien pero los que tienen letras o guiones dan «Código no válido», el lector está
+configurado con otra distribución de teclado. Prográmelo con la misma distribución del sistema (hoja de
+configuración del fabricante).</div>
+
+<h2 id="ayu-licencia">Licencia</h2>
+<p>El sistema se puede evaluar <b>30 días</b> con todos los módulos. Faltando 5 días aparece un aviso. Al terminar
+sin licencia, el sistema pasa a <b>modo lectura</b>: se bloquean el Punto de venta, la apertura de turnos, los
+reportes y la administración de usuarios; los productos, el inventario y las ventas registradas siguen
+disponibles, y un turno ya abierto se puede cerrar.</p>
+<p>Para activar o extender la licencia <span class="etq admin">Solo Administrador</span>:</p>
+<ol class="pasos">
+  <li>Abra <span class="ruta">Ayuda → Acerca de</span> → <b>Administración de licencia</b>.</li>
+  <li>Pulse <b>Exportar solicitud…</b> y guarde el archivo <code>.posreq</code>. Envíelo al proveedor.</li>
+  <li>El proveedor devuelve un archivo <code>.poslic</code>.</li>
+  <li>Pulse <b>Importar licencia…</b> y elija ese archivo. Se aplica de inmediato, sin reiniciar.</li>
+</ol>
+<figure class="captura" id="IMG-13-03" data-titulo="Administración de licencia">
+  Capture el diálogo con los botones «Exportar solicitud…» e «Importar licencia…» y el estado actual.
+</figure>
+<div class="caja aviso"><b class="t">No copie la licencia</b>
+La licencia está ligada a la computadora. No copie el archivo de licencia a otro equipo: se invalida y el sistema
+queda en modo lectura.</div>
+
+<h2 id="ayu-respaldos">Respaldos automáticos</h2>
+<p>El sistema crea un respaldo de la información al abrir o cerrar la aplicación, una vez al día, y conserva los 7
+más recientes. Antes de cada actualización de versión también se hace un respaldo. Si al abrir el sistema detecta
+la base de datos dañada, ofrece restaurar el respaldo más reciente indicando su fecha.</p>
+<div class="caja consejo"><b class="t">Recomendación</b>
+Copie periódicamente la carpeta <code>backups</code> (dentro de la carpeta de datos) a una memoria USB o a la nube.
+Los respaldos automáticos están en la misma computadora y no protegen contra robo o falla del disco.</div>
+
+<!-- ============================================================ 14. PROBLEMAS -->
+<h1 class="num" id="cap-problemas">Solución de problemas</h1>
+<table class="tabla">
+  <tr><th style="width:36%">Problema</th><th>Solución</th></tr>
+  <tr><td>No aparece una opción del menú</td><td>Su rol no tiene permiso o el módulo no está activo en la licencia. Consulte al Administrador.</td></tr>
+  <tr><td>«No hay un turno abierto» al vender</td><td>Pulse <b>Abrir turno</b> (capítulo 6).</td></tr>
+  <tr><td>El Punto de venta está bloqueado por el turno de otra persona</td><td>Ese turno debe cerrarse. El Administrador puede usar <b>Cerrar ese turno</b>.</td></tr>
+  <tr><td>Usuario bloqueado</td><td>Espere 5 minutos o pida a un Administrador que restablezca la contraseña.</td></tr>
+  <tr><td>Olvidé mi contraseña</td><td>Un Administrador debe usar <b>Restablecer contraseña</b>.</td></tr>
+  <tr><td>No imprime el ticket</td><td>Revise que la impresora esté encendida, con papel y conectada. Pulse <b>Reintentar</b>. Pruebe con <b>Impresión de prueba</b>. La venta ya quedó registrada.</td></tr>
+  <tr><td>Los acentos salen mal en el ticket</td><td>Verifique que la impresora sea compatible con ESC/POS. Pruebe con la impresora virtual para descartar el ticket.</td></tr>
+  <tr><td>El cajón no abre</td><td>Debe estar conectado a la impresora y la opción automática activada; solo abre si hubo pago en efectivo.</td></tr>
+  <tr><td>El escáner no agrega productos</td><td>Use <span class="ruta">Ayuda → Probar escáner</span>: el lector debe terminar con Enter y leer el mismo texto impreso.</td></tr>
+  <tr><td>«Código no encontrado»</td><td>Registre el código de barras en el producto o búsquelo con <kbd>F2</kbd>.</td></tr>
+  <tr><td>«Venta a crédito» no aparece en el cobro</td><td>Primero elija un cliente con <b>Cliente…</b>; el cliente debe tener crédito y estar activo.</td></tr>
+  <tr><td>No puedo devolver una venta</td><td>Puede haber vencido el plazo de devoluciones, o un Cajero intenta devolver una venta de otro cajero.</td></tr>
+  <tr><td>«No hay efectivo disponible en caja para este reintegro»</td><td>Elija nota de crédito o registre un ingreso de efectivo y vuelva a intentarlo.</td></tr>
+  <tr><td>No puedo anular una compra</td><td>Algún producto quedaría con existencia negativa, está inactivo o ya no controla inventario. El mensaje indica cuál.</td></tr>
+  <tr><td>El reporte PDF sale sin encabezado</td><td>Capture los datos en <span class="ruta">Configuración → Datos del negocio</span>.</td></tr>
+  <tr><td>«Ocurrió un error inesperado»</td><td>El detalle quedó registrado. Un Administrador puede usar <b>Exportar diagnóstico…</b> y enviarlo a soporte.</td></tr>
+  <tr><td>«El POS ya está abierto»</td><td>Solo se permite una ventana; el sistema muestra la que ya estaba abierta.</td></tr>
+</table>
+
+<!-- ============================================================ APÉNDICES -->
+<h1 class="apendice" id="apendice-atajos">Apéndice A. Atajos de teclado</h1>
+<table class="tabla">
+  <tr><th style="width:30%">Dónde</th><th style="width:26%">Tecla</th><th>Acción</th></tr>
+  <tr><td>Cualquier pantalla</td><td><kbd>F9</kbd></td><td>Ir al Punto de venta</td></tr>
+  <tr><td rowspan="7">Punto de venta</td><td><kbd>Enter</kbd></td><td>Agregar producto</td></tr>
+  <tr><td><kbd>F2</kbd></td><td>Buscar por nombre</td></tr>
+  <tr><td><kbd>F4</kbd> o <kbd>*</kbd></td><td>Cambiar cantidad</td></tr>
+  <tr><td><kbd>Supr</kbd></td><td>Quitar línea</td></tr>
+  <tr><td><kbd>F7</kbd> / <kbd>Shift</kbd>+<kbd>F7</kbd></td><td>Descuento de línea / de venta</td></tr>
+  <tr><td><kbd>F12</kbd></td><td>Cobrar</td></tr>
+  <tr><td><kbd>F8</kbd></td><td>Cancelar venta en curso</td></tr>
+  <tr><td rowspan="5">Cobro</td><td><kbd>Enter</kbd> o <kbd>F12</kbd></td><td>Confirmar cobro</td></tr>
+  <tr><td><kbd>Esc</kbd></td><td>Regresar a la venta</td></tr>
+  <tr><td><kbd>F5</kbd></td><td>Efectivo exacto</td></tr>
+  <tr><td><kbd>1</kbd> … <kbd>6</kbd></td><td>Billetes de $20, $50, $100, $200, $500, $1,000</td></tr>
+  <tr><td><kbd>Supr</kbd></td><td>Quitar pago seleccionado</td></tr>
+  <tr><td rowspan="5">Listas (Productos, Existencias…)</td><td><kbd>Ctrl</kbd>+<kbd>F</kbd></td><td>Ir al buscador</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>N</kbd></td><td>Nuevo registro</td></tr>
+  <tr><td><kbd>F2</kbd></td><td>Editar</td></tr>
+  <tr><td><kbd>Supr</kbd></td><td>Borrar</td></tr>
+  <tr><td><kbd>Alt</kbd>+<kbd>RePág</kbd> / <kbd>AvPág</kbd></td><td>Página anterior / siguiente</td></tr>
+  <tr><td>Lista de búsqueda</td><td><kbd>↑</kbd> <kbd>↓</kbd> <kbd>Enter</kbd> <kbd>Esc</kbd></td><td>Moverse, elegir, salir</td></tr>
+</table>
+
+<h1 class="apendice" id="apendice-folios">Apéndice B. Folios del sistema</h1>
+<p>Todos los folios son consecutivos, sin huecos y nunca se reinician.</p>
+<table class="tabla">
+  <tr><th style="width:24%">Formato</th><th>Documento</th></tr>
+  <tr><td><code>V-000123</code></td><td>Venta</td></tr>
+  <tr><td><code>T-000123</code></td><td>Turno de caja</td></tr>
+  <tr><td><code>T-000123-02</code></td><td>Ingreso o retiro de efectivo dentro de un turno</td></tr>
+  <tr><td><code>X-000001</code></td><td>Corte X (lectura parcial)</td></tr>
+  <tr><td><code>Z-000001</code></td><td>Corte Z (cierre de turno)</td></tr>
+  <tr><td><code>D-000001</code></td><td>Cancelación o devolución</td></tr>
+  <tr><td><code>NC-000001</code></td><td>Nota de crédito (vale)</td></tr>
+  <tr><td><code>AB-000001</code></td><td>Abono de cliente</td></tr>
+</table>
+
+<h1 class="apendice" id="apendice-permisos">Apéndice C. Permisos por rol</h1>
+<p>«Con autorización» significa que el Cajero puede hacerlo si un Administrador captura su contraseña en ese momento.</p>
+<table class="tabla">
+  <tr><th>Función</th><th class="c" style="width:17%">Administrador</th><th class="c" style="width:17%">Cajero</th></tr>
+  <tr><td>Vender y cobrar</td><td class="c">✔</td><td class="c">✔</td></tr>
+  <tr><td>Consultar y reimprimir sus propias ventas</td><td class="c">✔</td><td class="c">✔</td></tr>
+  <tr><td>Ver todas las ventas y filtrar por cajero</td><td class="c">✔</td><td class="c">—</td></tr>
+  <tr><td>Consultar productos y existencias</td><td class="c">✔</td><td class="c">✔</td></tr>
+  <tr><td>Crear, editar y borrar productos y categorías</td><td class="c">✔</td><td class="c">—</td></tr>
+  <tr><td>Registrar movimientos de inventario</td><td class="c">✔</td><td class="c">—</td></tr>
+  <tr><td>Proveedores, compras y su anulación</td><td class="c">✔</td><td class="c">—</td></tr>
+  <tr><td>Abrir turno, ingresos, Corte Z y Mi turno</td><td class="c">✔</td><td class="c">✔</td></tr>
+  <tr><td>Retirar efectivo</td><td class="c">✔</td><td class="c">Con autorización</td></tr>
+  <tr><td>Generar Corte X</td><td class="c">✔</td><td class="c">Con autorización</td></tr>
+  <tr><td>Turnos de todos los usuarios e histórico de cortes</td><td class="c">✔</td><td class="c">—</td></tr>
+  <tr><td>Abrir el cajón sin venta</td><td class="c">✔</td><td class="c">Con autorización</td></tr>
+  <tr><td>Cancelar o devolver ventas</td><td class="c">Con autorización*</td><td class="c">Con autorización</td></tr>
+  <tr><td>Notas de crédito, reintegros pendientes y plazo de devoluciones</td><td class="c">✔</td><td class="c">—</td></tr>
+  <tr><td>Aplicar descuentos y cupones</td><td class="c">✔</td><td class="c">✔</td></tr>
+  <tr><td>Descuentos mayores al límite</td><td class="c">✔</td><td class="c">Con autorización</td></tr>
+  <tr><td>Cupones, límite y reporte de descuentos</td><td class="c">✔</td><td class="c">—</td></tr>
+  <tr><td>Alta y edición de clientes</td><td class="c">✔</td><td class="c">✔ (solo efectivo)</td></tr>
+  <tr><td>Límite y modalidad de crédito, desactivar clientes</td><td class="c">✔</td><td class="c">—</td></tr>
+  <tr><td>Vender a crédito y registrar abonos</td><td class="c">✔</td><td class="c">✔</td></tr>
+  <tr><td>Vender a crédito sobre el límite</td><td class="c">✔</td><td class="c">Con autorización</td></tr>
+  <tr><td>Anular abonos</td><td class="c">Con autorización*</td><td class="c">Con autorización</td></tr>
+  <tr><td>Reportes de ventas, arqueo, compras y créditos</td><td class="c">✔</td><td class="c">—</td></tr>
+  <tr><td>Reporte de inventario</td><td class="c">✔</td><td class="c">✔</td></tr>
+  <tr><td>Usuarios, bitácora y configuración</td><td class="c">✔</td><td class="c">—</td></tr>
+  <tr><td>Exportar diagnóstico y administrar la licencia</td><td class="c">✔</td><td class="c">—</td></tr>
+  <tr><td>Probar escáner</td><td class="c">✔</td><td class="c">✔</td></tr>
+</table>
+<p class="mini">* El Administrador también debe confirmar con su propia contraseña.</p>
+
+<h1 class="apendice" id="apendice-capturas">Apéndice D. Lista de capturas</h1>
+<div class="caja nota"><b class="t">Cómo tomar las capturas</b>
+<ul style="margin:1mm 0 0">
+  <li>Use una base de datos de práctica para no mezclar datos reales: inicie el sistema con la variable <code>POS_DATA_DIR</code> apuntando a otra carpeta.</li>
+  <li>Mantenga el mismo tamaño de ventana en todas (se recomienda 1366 × 768) y el tema claro.</li>
+  <li>Use datos ficticios pero realistas (nombres, productos, precios).</li>
+  <li>Formato PNG. Nombre del archivo: el código de la figura, por ejemplo <code>IMG-07-01.png</code>.</li>
+  <li>Los wireframes SVG de ejemplo también se exportan a <code>imagenes/wireframes/</code>.</li>
+</ul></div>
+{{LISTA_CAPTURAS}}
+
+</body>
+</html>

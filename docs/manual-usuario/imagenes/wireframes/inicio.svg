@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 470" width="760" height="470">
+<rect x="0.5" y="0.5" width="759" height="469" rx="8" fill="#FFFFFF" stroke="#9AA5B1" stroke-width="1"/>
+<path d="M0.5 30 V8.5 a8 8 0 0 1 8 -8 H751.5 a8 8 0 0 1 8 8 V30 Z" fill="#E4E8ED"/>
+<text x="14" y="20" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#6B7785" font-weight="normal" text-anchor="start">POS</text>
+<circle cx="742" cy="15" r="5" fill="#9AA5B1"/>
+<circle cx="726" cy="15" r="5" fill="#9AA5B1"/>
+<circle cx="710" cy="15" r="5" fill="#9AA5B1"/>
+<rect x="1" y="30" width="170" height="439" rx="0" fill="#F7F9FB" stroke="#F7F9FB" stroke-width="1"/>
+<line x1="171" y1="30" x2="171" y2="469" stroke="#C9D1DA" stroke-width="1"/>
+<text x="16" y="54" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="12" fill="#1565C0" font-weight="bold" text-anchor="start">☰  POS</text>
+<rect x="8" y="65" width="154" height="24" rx="4" fill="#E3EEFB" stroke="#E3EEFB" stroke-width="1"/>
+<text x="20" y="81" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10.5" fill="#1565C0" font-weight="bold" text-anchor="start">Inicio</text>
+<text x="20" y="107" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10.5" fill="#1F2933" font-weight="normal" text-anchor="start">Ventas</text>
+<text x="150" y="107" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">▸</text>
+<text x="20" y="133" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10.5" fill="#1F2933" font-weight="normal" text-anchor="start">Caja</text>
+<text x="150" y="133" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">▸</text>
+<text x="20" y="159" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10.5" fill="#1F2933" font-weight="normal" text-anchor="start">Clientes</text>
+<text x="150" y="159" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">▸</text>
+<text x="20" y="185" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10.5" fill="#1F2933" font-weight="normal" text-anchor="start">Reportes</text>
+<text x="150" y="185" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">▸</text>
+<text x="20" y="211" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10.5" fill="#1F2933" font-weight="normal" text-anchor="start">Descuentos</text>
+<text x="150" y="211" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">▸</text>
+<text x="20" y="237" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10.5" fill="#1F2933" font-weight="normal" text-anchor="start">Catálogos</text>
+<text x="150" y="237" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">▸</text>
+<text x="20" y="263" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10.5" fill="#1F2933" font-weight="normal" text-anchor="start">Inventario</text>
+<text x="150" y="263" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">▸</text>
+<text x="20" y="289" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10.5" fill="#1F2933" font-weight="normal" text-anchor="start">Administración</text>
+<text x="150" y="289" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">▸</text>
+<text x="20" y="315" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10.5" fill="#1F2933" font-weight="normal" text-anchor="start">Configuración</text>
+<text x="150" y="315" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">▸</text>
+<text x="20" y="341" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10.5" fill="#1F2933" font-weight="normal" text-anchor="start">Ayuda</text>
+<text x="150" y="341" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">▸</text>
+<line x1="8" y1="426" x2="162" y2="426" stroke="#C9D1DA" stroke-width="1"/>
+<circle cx="24" cy="446" r="9" fill="#1565C0"/>
+<text x="40" y="443" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9.5" fill="#1F2933" font-weight="bold" text-anchor="start">Ana López</text>
+<text x="40" y="455" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="8.5" fill="#6B7785" font-weight="normal" text-anchor="start">Administrador</text>
+<text x="186" y="50" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="15" fill="#1F2933" font-weight="bold" text-anchor="start">Inicio</text>
+<rect x="186" y="75" width="132" height="68" rx="6" fill="#FFFFFF" stroke="#C9D1DA" stroke-width="1"/>
+<text x="196" y="93" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">Ventas del día</text>
+<text x="196" y="117" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="16" fill="#1F2933" font-weight="bold" text-anchor="start">$8,420.50</text>
+<text x="196" y="133" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">37 ventas</text>
+<rect x="328" y="75" width="132" height="68" rx="6" fill="#FFFFFF" stroke="#C9D1DA" stroke-width="1"/>
+<text x="338" y="93" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">Turno actual</text>
+<text x="338" y="117" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="16" fill="#1F2933" font-weight="bold" text-anchor="start">T-000124</text>
+<text x="338" y="133" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">Desde 08:02</text>
+<rect x="470" y="75" width="132" height="68" rx="6" fill="#FFFFFF" stroke="#C9D1DA" stroke-width="1"/>
+<text x="480" y="93" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">Productos activos</text>
+<text x="480" y="117" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="16" fill="#1F2933" font-weight="bold" text-anchor="start">1,248</text>
+<rect x="612" y="75" width="132" height="68" rx="6" fill="#FFFFFF" stroke="#C9D1DA" stroke-width="1"/>
+<text x="622" y="93" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">Alertas de existencia</text>
+<text x="622" y="117" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="16" fill="#C62828" font-weight="bold" text-anchor="start">3 · 11</text>
+<text x="622" y="133" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">Urgentes · En alerta</text>
+<rect x="186" y="155" width="350" height="200" rx="6" fill="#FFFFFF" stroke="#C9D1DA" stroke-width="1"/>
+<text x="196" y="174" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9.5" fill="#6B7785" font-weight="normal" text-anchor="start">Ventas de los últimos 7 días</text>
+<rect x="211" y="280" width="26" height="60" rx="2" fill="#1565C0" stroke="#1565C0" stroke-width="1"/>
+<rect x="256" y="255" width="26" height="85" rx="2" fill="#1565C0" stroke="#1565C0" stroke-width="1"/>
+<rect x="301" y="270" width="26" height="70" rx="2" fill="#1565C0" stroke="#1565C0" stroke-width="1"/>
+<rect x="346" y="230" width="26" height="110" rx="2" fill="#1565C0" stroke="#1565C0" stroke-width="1"/>
+<rect x="391" y="245" width="26" height="95" rx="2" fill="#1565C0" stroke="#1565C0" stroke-width="1"/>
+<rect x="436" y="210" width="26" height="130" rx="2" fill="#1565C0" stroke="#1565C0" stroke-width="1"/>
+<rect x="481" y="265" width="26" height="75" rx="2" fill="#1565C0" stroke="#1565C0" stroke-width="1"/>
+<rect x="546" y="155" width="208" height="200" rx="6" fill="#FFFFFF" stroke="#C9D1DA" stroke-width="1"/>
+<text x="556" y="174" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9.5" fill="#6B7785" font-weight="normal" text-anchor="start">Productos más vendidos</text>
+<text x="556" y="200" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">1. Coca-Cola 600 ml</text>
+<text x="556" y="226" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">2. Pan blanco</text>
+<text x="556" y="252" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">3. Leche 1 L</text>
+<text x="556" y="278" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">4. Huevo 12 pz</text>
+<text x="556" y="304" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">5. Jabón</text>
+<rect x="186" y="365" width="568" height="85" rx="6" fill="#FFF4E5" stroke="#F5C27A" stroke-width="1"/>
+<text x="196" y="385" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#E65100" font-weight="bold" text-anchor="start">Alertas</text>
+<text x="196" y="405" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9.5" fill="#1F2933" font-weight="normal" text-anchor="start">Diferencias de arqueo (1): T-000119 · Luis · 28/09 · -$150.00</text>
+<text x="196" y="425" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9.5" fill="#1F2933" font-weight="normal" text-anchor="start">Productos críticos con existencia baja (2): Leche 1 L (LEC-01): 2 pz</text>
+<circle cx="180" cy="40" r="9" fill="#E65100"/>
+<text x="180" y="44" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#FFFFFF" font-weight="bold" text-anchor="middle">1</text>
+<circle cx="25" cy="103" r="9" fill="#E65100"/>
+<text x="25" y="107" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#FFFFFF" font-weight="bold" text-anchor="middle">2</text>
+<circle cx="740" cy="70" r="9" fill="#E65100"/>
+<text x="740" y="74" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#FFFFFF" font-weight="bold" text-anchor="middle">3</text>
+<circle cx="150" cy="446" r="9" fill="#E65100"/>
+<text x="150" y="450" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#FFFFFF" font-weight="bold" text-anchor="middle">4</text>
+</svg>

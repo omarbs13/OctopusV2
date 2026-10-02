@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 400" width="760" height="400">
+<rect x="0.5" y="0.5" width="759" height="399" rx="8" fill="#FFFFFF" stroke="#9AA5B1" stroke-width="1"/>
+<path d="M0.5 30 V8.5 a8 8 0 0 1 8 -8 H751.5 a8 8 0 0 1 8 8 V30 Z" fill="#E4E8ED"/>
+<text x="14" y="20" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#6B7785" font-weight="normal" text-anchor="start">POS</text>
+<circle cx="742" cy="15" r="5" fill="#9AA5B1"/>
+<circle cx="726" cy="15" r="5" fill="#9AA5B1"/>
+<circle cx="710" cy="15" r="5" fill="#9AA5B1"/>
+<rect x="1" y="30" width="170" height="369" rx="0" fill="#F7F9FB" stroke="#F7F9FB" stroke-width="1"/>
+<line x1="171" y1="30" x2="171" y2="399" stroke="#C9D1DA" stroke-width="1"/>
+<text x="16" y="54" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="12" fill="#1565C0" font-weight="bold" text-anchor="start">☰  POS</text>
+<text x="20" y="81" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10.5" fill="#1F2933" font-weight="normal" text-anchor="start">Inicio</text>
+<text x="20" y="107" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10.5" fill="#1F2933" font-weight="normal" text-anchor="start">Ventas</text>
+<text x="150" y="107" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">▸</text>
+<text x="20" y="133" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10.5" fill="#1F2933" font-weight="normal" text-anchor="start">Caja</text>
+<text x="150" y="133" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">▸</text>
+<text x="20" y="159" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10.5" fill="#1F2933" font-weight="normal" text-anchor="start">Clientes</text>
+<text x="150" y="159" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">▸</text>
+<text x="20" y="185" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10.5" fill="#1F2933" font-weight="normal" text-anchor="start">Reportes</text>
+<text x="150" y="185" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">▸</text>
+<text x="20" y="211" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10.5" fill="#1F2933" font-weight="normal" text-anchor="start">Descuentos</text>
+<text x="150" y="211" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">▸</text>
+<text x="20" y="237" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10.5" fill="#1F2933" font-weight="normal" text-anchor="start">Catálogos</text>
+<text x="150" y="237" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">▸</text>
+<text x="20" y="263" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10.5" fill="#1F2933" font-weight="bold" text-anchor="start">Inventario</text>
+<text x="150" y="263" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">▾</text>
+<rect x="8" y="273" width="154" height="24" rx="4" fill="#E3EEFB" stroke="#E3EEFB" stroke-width="1"/>
+<text x="34" y="289" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1565C0" font-weight="normal" text-anchor="start">Existencias</text>
+<text x="34" y="313" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">Movimientos</text>
+<text x="34" y="337" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">Entrada de mercancía</text>
+<text x="34" y="361" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">Proveedores</text>
+<text x="20" y="385" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10.5" fill="#1F2933" font-weight="normal" text-anchor="start">Administración</text>
+<text x="150" y="385" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">▸</text>
+<text x="20" y="411" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10.5" fill="#1F2933" font-weight="normal" text-anchor="start">Configuración</text>
+<text x="150" y="411" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">▸</text>
+<text x="20" y="437" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10.5" fill="#1F2933" font-weight="normal" text-anchor="start">Ayuda</text>
+<text x="150" y="437" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">▸</text>
+<line x1="8" y1="356" x2="162" y2="356" stroke="#C9D1DA" stroke-width="1"/>
+<circle cx="24" cy="376" r="9" fill="#1565C0"/>
+<text x="40" y="373" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9.5" fill="#1F2933" font-weight="bold" text-anchor="start">Ana López</text>
+<text x="40" y="385" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="8.5" fill="#6B7785" font-weight="normal" text-anchor="start">Administrador</text>
+<text x="186" y="50" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="15" fill="#1F2933" font-weight="bold" text-anchor="start">Existencias</text>
+<rect x="186" y="75" width="260" height="24" rx="3" fill="#FFFFFF" stroke="#C9D1DA" stroke-width="1"/>
+<text x="193" y="91.0" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#6B7785" font-weight="normal" text-anchor="start">Buscar por nombre, SKU o código (Ctrl+F)</text>
+<rect x="456" y="75" width="120" height="24" rx="3" fill="#FFFFFF" stroke="#C9D1DA" stroke-width="1"/>
+<text x="463" y="91.0" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">Todos  ▾</text>
+<rect x="586" y="81" width="12" height="12" rx="2" fill="#FFFFFF" stroke="#C9D1DA" stroke-width="1"/>
+<text x="604" y="91" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">Incluir inactivos</text>
+<rect x="616" y="110" width="140" height="26" rx="4" fill="#1565C0" stroke="#1565C0" stroke-width="1"/>
+<text x="686.0" y="127.0" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#FFFFFF" font-weight="normal" text-anchor="middle">Registrar movimiento</text>
+<rect x="186" y="145" width="570" height="22" rx="0" fill="#F3F5F8" stroke="#C9D1DA" stroke-width="1"/>
+<text x="192" y="160" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="bold" text-anchor="start">Nombre</text>
+<text x="382.0" y="160" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="bold" text-anchor="start">SKU</text>
+<text x="534.6666666666667" y="160" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="bold" text-anchor="end">Existencia</text>
+<text x="546.6666666666667" y="160" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="bold" text-anchor="start">Unidad</text>
+<text x="661.3333333333335" y="160" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="bold" text-anchor="end">Mínimo</text>
+<text x="673.3333333333335" y="160" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="bold" text-anchor="start">Estado</text>
+<rect x="186" y="167" width="570" height="22" rx="0" fill="#FFFFFF" stroke="#C9D1DA" stroke-width="1"/>
+<text x="192" y="182" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">Coca-Cola 600 ml</text>
+<text x="382.0" y="182" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">COC-600</text>
+<text x="534.6666666666667" y="182" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="end">36</text>
+<text x="546.6666666666667" y="182" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">pz</text>
+<text x="661.3333333333335" y="182" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="end">12</text>
+<text x="673.3333333333335" y="182" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#2E7D32" font-weight="normal" text-anchor="start">Normal</text>
+<rect x="186" y="189" width="570" height="22" rx="0" fill="#E3EEFB" stroke="#C9D1DA" stroke-width="1"/>
+<text x="192" y="204" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">Leche entera 1 L</text>
+<text x="382.0" y="204" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">LEC-01</text>
+<text x="534.6666666666667" y="204" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="end">2</text>
+<text x="546.6666666666667" y="204" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">pz</text>
+<text x="661.3333333333335" y="204" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="end">10</text>
+<text x="673.3333333333335" y="204" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#E65100" font-weight="normal" text-anchor="start">Baja</text>
+<rect x="186" y="211" width="570" height="22" rx="0" fill="#FFFFFF" stroke="#C9D1DA" stroke-width="1"/>
+<text x="192" y="226" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">Pan blanco</text>
+<text x="382.0" y="226" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">PAN-01</text>
+<text x="534.6666666666667" y="226" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="end">0</text>
+<text x="546.6666666666667" y="226" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">pz</text>
+<text x="661.3333333333335" y="226" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="end">5</text>
+<text x="673.3333333333335" y="226" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#C62828" font-weight="normal" text-anchor="start">Sin existencia</text>
+<rect x="186" y="233" width="570" height="22" rx="0" fill="#FFFFFF" stroke="#C9D1DA" stroke-width="1"/>
+<text x="192" y="248" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">Azúcar a granel</text>
+<text x="382.0" y="248" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">AZU-KG</text>
+<text x="534.6666666666667" y="248" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="end">14.250</text>
+<text x="546.6666666666667" y="248" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">kg</text>
+<text x="661.3333333333335" y="248" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="end">5</text>
+<text x="673.3333333333335" y="248" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#2E7D32" font-weight="normal" text-anchor="start">Normal</text>
+<rect x="186" y="255" width="570" height="22" rx="0" fill="#FFFFFF" stroke="#C9D1DA" stroke-width="1"/>
+<text x="192" y="270" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">Huevo 12 pz</text>
+<text x="382.0" y="270" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">HUE-12</text>
+<text x="534.6666666666667" y="270" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="end">8</text>
+<text x="546.6666666666667" y="270" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">pz</text>
+<text x="661.3333333333335" y="270" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="end">6</text>
+<text x="673.3333333333335" y="270" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#2E7D32" font-weight="normal" text-anchor="start">Normal</text>
+</svg>

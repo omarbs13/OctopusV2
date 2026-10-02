@@ -27,10 +27,11 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Update="Resources\Strings.resx">
+      <Generator>MSBuild:Compile</Generator>
       <StronglyTypedLanguage>CSharp</StronglyTypedLanguage>
       <StronglyTypedNamespace>Pos.Desktop.Resources</StronglyTypedNamespace>
       <StronglyTypedClassName>Strings</StronglyTypedClassName>
-      <StronglyTypedFileName>$(IntermediateOutputPath)Strings.Designer.cs</StronglyTypedFileName>
+      <StronglyTypedFileName>Resources\Strings.Designer.cs</StronglyTypedFileName>
       <PublicClass>true</PublicClass>
     </EmbeddedResource>
   </ItemGroup>

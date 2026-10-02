@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 440" width="800" height="440">
+<rect x="0.5" y="0.5" width="799" height="439" rx="8" fill="#FFFFFF" stroke="#9AA5B1" stroke-width="1"/>
+<path d="M0.5 30 V8.5 a8 8 0 0 1 8 -8 H791.5 a8 8 0 0 1 8 8 V30 Z" fill="#E4E8ED"/>
+<text x="14" y="20" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#6B7785" font-weight="normal" text-anchor="start">POS</text>
+<circle cx="782" cy="15" r="5" fill="#9AA5B1"/>
+<circle cx="766" cy="15" r="5" fill="#9AA5B1"/>
+<circle cx="750" cy="15" r="5" fill="#9AA5B1"/>
+<rect x="1" y="30" width="170" height="409" rx="0" fill="#F7F9FB" stroke="#F7F9FB" stroke-width="1"/>
+<line x1="171" y1="30" x2="171" y2="439" stroke="#C9D1DA" stroke-width="1"/>
+<text x="16" y="54" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="12" fill="#1565C0" font-weight="bold" text-anchor="start">☰  POS</text>
+<text x="20" y="81" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10.5" fill="#1F2933" font-weight="normal" text-anchor="start">Inicio</text>
+<text x="20" y="107" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10.5" fill="#1F2933" font-weight="normal" text-anchor="start">Ventas</text>
+<text x="150" y="107" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">▸</text>
+<text x="20" y="133" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10.5" fill="#1F2933" font-weight="normal" text-anchor="start">Caja</text>
+<text x="150" y="133" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">▸</text>
+<text x="20" y="159" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10.5" fill="#1F2933" font-weight="normal" text-anchor="start">Clientes</text>
+<text x="150" y="159" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">▸</text>
+<text x="20" y="185" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10.5" fill="#1F2933" font-weight="normal" text-anchor="start">Reportes</text>
+<text x="150" y="185" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">▸</text>
+<text x="20" y="211" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10.5" fill="#1F2933" font-weight="normal" text-anchor="start">Descuentos</text>
+<text x="150" y="211" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">▸</text>
+<text x="20" y="237" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10.5" fill="#1F2933" font-weight="normal" text-anchor="start">Catálogos</text>
+<text x="150" y="237" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">▸</text>
+<text x="20" y="263" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10.5" fill="#1F2933" font-weight="normal" text-anchor="start">Inventario</text>
+<text x="150" y="263" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">▸</text>
+<text x="20" y="289" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10.5" fill="#1F2933" font-weight="bold" text-anchor="start">Administración</text>
+<text x="150" y="289" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">▾</text>
+<text x="34" y="315" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">Usuarios</text>
+<rect x="8" y="323" width="154" height="24" rx="4" fill="#E3EEFB" stroke="#E3EEFB" stroke-width="1"/>
+<text x="34" y="339" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1565C0" font-weight="normal" text-anchor="start">Bitácora</text>
+<text x="20" y="363" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10.5" fill="#1F2933" font-weight="normal" text-anchor="start">Configuración</text>
+<text x="150" y="363" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">▸</text>
+<text x="20" y="389" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10.5" fill="#1F2933" font-weight="normal" text-anchor="start">Ayuda</text>
+<text x="150" y="389" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">▸</text>
+<line x1="8" y1="396" x2="162" y2="396" stroke="#C9D1DA" stroke-width="1"/>
+<circle cx="24" cy="416" r="9" fill="#1565C0"/>
+<text x="40" y="413" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9.5" fill="#1F2933" font-weight="bold" text-anchor="start">Ana López</text>
+<text x="40" y="425" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="8.5" fill="#6B7785" font-weight="normal" text-anchor="start">Administrador</text>
+<text x="186" y="50" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="15" fill="#1F2933" font-weight="bold" text-anchor="start">Bitácora de auditoría</text>
+<text x="186" y="77" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">Desde</text>
+<rect x="186" y="82" width="95" height="24" rx="3" fill="#FFFFFF" stroke="#C9D1DA" stroke-width="1"/>
+<text x="193" y="98.0" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">01/10/2026</text>
+<text x="288" y="77" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">Hasta</text>
+<rect x="288" y="82" width="95" height="24" rx="3" fill="#FFFFFF" stroke="#C9D1DA" stroke-width="1"/>
+<text x="295" y="98.0" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">02/10/2026</text>
+<text x="390" y="77" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">Usuario</text>
+<rect x="390" y="82" width="110" height="24" rx="3" fill="#FFFFFF" stroke="#C9D1DA" stroke-width="1"/>
+<text x="397" y="98.0" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">Todos ▾</text>
+<text x="507" y="77" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">Tipo de evento</text>
+<rect x="507" y="82" width="120" height="24" rx="3" fill="#FFFFFF" stroke="#C9D1DA" stroke-width="1"/>
+<text x="514" y="98.0" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">Todos ▾</text>
+<text x="634" y="77" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="normal" text-anchor="start">Entidad</text>
+<rect x="634" y="82" width="80" height="24" rx="3" fill="#FFFFFF" stroke="#C9D1DA" stroke-width="1"/>
+<text x="641" y="98.0" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">Todas ▾</text>
+<rect x="721" y="82" width="73" height="24" rx="4" fill="#1565C0" stroke="#1565C0" stroke-width="1"/>
+<text x="757.5" y="98.0" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#FFFFFF" font-weight="normal" text-anchor="middle">Buscar</text>
+<rect x="186" y="118" width="360" height="22" rx="0" fill="#F3F5F8" stroke="#C9D1DA" stroke-width="1"/>
+<text x="192" y="133" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="bold" text-anchor="start">Fecha y hora</text>
+<text x="320.57142857142856" y="133" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="bold" text-anchor="start">Evento</text>
+<text x="466.2857142857142" y="133" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="bold" text-anchor="start">Usuario</text>
+<rect x="186" y="140" width="360" height="22" rx="0" fill="#E3EEFB" stroke="#C9D1DA" stroke-width="1"/>
+<text x="192" y="155" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">02/10 13:52</text>
+<text x="320.57142857142856" y="155" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">Producto modificado</text>
+<text x="466.2857142857142" y="155" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">ana</text>
+<rect x="186" y="162" width="360" height="22" rx="0" fill="#FFFFFF" stroke="#C9D1DA" stroke-width="1"/>
+<text x="192" y="177" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">02/10 13:20</text>
+<text x="320.57142857142856" y="177" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">Venta cancelada</text>
+<text x="466.2857142857142" y="177" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">luis</text>
+<rect x="186" y="184" width="360" height="22" rx="0" fill="#FFFFFF" stroke="#C9D1DA" stroke-width="1"/>
+<text x="192" y="199" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">02/10 12:05</text>
+<text x="320.57142857142856" y="199" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">Retiro de efectivo</text>
+<text x="466.2857142857142" y="199" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">luis</text>
+<rect x="186" y="206" width="360" height="22" rx="0" fill="#FFFFFF" stroke="#C9D1DA" stroke-width="1"/>
+<text x="192" y="221" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">02/10 08:02</text>
+<text x="320.57142857142856" y="221" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">Turno abierto</text>
+<text x="466.2857142857142" y="221" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">luis</text>
+<rect x="186" y="228" width="360" height="22" rx="0" fill="#FFFFFF" stroke="#C9D1DA" stroke-width="1"/>
+<text x="192" y="243" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">02/10 08:01</text>
+<text x="320.57142857142856" y="243" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">Inicio de sesión</text>
+<text x="466.2857142857142" y="243" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">luis</text>
+<rect x="556" y="118" width="238" height="250" rx="6" fill="#F3F5F8" stroke="#C9D1DA" stroke-width="1"/>
+<text x="566" y="138" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="11" fill="#1F2933" font-weight="bold" text-anchor="start">Producto modificado</text>
+<text x="566" y="156" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9.5" fill="#6B7785" font-weight="normal" text-anchor="start">Registro: Coca-Cola 600 ml</text>
+<rect x="564" y="168" width="222" height="20" rx="0" fill="#F3F5F8" stroke="#C9D1DA" stroke-width="1"/>
+<text x="570" y="183" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="bold" text-anchor="start">Campo</text>
+<text x="644.0" y="183" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="bold" text-anchor="start">Antes</text>
+<text x="718.0" y="183" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="9" fill="#6B7785" font-weight="bold" text-anchor="start">Después</text>
+<rect x="564" y="188" width="222" height="20" rx="0" fill="#FFFFFF" stroke="#C9D1DA" stroke-width="1"/>
+<text x="570" y="203" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">Precio</text>
+<text x="644.0" y="203" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">$17.50</text>
+<text x="718.0" y="203" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">$18.50</text>
+<rect x="564" y="208" width="222" height="20" rx="0" fill="#FFFFFF" stroke="#C9D1DA" stroke-width="1"/>
+<text x="570" y="223" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">Categoría</text>
+<text x="644.0" y="223" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">—</text>
+<text x="718.0" y="223" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="start">Bebidas</text>
+<rect x="566" y="240" width="218" height="24" rx="4" fill="#FFFFFF" stroke="#C9D1DA" stroke-width="1"/>
+<text x="675.0" y="256.0" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="middle">Ver historial del registro</text>
+<rect x="186" y="380" width="110" height="26" rx="4" fill="#FFFFFF" stroke="#C9D1DA" stroke-width="1"/>
+<text x="241.0" y="397.0" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="middle">Exportar PDF</text>
+<rect x="304" y="380" width="110" height="26" rx="4" fill="#FFFFFF" stroke="#C9D1DA" stroke-width="1"/>
+<text x="359.0" y="397.0" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="10" fill="#1F2933" font-weight="normal" text-anchor="middle">Exportar Excel</text>
+</svg>
