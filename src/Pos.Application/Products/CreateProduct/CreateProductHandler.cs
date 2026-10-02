@@ -88,7 +88,9 @@ public sealed partial class CreateProductHandler
 
         var price = Money.Parse(command.PriceText).Value!.Value;
         var minimum = ProductRules.ParseMinimum(command.TracksInventory, command.MinimumStockText, command.UnitCode)?.Value;
-        var product = Product.Create(command.Name, sku, barcode, price, command.UnitCode, command.TracksInventory, minimum, command.CategoryId);
+        var reorderPoint = ProductRules.ParseReorderPoint(command.TracksInventory, command.ReorderPointText, command.UnitCode)?.Value;
+        var product = Product.Create(
+            command.Name, sku, barcode, price, command.UnitCode, command.TracksInventory, minimum, command.CategoryId, reorderPoint);
         ProductImages.Apply(product, command.Image);
         _products.Add(product);
         _audit.Add(new AuditRecord(

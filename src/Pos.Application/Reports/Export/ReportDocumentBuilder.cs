@@ -320,6 +320,7 @@ public sealed class ReportDocumentBuilder
                 new(ReportTexts.ColCategory, ReportColumnType.Text),
                 new(ReportTexts.ColOnHand, ReportColumnType.Quantity),
                 new(ReportTexts.ColMinimum, ReportColumnType.Quantity),
+                new(ReportTexts.ColReorderPoint, ReportColumnType.Quantity),
                 new(ReportTexts.ColUnit, ReportColumnType.Text),
                 new(ReportTexts.ColStatus, ReportColumnType.Text),
             ],
@@ -330,6 +331,7 @@ public sealed class ReportDocumentBuilder
                 new TextCell(CategoryMessages.Display(r.CategoryName, r.CategoryIsActive)),
                 new QuantityCell(r.OnHandThousandths, r.DecimalPlaces),
                 r.MinimumThousandths is { } minimum ? new QuantityCell(minimum, r.DecimalPlaces) : EmptyCell.Instance,
+                r.ReorderPointThousandths is { } reorder ? new QuantityCell(reorder, r.DecimalPlaces) : EmptyCell.Instance,
                 new TextCell(r.UnitName),
                 new TextCell(StatusText(r.Status)),
             ])]);
@@ -563,6 +565,8 @@ public sealed class ReportDocumentBuilder
     {
         StockFilter.Normal => ReportTexts.NormalStock,
         StockFilter.Low => ReportTexts.LowStock,
+        StockFilter.Alert => ReportTexts.AlertLevel,
+        StockFilter.Urgent => ReportTexts.UrgentLevel,
         _ => ReportTexts.OutOfStock,
     };
 

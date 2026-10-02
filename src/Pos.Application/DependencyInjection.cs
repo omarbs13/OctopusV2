@@ -5,6 +5,7 @@ using Pos.Application.Business.GetBusinessProfile;
 using Pos.Application.Business.SaveBusinessProfile;
 using Pos.Application.Diagnostics.ExportDiagnostics;
 using Pos.Application.Diagnostics.GetAppInfo;
+using Pos.Application.Inventory.CheckStockAlerts;
 using Pos.Application.Inventory.GetStockAlerts;
 using Pos.Application.Inventory.RegisterMovement;
 using Pos.Application.Inventory.SearchMovements;
@@ -204,6 +205,7 @@ public static class DependencyInjection
         services.AddScoped<SearchStockHandler>();
         services.AddScoped<SearchMovementsHandler>();
         services.AddScoped<GetStockAlertsHandler>();
+        services.AddScoped<CheckStockAlertsHandler>();
 
         // Escáner (021): diagnóstico de lecturas, sin permiso de rol
         services.AddScoped<InspectScanHandler>();

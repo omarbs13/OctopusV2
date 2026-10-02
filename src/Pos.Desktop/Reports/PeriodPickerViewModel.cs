@@ -109,6 +109,31 @@ public sealed partial class PeriodPickerViewModel : ViewModelBase
         PeriodChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>
+    /// Elige un preset sin disparar <see cref="PeriodChanged"/>: quien lo llama recarga después (por
+    /// ejemplo, al recibir un filtro por navegación, 022).
+    /// </summary>
+    public void SelectPresetSilently(ReportPreset preset)
+    {
+        if (preset == ReportPreset.Custom)
+        {
+            throw new ArgumentOutOfRangeException(nameof(preset), preset, "El rango personalizado no se elige sin fechas.");
+        }
+
+        _suppress = true;
+        try
+        {
+            SelectedPreset = Presets.First(p => p.Preset == preset);
+        }
+        finally
+        {
+            _suppress = false;
+        }
+
+        Period = ReportPeriod.FromPreset(preset, _today());
+        OnPropertyChanged(nameof(PeriodText));
+    }
+
     [RelayCommand(CanExecute = nameof(CanQuery))]
     private void QueryCustom()
     {

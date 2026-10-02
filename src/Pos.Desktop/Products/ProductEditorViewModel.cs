@@ -90,6 +90,13 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
     [ObservableProperty]
     public partial string? MinimumStockError { get; set; }
 
+    /// <summary>Punto de reorden capturado (022); vacío significa sin punto de reorden.</summary>
+    [ObservableProperty]
+    public partial string ReorderPointText { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string? ReorderPointError { get; set; }
+
     [ObservableProperty]
     public partial string? TracksInventoryError { get; set; }
 
@@ -212,10 +219,10 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
             "GuardarProducto",
             () => _productId is { } id
                 ? _useCases.RunAsync<UpdateProductHandler, Result<ProductDto>>(h => h.HandleAsync(
-                    new UpdateProductCommand(id, _expectedVersion, Name, Sku, Barcode, PriceText, UnitCode, IsActive, _imageChange, TracksInventory, MinimumStockText, Category.SelectedCategoryId),
+                    new UpdateProductCommand(id, _expectedVersion, Name, Sku, Barcode, PriceText, UnitCode, IsActive, _imageChange, TracksInventory, MinimumStockText, Category.SelectedCategoryId, ReorderPointText),
                     CancellationToken.None))
                 : _useCases.RunAsync<CreateProductHandler, Result<ProductDto>>(h => h.HandleAsync(
-                    new CreateProductCommand(Name, Sku, Barcode, PriceText, UnitCode, _imageChange, TracksInventory, MinimumStockText, Category.SelectedCategoryId),
+                    new CreateProductCommand(Name, Sku, Barcode, PriceText, UnitCode, _imageChange, TracksInventory, MinimumStockText, Category.SelectedCategoryId, ReorderPointText),
                     CancellationToken.None)),
             new Dictionary<string, object?> { ["ProductId"] = _productId, ["Sku"] = Sku });
 
@@ -274,6 +281,7 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
         _imageChange,
         TracksInventory,
         TracksInventory ? MinimumStockText.Trim() : string.Empty,
+        TracksInventory ? ReorderPointText.Trim() : string.Empty,
         TracksInventory && IsCritical,
         Category.SelectedCategoryId);
 
@@ -397,6 +405,9 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
         MinimumStockText = product.MinimumStockThousandths is { } minimum
             ? Quantity.FromThousandths(minimum).ToEditableString(product.DecimalPlaces)
             : string.Empty;
+        ReorderPointText = product.ReorderPointThousandths is { } reorder
+            ? Quantity.FromThousandths(reorder).ToEditableString(product.DecimalPlaces)
+            : string.Empty;
         _onHandThousandths = product.OnHandThousandths;
         _loadedCategoryId = product.CategoryId;
         _loadedCategoryName = product.CategoryName;
@@ -431,6 +442,9 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
             case ProductFields.MinimumStock:
                 MinimumStockError = message;
                 break;
+            case ProductFields.ReorderPoint:
+                ReorderPointError = message;
+                break;
             case ProductFields.TracksInventory:
                 TracksInventoryError = message;
                 break;
@@ -439,7 +453,7 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
 
     private void ClearErrors()
     {
-        NameError = SkuError = BarcodeError = PriceError = UnitCodeError = MinimumStockError = TracksInventoryError = CategoryError = null;
+        NameError = SkuError = BarcodeError = PriceError = UnitCodeError = MinimumStockError = ReorderPointError = TracksInventoryError = CategoryError = null;
         FocusField = null;
     }
 }
@@ -456,5 +470,6 @@ internal sealed record ProductFormState(
     ProductImageChange Image,
     bool TracksInventory,
     string MinimumStock,
+    string ReorderPoint,
     bool IsCritical,
     Guid? CategoryId);

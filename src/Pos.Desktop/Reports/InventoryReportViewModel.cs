@@ -10,6 +10,7 @@ using Pos.Application.Reports.Export;
 using Pos.Application.Reports.GetInventoryReport;
 using Pos.Desktop.Categories;
 using Pos.Desktop.Common;
+using Pos.Desktop.Navigation;
 using Pos.Desktop.Resources;
 using Pos.Domain.Inventory;
 using Pos.Domain.Reports;
@@ -30,6 +31,8 @@ public sealed record InventoryReportRowItem(InventoryReportRow Row)
 
     public string MinimumText => QuantityConverter.FormatOrDash(Row.MinimumThousandths, Row.DecimalPlaces);
 
+    public string ReorderPointText => QuantityConverter.FormatOrDash(Row.ReorderPointThousandths, Row.DecimalPlaces);
+
     public string Unit => Row.UnitName;
 
     /// <summary>"Sin categoría" si no tiene; "(inactiva)" si corresponde (016, FR-020).</summary>
@@ -46,9 +49,10 @@ public sealed record InventoryReportRowItem(InventoryReportRow Row)
 /// <summary>
 /// Reportes > Inventario: estado del inventario al cierre de una fecha (Historia 3). Tarjetas y gráfica
 /// usan todos los productos de la categoría elegida (016); el filtro de estado, la búsqueda y el orden solo
-/// afectan a la tabla.
+/// afectan a la tabla. Recibe un <see cref="StockFilter"/> por navegación desde las notificaciones y la
+/// tarjeta de alertas de existencia (022).
 /// </summary>
-public sealed partial class InventoryReportViewModel : ReportPageViewModel
+public sealed partial class InventoryReportViewModel : ReportPageViewModel, INavigationArgumentReceiver
 {
     private const string NormalColor = "#2E7D32";
     private const string LowColor = "#EF6C00";
@@ -57,6 +61,7 @@ public sealed partial class InventoryReportViewModel : ReportPageViewModel
 
     private readonly UseCases _useCases;
     private int _searchVersion;
+    private bool _suppressReload;
 
     public InventoryReportViewModel(UseCases useCases, OperationRunner runner, IChartRenderer renderer, ReportExportCoordinator exporter)
         : base(runner, renderer, exporter, ReportPreset.Today)
@@ -70,6 +75,8 @@ public sealed partial class InventoryReportViewModel : ReportPageViewModel
             new(StockFilter.Normal, Strings.Stock_FilterNormal),
             new(StockFilter.Low, Strings.Stock_FilterLow),
             new(StockFilter.Out, Strings.Stock_FilterOut),
+            new(StockFilter.Alert, Strings.Stock_FilterAlert),
+            new(StockFilter.Urgent, Strings.Stock_FilterUrgent),
         ];
         SelectedStatus = StatusOptions[0];
     }
@@ -148,9 +155,47 @@ public sealed partial class InventoryReportViewModel : ReportPageViewModel
         await ReloadAsync();
     }
 
-    partial void OnSelectedStatusChanged(InventoryStatusOption value) => RestartFromFirstPage();
+    /// <summary>
+    /// Con un <see cref="StockFilter"/>: período "Hoy", ese filtro, sin búsqueda y en la página 1. La
+    /// recarga la hace <see cref="OnActivatedAsync"/>, que el navegador llama después (022, contracts/ui.md).
+    /// </summary>
+    public void Receive(object argument)
+    {
+        if (argument is not StockFilter filter)
+        {
+            return;
+        }
 
-    partial void OnSearchTextChanged(string value) => _ = SearchAfterDelayAsync();
+        Interlocked.Increment(ref _searchVersion);
+        _suppressReload = true;
+        try
+        {
+            Picker.SelectPresetSilently(ReportPreset.Today);
+            SelectedStatus = StatusOptions.First(o => o.Filter == filter);
+            SearchText = string.Empty;
+            CurrentPage = 1;
+        }
+        finally
+        {
+            _suppressReload = false;
+        }
+    }
+
+    partial void OnSelectedStatusChanged(InventoryStatusOption value)
+    {
+        if (!_suppressReload)
+        {
+            RestartFromFirstPage();
+        }
+    }
+
+    partial void OnSearchTextChanged(string value)
+    {
+        if (!_suppressReload)
+        {
+            _ = SearchAfterDelayAsync();
+        }
+    }
 
     [RelayCommand]
     private void SortBy(InventoryReportSort column)

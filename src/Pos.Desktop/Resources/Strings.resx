@@ -109,7 +109,14 @@
   <data name="Home_Indicators" xml:space="preserve"><value>Indicadores</value></data>
   <data name="Home_Charts" xml:space="preserve"><value>Ventas</value></data>
   <data name="Card_ActiveProducts" xml:space="preserve"><value>Productos activos</value></data>
-  <data name="Card_LowStock" xml:space="preserve"><value>Existencia baja</value></data>
+  <data name="Card_StockAlertLevels" xml:space="preserve"><value>Alertas de existencia</value></data>
+  <data name="Card_StockAlertLevelsUrgent" xml:space="preserve"><value>Urgentes</value></data>
+  <data name="Card_StockAlertLevelsAlert" xml:space="preserve"><value>En alerta</value></data>
+  <data name="Notify_UrgentTitle" xml:space="preserve"><value>Existencia urgente</value></data>
+  <data name="Notify_UrgentMessage" xml:space="preserve"><value>{0} producto(s) llegaron a su punto de reorden.</value></data>
+  <data name="Notify_AlertTitle" xml:space="preserve"><value>Existencia en alerta</value></data>
+  <data name="Notify_AlertMessage" xml:space="preserve"><value>{0} producto(s) están en su existencia mínima o por debajo.</value></data>
+  <data name="Notify_Dismiss" xml:space="preserve"><value>Descartar</value></data>
   <data name="Card_OutOfStock" xml:space="preserve"><value>Sin existencia</value></data>
   <data name="Chart_SalesToday" xml:space="preserve"><value>Ventas del día</value></data>
   <data name="Chart_SalesLast7Days" xml:space="preserve"><value>Ventas de los últimos 7 días</value></data>
@@ -128,6 +135,8 @@
   <data name="Editor_TracksInventory" xml:space="preserve"><value>Controla inventario</value></data>
   <data name="Editor_MinimumStock" xml:space="preserve"><value>Existencia mínima</value></data>
   <data name="Editor_MinimumStockHint" xml:space="preserve"><value>Opcional; genera alertas de existencia baja</value></data>
+  <data name="Editor_ReorderPoint" xml:space="preserve"><value>Punto de reorden</value></data>
+  <data name="Editor_ReorderPointHelp" xml:space="preserve"><value>Debe ser menor que la existencia mínima. Al llegar a este nivel la alerta es urgente.</value></data>
   <data name="Editor_OnHand" xml:space="preserve"><value>Existencia actual</value></data>
   <data name="Editor_InventoryLocked" xml:space="preserve"><value>Tiene movimientos de inventario; no se puede cambiar la unidad ni dejar de controlar el inventario.</value></data>
   <data name="Products_ColStock" xml:space="preserve"><value>Existencia</value></data>
@@ -137,6 +146,8 @@
   <data name="Stock_FilterNormal" xml:space="preserve"><value>Normal</value></data>
   <data name="Stock_FilterLow" xml:space="preserve"><value>Existencia baja</value></data>
   <data name="Stock_FilterOut" xml:space="preserve"><value>Sin existencia</value></data>
+  <data name="Stock_FilterAlert" xml:space="preserve"><value>En alerta</value></data>
+  <data name="Stock_FilterUrgent" xml:space="preserve"><value>Urgente</value></data>
   <data name="Stock_ShowInactive" xml:space="preserve"><value>Incluir inactivos</value></data>
   <data name="Stock_Register" xml:space="preserve"><value>Registrar movimiento</value></data>
   <data name="Stock_ColName" xml:space="preserve"><value>Nombre</value></data>
@@ -643,6 +654,7 @@
   <data name="Reports_Inventory_ColSku" xml:space="preserve"><value>SKU</value></data>
   <data name="Reports_Inventory_ColOnHand" xml:space="preserve"><value>Existencia</value></data>
   <data name="Reports_Inventory_ColMinimum" xml:space="preserve"><value>Mínimo</value></data>
+  <data name="Reports_Inventory_ColReorderPoint" xml:space="preserve"><value>Punto de reorden</value></data>
   <data name="Reports_Inventory_ColUnit" xml:space="preserve"><value>Unidad</value></data>
   <data name="Reports_Inventory_ColStatus" xml:space="preserve"><value>Estado</value></data>
   <data name="Reports_Inventory_NoMatches" xml:space="preserve"><value>No hay productos que coincidan.</value></data>

@@ -22,7 +22,10 @@ public static class InventoryModule
         services.AddScoped<Func<MovementEditorViewModel>>(sp => sp.GetRequiredService<MovementEditorViewModel>);
         services.AddComponentView<MovementEditorViewModel, MovementEditorView>();
 
-        services.AddDashboardCard<LowStockCard>();
+        // Revisión de alertas de existencia de la sesión (022).
+        services.AddScoped<StockAlertMonitor>();
+
+        services.AddDashboardCard<StockAlertLevelsCard>();
         services.AddDashboardCard<OutOfStockCard>();
         return services;
     }

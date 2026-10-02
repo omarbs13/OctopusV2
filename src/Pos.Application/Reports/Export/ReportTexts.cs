@@ -70,6 +70,9 @@ public static class ReportTexts
     public const string ColSku = "SKU";
     public const string ColOnHand = "Existencia";
     public const string ColMinimum = "Mínimo";
+    public const string ColReorderPoint = "Punto de reorden";
+    public const string AlertLevel = "En alerta";
+    public const string UrgentLevel = "Urgente";
     public const string ColUnit = "Unidad";
     public const string ColStatus = "Estado";
     public const string StatusLow = "Baja";

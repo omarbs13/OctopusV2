@@ -9,30 +9,6 @@ using Pos.Domain.Users;
 
 namespace Pos.Desktop.Inventory;
 
-/// <summary>Productos activos con existencia baja; lleva a Existencias ya filtrada (FR-021).</summary>
-public sealed class LowStockCard(OperationRunner runner, UseCases useCases) : DashboardCard(runner)
-{
-    public override string Title => Strings.Card_LowStock;
-
-    public override string Icon => "Icon.Warning";
-
-    public override int Order => 20;
-
-    public override Permission? RequiredPermission => Permission.ViewInventory;
-
-    public override DashboardCardKind Kind => DashboardCardKind.Metric;
-
-    public override string? NavigateTo => InventoryModule.StockPageId;
-
-    public override object? NavigationArgument => StockFilter.Low;
-
-    protected override async Task LoadCoreAsync()
-    {
-        var counts = await InventoryCardCounts.LoadAsync(useCases);
-        SetReady(counts.Low.ToString("N0", InventoryCardCounts.DisplayCulture));
-    }
-}
-
 /// <summary>Productos activos sin existencia; lleva a Existencias ya filtrada (FR-021).</summary>
 public sealed class OutOfStockCard(OperationRunner runner, UseCases useCases) : DashboardCard(runner)
 {

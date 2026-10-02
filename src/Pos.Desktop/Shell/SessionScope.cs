@@ -18,5 +18,9 @@ public sealed class SessionScope : IAsyncDisposable
 
     public MainViewModel Main { get; }
 
+    /// <summary>Servicio del ámbito de la sesión (por ejemplo, un monitor que se detiene al desecharla).</summary>
+    public T GetRequiredService<T>()
+        where T : notnull => _scope.ServiceProvider.GetRequiredService<T>();
+
     public ValueTask DisposeAsync() => _scope.DisposeAsync();
 }

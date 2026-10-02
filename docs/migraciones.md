@@ -325,3 +325,20 @@ dígitos) cumplen la regla nueva y no cambian al normalizarse (mayúsculas, sin 
 `__EFMigrationsHistory`. La base de ejemplo `v0.15.0.db` agrega un producto activo `ALF-001` con código
 `PROD-0042`; `SampleDatabaseUpgradeTests` verifica que lo conserve y que los códigos numéricos de las
 bases anteriores no cambien.
+
+## 0.16.0: alertas de existencia (`LowStockAlerts`)
+
+La migración `LowStockAlerts` **no reconstruye `Products`**:
+
+- `ALTER TABLE "Products" ADD "ReorderPoint" INTEGER NULL;` (punto de reorden en milésimas). Los productos
+  existentes quedan sin punto de reorden.
+- Crea la tabla técnica `StockAlertAcknowledgements` (sin llaves foráneas, auditoría ni borrado lógico) con
+  el índice único `IX_StockAlertAcknowledgements_User_Date_Level_Product` sobre
+  (`UserId`, `LocalDate`, `Level`, `ProductId`). `LocalDate` es el día local (`yyyy-MM-dd`), no un instante.
+- Las filas de más de 7 días se borran físicamente en cada revisión de alertas, en la misma transacción.
+
+`LowStockAlertsMigrationTests` revisa el SQL (un solo `ALTER TABLE ... ADD "ReorderPoint"`, el `CREATE
+TABLE`, el índice único y ningún `ef_temp_Products`, `DROP TABLE "Products"` ni `UPDATE`). La base de ejemplo
+`v0.16.0.db` agrega un punto de reorden de 2 kg al producto por kilo (mínimo 5 kg) y una notificación "en
+alerta" del administrador; `SampleDatabaseUpgradeTests` verifica que las bases anteriores queden sin punto de
+reorden ni registros y que `v0.16.0.db` conserve ambos. Ver [alertas-de-existencia.md](alertas-de-existencia.md).

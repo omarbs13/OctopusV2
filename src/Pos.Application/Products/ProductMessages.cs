@@ -14,6 +14,7 @@ public static class ProductMessages
     public const string PriceTooManyDecimals = "El precio admite máximo 2 decimales.";
     public const string PriceTooLarge = "El precio máximo es $999,999.99.";
     public const string UnitRequired = "La unidad de medida es obligatoria.";
+    public const string ReorderPointNotBelowMinimum = "El punto de reorden debe ser menor que la existencia mínima.";
     public const string ImageTooLarge = "La imagen pesa más de 5 MB. Elija un archivo más pequeño.";
     public const string ImageUnsupportedFormat = "Formato no admitido. Use una imagen JPG, PNG o WEBP.";
     public const string ImageCorrupt = "No se pudo leer la imagen; el archivo está dañado o no es una imagen válida.";

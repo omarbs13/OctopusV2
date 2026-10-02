@@ -32,6 +32,7 @@ public static class ProductMapping
             product.IsCritical,
             product.CategoryId,
             category?.Name,
-            category?.IsActive ?? true);
+            category?.IsActive ?? true,
+            product.ReorderPointThousandths);
     }
 }

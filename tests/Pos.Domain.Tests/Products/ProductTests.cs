@@ -181,4 +181,53 @@ public class ProductTests
 
         Assert.Equal("KGM", product.UnitCode);
     }
+
+    [Fact]
+    public void PuntoDeReorden_MenorQueElMinimo_EsValido()
+    {
+        var product = Product.Create(
+            "Café", "SKU1", null, Price, "H87", tracksInventory: true,
+            minimumStock: Quantity.FromThousandths(20_000), reorderPoint: Quantity.FromThousandths(5_000));
+
+        Assert.Equal(5_000, product.ReorderPointThousandths);
+        Assert.Equal(Quantity.FromThousandths(5_000), product.ReorderPoint);
+    }
+
+    [Fact]
+    public void PuntoDeReorden_IgualAlMinimo_Lanza()
+    {
+        Assert.Throws<DomainException>(() => Product.Create(
+            "Café", "SKU1", null, Price, "H87", tracksInventory: true,
+            minimumStock: Quantity.FromThousandths(20_000), reorderPoint: Quantity.FromThousandths(20_000)));
+
+        var product = Product.Create("Café", "SKU1", null, Price, "H87", tracksInventory: true);
+        Assert.Throws<DomainException>(() => product.Update(
+            "Café", "SKU1", null, Price, "H87", isActive: true, tracksInventory: true,
+            minimumStock: Quantity.FromThousandths(20_000), reorderPoint: Quantity.FromThousandths(20_000)));
+    }
+
+    [Fact]
+    public void PuntoDeReorden_ConDecimalesEnPiezas_Lanza()
+    {
+        Assert.False(Product.IsValidReorderPoint(Quantity.FromThousandths(2_500), null, UnitOfMeasure.Piece));
+        Assert.Throws<DomainException>(() => Product.Create(
+            "Café", "SKU1", null, Price, "H87", tracksInventory: true, reorderPoint: Quantity.FromThousandths(2_500)));
+    }
+
+    [Fact]
+    public void PuntoDeReorden_Cero_EsValido()
+    {
+        Assert.True(Product.IsValidReorderPoint(Quantity.Zero, Quantity.FromThousandths(1_000), UnitOfMeasure.Piece));
+    }
+
+    [Fact]
+    public void PuntoDeReorden_SinControlDeInventario_QuedaNulo()
+    {
+        var product = Product.Create(
+            "Café", "SKU1", null, Price, "H87", tracksInventory: false,
+            minimumStock: Quantity.FromThousandths(20_000), reorderPoint: Quantity.FromThousandths(20_000));
+
+        Assert.Null(product.ReorderPointThousandths);
+        Assert.Null(product.MinimumStockThousandths);
+    }
 }

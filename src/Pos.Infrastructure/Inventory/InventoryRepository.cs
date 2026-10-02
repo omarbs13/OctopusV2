@@ -120,7 +120,9 @@ public sealed class InventoryRepository : IInventoryRepository
         var rows = StockRows(includeInactive: false, search: null);
         var low = await FilterByStatus(rows, StockFilter.Low).LongCountAsync(cancellationToken);
         var outOfStock = await FilterByStatus(rows, StockFilter.Out).LongCountAsync(cancellationToken);
-        return new StockAlertCounts(low, outOfStock);
+        var alert = await FilterByAlertLevel(rows, StockAlertLevel.Alert).LongCountAsync(cancellationToken);
+        var urgent = await FilterByAlertLevel(rows, StockAlertLevel.Urgent).LongCountAsync(cancellationToken);
+        return new StockAlertCounts(low, outOfStock, alert, urgent);
     }
 
     public async Task<MovementPage> SearchMovementsAsync(MovementSearch search, CancellationToken cancellationToken)
@@ -244,7 +246,21 @@ public sealed class InventoryRepository : IInventoryRepository
             && r.OnHand <= r.Product.MinimumStockThousandths),
         StockFilter.Normal => rows.Where(r => r.OnHand > 0
             && (r.Product.MinimumStockThousandths == null || r.OnHand > r.Product.MinimumStockThousandths)),
+        StockFilter.Alert => FilterByAlertLevel(rows, StockAlertLevel.Alert),
+        StockFilter.Urgent => FilterByAlertLevel(rows, StockAlertLevel.Urgent),
         _ => rows,
+    };
+
+    /// <summary>Predicado de nivel en SQL; replica <see cref="StockAlertRule"/> (022, research §3).</summary>
+    private static IQueryable<StockRow> FilterByAlertLevel(IQueryable<StockRow> rows, StockAlertLevel level) => level switch
+    {
+        StockAlertLevel.Urgent => rows.Where(r => r.Product.ReorderPointThousandths != null
+            && r.OnHand <= r.Product.ReorderPointThousandths),
+        StockAlertLevel.Alert => rows.Where(r => (r.Product.ReorderPointThousandths == null || r.OnHand > r.Product.ReorderPointThousandths)
+            && r.Product.MinimumStockThousandths != null
+            && r.OnHand <= r.Product.MinimumStockThousandths),
+        _ => rows.Where(r => (r.Product.ReorderPointThousandths == null || r.OnHand > r.Product.ReorderPointThousandths)
+            && (r.Product.MinimumStockThousandths == null || r.OnHand > r.Product.MinimumStockThousandths)),
     };
 
     private sealed class StockRow

@@ -61,6 +61,16 @@ public sealed partial class HomeViewModel : PageViewModel
         Charts = [.. visible.Where(c => c.Kind == DashboardCardKind.Chart)];
     }
 
+    /// <summary>Pulsar una cifra de una tarjeta con varias (022): navega a su destino con su argumento.</summary>
+    [RelayCommand]
+    private async Task ActivateSegmentAsync(DashboardCardSegment? segment)
+    {
+        if (segment is not null)
+        {
+            await _navigator.NavigateAsync(segment.NavigateTo, segment.Argument);
+        }
+    }
+
     [RelayCommand]
     private async Task ActivateCardAsync(DashboardCard? card)
     {

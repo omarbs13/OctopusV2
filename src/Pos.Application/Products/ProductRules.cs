@@ -18,7 +18,8 @@ internal static class ProductRules
         Func<T, string?> priceText,
         Func<T, string?> unitCode,
         Func<T, bool> tracksInventory,
-        Func<T, string?> minimumStockText)
+        Func<T, string?> minimumStockText,
+        Func<T, string?> reorderPointText)
     {
         validator.RuleFor(x => Product.NormalizeName(name(x)))
             .Cascade(CascadeMode.Stop)
@@ -59,7 +60,35 @@ internal static class ProductRules
                 return InventoryMessages.ForMinimum(error, unit?.Name ?? string.Empty, unit?.DecimalPlaces ?? 0);
             })
             .OverridePropertyName(ProductFields.MinimumStock);
+
+        validator.RuleFor(x => ParseReorderPoint(tracksInventory(x), reorderPointText(x), unitCode(x)))
+            .Must(r => r is not { Error: not null })
+            .WithMessage(x =>
+            {
+                var unit = UnitOfMeasure.Find(unitCode(x));
+                var error = ParseReorderPoint(tracksInventory(x), reorderPointText(x), unitCode(x))!.Value.Error!.Value;
+                return InventoryMessages.ForReorderPoint(error, unit?.Name ?? string.Empty, unit?.DecimalPlaces ?? 0);
+            })
+            .OverridePropertyName(ProductFields.ReorderPoint);
+
+        // Solo con ambos umbrales capturados y válidos: el punto de reorden debe ser menor que el mínimo (FR-002).
+        validator.RuleFor(x => IsBelowMinimum(
+                ParseMinimum(tracksInventory(x), minimumStockText(x), unitCode(x)),
+                ParseReorderPoint(tracksInventory(x), reorderPointText(x), unitCode(x))))
+            .Must(below => below)
+            .WithMessage(ProductMessages.ReorderPointNotBelowMinimum)
+            .OverridePropertyName(ProductFields.ReorderPoint);
     }
+
+    /// <summary>
+    /// Punto de reorden capturado, con los decimales de la unidad elegida; se ignora si el producto no
+    /// controla inventario. Vacío significa sin punto de reorden; 0 es válido (022).
+    /// </summary>
+    public static QuantityParseResult? ParseReorderPoint(bool tracksInventory, string? text, string? unitCode) =>
+        ParseMinimum(tracksInventory, text, unitCode);
+
+    private static bool IsBelowMinimum(QuantityParseResult? minimum, QuantityParseResult? reorder) =>
+        minimum?.Value is not { } min || reorder?.Value is not { } point || point < min;
 
     /// <summary>
     /// Existencia mínima capturada, con los decimales de la unidad elegida; se ignora si el producto

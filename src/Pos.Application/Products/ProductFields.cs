@@ -10,4 +10,5 @@ public static class ProductFields
     public const string UnitCode = "UnitCode";
     public const string TracksInventory = "TracksInventory";
     public const string MinimumStock = "MinimumStock";
+    public const string ReorderPoint = "ReorderPoint";
 }

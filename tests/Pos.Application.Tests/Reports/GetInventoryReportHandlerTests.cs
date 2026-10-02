@@ -54,7 +54,7 @@ public class GetInventoryReportHandlerTests
         {
             Calls++;
             LastEnd = endUtcExclusive;
-            return Task.FromResult(new InventoryReport(new InventoryCounts(0, 0, 0, 0, 0), [], 0, 1, 100));
+            return Task.FromResult(new InventoryReport(new InventoryCounts(0, 0, 0, 0, 0, 0, 0), [], 0, 1, 100));
         }
     }
 }

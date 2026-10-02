@@ -49,6 +49,12 @@ public enum StockFilter
     Normal,
     Low,
     Out,
+
+    /// <summary>Nivel de alerta "en alerta" (022); independiente del estado.</summary>
+    Alert,
+
+    /// <summary>Nivel de alerta "urgente" (022); independiente del estado.</summary>
+    Urgent,
 }
 
 /// <summary>Criterios de existencias ya normalizados por el caso de uso.</summary>
@@ -84,7 +90,8 @@ public sealed record StockPage(IReadOnlyList<StockItemDto> Items, long TotalCoun
     public int TotalPages => ProductPage.PageCount(TotalCount, PageSize);
 }
 
-public sealed record StockAlertCounts(long Low, long Out);
+/// <summary>Conteos de Inicio: estado (bajo, sin existencia) y nivel de alerta (022).</summary>
+public sealed record StockAlertCounts(long Low, long Out, long Alert, long Urgent);
 
 /// <summary>Criterios del historial; el límite superior de fecha es exclusivo.</summary>
 public sealed record MovementSearch(

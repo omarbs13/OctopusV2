@@ -49,7 +49,7 @@ public class ExportReportHandlerTests
     {
         var env = Environment.For(UserRole.Cashier);
         env.Inventory = Enumerable.Range(1, 250)
-            .Select(i => new InventoryReportRow(Guid.NewGuid(), $"Producto {i}", $"SKU-{i}", i * 1_000, null, "Pieza", 0, StockStatus.Normal))
+            .Select(i => new InventoryReportRow(Guid.NewGuid(), $"Producto {i}", $"SKU-{i}", i * 1_000, null, null, "Pieza", 0, StockStatus.Normal, StockAlertLevel.None))
             .ToList();
 
         var result = await env.Handler.HandleAsync(ExportRequest.ForInventory(new InventoryReportQuery(new DateOnly(2026, 9, 30)), ExportFormat.Pdf), TestContext.Current.CancellationToken);
@@ -187,7 +187,7 @@ public class ExportReportHandlerTests
         public Task<InventoryReport> GetAsync(DateTime endUtcExclusive, InventoryReportQuery query, CancellationToken cancellationToken)
         {
             LastQuery = query;
-            var counts = new InventoryCounts(Rows.Count, Rows.Count, 0, 0, Rows.Count);
+            var counts = new InventoryCounts(Rows.Count, Rows.Count, 0, 0, Rows.Count, 0, 0);
             return Task.FromResult(new InventoryReport(counts, Rows, Rows.Count, 1, query.PageSize));
         }
     }

@@ -64,6 +64,7 @@ public partial class ProductEditorView : UserControl
             ProductFields.Barcode => BarcodeBox,
             ProductFields.Price => PriceBox,
             ProductFields.MinimumStock => MinimumStockBox,
+            ProductFields.ReorderPoint => ReorderPointBox,
             _ => NameBox,
         };
         target.Focus();

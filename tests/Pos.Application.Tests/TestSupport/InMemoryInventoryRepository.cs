@@ -46,7 +46,7 @@ public sealed class InMemoryInventoryRepository : IInventoryRepository
         Task.FromResult(new StockPage([], 0, 1, StockPage.DefaultPageSize));
 
     public Task<StockAlertCounts> CountAlertsAsync(CancellationToken cancellationToken) =>
-        Task.FromResult(new StockAlertCounts(0, 0));
+        Task.FromResult(new StockAlertCounts(0, 0, 0, 0));
 
     public Task<MovementPage> SearchMovementsAsync(MovementSearch search, CancellationToken cancellationToken) =>
         Task.FromResult(new MovementPage([], 0, 1, MovementPage.DefaultPageSize));

@@ -9,6 +9,7 @@ using Pos.Application.Users.GetSetupState;
 using Pos.Application.Users.StartSession;
 using Pos.Desktop.Auth;
 using Pos.Desktop.Common;
+using Pos.Desktop.Inventory;
 using Pos.Desktop.Resources;
 using Serilog;
 
@@ -213,6 +214,9 @@ public sealed partial class RootViewModel : ViewModelBase, ISessionActions, ISes
         _scope = scope;
         await scope.Main.StartAsync();
         Content = scope.Main;
+
+        // Alertas de existencia (022): primera revisión ya con la ventana principal; se detiene con el ámbito.
+        scope.GetRequiredService<StockAlertMonitor>().Start();
         await ConfigureIdleLockAsync();
     }
 

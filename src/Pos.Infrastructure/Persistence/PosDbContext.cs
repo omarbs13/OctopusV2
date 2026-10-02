@@ -118,6 +118,8 @@ public class PosDbContext : DbContext
 
     public DbSet<PurchaseLine> PurchaseLines => Set<PurchaseLine>();
 
+    public DbSet<StockAlertAcknowledgement> StockAlertAcknowledgements => Set<StockAlertAcknowledgement>();
+
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
         RejectImmutableChanges();
@@ -175,6 +177,7 @@ public class PosDbContext : DbContext
         modelBuilder.ApplyConfiguration(new SupplierConfiguration());
         modelBuilder.ApplyConfiguration(new PurchaseConfiguration());
         modelBuilder.ApplyConfiguration(new PurchaseLineConfiguration());
+        modelBuilder.ApplyConfiguration(new StockAlertAcknowledgementConfiguration());
     }
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)

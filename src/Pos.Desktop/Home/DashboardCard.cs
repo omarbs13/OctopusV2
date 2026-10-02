@@ -52,8 +52,16 @@ public abstract partial class DashboardCard : ViewModelBase
     public virtual object? NavigationArgument => null;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsNavigable), nameof(IsReady), nameof(IsEmpty), nameof(IsError), nameof(IsLoading))]
+    [NotifyPropertyChangedFor(nameof(IsNavigable), nameof(IsReady), nameof(IsEmpty), nameof(IsError), nameof(IsLoading), nameof(ShowValue), nameof(ShowSegments))]
     public partial DashboardCardState State { get; private set; } = DashboardCardState.Loading;
+
+    /// <summary>
+    /// Cifras navegables (022). Si la tarjeta tiene, se dibujan en lugar de <see cref="Value"/> y la
+    /// tarjeta exterior no navega. Vacío por omisión: las demás tarjetas no cambian.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowValue), nameof(ShowSegments))]
+    public partial IReadOnlyList<DashboardCardSegment> Segments { get; protected set; } = [];
 
     /// <summary>Valor ya formateado; solo en <see cref="DashboardCardState.Ready"/>. Puede faltar en una gráfica.</summary>
     [ObservableProperty]
@@ -72,6 +80,10 @@ public abstract partial class DashboardCard : ViewModelBase
     public bool IsError => State == DashboardCardState.Error;
 
     public bool IsLoading => State == DashboardCardState.Loading;
+
+    public bool ShowValue => IsReady && Segments.Count == 0;
+
+    public bool ShowSegments => IsReady && Segments.Count > 0;
 
     /// <summary>Carga la tarjeta. Nunca lanza: un error la deja en estado de error y se registra.</summary>
     public async Task LoadAsync()

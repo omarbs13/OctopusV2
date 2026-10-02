@@ -38,6 +38,7 @@ internal sealed class InventoryReportReader : IInventoryReportReader
                     p.Sku,
                     p.IsActive,
                     Minimum = p.MinimumStockThousandths,
+                    ReorderPoint = p.ReorderPointThousandths,
                     UnitName = u.Name,
                     u.DecimalPlaces,
                     CategoryName = c == null ? null : c.Name,
@@ -52,12 +53,17 @@ internal sealed class InventoryReportReader : IInventoryReportReader
             .ToListAsync(cancellationToken);
 
         var items = all
-            .Select(p => new
+            .Select(p =>
             {
-                Product = p,
-                Status = StockStatusRule.Evaluate(
-                    StockLevel.FromThousandths(p.OnHand),
-                    p.Minimum is { } m ? Quantity.FromThousandths(m) : null),
+                var onHand = StockLevel.FromThousandths(p.OnHand);
+                var minimum = p.Minimum is { } m ? Quantity.FromThousandths(m) : (Quantity?)null;
+                var reorder = p.ReorderPoint is { } r ? Quantity.FromThousandths(r) : (Quantity?)null;
+                return new
+                {
+                    Product = p,
+                    Status = StockStatusRule.Evaluate(onHand, minimum),
+                    Level = p.IsActive ? StockAlertRule.Evaluate(onHand, minimum, reorder) : StockAlertLevel.None,
+                };
             })
             .ToList();
 
@@ -66,13 +72,17 @@ internal sealed class InventoryReportReader : IInventoryReportReader
             items.Count(i => i.Product.IsActive),
             items.Count(i => i.Status == StockStatus.Low),
             items.Count(i => i.Status == StockStatus.Out),
-            items.Count(i => i.Status == StockStatus.Normal));
+            items.Count(i => i.Status == StockStatus.Normal),
+            items.Count(i => i.Level == StockAlertLevel.Alert),
+            items.Count(i => i.Level == StockAlertLevel.Urgent));
 
         var filtered = items.Where(i => query.Filter switch
         {
             StockFilter.Normal => i.Status == StockStatus.Normal,
             StockFilter.Low => i.Status == StockStatus.Low,
             StockFilter.Out => i.Status == StockStatus.Out,
+            StockFilter.Alert => i.Level == StockAlertLevel.Alert,
+            StockFilter.Urgent => i.Level == StockAlertLevel.Urgent,
             _ => true,
         });
 
@@ -114,9 +124,11 @@ internal sealed class InventoryReportReader : IInventoryReportReader
                 i.Product.Sku,
                 i.Product.OnHand,
                 i.Product.Minimum,
+                i.Product.ReorderPoint,
                 i.Product.UnitName,
                 i.Product.DecimalPlaces,
                 i.Status,
+                i.Level,
                 i.Product.CategoryName,
                 i.Product.CategoryIsActive))
             .ToList();

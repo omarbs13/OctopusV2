@@ -29,6 +29,7 @@ public static class ProductAuditFields
             new("Categoría", product.CategoryId is null ? AuditFormat.NoCategory : AuditFormat.Category(categoryName)),
             new("Maneja inventario", AuditFormat.YesNo(product.TracksInventory)),
             new("Existencia mínima", AuditFormat.Quantity(product.MinimumStock, unit?.DecimalPlaces ?? 0)),
+            new("Punto de reorden", AuditFormat.Quantity(product.ReorderPoint, unit?.DecimalPlaces ?? 0)),
             new(Critical, AuditFormat.YesNo(product.IsCritical)),
             new("Estado", AuditFormat.ActiveState(product.IsActive)),
             new(Image, hasImage ? WithImage : WithoutImage),

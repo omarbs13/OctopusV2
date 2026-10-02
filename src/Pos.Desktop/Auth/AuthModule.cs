@@ -23,6 +23,7 @@ public static class AuthModule
         // De la sesión: se desechan al cerrarla.
         services.AddScoped<MainViewModel>();
         services.AddScoped<ModalHost>();
+        services.AddScoped<NotificationCenter>();
         services.AddScoped<UserSectionViewModel>();
         services.AddScoped<AdminAuthorizationService>();
 

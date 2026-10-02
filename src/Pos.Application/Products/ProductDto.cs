@@ -24,7 +24,8 @@ public sealed record ProductDto(
     bool IsCritical = false,
     Guid? CategoryId = null,
     string? CategoryName = null,
-    bool CategoryIsActive = true);
+    bool CategoryIsActive = true,
+    long? ReorderPointThousandths = null);
 
 /// <summary>Fila del listado de productos; <c>CategoryName</c> nulo = "Sin categoría" (016).</summary>
 public sealed record ProductListItemDto(

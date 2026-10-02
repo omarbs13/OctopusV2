@@ -16,11 +16,13 @@ public sealed partial class MainViewModel : ViewModelBase
         NavigationRegistry registry,
         MenuViewModel menu,
         IAppInfo appInfo,
-        ModalHost? modal = null)
+        ModalHost? modal = null,
+        NotificationCenter? notifications = null)
     {
         Menu = menu;
         Modal = modal ?? new ModalHost();
         ArgumentNullException.ThrowIfNull(navigator);
+        Notifications = notifications ?? new NotificationCenter(navigator);
         ArgumentNullException.ThrowIfNull(appInfo);
         Navigator = navigator;
         Registry = registry;
@@ -38,6 +40,9 @@ public sealed partial class MainViewModel : ViewModelBase
 
     /// <summary>Diálogo sobre la sesión (cambio de contraseña, autorización de administrador).</summary>
     public ModalHost Modal { get; }
+
+    /// <summary>Notificaciones no bloqueantes de la sesión, abajo a la derecha (022).</summary>
+    public NotificationCenter Notifications { get; }
 
     /// <summary>
     /// Hay una venta en curso en el Punto de venta de esta sesión. Solo consulta la pantalla si ya se

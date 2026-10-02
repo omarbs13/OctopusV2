@@ -95,6 +95,7 @@ public sealed class SampleDatabaseUpgradeTests
         AssertCategories(connection, sampleFile);
         AssertShiftCuts(connection, sampleFile);
         AssertPurchases(connection, sampleFile);
+        AssertStockAlerts(connection, sampleFile);
         await AssertLegacyCancelledCashAsync(db, connection, sampleFile);
 
         foreach (var index in new[] { "IX_Products_Sku", "IX_Products_Barcode", "IX_Products_NameSearch" })
@@ -592,6 +593,36 @@ public sealed class SampleDatabaseUpgradeTests
                 """));
         Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM AuditEntries WHERE Action = 'PURCHASE_VOIDED' AND EntityType = 'Purchase'"));
     }
+
+    /// <summary>
+    /// 022: las bases anteriores quedan sin punto de reorden y sin registros de notificación; la de 0.16.0
+    /// conserva el punto de reorden del producto en kilo y el registro del administrador.
+    /// </summary>
+    private static void AssertStockAlerts(SqliteConnection connection, string sampleFile)
+    {
+        if (!HasStockAlerts(sampleFile))
+        {
+            Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM Products WHERE ReorderPoint IS NOT NULL"));
+            Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM StockAlertAcknowledgements"));
+            return;
+        }
+
+        Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM Products WHERE ReorderPoint IS NOT NULL"));
+        Assert.Equal(
+            SampleData.ReorderPointThousandths,
+            Scalar<long>(connection, $"SELECT ReorderPoint FROM Products WHERE Sku = '{SampleData.InventorySku}'"));
+        Assert.Equal(
+            1,
+            Scalar<long>(connection, $"""
+                SELECT COUNT(*) FROM StockAlertAcknowledgements a
+                JOIN Products p ON p.Id = a.ProductId
+                JOIN Users u ON u.Id = a.UserId
+                WHERE p.Sku = '{SampleData.InventorySku}' AND u.UserName = '{SampleData.AdminUserName}'
+                  AND a.Level = 1 AND a.LocalDate = '{SampleData.AcknowledgementDate:yyyy-MM-dd}'
+                """));
+    }
+
+    private static bool HasStockAlerts(string sampleFile) => VersionOf(sampleFile) >= new Version(0, 16, 0);
 
     private static bool HasAlphanumericBarcode(string sampleFile) => VersionOf(sampleFile) >= new Version(0, 15, 0);
 

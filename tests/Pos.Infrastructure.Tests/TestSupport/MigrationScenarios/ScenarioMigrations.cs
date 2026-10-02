@@ -21,6 +21,7 @@ internal static class ScenarioSql
             "IsActive" INTEGER NOT NULL,
             "TracksInventory" INTEGER NOT NULL DEFAULT 0,
             "MinimumStock" INTEGER NULL,
+            "ReorderPoint" INTEGER NULL,
             "IsCritical" INTEGER NOT NULL DEFAULT 0,
             "CategoryId" TEXT NULL,
             "CreatedAt" TEXT NOT NULL,

@@ -57,6 +57,14 @@ public sealed partial class Product
 
     public Quantity? MinimumStock => MinimumStockThousandths is { } m ? Quantity.FromThousandths(m) : null;
 
+    /// <summary>
+    /// Punto de reorden: al llegar a él la alerta es urgente (022, FR-001). Nulo si no controla
+    /// inventario o no lo define; si hay mínimo, es menor que él.
+    /// </summary>
+    public long? ReorderPointThousandths { get; private set; }
+
+    public Quantity? ReorderPoint => ReorderPointThousandths is { } r ? Quantity.FromThousandths(r) : null;
+
     /// <summary>Marca de producto crítico: aparece en las alertas de Inicio cuando su existencia es baja (009).</summary>
     public bool IsCritical { get; private set; }
 
@@ -100,7 +108,8 @@ public sealed partial class Product
         string unitCode,
         bool tracksInventory = false,
         Quantity? minimumStock = null,
-        Guid? categoryId = null)
+        Guid? categoryId = null,
+        Quantity? reorderPoint = null)
     {
         var product = new Product
         {
@@ -110,7 +119,7 @@ public sealed partial class Product
             CategoryId = categoryId,
         };
         product.Apply(name, sku, barcode, price, unitCode);
-        product.ApplyInventory(tracksInventory, minimumStock);
+        product.ApplyInventory(tracksInventory, minimumStock, reorderPoint);
         return product;
     }
 
@@ -128,7 +137,8 @@ public sealed partial class Product
         bool tracksInventory = false,
         Quantity? minimumStock = null,
         bool hasMovements = false,
-        Guid? categoryId = null)
+        Guid? categoryId = null,
+        Quantity? reorderPoint = null)
     {
         if (!CanChangeInventorySettings(hasMovements, UnitCode, unitCode, TracksInventory, tracksInventory))
         {
@@ -137,7 +147,7 @@ public sealed partial class Product
         }
 
         Apply(name, sku, barcode, price, unitCode);
-        ApplyInventory(tracksInventory, minimumStock);
+        ApplyInventory(tracksInventory, minimumStock, reorderPoint);
         IsActive = isActive;
         CategoryId = categoryId;
     }
@@ -214,6 +224,17 @@ public sealed partial class Product
     }
 
     /// <summary>
+    /// El punto de reorden, si existe, respeta los decimales de la unidad y, si hay mínimo, es
+    /// estrictamente menor que él (022, FR-002). 0 es válido: urgente solo al agotarse.
+    /// </summary>
+    public static bool IsValidReorderPoint(Quantity? reorder, Quantity? minimum, UnitOfMeasure unit)
+    {
+        ArgumentNullException.ThrowIfNull(unit);
+        return reorder is null
+            || (IsValidMinimumStock(reorder, unit) && (minimum is null || reorder.Value < minimum.Value));
+    }
+
+    /// <summary>
     /// Con movimientos no se puede cambiar de unidad ni pasar de controlar a no controlar inventario (FR-006).
     /// </summary>
     public static bool CanChangeInventorySettings(
@@ -270,7 +291,7 @@ public sealed partial class Product
         UnitCode = unitCode;
     }
 
-    private void ApplyInventory(bool tracksInventory, Quantity? minimumStock)
+    private void ApplyInventory(bool tracksInventory, Quantity? minimumStock, Quantity? reorderPoint)
     {
         var unit = UnitOfMeasure.Find(UnitCode)!;
         if (tracksInventory && !IsValidMinimumStock(minimumStock, unit))
@@ -278,8 +299,15 @@ public sealed partial class Product
             throw new DomainException("La existencia mínima no es válida para la unidad del producto.");
         }
 
+        if (tracksInventory && !IsValidReorderPoint(reorderPoint, minimumStock, unit))
+        {
+            throw new DomainException(
+                "El punto de reorden no es válido para la unidad del producto o no es menor que la existencia mínima.");
+        }
+
         TracksInventory = tracksInventory;
         MinimumStockThousandths = tracksInventory ? minimumStock?.Thousandths : null;
+        ReorderPointThousandths = tracksInventory ? reorderPoint?.Thousandths : null;
     }
 
     [GeneratedRegex(@"^[0-9]{8,14}$", RegexOptions.CultureInvariant)]

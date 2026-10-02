@@ -92,6 +92,15 @@
       <TextBlock Classes="error" Text="{Binding MinimumStockError}" IsVisible="{Binding MinimumStockError, Converter={x:Static ObjectConverters.IsNotNull}}" />
     </StackPanel>
 
+    <!-- Punto de reorden (022, FR-001, FR-002) -->
+    <StackPanel Classes="field" IsVisible="{Binding TracksInventory}">
+      <forms:FieldLabel Text="{x:Static res:Strings.Editor_ReorderPoint}" />
+      <TextBox x:Name="ReorderPointBox" Text="{Binding ReorderPointText}"
+               IsEnabled="{Binding TracksInventory}" />
+      <TextBlock Text="{x:Static res:Strings.Editor_ReorderPointHelp}" TextWrapping="Wrap" FontSize="12" Opacity="0.75" />
+      <TextBlock Classes="error" Text="{Binding ReorderPointError}" IsVisible="{Binding ReorderPointError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+    </StackPanel>
+
     <StackPanel Classes="field" IsVisible="{Binding TracksInventory}">
       <CheckBox Content="{x:Static res:Strings.Editor_IsCritical}" IsChecked="{Binding IsCritical}" />
       <TextBlock Text="{x:Static res:Strings.Editor_IsCriticalHint}" TextWrapping="Wrap" FontSize="12" Opacity="0.75" />

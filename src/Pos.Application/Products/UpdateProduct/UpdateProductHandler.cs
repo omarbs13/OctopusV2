@@ -131,7 +131,9 @@ public sealed partial class UpdateProductHandler
 
         var price = Money.Parse(command.PriceText).Value!.Value;
         var minimum = ProductRules.ParseMinimum(command.TracksInventory, command.MinimumStockText, command.UnitCode)?.Value;
-        product.Update(command.Name, sku, barcode, price, command.UnitCode, command.IsActive, command.TracksInventory, minimum, hasMovements, command.CategoryId);
+        var reorderPoint = ProductRules.ParseReorderPoint(command.TracksInventory, command.ReorderPointText, command.UnitCode)?.Value;
+        product.Update(
+            command.Name, sku, barcode, price, command.UnitCode, command.IsActive, command.TracksInventory, minimum, hasMovements, command.CategoryId, reorderPoint);
         ProductImages.Apply(product, command.Image);
 
         var hasImage = imageChanges ? product.Image is not null : hadImage;

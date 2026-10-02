@@ -40,7 +40,7 @@ public sealed class InventoryReportReaderTests
 
         // Incluye activos e inactivos que controlan inventario; excluye el que no controla y el creado después.
         Assert.Equal(["INV-A", "INV-B", "INV-C", "INV-F"], day15.Rows.Select(r => r.Sku));
-        Assert.Equal(new InventoryCounts(4, 3, 1, 0, 3), day15.Counts);
+        Assert.Equal(new InventoryCounts(4, 3, 1, 0, 3, 1, 0), day15.Counts);
 
         // Existencia igual al mínimo: baja. Sin mínimo definido: nunca baja.
         Assert.Equal(StockStatus.Low, day15.Rows.Single(r => r.Sku == "INV-B").Status);

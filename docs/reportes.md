@@ -53,6 +53,13 @@ Inventario usa una sola fecha ("Al cierre del día"): se toma la fecha final del
     mínimo. Un producto sin mínimo nunca está en estado bajo.
   - Las tarjetas y la gráfica usan todos los productos; el filtro de estado, la búsqueda por nombre o SKU y
     el orden solo afectan a la tabla (100 por página). No muestra costos, valuación ni márgenes.
+  - Desde 0.16.0 el filtro de estado agrega **En alerta** y **Urgente** (nivel de alerta con la existencia a
+    la fecha y los umbrales actuales; los inactivos no tienen nivel). Son independientes del estado: un
+    producto agotado con punto de reorden aparece en "Sin existencia" y en "Urgente". La tabla y la
+    exportación agregan la columna **Punto de reorden** después de "Existencia mínima" ("—" si no tiene).
+  - Las notificaciones de existencia y la tarjeta "Alertas de existencia" de Inicio abren este reporte con
+    el período "Hoy", el filtro correspondiente, sin búsqueda y en la página 1. Ver
+    [alertas-de-existencia.md](alertas-de-existencia.md).
 
 ## Categorías (016)
 

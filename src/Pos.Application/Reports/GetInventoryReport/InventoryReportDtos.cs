@@ -32,12 +32,17 @@ public sealed record InventoryReportQuery(
     public const int DefaultPageSize = 100;
 }
 
-/// <summary>Conteos sobre todos los productos que controlan inventario (activos e inactivos).</summary>
-public sealed record InventoryCounts(int Total, int Active, int Low, int Out, int Normal);
+/// <summary>
+/// Conteos sobre todos los productos que controlan inventario (activos e inactivos). <c>Alert</c> y
+/// <c>Urgent</c> cuentan el nivel de alerta (022) y son solo informativos; los inactivos no cuentan.
+/// </summary>
+public sealed record InventoryCounts(int Total, int Active, int Low, int Out, int Normal, int Alert, int Urgent);
 
 /// <summary>
-/// Producto con la existencia vigente a la fecha; nombre, SKU, unidad, mínimo y categoría son los actuales.
-/// Sin costos (FR-014). <c>CategoryName</c> nulo = "Sin categoría" (016).
+/// Producto con la existencia vigente a la fecha; nombre, SKU, unidad, mínimo, punto de reorden y categoría
+/// son los actuales. Sin costos (FR-014). <c>CategoryName</c> nulo = "Sin categoría" (016). <c>Level</c> es el
+/// nivel de alerta con la existencia a la fecha y los umbrales actuales; <c>None</c> si el producto está
+/// inactivo (022).
 /// </summary>
 public sealed record InventoryReportRow(
     Guid ProductId,
@@ -45,9 +50,11 @@ public sealed record InventoryReportRow(
     string Sku,
     long OnHandThousandths,
     long? MinimumThousandths,
+    long? ReorderPointThousandths,
     string UnitName,
     int DecimalPlaces,
     StockStatus Status,
+    StockAlertLevel Level,
     string? CategoryName = null,
     bool CategoryIsActive = true);
 

@@ -842,6 +842,35 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.ToTable("ProductStocks", (string)null);
                 });
 
+            modelBuilder.Entity("Pos.Domain.Inventory.StockAlertAcknowledgement", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateOnly>("LocalDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "LocalDate", "Level", "ProductId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_StockAlertAcknowledgements_User_Date_Level_Product");
+
+                    b.ToTable("StockAlertAcknowledgements", (string)null);
+                });
+
             modelBuilder.Entity("Pos.Domain.Products.Product", b =>
                 {
                     b.Property<Guid>("Id")
@@ -888,6 +917,10 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.Property<long>("Price")
                         .HasColumnType("INTEGER")
                         .HasColumnName("PriceCents");
+
+                    b.Property<long?>("ReorderPointThousandths")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("ReorderPoint");
 
                     b.Property<string>("Sku")
                         .IsRequired()

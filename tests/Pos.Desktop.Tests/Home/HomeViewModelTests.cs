@@ -35,7 +35,7 @@ public sealed class HomeViewModelTests : IDisposable
         await Home.OnActivatedAsync();
 
         Assert.Equal(
-            [Strings.Card_ActiveProducts, Strings.Card_LowStock, Strings.Card_OutOfStock],
+            [Strings.Card_ActiveProducts, Strings.Card_StockAlertLevels, Strings.Card_OutOfStock],
             Home.Metrics.Select(c => c.Title));
         Assert.Equal(
             [Strings.Chart_SalesToday, Strings.Chart_SalesLast7Days, Strings.Chart_TopProducts],
@@ -77,14 +77,15 @@ public sealed class HomeViewModelTests : IDisposable
         Assert.Equal(DashboardCardState.Empty, top.State);
         Assert.Equal(Strings.Card_TopProductsEmpty, top.Message);
 
-        var inventory = Home.Cards.Where(c => c is LowStockCard or OutOfStockCard).ToList();
-        Assert.Equal(2, inventory.Count);
-        Assert.All(inventory, c =>
-        {
-            Assert.Equal(DashboardCardState.Ready, c.State);
-            Assert.Equal("0", c.Value);
-            Assert.True(c.IsNavigable);
-        });
+        var outOfStock = Home.Cards.OfType<OutOfStockCard>().Single();
+        Assert.Equal(DashboardCardState.Ready, outOfStock.State);
+        Assert.Equal("0", outOfStock.Value);
+        Assert.True(outOfStock.IsNavigable);
+
+        var levels = Home.Cards.OfType<StockAlertLevelsCard>().Single();
+        Assert.Equal(DashboardCardState.Ready, levels.State);
+        Assert.False(levels.IsNavigable);
+        Assert.All(levels.Segments, s => Assert.Equal(("0", DashboardSegmentTone.Neutral), (s.Value, s.Tone)));
     }
 
     [Fact]

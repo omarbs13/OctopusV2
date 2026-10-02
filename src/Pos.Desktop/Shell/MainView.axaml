@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:shell="using:Pos.Desktop.Shell"
              xmlns:nav="using:Pos.Desktop.Navigation"
+             xmlns:res="using:Pos.Desktop.Resources"
              x:Class="Pos.Desktop.Shell.MainView"
              x:DataType="shell:MainViewModel">
 
@@ -17,6 +18,40 @@
 
       <ContentControl Content="{Binding CurrentPage}" Margin="16" />
     </SplitView>
+
+    <!-- Notificaciones (022): encima del contenido y debajo de los diálogos; nunca toman el foco (FR-012) -->
+    <ItemsControl ItemsSource="{Binding Notifications.Items}" Width="360" Margin="16"
+                  HorizontalAlignment="Right" VerticalAlignment="Bottom" Focusable="False">
+      <ItemsControl.ItemsPanel>
+        <ItemsPanelTemplate>
+          <StackPanel Spacing="8" />
+        </ItemsPanelTemplate>
+      </ItemsControl.ItemsPanel>
+      <ItemsControl.ItemTemplate>
+        <DataTemplate x:DataType="shell:NotificationItem">
+          <Border CornerRadius="6" BoxShadow="0 2 8 0 #40000000"
+                  Background="{Binding Severity, Converter={x:Static shell:NotificationSeverityBrushConverter.Instance}}">
+            <Grid ColumnDefinitions="*,Auto">
+              <Button Grid.Column="0" Classes="flat" Focusable="False" IsTabStop="False"
+                      HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="12,10"
+                      Command="{Binding $parent[ItemsControl].((shell:MainViewModel)DataContext).Notifications.ActivateCommand}"
+                      CommandParameter="{Binding}">
+                <StackPanel Spacing="2">
+                  <TextBlock Text="{Binding Title}" FontWeight="SemiBold" Foreground="White" />
+                  <TextBlock Text="{Binding Message}" TextWrapping="Wrap" Foreground="White" />
+                </StackPanel>
+              </Button>
+              <Button Grid.Column="1" Classes="flat" Focusable="False" IsTabStop="False" Content="×"
+                      FontSize="18" Foreground="White" VerticalAlignment="Top" Padding="10,4"
+                      AutomationProperties.Name="{x:Static res:Strings.Notify_Dismiss}"
+                      ToolTip.Tip="{x:Static res:Strings.Notify_Dismiss}"
+                      Command="{Binding $parent[ItemsControl].((shell:MainViewModel)DataContext).Notifications.DismissCommand}"
+                      CommandParameter="{Binding}" />
+            </Grid>
+          </Border>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
 
     <!-- Diálogos de la sesión: cambio de contraseña y autorización de administrador -->
     <Border IsVisible="{Binding Modal.IsOpen}" Background="#88000000">

@@ -31,14 +31,4 @@ public sealed class ScannerBarcodeFormatsMigrationTests
         Assert.Equal("INSERT INTO \"__EFMigrationsHistory\" (\"MigrationId\", \"ProductVersion\")", statements[0]);
         Assert.Equal(2, statements.Count);
     }
-
-    [Fact]
-    public async Task ScannerBarcodeFormats_EsLaUltimaMigracion()
-    {
-        using var db = await TestDb.CreateAsync();
-        await using var context = db.CreateDbContext();
-
-        Assert.EndsWith("_ScannerBarcodeFormats", context.Database.GetMigrations().Last(), StringComparison.Ordinal);
-        Assert.Empty(await context.Database.GetPendingMigrationsAsync(TestContext.Current.CancellationToken));
-    }
 }

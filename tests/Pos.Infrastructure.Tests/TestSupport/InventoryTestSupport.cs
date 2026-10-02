@@ -30,7 +30,8 @@ public static class InventoryTestSupport
         string unit = "H87",
         bool tracks = true,
         long? minimumThousandths = null,
-        bool active = true)
+        bool active = true,
+        long? reorderPointThousandths = null)
     {
         var product = Product.Create(
             $"Producto {sku}",
@@ -39,10 +40,11 @@ public static class InventoryTestSupport
             Money.FromCents(1000),
             unit,
             tracks,
-            minimumThousandths is { } m ? Quantity.FromThousandths(m) : null);
+            minimumThousandths is { } m ? Quantity.FromThousandths(m) : null,
+            reorderPoint: reorderPointThousandths is { } r ? Quantity.FromThousandths(r) : null);
         if (!active)
         {
-            product.Update(product.Name, product.Sku, null, product.Price, unit, isActive: false, tracks, product.MinimumStock);
+            product.Update(product.Name, product.Sku, null, product.Price, unit, isActive: false, tracks, product.MinimumStock, reorderPoint: product.ReorderPoint);
         }
 
         await using var context = factory.CreateDbContext();

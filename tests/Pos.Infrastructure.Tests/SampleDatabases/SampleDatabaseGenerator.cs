@@ -136,6 +136,19 @@ public sealed class SampleDatabaseGenerator
             await context.SaveChangesAsync(TestContext.Current.CancellationToken);
         }
 
+        // Desde 0.16.0: el producto en kilo tiene punto de reorden (menor que su mínimo de 5 kg) y al
+        // administrador ya se le notificó en alerta (022).
+        await using (var context = db.CreateDbContext())
+        {
+            var product = context.Products.Single(p => p.Sku == SampleData.InventorySku);
+            product.Update(
+                product.Name, product.Sku, product.Barcode, product.Price, product.UnitCode, product.IsActive, product.TracksInventory,
+                product.MinimumStock, hasMovements: true, categoryId: product.CategoryId, reorderPoint: Quantity.FromThousandths(SampleData.ReorderPointThousandths));
+            context.StockAlertAcknowledgements.Add(StockAlertAcknowledgement.Create(
+                adminId, product.Id, StockAlertLevel.Alert, SampleData.AcknowledgementDate, db.Clock.UtcNow));
+            await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
         // Un solo archivo autocontenido: sin WAL pendiente. Primero se liberan las conexiones del pool.
         SqliteConnection.ClearAllPools();
         DatabaseTestHelpers.Execute(db.Directory.Paths.DatabaseFile, "PRAGMA wal_checkpoint(TRUNCATE); PRAGMA journal_mode=DELETE; VACUUM;");
@@ -682,6 +695,12 @@ public static class SampleData
     /// <summary>Desde 0.15.0: producto activo con código de barras alfanumérico, fuera de <see cref="Products"/>.</summary>
     public const string AlphanumericBarcodeSku = "ALF-001";
     public const string AlphanumericBarcode = "PROD-0042";
+
+    /// <summary>Desde 0.16.0: punto de reorden del producto en kilo (su mínimo es 5 kg).</summary>
+    public const long ReorderPointThousandths = 2_000;
+
+    /// <summary>Desde 0.16.0: día local de la notificación en alerta registrada para el administrador.</summary>
+    public static readonly DateOnly AcknowledgementDate = new(2026, 9, 30);
 
     /// <summary>Desde 0.6.0: usuarios de muestra. El administrador hace la venta 1; el cajero, la 2 y la 3 y el borrador.</summary>
     public const string AdminUserName = "admin";

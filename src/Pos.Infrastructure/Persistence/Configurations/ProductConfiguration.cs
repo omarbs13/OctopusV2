@@ -44,6 +44,10 @@ internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.Property(p => p.MinimumStockThousandths).HasColumnName("MinimumStock");
         builder.Ignore(p => p.MinimumStock);
 
+        // Punto de reorden (022): columna nula agregada con AddColumn, sin reconstruir la tabla.
+        builder.Property(p => p.ReorderPointThousandths).HasColumnName("ReorderPoint");
+        builder.Ignore(p => p.ReorderPoint);
+
         // Los productos existentes quedan como "no crítico" (009); AddColumn sin reconstruir la tabla.
         builder.Property(p => p.IsCritical).IsRequired().HasDefaultValue(false);
 
