@@ -5,6 +5,8 @@ namespace Pos.Desktop.Tests.TestSupport;
 
 public sealed class FakeDialogService : IDialogService
 {
+    public Action? ScanIgnored { get; set; }
+
     public List<(string Title, string Message)> Messages { get; } = [];
 
     public List<string> Confirmations { get; } = [];

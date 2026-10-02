@@ -37,7 +37,7 @@ public sealed class MenuViewModelTests : IDisposable
         Assert.Equal(["inventory.stock", "inventory.movements"], Group(menu, "inventory").Children.Select(c => c.Id));
         Assert.Equal(["administration.users", "administration.audit"], Group(menu, "administration").Children.Select(c => c.Id));
         Assert.Equal(["settings.business", "settings.printer", "settings.security"], Group(menu, "settings").Children.Select(c => c.Id));
-        Assert.Equal(["help.about"], Group(menu, "help").Children.Select(c => c.Id));
+        Assert.Equal(["help.about", "help.scanner-test"], Group(menu, "help").Children.Select(c => c.Id));
     }
 
     [Fact]

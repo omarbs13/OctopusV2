@@ -46,6 +46,12 @@ public interface IProductRepository
     Task<IReadOnlyList<Product>> FindForSaleAsync(string code, CancellationToken cancellationToken);
 
     /// <summary>
+    /// Producto no borrado (activo o inactivo) con ese código de barras ya normalizado, sin seguimiento; nulo
+    /// si no hay (021, pantalla "Probar escáner").
+    /// </summary>
+    Task<Product?> FindByBarcodeAsync(string normalizedBarcode, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Búsqueda por nombre, SKU o código de barras para vender: activos primero, sin borrados, hasta
     /// <paramref name="limit"/> resultados y sin seguimiento. <paramref name="nameText"/> ya viene normalizado.
     /// </summary>

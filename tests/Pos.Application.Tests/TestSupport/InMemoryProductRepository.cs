@@ -140,6 +140,13 @@ public sealed class InMemoryProductRepository : IProductRepository
         return Task.FromResult(found);
     }
 
+    public Task<Product?> FindByBarcodeAsync(string normalizedBarcode, CancellationToken cancellationToken)
+    {
+        ThrowIfFailing();
+        var found = _stored.Values.FirstOrDefault(p => p.Barcode == normalizedBarcode && !p.IsDeleted);
+        return Task.FromResult(found is null ? null : Clone(found));
+    }
+
     public Task<IReadOnlyList<Product>> SearchForSaleAsync(string nameText, int limit, CancellationToken cancellationToken)
     {
         ThrowIfFailing();

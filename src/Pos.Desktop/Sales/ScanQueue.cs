@@ -2,6 +2,9 @@ using System.Threading.Channels;
 
 namespace Pos.Desktop.Sales;
 
+/// <summary>Lectura del campo de captura: el texto y si llegó como ráfaga del escáner (021).</summary>
+public sealed record ScanInput(string Text, bool IsScan);
+
 /// <summary>
 /// Cola de lecturas del campo de captura (research §8): un solo consumidor las atiende en orden. El
 /// texto se toma y se limpia de forma síncrona en el evento de tecla, así que las lecturas seguidas
@@ -11,13 +14,13 @@ namespace Pos.Desktop.Sales;
 #pragma warning disable CA1711 // El nombre describe su función: una cola de lecturas.
 public sealed class ScanQueue : IDisposable
 {
-    private readonly Channel<string> _channel = Channel.CreateUnbounded<string>(
+    private readonly Channel<ScanInput> _channel = Channel.CreateUnbounded<ScanInput>(
         new UnboundedChannelOptions { SingleReader = true });
 
-    private readonly Func<string, Task> _handler;
+    private readonly Func<ScanInput, Task> _handler;
     private readonly Action<Exception> _onError;
 
-    public ScanQueue(Func<string, Task> handler, Action<Exception> onError)
+    public ScanQueue(Func<ScanInput, Task> handler, Action<Exception> onError)
     {
         _handler = handler;
         _onError = onError;
@@ -25,20 +28,20 @@ public sealed class ScanQueue : IDisposable
 
     public void Start() => _ = ConsumeAsync();
 
-    public void Enqueue(string text)
+    public void Enqueue(ScanInput input)
     {
-        _channel.Writer.TryWrite(text);
+        _channel.Writer.TryWrite(input);
     }
 
     public void Dispose() => _channel.Writer.TryComplete();
 
     private async Task ConsumeAsync()
     {
-        await foreach (var text in _channel.Reader.ReadAllAsync())
+        await foreach (var input in _channel.Reader.ReadAllAsync())
         {
             try
             {
-                await _handler(text);
+                await _handler(input);
             }
 #pragma warning disable CA1031 // Una lectura fallida no debe detener a las siguientes.
             catch (Exception ex)

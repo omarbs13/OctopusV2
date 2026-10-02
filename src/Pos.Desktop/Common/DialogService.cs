@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
+using Pos.Desktop.Common.Scanner;
 using Pos.Desktop.Forms;
 using Pos.Desktop.Resources;
 using Pos.Desktop.Shell;
@@ -20,6 +22,8 @@ internal sealed class DialogService : IDialogService, IDialogVisibility
         _lifetime = lifetime;
         _idle = idle;
     }
+
+    public Action? ScanIgnored { get; set; }
 
     /// <summary>Oculta los diálogos abiertos sin cerrarlos (bloqueo por inactividad).</summary>
     public void HideAll()
@@ -124,6 +128,11 @@ internal sealed class DialogService : IDialogService, IDialogVisibility
     private async Task<object> ShowAsync(DialogWindow dialog)
     {
         Track(dialog);
+        if (ScanIgnored is { } onScanIgnored)
+        {
+            GuardScans(dialog, onScanIgnored);
+        }
+
         var owner = FindOwner();
         if (owner is not null)
         {
@@ -152,6 +161,36 @@ internal sealed class DialogService : IDialogService, IDialogVisibility
             dialog.AddHandler(InputElement.PointerPressedEvent, OnActivity, RoutingStrategies.Tunnel, handledEventsToo: true);
             dialog.AddHandler(InputElement.PointerMovedEvent, OnActivity, RoutingStrategies.Tunnel, handledEventsToo: true);
         }
+    }
+
+    /// <summary>
+    /// Detector propio de la ventana (la vista del Punto de venta no recibe su teclado): no intercepta
+    /// caracteres; el Enter que cierra una ráfaga no llega al diálogo y el campo enfocado recupera su texto.
+    /// </summary>
+    private static void GuardScans(DialogWindow dialog, Action onScanIgnored)
+    {
+        var detector = new ScanBurstDetector();
+        dialog.AddHandler(
+            InputElement.TextInputEvent,
+            (_, e) => detector.OnText(e.Text ?? string.Empty, Stopwatch.GetTimestamp(), ScanFocus.Snapshot(ScanFocus.FocusedTextBox(dialog))),
+            RoutingStrategies.Tunnel);
+        dialog.AddHandler(
+            InputElement.KeyDownEvent,
+            (_, e) =>
+            {
+                if (e.Key == Key.Tab)
+                {
+                    detector.OnTerminator(Terminator.Tab, Stopwatch.GetTimestamp());
+                }
+                else if (e.Key == Key.Enter
+                    && detector.OnTerminator(Terminator.Enter, Stopwatch.GetTimestamp()) is { IsBurst: true } reading)
+                {
+                    e.Handled = true;
+                    ScanFocus.Restore(dialog, reading.FocusedSnapshot);
+                    onScanIgnored();
+                }
+            },
+            RoutingStrategies.Tunnel);
     }
 
     private Window? FindOwner() =>

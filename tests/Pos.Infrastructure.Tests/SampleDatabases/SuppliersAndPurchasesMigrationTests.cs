@@ -38,16 +38,6 @@ public sealed class SuppliersAndPurchasesMigrationTests
     }
 
     [Fact]
-    public async Task SuppliersAndPurchases_EsLaUltimaMigracion()
-    {
-        using var db = await TestDb.CreateAsync();
-        await using var context = db.CreateDbContext();
-
-        Assert.EndsWith("_SuppliersAndPurchases", context.Database.GetMigrations().Last(), StringComparison.Ordinal);
-        Assert.Empty(await context.Database.GetPendingMigrationsAsync(TestContext.Current.CancellationToken));
-    }
-
-    [Fact]
     public async Task MigrarDesde0130_ConservaMovimientosYExistencias()
     {
         using var dir = new TempDataDirectory();

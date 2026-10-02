@@ -9,6 +9,7 @@ using Pos.Application.Licensing.GetLicenseStatus;
 using Pos.Application.Licensing.ImportLicense;
 using Pos.Desktop.Common;
 using Pos.Desktop.Licensing;
+using Pos.Desktop.Navigation;
 using Pos.Desktop.Resources;
 using Pos.Domain.Users;
 
@@ -22,6 +23,7 @@ public sealed partial class AboutViewModel : PageViewModel
     private readonly IDialogService _dialogs;
     private readonly IClock _clock;
     private readonly IClipboardService _clipboard;
+    private readonly Navigator? _navigator;
 
     public AboutViewModel(
         UseCases useCases,
@@ -29,8 +31,10 @@ public sealed partial class AboutViewModel : PageViewModel
         IDialogService dialogs,
         IClock clock,
         IClipboardService clipboard,
-        ICurrentPermissions? permissions = null)
+        ICurrentPermissions? permissions = null,
+        Navigator? navigator = null)
     {
+        _navigator = navigator;
         CanExport = permissions?.Has(Permission.ExportDiagnostics) ?? true;
         CanManageLicense = permissions?.Has(Permission.ManageLicense) ?? false;
         _useCases = useCases;
@@ -78,6 +82,16 @@ public sealed partial class AboutViewModel : PageViewModel
         }
 
         await RefreshLicenseAsync();
+    }
+
+    /// <summary>Abre "Probar escáner" (021, FR-015).</summary>
+    [RelayCommand]
+    private async Task OpenScannerTestAsync()
+    {
+        if (_navigator is not null)
+        {
+            await _navigator.NavigateAsync(AboutModule.ScannerTestPageId);
+        }
     }
 
     [RelayCommand]

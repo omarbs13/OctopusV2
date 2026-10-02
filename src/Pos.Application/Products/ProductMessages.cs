@@ -22,5 +22,5 @@ public static class ProductMessages
     public static readonly string NameTooLong = $"El nombre admite hasta {Product.NameMaxLength} caracteres.";
     public static readonly string SkuTooLong = $"El SKU admite hasta {Product.SkuMaxLength} caracteres.";
     public static readonly string BarcodeFormat =
-        $"El código de barras debe tener solo dígitos, entre {Product.BarcodeMinLength} y {Product.BarcodeMaxLength}.";
+        $"El código de barras admite hasta {Product.BarcodeMaxLength} letras, dígitos, espacios interiores y los símbolos - . $ / + %.";
 }

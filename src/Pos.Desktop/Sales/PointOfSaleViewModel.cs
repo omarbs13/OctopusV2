@@ -28,6 +28,7 @@ using Pos.Desktop.Common;
 using Pos.Desktop.Diagnostics;
 using Pos.Desktop.Resources;
 using Pos.Desktop.Settings;
+using Pos.Desktop.Shell;
 using Pos.Domain.CashShifts;
 using Pos.Domain.Licensing;
 using Pos.Domain.Common;
@@ -107,6 +108,7 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
     private readonly CashShiftDialogs? _shiftDialogs;
     private readonly ICurrentPermissions? _permissions;
     private readonly ILicenseState? _license;
+    private readonly ModalHost? _sessionModal;
 
     private CheckoutViewModel? _pendingCheckout;
     private bool _draftChecked;
@@ -122,8 +124,10 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
         CashShiftDialogs? shiftDialogs = null,
         ICurrentPermissions? permissions = null,
         DiagnosticContext? diagnostics = null,
-        ILicenseState? license = null)
+        ILicenseState? license = null,
+        ModalHost? sessionModal = null)
     {
+        _sessionModal = sessionModal;
         _license = license;
         _diagnostics = diagnostics;
         _authorization = authorization;
@@ -264,6 +268,12 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
     /// <summary>Hay una ventana modal sobre la venta (selector o cobro): los atajos de captura no aplican.</summary>
     public bool IsModalOpen => Chooser is not null || Checkout is not null || DrawerReason is not null || CustomerPicker is not null
         || DiscountDialog is not null || CouponEntry is not null;
+
+    /// <summary>
+    /// Un diálogo propio de la venta o uno de la sesión (autorización del Administrador) está abierto: las
+    /// lecturas del escáner se ignoran (021, FR-008).
+    /// </summary>
+    public bool IsDialogOpen => IsModalOpen || _sessionModal?.IsOpen == true;
 
     public bool HasLastSale => LastSaleText is not null;
 
@@ -516,7 +526,13 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
 
     /// <summary>Enter en el campo: toma el texto y lo encola. Con el campo vacío solo cierra el resultado anterior.</summary>
     [RelayCommand]
-    private void Capture()
+    private void Capture() => Capture(isScan: false);
+
+    /// <summary>
+    /// Enter en el campo de captura desde la vista; <paramref name="isScan"/> indica que el texto llegó como
+    /// ráfaga del escáner (021): entonces no se busca por nombre.
+    /// </summary>
+    public void Capture(bool isScan)
     {
         var text = CaptureText.Trim();
         CaptureText = string.Empty;
@@ -526,7 +542,25 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
             return;
         }
 
-        _scans.Enqueue(text);
+        _scans.Enqueue(new ScanInput(text, isScan));
+    }
+
+    /// <summary>Asigna el guardián de lecturas a los diálogos en ventana propia mientras la venta está en pantalla (021, FR-008).</summary>
+    public void AttachScanGuard() => _dialogs.ScanIgnored = ReportScanIgnoredInDialog;
+
+    public void DetachScanGuard()
+    {
+        if (_dialogs.ScanIgnored == ReportScanIgnoredInDialog)
+        {
+            _dialogs.ScanIgnored = null;
+        }
+    }
+
+    /// <summary>Una ráfaga del escáner llegó con un diálogo abierto: se ignoró y se avisa (021, FR-008).</summary>
+    public void ReportScanIgnoredInDialog()
+    {
+        ShowStatus(Strings.Scan_IgnoredInDialog, warning: true);
+        _logger.Information("Lectura ignorada por diálogo abierto");
     }
 
     /// <summary>F2: con texto, busca (abre el selector si no hay coincidencia exacta); sin texto, enfoca el campo.</summary>
@@ -1305,7 +1339,7 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
         LastChangeText = null;
     }
 
-    private async Task ProcessCodeAsync(string text)
+    private async Task ProcessCodeAsync(ScanInput input)
     {
         if (IsSaleBlocked)
         {
@@ -1313,11 +1347,12 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
         }
 
         DismissLastSale();
+        var text = input.Text;
         var (completed, result) = await _runner.RunAsync(
             "BuscarProductoParaVender",
             () => _useCases.RunAsync<FindProductsForSaleHandler, Result<ProductLookup>>(
-                h => h.HandleAsync(new FindProductsForSaleQuery(text), CancellationToken.None)),
-            new Dictionary<string, object?> { ["Text"] = text });
+                h => h.HandleAsync(new FindProductsForSaleQuery(text, input.IsScan), CancellationToken.None)),
+            new Dictionary<string, object?> { ["Text"] = text, ["IsScan"] = input.IsScan });
 
         if (!completed || result is not { IsSuccess: true })
         {
@@ -1353,9 +1388,30 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
                 break;
 
             default:
-                ShowStatus(string.Format(Display, Strings.Sale_ProductNotFound, text), warning: true);
+                ShowCodeNotFound(text, lookup.Format ?? Barcode.Classify(text), input.IsScan);
                 break;
         }
+    }
+
+    /// <summary>
+    /// Sin coincidencias (021, FR-011, FR-014): "Código no válido" o "Código no encontrado" con F2 para la
+    /// búsqueda manual; el aviso se reemplaza con la siguiente lectura o acción.
+    /// </summary>
+    private void ShowCodeNotFound(string text, BarcodeFormat format, bool isScan)
+    {
+        if (format == BarcodeFormat.Empty)
+        {
+            return;
+        }
+
+        var normalized = Barcode.Normalize(text);
+        _logger.Information(
+            "Código sin coincidencias en el Punto de venta. Texto={Text} Formato={Format} Escaneo={IsScan}",
+            normalized,
+            format,
+            isScan);
+        var message = format == BarcodeFormat.Unrecognized ? Strings.Scan_CodeInvalid : Strings.Scan_CodeNotFound;
+        ShowStatus(string.Format(Display, message, normalized), warning: true);
     }
 
     private void AddProduct(SaleProductDto product)

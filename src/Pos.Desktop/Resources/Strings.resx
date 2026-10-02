@@ -215,7 +215,9 @@
   <data name="Sale_LineDeleted" xml:space="preserve"><value>Producto eliminado</value></data>
   <data name="Sale_ProductInactive" xml:space="preserve"><value>Inactivo</value></data>
   <data name="Sale_ProductDeleted" xml:space="preserve"><value>Eliminado</value></data>
-  <data name="Sale_ProductNotFound" xml:space="preserve"><value>No se encontró ningún producto con el código {0}</value></data>
+  <data name="Scan_CodeNotFound" xml:space="preserve"><value>Código no encontrado: {0}. F2: buscar por nombre o SKU</value></data>
+  <data name="Scan_CodeInvalid" xml:space="preserve"><value>Código no válido: {0}. F2: buscar por nombre o SKU</value></data>
+  <data name="Scan_IgnoredInDialog" xml:space="preserve"><value>Lectura ignorada: cierre la ventana para escanear</value></data>
   <data name="Sale_RemoveMarkedLines" xml:space="preserve"><value>Quite las líneas señaladas para cobrar</value></data>
   <data name="Sale_CancelTitle" xml:space="preserve"><value>Cancelar venta</value></data>
   <data name="Sale_CancelQuestion" xml:space="preserve"><value>¿Cancelar la venta en curso?</value></data>
@@ -1249,4 +1251,27 @@
   <data name="PurchaseReport_Empty" xml:space="preserve"><value>No hay compras con estos filtros.</value></data>
   <data name="PurchaseReport_PageSummary" xml:space="preserve"><value>{0} compras · Página {1} de {2}</value></data>
   <data name="PurchaseReport_Open" xml:space="preserve"><value>Ver compra</value></data>
+  <data name="Nav_ScannerTest" xml:space="preserve"><value>Probar escáner</value></data>
+  <data name="ScannerTest_Instructions" xml:space="preserve"><value>Escanee un código. Esta pantalla no modifica la venta.</value></data>
+  <data name="ScannerTest_Text" xml:space="preserve"><value>Texto leído</value></data>
+  <data name="ScannerTest_Format" xml:space="preserve"><value>Formato</value></data>
+  <data name="ScannerTest_Length" xml:space="preserve"><value>Caracteres</value></data>
+  <data name="ScannerTest_Terminator" xml:space="preserve"><value>Terminó con</value></data>
+  <data name="ScannerTest_Speed" xml:space="preserve"><value>Velocidad</value></data>
+  <data name="ScannerTest_Product" xml:space="preserve"><value>Producto</value></data>
+  <data name="ScannerTest_FormatEan13" xml:space="preserve"><value>EAN-13</value></data>
+  <data name="ScannerTest_FormatEan8" xml:space="preserve"><value>EAN-8</value></data>
+  <data name="ScannerTest_FormatCode" xml:space="preserve"><value>CODE128 / CODE39</value></data>
+  <data name="ScannerTest_FormatUnrecognized" xml:space="preserve"><value>Formato no reconocido</value></data>
+  <data name="ScannerTest_EndEnter" xml:space="preserve"><value>Enter</value></data>
+  <data name="ScannerTest_EndTab" xml:space="preserve"><value>Tab</value></data>
+  <data name="ScannerTest_EndNone" xml:space="preserve"><value>Sin Enter</value></data>
+  <data name="ScannerTest_ConfigureEnter" xml:space="preserve"><value>Configure el lector para enviar Enter al final de cada lectura</value></data>
+  <data name="ScannerTest_SpeedScanner" xml:space="preserve"><value>Escáner</value></data>
+  <data name="ScannerTest_SpeedManual" xml:space="preserve"><value>Escritura manual</value></data>
+  <data name="ScannerTest_Inactive" xml:space="preserve"><value>(inactivo)</value></data>
+  <data name="ScannerTest_NoProduct" xml:space="preserve"><value>Sin producto con este código</value></data>
+  <data name="ScannerTest_History" xml:space="preserve"><value>Últimas lecturas</value></data>
+  <data name="ScannerTest_Clear" xml:space="preserve"><value>Borrar</value></data>
+  <data name="ScannerTest_Waiting" xml:space="preserve"><value>Esperando la primera lectura…</value></data>
 </root>

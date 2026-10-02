@@ -20,6 +20,8 @@
       <SelectableTextBlock Grid.Row="2" Grid.Column="1" Text="{Binding OperatingSystem}" TextWrapping="Wrap" />
     </Grid>
 
+    <Button Content="{x:Static res:Strings.Nav_ScannerTest}" Command="{Binding OpenScannerTestCommand}" />
+
     <Separator />
 
     <TextBlock Text="{x:Static res:Strings.About_Description}" TextWrapping="Wrap" IsVisible="{Binding CanExport}" />

@@ -56,9 +56,9 @@ public class CreateProductValidatorTests
     }
 
     [Theory]
-    [InlineData("75012345678AB")]
-    [InlineData("1234567")]
-    [InlineData("123456789012345")]
+    [InlineData("ABC_123")]
+    [InlineData("ABC'123")]
+    [InlineData("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")]
     public void CodigoDeBarrasInvalido_SeRechaza(string barcode)
     {
         Assert.Equal(
@@ -111,7 +111,7 @@ public class CreateProductValidatorTests
     [Fact]
     public void VariosCamposInvalidos_ReportaUnErrorPorCampo()
     {
-        var errors = Errors(new CreateProductCommand("", "", "12", "abc", "")).Select(e => e.Field);
+        var errors = Errors(new CreateProductCommand("", "", "AB_12", "abc", "")).Select(e => e.Field);
 
         Assert.Equal([ProductFields.Name, ProductFields.Sku, ProductFields.Barcode, ProductFields.Price, ProductFields.UnitCode], errors);
     }

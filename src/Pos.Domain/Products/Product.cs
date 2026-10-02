@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using Pos.Domain.Common;
+using BarcodeRules = Pos.Domain.Products.Barcode;
 
 namespace Pos.Domain.Products;
 
@@ -11,8 +12,8 @@ public sealed partial class Product
 {
     public const int NameMaxLength = 200;
     public const int SkuMaxLength = 50;
-    public const int BarcodeMinLength = 8;
-    public const int BarcodeMaxLength = 14;
+    public const int BarcodeMinLength = 1;
+    public const int BarcodeMaxLength = BarcodeRules.MaxLength;
 
     /// <summary>Tamaño máximo del archivo de imagen que se acepta (5 MB).</summary>
     public const long ImageMaxBytes = 5 * 1024 * 1024;
@@ -187,9 +188,8 @@ public sealed partial class Product
     /// <summary>Recorta los extremos y pasa a mayúsculas invariantes.</summary>
     public static string NormalizeSku(string? sku) => (sku ?? string.Empty).Trim().ToUpperInvariant();
 
-    /// <summary>Recorta; vacío o solo espacios se convierte en nulo.</summary>
-    public static string? NormalizeBarcode(string? barcode) =>
-        string.IsNullOrWhiteSpace(barcode) ? null : barcode.Trim();
+    /// <summary>Recorta, quita los asteriscos de CODE39 y pasa a mayúsculas; vacío se convierte en nulo (021).</summary>
+    public static string? NormalizeBarcode(string? barcode) => BarcodeRules.Normalize(barcode);
 
     public static bool IsValidName(string normalizedName) =>
         normalizedName.Length is > 0 and <= NameMaxLength;
@@ -198,7 +198,7 @@ public sealed partial class Product
         normalizedSku.Length is > 0 and <= SkuMaxLength && !normalizedSku.Any(char.IsWhiteSpace);
 
     public static bool IsValidBarcode(string? normalizedBarcode) =>
-        normalizedBarcode is null || BarcodePattern().IsMatch(normalizedBarcode);
+        BarcodeRules.IsValidForCatalog(normalizedBarcode);
 
     /// <summary>El precio de venta debe ser mayor que 0 (003, FR-015).</summary>
     public static bool IsValidPrice(Money price) => price.Cents > 0;
@@ -224,8 +224,11 @@ public sealed partial class Product
         bool newTracks) =>
         !hasMovements || (string.Equals(currentUnit, newUnit, StringComparison.Ordinal) && (newTracks || !currentTracks));
 
-    /// <summary>Indica si un texto de búsqueda tiene la forma de un código de barras completo.</summary>
-    public static bool LooksLikeFullBarcode(string text) => BarcodePattern().IsMatch(text);
+    /// <summary>
+    /// Indica si un texto de búsqueda tiene la forma de un código de barras numérico completo. Los
+    /// códigos alfanuméricos se encuentran con la búsqueda por contenido.
+    /// </summary>
+    public static bool LooksLikeFullBarcode(string text) => FullNumericBarcodePattern().IsMatch(text);
 
     private void Apply(string name, string sku, string? barcode, Money price, string unitCode)
     {
@@ -246,7 +249,7 @@ public sealed partial class Product
         if (!IsValidBarcode(normalizedBarcode))
         {
             throw new DomainException(
-                $"El código de barras debe tener solo dígitos, entre {BarcodeMinLength} y {BarcodeMaxLength}.");
+                $"El código de barras admite hasta {BarcodeMaxLength} letras, dígitos, espacios interiores y los símbolos - . $ / + %.");
         }
 
         if (!IsValidPrice(price))
@@ -280,5 +283,5 @@ public sealed partial class Product
     }
 
     [GeneratedRegex(@"^[0-9]{8,14}$", RegexOptions.CultureInvariant)]
-    private static partial Regex BarcodePattern();
+    private static partial Regex FullNumericBarcodePattern();
 }

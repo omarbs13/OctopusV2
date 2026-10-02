@@ -46,7 +46,7 @@ public sealed class ModuleRegistrationTests
         Assert.Equal(["inventory.stock", "inventory.movements"], roots[3].Children.Select(c => c.Id));
         Assert.Equal(["administration.users", "administration.audit"], roots[4].Children.Select(c => c.Id));
         Assert.Equal(["settings.business", "settings.printer", "settings.security"], roots[5].Children.Select(c => c.Id));
-        Assert.Equal(["help.about"], roots[6].Children.Select(c => c.Id));
+        Assert.Equal(["help.about", "help.scanner-test"], roots[6].Children.Select(c => c.Id));
     }
 
     public sealed class TestCard(OperationRunner runner) : DashboardCard(runner)

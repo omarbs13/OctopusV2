@@ -128,6 +128,14 @@ public sealed class SampleDatabaseGenerator
         // bonificación y otra anulada, sobre los dos productos que controlan inventario.
         await SeedPurchasesAsync(db, adminId);
 
+        // Desde 0.15.0: un producto activo con código de barras alfanumérico (CODE128/CODE39).
+        await using (var context = db.CreateDbContext())
+        {
+            context.Products.Add(Product.Create(
+                "Producto con código alfanumérico", SampleData.AlphanumericBarcodeSku, SampleData.AlphanumericBarcode, Money.FromCents(2500), "H87"));
+            await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
         // Un solo archivo autocontenido: sin WAL pendiente. Primero se liberan las conexiones del pool.
         SqliteConnection.ClearAllPools();
         DatabaseTestHelpers.Execute(db.Directory.Paths.DatabaseFile, "PRAGMA wal_checkpoint(TRUNCATE); PRAGMA journal_mode=DELETE; VACUUM;");
@@ -670,6 +678,10 @@ public static class SampleData
     /// <summary>Desde 0.14.0: la compra vigente suma 2.5 kg al producto en kilo y 1 pieza bonificada a la pieza en negativo.</summary>
     public const long PurchaseKilogramThousandths = 2_500;
     public const long PurchaseBonusThousandths = 1_000;
+
+    /// <summary>Desde 0.15.0: producto activo con código de barras alfanumérico, fuera de <see cref="Products"/>.</summary>
+    public const string AlphanumericBarcodeSku = "ALF-001";
+    public const string AlphanumericBarcode = "PROD-0042";
 
     /// <summary>Desde 0.6.0: usuarios de muestra. El administrador hace la venta 1; el cajero, la 2 y la 3 y el borrador.</summary>
     public const string AdminUserName = "admin";

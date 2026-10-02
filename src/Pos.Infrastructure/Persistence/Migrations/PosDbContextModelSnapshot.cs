@@ -848,7 +848,7 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Barcode")
-                        .HasMaxLength(14)
+                        .HasMaxLength(48)
                         .HasColumnType("TEXT");
 
                     b.Property<Guid?>("CategoryId")

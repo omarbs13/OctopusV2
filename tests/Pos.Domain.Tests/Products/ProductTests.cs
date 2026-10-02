@@ -73,19 +73,19 @@ public class ProductTests
     }
 
     [Theory]
-    [InlineData("12345678")]
-    [InlineData("12345678901234")]
-    public void Create_CodigoDeBarrasDe8a14Digitos_EsValido(string barcode)
+    [InlineData("12345678", "12345678")]
+    [InlineData("12345678901234", "12345678901234")]
+    [InlineData("PROD-0042", "PROD-0042")]
+    [InlineData("abc-12345", "ABC-12345")]
+    public void Create_CodigoDeBarrasNumericoOAlfanumerico_EsValido(string barcode, string expected)
     {
-        Assert.Equal(barcode, Product.Create("Nombre", "SKU1", barcode, Price, "H87").Barcode);
+        Assert.Equal(expected, Product.Create("Nombre", "SKU1", barcode, Price, "H87").Barcode);
     }
 
     [Theory]
-    [InlineData("1234567")]
-    [InlineData("123456789012345")]
-    [InlineData("12345678A")]
-    [InlineData("1234 5678")]
     [InlineData("١٢٣٤٥٦٧٨")]
+    [InlineData("ABC_123")]
+    [InlineData("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")]
     public void Create_CodigoDeBarrasInvalido_Lanza(string barcode)
     {
         Assert.Throws<DomainException>(() => Product.Create("Nombre", "SKU1", barcode, Price, "H87"));

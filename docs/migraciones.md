@@ -312,3 +312,16 @@ bonificada del producto en negativo, con impuestos) y la compra anulada `FAC-000
 `SampleDatabaseUpgradeTests` verifica que las tres tablas estén vacías en las bases anteriores y que
 `v0.14.0.db` conserve proveedores, compras, líneas, importes y los enlaces a sus movimientos. Ver
 [compras.md](compras.md).
+
+## 0.15.0: formatos del escáner (`ScannerBarcodeFormats`)
+
+La migración `ScannerBarcodeFormats` **no genera SQL**: solo actualiza el snapshot porque
+`Products.Barcode` pasa de `HasMaxLength(14)` a `HasMaxLength(48)` (CODE128/CODE39, ver
+[escaner.md](escaner.md)). SQLite no guarda el largo de `TEXT`, así que no hay reconstrucción de
+`Products` ni cambio de datos; el índice `IX_Products_Barcode` no cambia. Los códigos existentes (8 a 14
+dígitos) cumplen la regla nueva y no cambian al normalizarse (mayúsculas, sin `*…*`).
+
+`ScannerBarcodeFormatsMigrationTests` revisa que el script solo registre la migración en
+`__EFMigrationsHistory`. La base de ejemplo `v0.15.0.db` agrega un producto activo `ALF-001` con código
+`PROD-0042`; `SampleDatabaseUpgradeTests` verifica que lo conserve y que los códigos numéricos de las
+bases anteriores no cambien.

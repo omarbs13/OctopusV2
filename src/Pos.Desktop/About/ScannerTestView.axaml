@@ -1,0 +1,76 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Pos.Desktop.About"
+             xmlns:res="using:Pos.Desktop.Resources"
+             x:Class="Pos.Desktop.About.ScannerTestView"
+             x:DataType="vm:ScannerTestViewModel"
+             Focusable="True">
+
+  <UserControl.Styles>
+    <Style Selector="TextBlock.label">
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="TextBlock.warning">
+      <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCautionBrush}" />
+    </Style>
+  </UserControl.Styles>
+
+  <DockPanel MaxWidth="900" HorizontalAlignment="Left">
+    <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,16">
+      <TextBlock Text="{x:Static res:Strings.Nav_ScannerTest}" FontSize="22" FontWeight="SemiBold" />
+      <TextBlock Text="{x:Static res:Strings.ScannerTest_Instructions}" TextWrapping="Wrap" />
+    </StackPanel>
+
+    <!-- Lectura actual (contracts/ui.md) -->
+    <Border DockPanel.Dock="Top" Padding="16" CornerRadius="6" Margin="0,0,0,16"
+            BorderThickness="1" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
+      <Panel>
+        <TextBlock Text="{x:Static res:Strings.ScannerTest_Waiting}" Opacity="0.7" IsVisible="{Binding !HasCurrent}" />
+        <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="10" ColumnSpacing="24"
+              IsVisible="{Binding HasCurrent}">
+          <TextBlock Grid.Row="0" Classes="label" Text="{x:Static res:Strings.ScannerTest_Text}" />
+          <SelectableTextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Current.Text, FallbackValue=''}"
+                               FontFamily="monospace" FontSize="22" TextWrapping="Wrap" />
+
+          <TextBlock Grid.Row="1" Classes="label" Text="{x:Static res:Strings.ScannerTest_Format}" />
+          <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Current.Format, FallbackValue=''}" />
+
+          <TextBlock Grid.Row="2" Classes="label" Text="{x:Static res:Strings.ScannerTest_Length}" />
+          <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Current.Length, FallbackValue=''}" />
+
+          <TextBlock Grid.Row="3" Classes="label" Text="{x:Static res:Strings.ScannerTest_Terminator}" />
+          <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Current.Terminator, FallbackValue=''}" TextWrapping="Wrap"
+                     Classes.warning="{Binding !Current.EndedWithEnter, FallbackValue=False}" />
+
+          <TextBlock Grid.Row="4" Classes="label" Text="{x:Static res:Strings.ScannerTest_Speed}" />
+          <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding Current.Speed, FallbackValue=''}" />
+
+          <TextBlock Grid.Row="5" Classes="label" Text="{x:Static res:Strings.ScannerTest_Product}" />
+          <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding Current.Product, FallbackValue=''}" TextWrapping="Wrap" />
+        </Grid>
+      </Panel>
+    </Border>
+
+    <!-- Historial: últimas 10 lecturas (FR-018) -->
+    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+      <Button DockPanel.Dock="Right" Content="{x:Static res:Strings.ScannerTest_Clear}" Command="{Binding ClearCommand}" Focusable="False" />
+      <TextBlock Text="{x:Static res:Strings.ScannerTest_History}" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center" />
+    </DockPanel>
+
+    <ScrollViewer>
+      <ItemsControl ItemsSource="{Binding History}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:ScanTestItem">
+            <Grid ColumnDefinitions="80,2*,*,2*" ColumnSpacing="12" Margin="0,4">
+              <TextBlock Grid.Column="0" Text="{Binding ReceivedAt}" Opacity="0.7" />
+              <TextBlock Grid.Column="1" Text="{Binding Text}" FontFamily="monospace" TextTrimming="CharacterEllipsis" />
+              <TextBlock Grid.Column="2" Text="{Binding Format}" />
+              <TextBlock Grid.Column="3" Text="{Binding Product}" TextTrimming="CharacterEllipsis" />
+            </Grid>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </ScrollViewer>
+  </DockPanel>
+</UserControl>

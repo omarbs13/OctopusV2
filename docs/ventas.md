@@ -17,7 +17,7 @@ Atajos del Punto de venta (todos tienen también un botón de al menos 48 px, pa
 |---|---|
 | Enter | Agrega el producto del código, SKU o nombre escrito (un lector de códigos lo hace solo) |
 | F2 | Buscar por nombre; con varios resultados abre una lista (↑/↓, Enter, Esc) |
-| F4 o `*` | Cambiar la cantidad de la línea seleccionada (`*` solo con el campo de captura vacío) |
+| F4 o `*` | Cambiar la cantidad de la línea seleccionada (`*` solo con el campo de captura vacío; desde 0.15.0 espera 60 ms, ver abajo) |
 | Supr | Quitar la línea seleccionada |
 | F12 | Cobrar |
 | F8 | Cancelar la venta en curso (pide confirmación) |
@@ -25,6 +25,28 @@ Atajos del Punto de venta (todos tienen también un botón de al menos 48 px, pa
 
 En el cobro: **Enter** o **F12** confirman, **Esc** regresa a la venta conservando los pagos, **F5**
 pone el monto exacto y **1 a 6** los billetes de $20, $50, $100, $200, $500 y $1,000.
+
+## Lector de códigos de barras (0.15.0)
+
+Requisitos del lector, formatos y pantalla de prueba: [escaner.md](escaner.md). En el Punto de venta:
+
+- **Foco fuera del campo de captura**: si el foco está en la lista de líneas, un botón o el resumen (no
+  en un campo de texto) y no hay diálogo abierto, el primer carácter mueve el foco al campo de captura y
+  la lectura se agrega igual. Con el foco en otro campo de texto (cantidad, efectivo, cliente, cupón) no
+  se intercepta: escanear ahí llena ese campo.
+- **Escaneo o escritura manual**: una lectura es escaneo si trae al menos 3 caracteres y ninguna pausa
+  entre teclas (incluido el Enter) mayor de 50 ms. Un escaneo busca solo el código exacto (SKU o código
+  de barras) y el cupón; **no** busca por nombre. Lo escrito a mano sigue buscando por nombre al final.
+- **Sin coincidencias**: "Código no válido: … F2: buscar por nombre o SKU" si el texto no puede ser un
+  código (caracteres no admitidos o EAN con dígito verificador incorrecto) y "Código no encontrado: …" si
+  tiene forma de código pero no está en el catálogo. El aviso se reemplaza con la siguiente lectura y no
+  bloquea la captura; **F2** con el campo vacío enfoca la captura para buscar por nombre o SKU.
+- **Diálogo abierto** (selector, cobro, motivo de cajón, cliente, descuento, cupón, autorización del
+  Administrador o una confirmación): el Enter de una lectura no llega al diálogo, el campo enfocado
+  recupera su texto y aparece "Lectura ignorada: cierre la ventana para escanear".
+- **Atajo `*`**: con el campo de captura vacío, el `*` se escribe y se esperan 60 ms. Si llega otro
+  carácter era el asterisco de un código CODE39 (`*ABC123*`) y se deja; si no, se quita y se abre la
+  cantidad.
 
 ## Folio
 
@@ -132,6 +154,9 @@ pertenecen al usuario "Sistema" (`00000000-0000-7000-8000-000000000001`).
 - `Venta no registrada: cambió un precio o una disponibilidad`: el operador vio el total nuevo antes de
   cobrar.
 - `Venta no registrada por conflicto`: otra operación se adelantó; la venta se conserva en pantalla.
+- `Código sin coincidencias en el Punto de venta. Texto=… Formato=… Escaneo=…` (información, 0.15.0):
+  lectura o captura sin producto ni cupón; `Formato=Unrecognized` corresponde a "Código no válido".
+- `Lectura ignorada por diálogo abierto` (información, 0.15.0).
 - Ningún log contiene referencias de pago (Principio VIII).
 - Para comprobar la consistencia de un respaldo: la existencia de cada producto (`ProductStocks.OnHand`)
   debe ser igual a la suma con signo de sus `InventoryMovements` (entradas y cancelaciones suman;

@@ -95,6 +95,7 @@ using Pos.Application.Sales.GetSalesDashboard;
 using Pos.Application.Sales.ReviewSale;
 using Pos.Application.Sales.SaveSaleDraft;
 using Pos.Application.Sales.SearchSales;
+using Pos.Application.Scanner.InspectScan;
 using Pos.Application.Licensing;
 using Pos.Application.Licensing.ExportLicenseRequest;
 using Pos.Application.Licensing.GetLicenseStatus;
@@ -203,6 +204,9 @@ public static class DependencyInjection
         services.AddScoped<SearchStockHandler>();
         services.AddScoped<SearchMovementsHandler>();
         services.AddScoped<GetStockAlertsHandler>();
+
+        // Escáner (021): diagnóstico de lecturas, sin permiso de rol
+        services.AddScoped<InspectScanHandler>();
 
         // Ventas
         services.AddScoped<FindProductsForSaleHandler>();

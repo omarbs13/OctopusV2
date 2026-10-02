@@ -73,7 +73,7 @@ public sealed class ProductEditorViewModelCreateTests : IDisposable
     public async Task DatosInvalidos_MuestraErroresPorCampoYConservaLoCapturado()
     {
         var editor = CreateEditor();
-        Fill(editor, name: "", sku: "A B", barcode: "12", price: "12,50");
+        Fill(editor, name: "", sku: "A B", barcode: "AB_12", price: "12,50");
         var savedRaised = false;
         editor.Saved += (_, _) => savedRaised = true;
 
@@ -85,7 +85,7 @@ public sealed class ProductEditorViewModelCreateTests : IDisposable
         Assert.Equal(ProductMessages.BarcodeFormat, editor.BarcodeError);
         Assert.Equal(ProductMessages.PriceFormat, editor.PriceError);
         Assert.Equal(ProductFields.Name, editor.FocusField);
-        Assert.Equal(("", "A B", "12", "12,50"), (editor.Name, editor.Sku, editor.Barcode, editor.PriceText));
+        Assert.Equal(("", "A B", "AB_12", "12,50"), (editor.Name, editor.Sku, editor.Barcode, editor.PriceText));
     }
 
     [Fact]

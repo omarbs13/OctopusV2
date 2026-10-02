@@ -1,6 +1,7 @@
 using Pos.Application.Discounts;
 using Pos.Application.Returns;
 using Pos.Domain.Discounts;
+using Pos.Domain.Products;
 using Pos.Domain.Receivables;
 using Pos.Domain.Sales;
 
@@ -30,7 +31,15 @@ public sealed record SaleProductDto(
     long? OnHandThousandths,
     NotSellableReason? NotSellableReason);
 
-public sealed record ProductLookup(LookupKind Kind, IReadOnlyList<SaleProductDto> Items, CouponLookupDto? Coupon = null);
+/// <summary>
+/// Resultado de buscar para vender. <see cref="Format"/> solo se llena con <see cref="LookupKind.None"/>
+/// (021): el formato del código sin coincidencias.
+/// </summary>
+public sealed record ProductLookup(
+    LookupKind Kind,
+    IReadOnlyList<SaleProductDto> Items,
+    CouponLookupDto? Coupon = null,
+    BarcodeFormat? Format = null);
 
 /// <summary>Descuento de una línea en el borrador (015, research §11): valor capturado y aprobación, si la hubo.</summary>
 public sealed record DraftDiscountDto(DiscountMode Mode, long Value, Guid? ApprovalId = null);

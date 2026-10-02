@@ -14,7 +14,8 @@ namespace Pos.Application.Sales.FindProductsForSale;
 /// Busca productos para vender (research §8): primero coincidencia exacta de código de barras o SKU,
 /// que incluye inactivos y borrados para informar el motivo; después, con el módulo Descuentos activo,
 /// cupón exacto (015, FR-011: un código que es de producto y de cupón se trata como producto); al final,
-/// búsqueda por nombre.
+/// búsqueda por nombre, salvo en una lectura del escáner (021, research §8). Sin resultados devuelve el
+/// formato del código para distinguir "no válido" de "no encontrado".
 /// </summary>
 public sealed class FindProductsForSaleHandler
 {
@@ -72,10 +73,16 @@ public sealed class FindProductsForSaleHandler
             return Result.Success(new ProductLookup(LookupKind.Coupon, [], coupon));
         }
 
-        var byName = await _products.SearchForSaleAsync(TextNormalizer.ForSearch(text), NameMatchLimit, cancellationToken);
-        return byName.Count == 0
-            ? Result.Success(new ProductLookup(LookupKind.None, []))
-            : Result.Success(new ProductLookup(LookupKind.NameMatches, await MapAsync(byName, cancellationToken)));
+        if (!query.FromScanner)
+        {
+            var byName = await _products.SearchForSaleAsync(TextNormalizer.ForSearch(text), NameMatchLimit, cancellationToken);
+            if (byName.Count > 0)
+            {
+                return Result.Success(new ProductLookup(LookupKind.NameMatches, await MapAsync(byName, cancellationToken)));
+            }
+        }
+
+        return Result.Success(new ProductLookup(LookupKind.None, [], Format: Barcode.Classify(text)));
     }
 
     /// <summary>Cupón con ese código y su estado de hoy; nulo sin módulo o sin permiso (se trata como producto no encontrado).</summary>

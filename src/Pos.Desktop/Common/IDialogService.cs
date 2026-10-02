@@ -5,6 +5,13 @@ namespace Pos.Desktop.Common;
 /// <summary>Diálogos de la aplicación; permite probar los ViewModels sin UI.</summary>
 public interface IDialogService
 {
+    /// <summary>
+    /// Guardián de lecturas del escáner (021, FR-008): con un valor, los diálogos en ventana propia ignoran el
+    /// Enter de una ráfaga del lector, restauran el campo enfocado e invocan esta acción. Lo asigna el Punto de
+    /// venta mientras está en pantalla; con nulo, escanear dentro de un diálogo llena el campo enfocado.
+    /// </summary>
+    Action? ScanIgnored { get; set; }
+
     Task ShowMessageAsync(string title, string message);
 
     /// <summary>Pide confirmación. La opción predeterminada (Enter o Esc) es cancelar.</summary>

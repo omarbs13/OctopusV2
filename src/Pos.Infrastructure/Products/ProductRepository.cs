@@ -124,6 +124,10 @@ public sealed class ProductRepository : IProductRepository
             .ToListAsync(cancellationToken);
     }
 
+    public Task<Product?> FindByBarcodeAsync(string normalizedBarcode, CancellationToken cancellationToken) =>
+        _context.Products.AsNoTracking()
+            .FirstOrDefaultAsync(p => p.Barcode == normalizedBarcode && p.DeletedAt == null, cancellationToken);
+
     public async Task<IReadOnlyList<Product>> SearchForSaleAsync(
         string nameText,
         int limit,

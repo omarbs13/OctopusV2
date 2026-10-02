@@ -45,7 +45,18 @@ public sealed class SampleDatabaseUpgradeTests
 
         using var connection = new SqliteConnection($"Data Source={dir.Paths.DatabaseFile};Pooling=False");
         connection.Open();
-        Assert.Equal(SampleData.ProductCount, Scalar<long>(connection, "SELECT COUNT(*) FROM Products"));
+        Assert.Equal(
+            SampleData.ProductCount + (HasAlphanumericBarcode(sampleFile) ? 1 : 0),
+            Scalar<long>(connection, "SELECT COUNT(*) FROM Products"));
+
+        // 021: los códigos numéricos de las bases anteriores no cambian; desde 0.15.0 hay uno alfanumérico.
+        Assert.Equal(16, Scalar<long>(connection, "SELECT COUNT(*) FROM Products WHERE Sku LIKE 'MUE-%' AND Barcode = '7500000000' || substr(Sku, 5, 3)"));
+        Assert.Equal(
+            HasAlphanumericBarcode(sampleFile) ? 1 : 0,
+            Scalar<long>(connection, $"""
+                SELECT COUNT(*) FROM Products
+                WHERE Sku = '{SampleData.AlphanumericBarcodeSku}' AND Barcode = '{SampleData.AlphanumericBarcode}' AND IsActive = 1 AND DeletedAt IS NULL
+                """));
         Assert.Equal(1, Scalar<long>(connection, $"SELECT COUNT(*) FROM Products WHERE Sku = '{SampleData.DeletedSku}' AND DeletedAt IS NOT NULL"));
         Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM Products WHERE IsActive = 0 AND DeletedAt IS NULL"));
         Assert.Equal(SampleData.AccentedName, Scalar<string>(connection, $"SELECT Name FROM Products WHERE Sku = '{SampleData.AccentedSku}'"));
@@ -581,6 +592,8 @@ public sealed class SampleDatabaseUpgradeTests
                 """));
         Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM AuditEntries WHERE Action = 'PURCHASE_VOIDED' AND EntityType = 'Purchase'"));
     }
+
+    private static bool HasAlphanumericBarcode(string sampleFile) => VersionOf(sampleFile) >= new Version(0, 15, 0);
 
     private static bool HasPurchases(string sampleFile) => VersionOf(sampleFile) >= new Version(0, 14, 0);
 
