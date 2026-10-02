@@ -6,6 +6,7 @@ using Pos.Application.Products;
 using Pos.Application.Sales;
 using Pos.Application.Users.Access;
 using Pos.Application.Users.Session;
+using Pos.Domain.Audit;
 using Pos.Domain.Users;
 
 namespace Pos.Application.Users.UpdateUser;
@@ -91,9 +92,7 @@ public sealed partial class UpdateUserHandler
             return Result.Failure(new Duplicate(UserFields.UserName));
         }
 
-        var fieldsChanged = user.FullName != command.FullName.Trim()
-            || user.UserName != command.UserName.Trim()
-            || user.Role != command.Role;
+        var before = UserAuditFields.Snapshot(user);
         var wasActive = user.IsActive;
 
         user.Rename(command.FullName);
@@ -108,14 +107,18 @@ public sealed partial class UpdateUserHandler
             user.Deactivate();
         }
 
-        if (fieldsChanged)
+        // Los datos van en USER_UPDATED y el Estado en el evento de activación o desactivación (018, FR-002).
+        var changes = AuditChanges.Compare(before, UserAuditFields.Snapshot(user));
+        var fieldChanges = changes.Where(c => c.Field != UserAuditFields.State).ToList();
+        var stateChanges = changes.Where(c => c.Field == UserAuditFields.State).ToList();
+        if (AuditChanges.HasChanges(fieldChanges))
         {
-            _audit.Add(AuditActions.UserUpdated, AuditActions.UserEntity, user.Id, $"Usuario: {user.UserName}. Rol: {user.Role.ToCode()}");
+            _audit.Add(Record(AuditActions.UserUpdated, user, $"Usuario: {user.UserName}. Rol: {user.Role.ToCode()}", fieldChanges));
         }
 
         if (wasActive && !user.IsActive)
         {
-            _audit.Add(AuditActions.UserDeactivated, AuditActions.UserEntity, user.Id, $"Usuario: {user.UserName}");
+            _audit.Add(Record(AuditActions.UserDeactivated, user, $"Usuario: {user.UserName}", stateChanges));
             if (await _drafts.RemoveForAsync(user.Id, cancellationToken))
             {
                 _audit.Add(AuditActions.HeldSaleDiscarded, AuditActions.UserEntity, user.Id, $"Usuario: {user.UserName}");
@@ -123,7 +126,7 @@ public sealed partial class UpdateUserHandler
         }
         else if (!wasActive && user.IsActive)
         {
-            _audit.Add(AuditActions.UserActivated, AuditActions.UserEntity, user.Id, $"Usuario: {user.UserName}");
+            _audit.Add(Record(AuditActions.UserActivated, user, $"Usuario: {user.UserName}", stateChanges));
         }
 
         var outcome = await _users.SaveChangesAsync(cancellationToken);
@@ -139,6 +142,9 @@ public sealed partial class UpdateUserHandler
         LogUpdated(user.Id, user.IsActive);
         return Result.Success();
     }
+
+    private static AuditRecord Record(string action, User user, string details, IReadOnlyList<AuditFieldChange> changes) =>
+        new(action, AuditActions.UserEntity, user.Id, EntityName: user.UserName, Details: details, Changes: changes);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Usuario modificado. UserId={UserId} Activo={IsActive}")]
     private partial void LogUpdated(Guid userId, bool isActive);

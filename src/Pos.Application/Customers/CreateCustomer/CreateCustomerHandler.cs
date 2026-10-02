@@ -63,7 +63,13 @@ public sealed partial class CreateCustomerHandler
 
         var customer = Customer.Create(command.Name, command.Phone, command.Email, command.TaxId, limit, mode);
         _customers.Add(customer);
-        _audit.Add(AuditActions.CustomerCreated, AuditActions.CustomerEntity, customer.Id, CustomerRules.Describe(customer));
+        _audit.Add(new AuditRecord(
+            AuditActions.CustomerCreated,
+            AuditActions.CustomerEntity,
+            customer.Id,
+            EntityName: customer.Name,
+            Details: CustomerRules.Describe(customer),
+            Changes: AuditChanges.Created(CustomerAuditFields.Snapshot(customer))));
 
         var outcome = await _customers.SaveChangesAsync(cancellationToken);
         if (outcome.Status != SaveStatus.Saved)

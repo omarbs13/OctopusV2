@@ -22,6 +22,7 @@ public class UpdateProductInventoryTests
         _inventory,
         _transactions,
         new InMemoryCategoryRepository(),
+        new RecordingAuditLog(),
         NullLogger<UpdateProductHandler>.Instance);
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;

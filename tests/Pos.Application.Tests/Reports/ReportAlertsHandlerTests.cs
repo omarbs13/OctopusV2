@@ -46,14 +46,14 @@ public class ReportAlertsHandlerTests
 
         var cashier = new AuthFixture();
         cashier.SignedIn(cashier.AddUser("cajero", UserRole.Cashier));
-        var denied = await new SetProductCriticalHandler(cashier.Access, products)
+        var denied = await new SetProductCriticalHandler(cashier.Access, products, new RecordingAuditLog())
             .HandleAsync(new SetProductCriticalCommand(product.Id, true), TestContext.Current.CancellationToken);
         Assert.IsType<Forbidden>(denied.Error);
         Assert.False(products.All.Single().IsCritical);
 
         var admin = new AuthFixture();
         admin.SignedIn(admin.AddUser("admin", UserRole.Admin));
-        var handler = new SetProductCriticalHandler(admin.Access, products);
+        var handler = new SetProductCriticalHandler(admin.Access, products, new RecordingAuditLog());
         Assert.True((await handler.HandleAsync(new SetProductCriticalCommand(product.Id, true), TestContext.Current.CancellationToken)).IsSuccess);
         Assert.True(products.All.Single().IsCritical);
         Assert.IsType<NotFound>((await handler.HandleAsync(new SetProductCriticalCommand(Guid.NewGuid(), true), TestContext.Current.CancellationToken)).Error);

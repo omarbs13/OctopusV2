@@ -73,8 +73,19 @@ public sealed partial class UpdateCategoryHandler
             return Result.Failure(new Duplicate(CategoryFields.Name));
         }
 
+        var before = CategoryAuditFields.Snapshot(category);
         category.Update(command.Name, command.Description);
-        _audit.Add(AuditActions.CategoryUpdated, AuditActions.CategoryEntity, category.Id, CategoryRules.Describe(category));
+        var changes = AuditChanges.Compare(before, CategoryAuditFields.Snapshot(category));
+        if (AuditChanges.HasChanges(changes))
+        {
+            _audit.Add(new AuditRecord(
+                AuditActions.CategoryUpdated,
+                AuditActions.CategoryEntity,
+                category.Id,
+                EntityName: category.Name,
+                Details: CategoryRules.Describe(category),
+                Changes: changes));
+        }
 
         var outcome = await _categories.SaveChangesAsync(cancellationToken);
         if (outcome.Status != SaveStatus.Saved)

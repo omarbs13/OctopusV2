@@ -498,9 +498,10 @@ public sealed class ReturnsUseCaseTests : IAsyncLifetime
         Assert.Equal(sale.SaleId, entry.EntityId);
         Assert.Equal(_users.Cashier.Id, entry.CreatedBy);
         Assert.Equal(_users.Admin.Id, entry.AuthorizedBy);
-        Assert.Contains("Cliente se arrepintió", entry.Details, StringComparison.Ordinal);
-        Assert.Contains(sale.Folio, entry.Details, StringComparison.Ordinal);
+        Assert.Equal("Cliente se arrepintió", entry.Reason);
+        Assert.Equal($"Venta {sale.Folio}", entry.EntityName);
         Assert.Contains("$100.00", entry.Details, StringComparison.Ordinal);
+        Assert.Equal(("Importe", "$100.00", "$0.00"), (entry.Changes[^1].Field, entry.Changes[^1].Before, entry.Changes[^1].After));
         Assert.Contains("Nota de crédito NC-000001", entry.Details, StringComparison.Ordinal);
         var saleReturn = await check.SaleReturns.AsNoTracking().SingleAsync(Ct);
         Assert.Equal((_users.Cashier.Id, _users.Admin.Id), (saleReturn.CreatedBy, saleReturn.AuthorizedBy));

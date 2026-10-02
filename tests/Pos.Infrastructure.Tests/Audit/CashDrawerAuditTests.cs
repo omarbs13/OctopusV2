@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Pos.Application.Audit;
 using Pos.Domain.Audit;
 using Pos.Infrastructure.Audit;
 using Pos.Infrastructure.Tests.TestSupport;
@@ -27,7 +28,7 @@ public sealed class CashDrawerAuditTests : IAsyncLifetime
         await using (var context = _db.CreateDbContext())
         {
             var log = new AuditLog(context);
-            log.Add("DRAWER_OPENED", "CashDrawer", id, "Motivo: Cambio; Resultado: OK");
+            log.Add(new AuditRecord(AuditActions.DrawerOpened, AuditActions.CashDrawerEntity, id, Details: "Resultado: OK", Reason: "Cambio"));
             await log.SaveAsync(Ct);
         }
 
@@ -35,7 +36,8 @@ public sealed class CashDrawerAuditTests : IAsyncLifetime
         var entry = await read.AuditEntries.SingleAsync(e => e.EntityId == id, Ct);
         Assert.Equal("DRAWER_OPENED", entry.Action);
         Assert.Equal("CashDrawer", entry.EntityType);
-        Assert.Equal("Motivo: Cambio; Resultado: OK", entry.Details);
+        Assert.Equal("Resultado: OK", entry.Details);
+        Assert.Equal("Cambio", entry.Reason);
         Assert.Equal(_db.User.UserId, entry.CreatedBy);
         Assert.Equal(_db.Clock.UtcNow, entry.CreatedAt);
     }

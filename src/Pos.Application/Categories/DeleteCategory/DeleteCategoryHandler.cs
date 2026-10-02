@@ -71,7 +71,13 @@ public sealed partial class DeleteCategoryHandler
 
         category.Delete(_clock.UtcNow);
         await _categories.ClearFromDeletedProductsAsync(category.Id, cancellationToken);
-        _audit.Add(AuditActions.CategoryDeleted, AuditActions.CategoryEntity, category.Id, CategoryRules.Describe(category));
+        _audit.Add(new AuditRecord(
+            AuditActions.CategoryDeleted,
+            AuditActions.CategoryEntity,
+            category.Id,
+            EntityName: category.Name,
+            Details: CategoryRules.Describe(category),
+            Changes: AuditChanges.Removed(CategoryAuditFields.Snapshot(category))));
 
         var outcome = await _categories.SaveChangesAsync(cancellationToken);
         if (outcome.Status != SaveStatus.Saved)

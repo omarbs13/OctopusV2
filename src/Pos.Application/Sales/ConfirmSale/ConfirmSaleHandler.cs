@@ -11,6 +11,7 @@ using Pos.Application.Licensing;
 using Pos.Application.Printing.Ticket;
 using Pos.Application.Products;
 using Pos.Application.Receivables;
+using Pos.Domain.Audit;
 using Pos.Domain.Common;
 using Pos.Domain.CreditNotes;
 using Pos.Domain.Customers;
@@ -349,7 +350,7 @@ public sealed partial class ConfirmSaleHandler
             lines,
             checkout.ToPayments().Select(SalePayment.Create),
             saleDiscounts);
-        AuditAuthorizedDiscounts(sale, saleDiscounts);
+        AuditDiscounts(sale, saleDiscounts);
         if (creditNote is not null)
         {
             await RedeemCreditNoteAsync(sale, creditNote, creditBalance, cancellationToken);
@@ -601,22 +602,47 @@ public sealed partial class ConfirmSaleHandler
         return result;
     }
 
-    /// <summary><c>DISCOUNT_APPLIED_AUTHORIZED</c> por cada descuento autorizado: folio, monto, aplicador y autorizador (FR-019).</summary>
-    private void AuditAuthorizedDiscounts(Sale sale, List<SaleDiscount> discounts)
+    /// <summary>
+    /// Una sola entrada <c>SALE_DISCOUNTS_APPLIED</c> por venta con descuento, autorizado o no, con un cambio
+    /// por descuento: importe sin y con descuento, descripción, cupón y autorización (018, research §7).
+    /// </summary>
+    private void AuditDiscounts(Sale sale, List<SaleDiscount> discounts)
     {
-        foreach (var discount in discounts.Where(d => d.AuthorizedBy is not null))
+        if (_audit is null || discounts.Count == 0)
+        {
+            return;
+        }
+
+        var changes = new List<AuditFieldChange>();
+        foreach (var discount in discounts)
         {
             var scope = discount.Kind == DiscountKind.Line ? DiscountScope.Line : DiscountScope.Order;
             var line = discount.SaleLineId is { } lineId ? sale.Lines.Single(l => l.Id == lineId) : null;
             var baseCents = line?.OriginalAmountCents ?? sale.SubtotalCents;
-            var product = line is null ? string.Empty : $". Producto {line.ProductName}";
-            _audit?.Add(
-                AuditActions.DiscountAppliedAuthorized,
-                AuditActions.SaleEntity,
-                sale.Id,
-                $"Venta {sale.Folio}. {DiscountTexts.Describe(scope, discount.Discount, discount.AmountCents, baseCents)}{product}",
-                discount.AuthorizedBy);
+            var after = $"{TicketBuilder.FormatMoney(baseCents - discount.AmountCents)} · {DiscountTexts.Describe(scope, discount.Discount, discount.AmountCents, baseCents)}";
+            if (discount.CouponCode is { } code)
+            {
+                after += $" · Cupón {code}";
+            }
+
+            if (discount.AuthorizedBy is not null)
+            {
+                after += " · Autorizado por un Administrador";
+            }
+
+            changes.Add(new AuditFieldChange(
+                line is null ? "Total de la venta" : $"Producto {line.ProductName}",
+                TicketBuilder.FormatMoney(baseCents),
+                after));
         }
+
+        _audit.Add(new AuditRecord(
+            AuditActions.SaleDiscountsApplied,
+            AuditActions.SaleEntity,
+            sale.Id,
+            EntityName: $"Venta {sale.Folio}",
+            Changes: changes,
+            AuthorizedBy: discounts.FirstOrDefault(d => d.AuthorizedBy is not null)?.AuthorizedBy));
     }
 
     private IClock Clock => _clock ?? SystemUtcClock.Instance;

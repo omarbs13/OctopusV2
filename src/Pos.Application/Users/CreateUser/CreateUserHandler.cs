@@ -70,7 +70,13 @@ public sealed partial class CreateUserHandler
         }
 
         _users.Add(user);
-        _audit.Add(AuditActions.UserCreated, AuditActions.UserEntity, user.Id, $"Usuario: {user.UserName}. Rol: {user.Role.ToCode()}");
+        _audit.Add(new AuditRecord(
+            AuditActions.UserCreated,
+            AuditActions.UserEntity,
+            user.Id,
+            EntityName: user.UserName,
+            Details: $"Usuario: {user.UserName}. Rol: {user.Role.ToCode()}",
+            Changes: AuditChanges.Created(UserAuditFields.Snapshot(user))));
 
         var outcome = await _users.SaveChangesAsync(cancellationToken);
         if (outcome.Status == SaveStatus.Duplicate)

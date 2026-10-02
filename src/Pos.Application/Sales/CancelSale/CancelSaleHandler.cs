@@ -175,6 +175,7 @@ public sealed partial class CancelSaleHandler
         }
 
         var reason = command.Reason.Trim();
+        var affected = sale.Lines.Where(l => l.AvailableToReturn > 0).Select(l => (l.Id, l.AvailableToReturn)).ToList();
         sale.Cancel(reason, _clock.UtcNow, _currentUser.UserId);
         if (_couponRelease is not null)
         {
@@ -205,7 +206,15 @@ public sealed partial class CancelSaleHandler
             sale.LinkCancellationMovement(line.Id, movement.Id);
         }
 
-        _audit.Add(AuditAction, "Sale", sale.Id, $"Folio {sale.Folio}. Motivo: {reason}", access.AuthorizedBy);
+        _audit.Add(new AuditRecord(
+            AuditAction,
+            AuditActions.SaleEntity,
+            sale.Id,
+            EntityName: SaleAuditChanges.EntityName(sale),
+            Details: $"Folio {sale.Folio}. Cancelación sin devolución registrada",
+            Reason: reason,
+            Changes: SaleAuditChanges.Affected(sale, affected, cancellation: true, remaining, 0),
+            AuthorizedBy: access.AuthorizedBy));
 
         var outcome = await _sales.SaveChangesAsync(cancellationToken);
         if (outcome.Status != SaveStatus.Saved)

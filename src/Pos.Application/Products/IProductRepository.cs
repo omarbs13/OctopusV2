@@ -12,6 +12,9 @@ public interface IProductRepository
     /// </summary>
     Task<Product?> GetAsync(Guid id, bool includeImage, CancellationToken cancellationToken);
 
+    /// <summary>Indica si el producto tiene imagen, sin cargarla (018: instantánea de auditoría).</summary>
+    Task<bool> HasImageAsync(Guid id, CancellationToken cancellationToken);
+
     /// <summary>Productos activos y no borrados.</summary>
     Task<long> CountActiveAsync(CancellationToken cancellationToken);
 

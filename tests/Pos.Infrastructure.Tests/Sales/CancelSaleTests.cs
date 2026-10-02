@@ -59,8 +59,9 @@ public sealed class CancelSaleTests : IAsyncLifetime
         Assert.Equal("SALE_CANCELLED", audit.Action);
         Assert.Equal("Sale", audit.EntityType);
         Assert.Equal(sale.SaleId, audit.EntityId);
-        Assert.Contains("Error de captura", audit.Details, StringComparison.Ordinal);
-        Assert.Contains(sale.Folio, audit.Details, StringComparison.Ordinal);
+        Assert.Equal("Error de captura", audit.Reason);
+        Assert.Equal($"Venta {sale.Folio}", audit.EntityName);
+        Assert.Equal("Importe", audit.Changes[^1].Field);
     }
 
     [Fact]

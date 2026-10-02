@@ -1,4 +1,5 @@
 using Pos.Application.Abstractions;
+using Pos.Application.Audit;
 
 namespace Pos.Application.Tests.TestSupport;
 
@@ -10,7 +11,9 @@ public sealed class RecordingAuditLog : IAuditLog
     public int Saves { get; private set; }
 
     public void Add(string action, string entityType, Guid entityId, string? details, Guid? authorizedBy = null) =>
-        Entries.Add(new AuditRecord(action, entityType, entityId, details, authorizedBy));
+        Entries.Add(new AuditRecord(action, entityType, entityId, Details: details, AuthorizedBy: authorizedBy));
+
+    public void Add(AuditRecord record) => Entries.Add(record);
 
     public Task SaveAsync(CancellationToken cancellationToken)
     {
@@ -18,5 +21,3 @@ public sealed class RecordingAuditLog : IAuditLog
         return Task.CompletedTask;
     }
 }
-
-public sealed record AuditRecord(string Action, string EntityType, Guid EntityId, string? Details, Guid? AuthorizedBy);

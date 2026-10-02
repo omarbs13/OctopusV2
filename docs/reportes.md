@@ -110,6 +110,9 @@ umbral y hasta 10 productos críticos activos con existencia baja o agotada, má
   capturados, el PDF se genera sin encabezado y la pantalla avisa y ofrece ir a "Datos del negocio".
 - **Excel (XLSX)**: hojas Resumen, Detalle y Gráficas (imágenes PNG). Importes y fechas son valores
   numéricos y de fecha; sin fórmulas ni protección. "Mi turno" solo se exporta a PDF.
+  - Desde 0.13.0 la hoja Gráficas solo se agrega si el documento tiene gráficas. El reporte de
+    descuentos y el de arqueo sin turnos cerrados en el período ya no traen esa hoja vacía, y tampoco
+    la exportación de la bitácora (ver [auditoria.md](auditoria.md)).
 - La exportación incluye **todos** los registros del filtro (no solo la página visible) y omite efectivo
   esperado, contado y diferencia de turnos abiertos. Un período sin datos no genera archivo
   ("Sin datos en este período").

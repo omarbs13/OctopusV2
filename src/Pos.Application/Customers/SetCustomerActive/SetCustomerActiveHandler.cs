@@ -3,6 +3,7 @@ using Pos.Application.Abstractions;
 using Pos.Application.Audit;
 using Pos.Application.Products;
 using Pos.Application.Users.Access;
+using Pos.Domain.Customers;
 using Pos.Domain.Users;
 
 namespace Pos.Application.Customers.SetCustomerActive;
@@ -56,10 +57,11 @@ public sealed partial class SetCustomerActiveHandler
             return Result.Failure(new Conflict());
         }
 
+        var before = CustomerAuditFields.Snapshot(customer);
         if (command.Active)
         {
             customer.Activate();
-            _audit.Add(AuditActions.CustomerActivated, AuditActions.CustomerEntity, customer.Id, $"Cliente: {customer.Name}");
+            _audit.Add(Record(AuditActions.CustomerActivated, customer, before));
         }
         else
         {
@@ -71,7 +73,7 @@ public sealed partial class SetCustomerActiveHandler
             }
 
             customer.Deactivate(balance);
-            _audit.Add(AuditActions.CustomerDeactivated, AuditActions.CustomerEntity, customer.Id, $"Cliente: {customer.Name}");
+            _audit.Add(Record(AuditActions.CustomerDeactivated, customer, before));
         }
 
         var outcome = await _customers.SaveChangesAsync(cancellationToken);
@@ -87,6 +89,15 @@ public sealed partial class SetCustomerActiveHandler
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Cliente activado o desactivado. CustomerId={CustomerId} Activo={Active}")]
     private partial void LogChanged(Guid customerId, bool active);
+
+    private static AuditRecord Record(string action, Customer customer, IReadOnlyList<AuditField> before) =>
+        new(
+            action,
+            AuditActions.CustomerEntity,
+            customer.Id,
+            EntityName: customer.Name,
+            Details: $"Cliente: {customer.Name}",
+            Changes: AuditChanges.Compare(before, CustomerAuditFields.Snapshot(customer)));
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Desactivación de cliente rechazada por saldo pendiente. CustomerId={CustomerId} BalanceCents={BalanceCents}")]
     private partial void LogHasBalance(Guid customerId, long balanceCents);

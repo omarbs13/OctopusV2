@@ -4,6 +4,7 @@ using Pos.Application.Abstractions;
 using Pos.Application.Audit;
 using Pos.Application.Products;
 using Pos.Application.Users.Access;
+using Pos.Domain.Audit;
 using Pos.Domain.Common;
 using Pos.Domain.Discounts;
 using Pos.Domain.Users;
@@ -74,6 +75,7 @@ public sealed partial class SaveCouponHandler
 
         Coupon coupon;
         string action;
+        IReadOnlyList<AuditFieldChange> changes;
         if (command.Id is { } id)
         {
             var existing = await _coupons.GetAsync(id, cancellationToken);
@@ -99,6 +101,7 @@ public sealed partial class SaveCouponHandler
                 return Result.Failure<Guid>(new CodeCollidesWithProduct());
             }
 
+            var before = CouponAuditFields.Snapshot(coupon);
             try
             {
                 coupon.Edit(code, value);
@@ -110,6 +113,7 @@ public sealed partial class SaveCouponHandler
             }
 
             action = AuditActions.CouponUpdated;
+            changes = AuditChanges.Compare(before, CouponAuditFields.Snapshot(coupon));
         }
         else
         {
@@ -121,9 +125,14 @@ public sealed partial class SaveCouponHandler
             coupon = Coupon.Create(code, value, command.StartsOn, command.EndsOn, command.UsageLimit);
             _coupons.Add(coupon);
             action = AuditActions.CouponCreated;
+            changes = AuditChanges.Created(CouponAuditFields.Snapshot(coupon));
         }
 
-        _audit.Add(action, AuditActions.CouponEntity, coupon.Id, Describe(coupon));
+        // Una edición sin cambios no queda en la bitácora (018, FR-002).
+        if (AuditChanges.HasChanges(changes))
+        {
+            _audit.Add(new AuditRecord(action, AuditActions.CouponEntity, coupon.Id, EntityName: coupon.Code, Details: Describe(coupon), Changes: changes));
+        }
 
         var outcome = await _coupons.SaveChangesAsync(cancellationToken);
         if (outcome.Status != SaveStatus.Saved)

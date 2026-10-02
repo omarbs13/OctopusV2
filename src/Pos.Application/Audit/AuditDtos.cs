@@ -1,20 +1,36 @@
+using Pos.Domain.Audit;
+
 namespace Pos.Application.Audit;
 
 /// <summary>
-/// Criterios de la consulta de la bitácora; el límite superior de fecha es exclusivo (UTC).
-/// <c>UserId</c> es el usuario involucrado: autor, autorizador o afectado.
+/// Filtros de la bitácora; el límite superior de fecha es exclusivo (UTC). <c>UserId</c> es el usuario
+/// involucrado: autor, autorizador o afectado. <c>Record</c> pide el historial de un registro (018, research §9).
 /// </summary>
-public sealed record AuditSearch(DateTime? FromUtc, DateTime? ToUtcExclusive, Guid? UserId, string? Action, int Page, int PageSize);
+public sealed record AuditFilter(
+    DateTime? FromUtc,
+    DateTime? ToUtcExclusive,
+    Guid? UserId,
+    string? Action,
+    AuditEntityGroup? Entity,
+    AuditRecordRef? Record);
+
+/// <summary>Registro cuyo historial se consulta.</summary>
+public sealed record AuditRecordRef(string EntityType, Guid EntityId);
+
+public sealed record AuditSearch(AuditFilter Filter, int Page, int PageSize);
 
 public sealed record AuditRow(
     Guid Id,
     DateTime CreatedAtUtc,
     string Action,
-    string UserName,
-    string? AuthorizedByName,
     string EntityType,
     Guid EntityId,
-    string? Details);
+    string? EntityName,
+    string UserName,
+    string? AuthorizedByName,
+    string? Reason,
+    string? Details,
+    IReadOnlyList<AuditFieldChange> Changes);
 
 public sealed record AuditPage(IReadOnlyList<AuditRow> Items, long TotalCount, int Page, int PageSize)
 {

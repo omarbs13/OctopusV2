@@ -32,6 +32,7 @@ public sealed class DesktopTestHost : IDisposable
         services.AddSingleton<ICategoryRepository>(Categories);
         services.AddSingleton<ISaleRepository>(Sales);
         services.AddSingleton<IWriteTransactions>(new FakeWriteTransactions());
+        services.AddSingleton<IAuditLog>(new RecordingAuditLog());
         services.AddSingleton<ICurrentUser, FixedCurrentUser>();
         services.AddScoped<IAccessControl, AllowAllAccessControl>();
         services.AddSingleton<IUserSession>(Session);

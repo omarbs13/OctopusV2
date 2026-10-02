@@ -4,6 +4,7 @@ using Pos.Application.Abstractions;
 using Pos.Application.Audit;
 using Pos.Application.Products;
 using Pos.Application.Users.Access;
+using Pos.Domain.Audit;
 using Pos.Domain.Discounts;
 using Pos.Domain.Users;
 
@@ -51,13 +52,22 @@ public sealed partial class SaveDiscountSettingsHandler
         var previous = _store.Load();
         var settings = new DiscountSettings { LimitBasisPoints = command.LimitBasisPoints };
         _store.Save(settings);
-        _audit.Add(
-            AuditActions.DiscountLimitChanged,
-            AuditActions.DiscountSettingsEntity,
-            Guid.CreateVersion7(),
-            $"Límite de descuento sin autorización: {DiscountValue.FormatPercent(previous.LimitBasisPoints)} -> {DiscountValue.FormatPercent(settings.LimitBasisPoints)}",
-            access.AuthorizedBy);
-        await _audit.SaveAsync(cancellationToken);
+
+        // Sin cambio no se registra nada (018, FR-002).
+        if (previous.LimitBasisPoints != settings.LimitBasisPoints)
+        {
+            var before = DiscountValue.FormatPercent(previous.LimitBasisPoints);
+            var after = DiscountValue.FormatPercent(settings.LimitBasisPoints);
+            _audit.Add(new AuditRecord(
+                AuditActions.DiscountLimitChanged,
+                AuditActions.DiscountSettingsEntity,
+                Guid.CreateVersion7(),
+                Details: $"Límite de descuento sin autorización: {before} -> {after}",
+                Changes: [new AuditFieldChange("Límite de descuento sin autorización", before, after)],
+                AuthorizedBy: access.AuthorizedBy));
+            await _audit.SaveAsync(cancellationToken);
+        }
+
         LogChanged(previous.LimitBasisPoints, settings.LimitBasisPoints);
         return Result.Success(settings);
     }

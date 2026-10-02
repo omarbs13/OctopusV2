@@ -3,6 +3,7 @@ using Pos.Application.Abstractions;
 using Pos.Application.Audit;
 using Pos.Application.Products;
 using Pos.Application.Users.Access;
+using Pos.Domain.Discounts;
 using Pos.Domain.Users;
 
 namespace Pos.Application.Discounts.Coupons.SetCouponActive;
@@ -56,15 +57,16 @@ public sealed partial class SetCouponActiveHandler
             return Result.Failure(new Conflict());
         }
 
+        var before = CouponAuditFields.Snapshot(coupon);
         if (command.Active)
         {
             coupon.Activate();
-            _audit.Add(AuditActions.CouponUpdated, AuditActions.CouponEntity, coupon.Id, $"Cupón {coupon.Code} activado");
+            _audit.Add(Record(AuditActions.CouponUpdated, coupon, before, $"Cupón {coupon.Code} activado"));
         }
         else
         {
             coupon.Deactivate();
-            _audit.Add(AuditActions.CouponDeactivated, AuditActions.CouponEntity, coupon.Id, $"Cupón {coupon.Code} desactivado");
+            _audit.Add(Record(AuditActions.CouponDeactivated, coupon, before, $"Cupón {coupon.Code} desactivado"));
         }
 
         var outcome = await _coupons.SaveChangesAsync(cancellationToken);
@@ -77,6 +79,15 @@ public sealed partial class SetCouponActiveHandler
         LogChanged(coupon.Id, coupon.Code, command.Active);
         return Result.Success();
     }
+
+    private static AuditRecord Record(string action, Coupon coupon, IReadOnlyList<AuditField> before, string details) =>
+        new(
+            action,
+            AuditActions.CouponEntity,
+            coupon.Id,
+            EntityName: coupon.Code,
+            Details: details,
+            Changes: AuditChanges.Compare(before, CouponAuditFields.Snapshot(coupon)));
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Cupón activado o desactivado. CouponId={CouponId} Codigo={Code} Activo={Active}")]
     private partial void LogChanged(Guid couponId, string code, bool active);

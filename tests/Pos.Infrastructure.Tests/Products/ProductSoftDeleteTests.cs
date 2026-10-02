@@ -3,6 +3,7 @@ using Pos.Application.Products;
 using Pos.Application.Products.CreateProduct;
 using Pos.Application.Products.DeleteProduct;
 using Pos.Application.Products.SearchProducts;
+using Pos.Infrastructure.Audit;
 using Pos.Infrastructure.Categories;
 using Pos.Infrastructure.Persistence;
 using Pos.Infrastructure.Products;
@@ -34,6 +35,7 @@ public sealed class ProductSoftDeleteTests : IAsyncLifetime
                 new CreateProductValidator(),
                 new CategoryRepository(context),
                 new WriteTransactions(context),
+                new AuditLog(context),
                 NullLogger<CreateProductHandler>.Instance)
             .HandleAsync(new CreateProductCommand(name, sku, barcode, "10.00", "H87"), Ct);
         Assert.True(result.IsSuccess, result.Error?.ToString());
@@ -43,7 +45,7 @@ public sealed class ProductSoftDeleteTests : IAsyncLifetime
     private async Task DeleteAsync(ProductDto product)
     {
         await using var context = _db.CreateDbContext();
-        var result = await new DeleteProductHandler(new AllowAllAccessControl(), new ProductRepository(context), _db.Clock)
+        var result = await new DeleteProductHandler(new AllowAllAccessControl(), new ProductRepository(context), _db.Clock, new CategoryRepository(context), new AuditLog(context))
             .HandleAsync(new DeleteProductCommand(product.Id, product.Version), Ct);
         Assert.True(result.IsSuccess, result.Error?.ToString());
     }

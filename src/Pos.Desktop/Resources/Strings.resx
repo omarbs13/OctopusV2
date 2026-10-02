@@ -427,6 +427,29 @@
   <data name="Audit_ColDetails" xml:space="preserve"><value>Detalle</value></data>
   <data name="Audit_Empty" xml:space="preserve"><value>No hay eventos en la bitácora con esos filtros.</value></data>
   <data name="Audit_PageSummary" xml:space="preserve"><value>{0} eventos · Página {1} de {2}</value></data>
+  <data name="Audit_Entity" xml:space="preserve"><value>Entidad</value></data>
+  <data name="Audit_Record" xml:space="preserve"><value>Registro</value></data>
+  <data name="Audit_Summary" xml:space="preserve"><value>Resumen</value></data>
+  <data name="Audit_Reason" xml:space="preserve"><value>Motivo</value></data>
+  <data name="Audit_Changes" xml:space="preserve"><value>Cambios</value></data>
+  <data name="Audit_Field" xml:space="preserve"><value>Campo</value></data>
+  <data name="Audit_Before" xml:space="preserve"><value>Antes</value></data>
+  <data name="Audit_After" xml:space="preserve"><value>Después</value></data>
+  <data name="Audit_Details" xml:space="preserve"><value>Detalles</value></data>
+  <data name="Audit_NoResults" xml:space="preserve"><value>No hay entradas con estos filtros.</value></data>
+  <data name="Audit_SelectEntry" xml:space="preserve"><value>Selecciona una entrada para ver su detalle.</value></data>
+  <data name="Audit_AuthorizedBy" xml:space="preserve"><value>Autorizó: {0}</value></data>
+  <data name="Audit_MoreFields" xml:space="preserve"><value>(+{0})</value></data>
+  <data name="Audit_ViewHistory" xml:space="preserve"><value>Ver historial del registro</value></data>
+  <data name="Audit_HistoryOf" xml:space="preserve"><value>Historial de: {0}</value></data>
+  <data name="Audit_ClearHistory" xml:space="preserve"><value>Quitar el filtro de historial</value></data>
+  <data name="Audit_AllEntities" xml:space="preserve"><value>Todas</value></data>
+  <data name="Audit_ExportPdf" xml:space="preserve"><value>Exportar PDF</value></data>
+  <data name="Audit_ExportExcel" xml:space="preserve"><value>Exportar Excel</value></data>
+  <data name="Audit_ExportNeedsRange" xml:space="preserve"><value>Elige un rango de fechas para exportar.</value></data>
+  <data name="Audit_Exported" xml:space="preserve"><value>Bitácora exportada ({0} entradas).</value></data>
+  <data name="Audit_ExportFailed" xml:space="preserve"><value>No se pudo guardar el archivo: {0}.</value></data>
+  <data name="Audit_SaveTitle" xml:space="preserve"><value>Guardar la bitácora</value></data>
   <data name="SecuritySettings_Title" xml:space="preserve"><value>Seguridad</value></data>
   <data name="SecuritySettings_IdleBefore" xml:space="preserve"><value>Bloquear la sesión tras</value></data>
   <data name="SecuritySettings_IdleAfter" xml:space="preserve"><value>minutos sin actividad</value></data>

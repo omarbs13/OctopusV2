@@ -226,6 +226,7 @@ public sealed partial class SaleReturnProcessor
     {
         var now = _clock.UtcNow;
         var isCancellation = request.Kind == ReturnKind.Cancellation;
+        var amountBeforeCents = sale.TotalCents - sale.ReturnedCents;
         var returnId = Guid.CreateVersion7();
         var number = await _returns.NextNumberAsync(cancellationToken);
 
@@ -315,12 +316,20 @@ public sealed partial class SaleReturnProcessor
             : credit is not null
                 ? $"Crédito: reduce el saldo {TicketBuilder.FormatMoney(credit.ReducesBalanceCents)}, aplicado a otras ventas {TicketBuilder.FormatMoney(credit.ReappliedCents)}, reintegro en efectivo {TicketBuilder.FormatMoney(credit.CashRefundCents)}"
                 : "Reintegro";
-        _audit.Add(
+        _audit.Add(new AuditRecord(
             isCancellation ? AuditActions.SaleCancelled : AuditActions.SaleReturned,
             AuditActions.SaleEntity,
             sale.Id,
-            $"Folio {sale.Folio}. Devolución {saleReturn.Folio}. Motivo: {reason}. Monto {TicketBuilder.FormatMoney(plan.TotalCents)}. Compensación: {compensation}",
-            authorizedBy);
+            EntityName: SaleAuditChanges.EntityName(sale),
+            Details: $"Devolución {saleReturn.Folio}. Monto {TicketBuilder.FormatMoney(plan.TotalCents)}. Compensación: {compensation}",
+            Reason: reason,
+            Changes: SaleAuditChanges.Affected(
+                sale,
+                plan.Lines.Select(l => (l.SaleLineId, l.QuantityThousandths)),
+                isCancellation,
+                amountBeforeCents,
+                amountBeforeCents - plan.TotalCents),
+            AuthorizedBy: authorizedBy));
 
         var outcome = await _returns.SaveChangesAsync(cancellationToken);
         if (outcome.Status != SaveStatus.Saved)

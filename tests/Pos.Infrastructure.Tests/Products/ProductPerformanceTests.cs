@@ -5,6 +5,7 @@ using Pos.Application.Products.CreateProduct;
 using Pos.Application.Products.SearchProducts;
 using Pos.Domain.Common;
 using Pos.Domain.Products;
+using Pos.Infrastructure.Audit;
 using Pos.Infrastructure.Categories;
 using Pos.Infrastructure.Persistence;
 using Pos.Infrastructure.Products;
@@ -118,6 +119,7 @@ public sealed class ProductPerformanceTests : IAsyncLifetime
                 new CreateProductValidator(),
                 new CategoryRepository(context),
                 new WriteTransactions(context),
+                new AuditLog(context),
                 NullLogger<CreateProductHandler>.Instance)
                 .HandleAsync(new CreateProductCommand("Nuevo producto", "NUEVO-1", null, "10.00", "H87"), Ct);
             Assert.True(created.IsSuccess);

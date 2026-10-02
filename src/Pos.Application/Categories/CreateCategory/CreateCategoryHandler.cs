@@ -66,7 +66,13 @@ public sealed partial class CreateCategoryHandler
 
         var category = Category.Create(command.Name, command.Description);
         _categories.Add(category);
-        _audit.Add(AuditActions.CategoryCreated, AuditActions.CategoryEntity, category.Id, CategoryRules.Describe(category));
+        _audit.Add(new AuditRecord(
+            AuditActions.CategoryCreated,
+            AuditActions.CategoryEntity,
+            category.Id,
+            EntityName: category.Name,
+            Details: CategoryRules.Describe(category),
+            Changes: AuditChanges.Created(CategoryAuditFields.Snapshot(category))));
 
         var outcome = await _categories.SaveChangesAsync(cancellationToken);
         if (outcome.Status != SaveStatus.Saved)

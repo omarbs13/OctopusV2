@@ -18,6 +18,7 @@
     <Compile Include="..\Pos.Application.Tests\TestSupport\InMemoryCategoryRepository.cs" Link="TestSupport\InMemoryCategoryRepository.cs" />
     <Compile Include="..\Pos.Application.Tests\TestSupport\FakeWriteTransactions.cs" Link="TestSupport\FakeWriteTransactions.cs" />
     <Compile Include="..\Pos.Application.Tests\TestSupport\AllowAllAccessControl.cs" Link="TestSupport\AllowAllAccessControl.cs" />
+    <Compile Include="..\Pos.Application.Tests\TestSupport\RecordingAuditLog.cs" Link="TestSupport\RecordingAuditLog.cs" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="Xunit" />

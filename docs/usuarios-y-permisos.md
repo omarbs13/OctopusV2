@@ -25,7 +25,7 @@ Los permisos se asignan a los roles en un solo lugar: `src/Pos.Domain/Users/Role
 | Cancelar ventas (`CancelSales`) | ✔ | con autorización |
 | Abrir el cajón sin venta (`OpenDrawerWithoutSale`) | ✔ | con autorización |
 | Administrar usuarios (`ManageUsers`) | ✔ | |
-| Consultar la bitácora (`ViewAuditLog`) | ✔ | |
+| Consultar y exportar la bitácora (`ViewAuditLog`) | ✔ | |
 | Configuración: negocio, impresora, seguridad (`ManageSettings`) | ✔ | |
 | Exportar el diagnóstico (`ExportDiagnostics`) | ✔ | |
 | Reportes de ventas y arqueo, alertas de Inicio (`ViewReports`) | ✔ | |
@@ -121,7 +121,11 @@ confirmación; al volver a entrar, ese mismo usuario puede recuperarla (otro usu
 ## Bitácora de auditoría
 
 **Administración → Bitácora** (solo Administrador, solo lectura): filtros por rango de fechas, usuario
-involucrado (autor, autorizador o afectado) y tipo de evento; más reciente primero, 100 por página.
+involucrado (autor, autorizador o afectado), tipo de evento y entidad; más reciente primero, 100 por página.
+Desde 0.13.0 muestra el antes y después de cada cambio, el historial de un registro y exporta a PDF o
+Excel. Consultar y exportar son exclusivos del Administrador (`ViewAuditLog`); un Cajero no ve la pantalla
+y los casos de uso `SearchAuditLog`, `ExportAuditLog` y `ConfirmAuditExport` lo rechazan. Ver
+[auditoria.md](auditoria.md).
 
 | Evento (`Action`) | Cuándo |
 |---|---|

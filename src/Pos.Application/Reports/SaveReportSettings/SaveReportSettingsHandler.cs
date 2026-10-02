@@ -1,6 +1,8 @@
 using Pos.Application.Abstractions;
 using Pos.Application.Audit;
 using Pos.Application.Users.Access;
+using Pos.Domain.Audit;
+using Pos.Domain.Discounts;
 using Pos.Domain.Users;
 
 namespace Pos.Application.Reports.SaveReportSettings;
@@ -34,13 +36,20 @@ public sealed class SaveReportSettingsHandler
 
         var previous = _store.Load();
         _store.Save(new ReportSettings { CashDifferenceAlertBasisPoints = thresholdBasisPoints });
-        _audit.Add(
-            AuditActions.ReportSettingsChanged,
-            AuditActions.ReportEntity,
-            Guid.CreateVersion7(),
-            $"Umbral de alerta de arqueo: {previous.CashDifferenceAlertBasisPoints} -> {thresholdBasisPoints} (centésimas de %)",
-            access.AuthorizedBy);
-        await _audit.SaveAsync(cancellationToken);
+
+        // Sin cambio no se registra nada (018, FR-002).
+        if (previous.CashDifferenceAlertBasisPoints != thresholdBasisPoints)
+        {
+            _audit.Add(new AuditRecord(
+                AuditActions.ReportSettingsChanged,
+                AuditActions.ReportEntity,
+                Guid.CreateVersion7(),
+                Details: $"Umbral de alerta de arqueo: {previous.CashDifferenceAlertBasisPoints} -> {thresholdBasisPoints} (centésimas de %)",
+                Changes: [new AuditFieldChange("Umbral de alerta de arqueo", DiscountValue.FormatPercent(previous.CashDifferenceAlertBasisPoints), DiscountValue.FormatPercent(thresholdBasisPoints))],
+                AuthorizedBy: access.AuthorizedBy));
+            await _audit.SaveAsync(cancellationToken);
+        }
+
         return Result.Success();
     }
 }

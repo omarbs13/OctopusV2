@@ -264,3 +264,21 @@ La migración `ShiftCuts` **no reconstruye ninguna tabla**:
 `ShiftCuts` quede vacía. `SampleDatabaseUpgradeTests` verifica que `ShiftCuts` esté vacía en las bases
 anteriores y que `v0.12.0.db` conserve su Corte X y su Corte Z con sus folios y cifras. Ver
 [turnos-de-caja.md](turnos-de-caja.md).
+
+## 0.13.0: auditoría detallada (`AuditTrail`)
+
+La migración `AuditTrail` **no reconstruye ninguna tabla** ni transforma datos:
+
+- Agrega a `AuditEntries` tres columnas nulas con `ALTER TABLE ... ADD`: `EntityName`, `Reason` y `Changes`
+  (JSON con la lista de cambios de campo, `OwnsMany(...).ToJson("Changes")`). Las entradas anteriores
+  quedan con las tres en `NULL` y siguen mostrando su texto en `Details`.
+- Recrea dos índices con más columnas: `IX_AuditEntries_CreatedAt` pasa a `(CreatedAt, Id)` (el orden de
+  la página sale del índice, sin ordenar en memoria) e `IX_AuditEntries_CreatedBy` a `(CreatedBy, CreatedAt)`.
+- Crea `IX_AuditEntries_AuthorizedBy`, `IX_AuditEntries_Action_CreatedAt` e
+  `IX_AuditEntries_EntityType_CreatedAt`. `IX_AuditEntries_Entity` no cambia.
+
+`AuditTrailMigrationTests` revisa el SQL (exactamente tres `ALTER TABLE ... ADD`, los cinco índices, sin
+`CREATE TABLE`, `DROP TABLE`, `UPDATE`, `INSERT` en la bitácora ni `ef_temp_`) y que al migrar `v0.12.0.db`
+las entradas conserven sus datos con las columnas nuevas en nulo. La base de ejemplo `v0.13.0.db` trae
+entradas con `EntityName`, `Reason` y `Changes` (la cancelación, la devolución y las ventas con descuento de
+`SampleData`). Ver [auditoria.md](auditoria.md).

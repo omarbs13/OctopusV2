@@ -22,6 +22,9 @@ public sealed class ProductRepository : IProductRepository
         return products.SingleOrDefaultAsync(p => p.Id == id && p.DeletedAt == null, cancellationToken);
     }
 
+    public Task<bool> HasImageAsync(Guid id, CancellationToken cancellationToken) =>
+        _context.ProductImages.AnyAsync(i => i.ProductId == id, cancellationToken);
+
     public Task<long> CountActiveAsync(CancellationToken cancellationToken) =>
         _context.Products.LongCountAsync(p => p.IsActive && p.DeletedAt == null, cancellationToken);
 

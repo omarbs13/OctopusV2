@@ -6,9 +6,15 @@ using Pos.Infrastructure.Tests.TestSupport;
 
 namespace Pos.Infrastructure.Tests.Audit;
 
-/// <summary>Consulta de la bitácora (FR-027): orden, filtros, usuario involucrado y nombres.</summary>
+/// <summary>
+/// Consulta de la bitácora (FR-027): orden, filtros, usuario involucrado y nombres. Desde 018: filtro por
+/// entidad, historial de un registro y entradas anteriores sin cambios (FR-017, FR-021).
+/// </summary>
 public sealed class AuditLogReaderTests : IAsyncLifetime
 {
+    private static readonly DateTime T0 = new(2026, 9, 30, 10, 0, 0, DateTimeKind.Utc);
+    private static readonly AuditFilter NoFilter = new(null, null, null, null, null, null);
+
     private TestDb _db = null!;
     private User _cashier = null!;
     private User _admin = null!;
@@ -31,22 +37,27 @@ public sealed class AuditLogReaderTests : IAsyncLifetime
         return ValueTask.CompletedTask;
     }
 
-    private async Task AddAsync(Guid author, DateTime at, string action, Guid entityId, Guid? authorizedBy = null, string entityType = "User")
+    private async Task AddAsync(
+        Guid author,
+        DateTime at,
+        string action,
+        Guid entityId,
+        Guid? authorizedBy = null,
+        string entityType = "User",
+        IEnumerable<AuditFieldChange>? changes = null)
     {
         _db.User.UserId = author;
         _db.Clock.UtcNow = at;
         await using var context = _db.CreateDbContext();
-        context.AuditEntries.Add(AuditEntry.Create(action, entityType, entityId, "detalle", authorizedBy));
+        context.AuditEntries.Add(AuditEntry.Create(action, entityType, entityId, "detalle", authorizedBy, changes: changes));
         await context.SaveChangesAsync(Ct);
     }
 
-    private async Task<AuditPage> SearchAsync(AuditSearch search)
+    private async Task<AuditPage> SearchAsync(AuditFilter filter, int page = 1)
     {
         await using var context = _db.CreateDbContext();
-        return await new AuditLogReader(context).SearchAsync(search, Ct);
+        return await new AuditLogReader(context).SearchAsync(new AuditSearch(filter, page, 100), Ct);
     }
-
-    private static readonly DateTime T0 = new(2026, 9, 30, 10, 0, 0, DateTimeKind.Utc);
 
     [Fact]
     public async Task Orden_MasRecientePrimero_ConNombresDeAutorYAutorizador()
@@ -54,7 +65,7 @@ public sealed class AuditLogReaderTests : IAsyncLifetime
         await AddAsync(_cashier.Id, T0, AuditActions.LoginSucceeded, _cashier.Id);
         await AddAsync(_cashier.Id, T0.AddMinutes(5), AuditActions.AdminAuthorizationGranted, _admin.Id, _admin.Id);
 
-        var page = await SearchAsync(new AuditSearch(null, null, null, null, 1, 100));
+        var page = await SearchAsync(NoFilter);
 
         Assert.Equal([AuditActions.AdminAuthorizationGranted, AuditActions.LoginSucceeded], page.Items.Select(r => r.Action));
         Assert.Equal("Caja Uno", page.Items[0].UserName);
@@ -69,9 +80,9 @@ public sealed class AuditLogReaderTests : IAsyncLifetime
         await AddAsync(_admin.Id, T0.AddHours(1), AuditActions.UserDeactivated, _cashier.Id);
         await AddAsync(_admin.Id, T0.AddHours(2), AuditActions.PasswordReset, _admin.Id);
 
-        var byRange = await SearchAsync(new AuditSearch(T0.AddMinutes(30), T0.AddHours(2), null, null, 1, 100));
-        var byAction = await SearchAsync(new AuditSearch(null, null, null, AuditActions.PasswordReset, 1, 100));
-        var involvingCashier = await SearchAsync(new AuditSearch(null, null, _cashier.Id, null, 1, 100));
+        var byRange = await SearchAsync(NoFilter with { FromUtc = T0.AddMinutes(30), ToUtcExclusive = T0.AddHours(2) });
+        var byAction = await SearchAsync(NoFilter with { Action = AuditActions.PasswordReset });
+        var involvingCashier = await SearchAsync(NoFilter with { UserId = _cashier.Id });
 
         // El límite superior es exclusivo: la entrada de T0 + 2 h queda fuera.
         Assert.Equal([AuditActions.UserDeactivated], byRange.Items.Select(r => r.Action));
@@ -89,12 +100,83 @@ public sealed class AuditLogReaderTests : IAsyncLifetime
             await AddAsync(_admin.Id, T0.AddSeconds(i), AuditActions.LoginSucceeded, _admin.Id);
         }
 
-        var first = await SearchAsync(new AuditSearch(null, null, null, null, 1, 100));
-        var second = await SearchAsync(new AuditSearch(null, null, null, null, 2, 100));
+        var first = await SearchAsync(NoFilter);
+        var second = await SearchAsync(NoFilter, page: 2);
 
         Assert.Equal(105, first.TotalCount);
         Assert.Equal(100, first.Items.Count);
         Assert.Equal(5, second.Items.Count);
         Assert.Equal(2, first.TotalPages);
+    }
+
+    [Fact]
+    public async Task Entidad_ProductoYSesion_SeparanLosEventosDeUsuario()
+    {
+        var product = Guid.CreateVersion7();
+        await AddAsync(_admin.Id, T0, AuditActions.ProductUpdated, product, entityType: AuditActions.ProductEntity);
+        await AddAsync(_cashier.Id, T0.AddMinutes(1), AuditActions.LoginSucceeded, _cashier.Id);
+        await AddAsync(_admin.Id, T0.AddMinutes(2), AuditActions.UserUpdated, _cashier.Id);
+
+        var products = await SearchAsync(NoFilter with { Entity = AuditEntityGroup.Product });
+        var sessions = await SearchAsync(NoFilter with { Entity = AuditEntityGroup.Session });
+        var users = await SearchAsync(NoFilter with { Entity = AuditEntityGroup.User });
+
+        Assert.Equal([AuditActions.ProductUpdated], products.Items.Select(r => r.Action));
+        Assert.Equal([AuditActions.LoginSucceeded], sessions.Items.Select(r => r.Action));
+        Assert.Equal([AuditActions.UserUpdated], users.Items.Select(r => r.Action));
+    }
+
+    [Fact]
+    public async Task Entidad_Configuracion_IncluyeElUmbralDeReportesQueNoEstaEnReportes()
+    {
+        await AddAsync(_admin.Id, T0, AuditActions.ReportSettingsChanged, Guid.CreateVersion7(), entityType: AuditActions.ReportEntity);
+        await AddAsync(_admin.Id, T0.AddMinutes(1), AuditActions.ReportExported, Guid.CreateVersion7(), entityType: AuditActions.ReportEntity);
+        await AddAsync(_admin.Id, T0.AddMinutes(2), AuditActions.DiscountLimitChanged, Guid.CreateVersion7(), entityType: AuditActions.DiscountSettingsEntity);
+
+        var settings = await SearchAsync(NoFilter with { Entity = AuditEntityGroup.Settings });
+        var reports = await SearchAsync(NoFilter with { Entity = AuditEntityGroup.Reports });
+
+        Assert.Equal([AuditActions.DiscountLimitChanged, AuditActions.ReportSettingsChanged], settings.Items.Select(r => r.Action));
+        Assert.Equal([AuditActions.ReportExported], reports.Items.Select(r => r.Action));
+    }
+
+    [Fact]
+    public async Task HistorialDelRegistro_DeLaMasAntiguaALaMasReciente_ConSusCambios()
+    {
+        var product = Guid.CreateVersion7();
+        await AddAsync(_admin.Id, T0, AuditActions.ProductCreated, product, entityType: AuditActions.ProductEntity, changes: [new("Precio", null, "$25.00")]);
+        await AddAsync(_admin.Id, T0.AddHours(1), AuditActions.ProductUpdated, product, entityType: AuditActions.ProductEntity, changes: [new("Precio", "$25.00", "$28.50")]);
+        await AddAsync(_admin.Id, T0.AddHours(2), AuditActions.ProductUpdated, Guid.CreateVersion7(), entityType: AuditActions.ProductEntity);
+
+        var history = await SearchAsync(NoFilter with { Record = new AuditRecordRef(AuditActions.ProductEntity, product) });
+
+        Assert.Equal([AuditActions.ProductCreated, AuditActions.ProductUpdated], history.Items.Select(r => r.Action));
+        var change = Assert.Single(history.Items[1].Changes);
+        Assert.Equal(("Precio", "$25.00", "$28.50"), (change.Field, change.Before, change.After));
+    }
+
+    [Fact]
+    public async Task UsuarioInvolucrado_EncuentraAlAutorizador()
+    {
+        await AddAsync(_cashier.Id, T0, AuditActions.SaleCancelled, Guid.CreateVersion7(), _admin.Id, AuditActions.SaleEntity);
+        await AddAsync(_cashier.Id, T0.AddMinutes(1), AuditActions.SaleReturned, Guid.CreateVersion7(), entityType: AuditActions.SaleEntity);
+
+        var page = await SearchAsync(NoFilter with { UserId = _admin.Id });
+
+        Assert.Equal([AuditActions.SaleCancelled], page.Items.Select(r => r.Action));
+    }
+
+    [Fact]
+    public async Task EntradasAnteriores_SinCambios_SeIncluyenPorSuEntidad()
+    {
+        // Entrada como las de antes de 0.13.0: sin nombre, motivo ni cambios.
+        await AddAsync(_cashier.Id, T0, AuditActions.SaleCancelled, Guid.CreateVersion7(), entityType: AuditActions.SaleEntity);
+
+        var row = Assert.Single((await SearchAsync(NoFilter with { Entity = AuditEntityGroup.Sale })).Items);
+
+        Assert.Null(row.EntityName);
+        Assert.Null(row.Reason);
+        Assert.Empty(row.Changes);
+        Assert.Equal("detalle", row.Details);
     }
 }

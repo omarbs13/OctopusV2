@@ -58,6 +58,11 @@ public static class AuditActions
     public const string CategoryDeleted = "CATEGORY_DELETED";
     public const string ShiftReadoutGenerated = "SHIFT_READOUT_GENERATED";
     public const string ShiftCutReprinted = "SHIFT_CUT_REPRINTED";
+    public const string ProductCreated = "PRODUCT_CREATED";
+    public const string ProductUpdated = "PRODUCT_UPDATED";
+    public const string ProductDeleted = "PRODUCT_DELETED";
+    public const string SaleDiscountsApplied = "SALE_DISCOUNTS_APPLIED";
+    public const string AuditExported = "AUDIT_EXPORTED";
 
     public const string UserEntity = "User";
     public const string CashShiftEntity = "CashShift";
@@ -75,6 +80,9 @@ public static class AuditActions
     public const string DiscountSettingsEntity = "DiscountSettings";
     public const string CategoryEntity = "Category";
     public const string ShiftCutEntity = "ShiftCut";
+    public const string ProductEntity = "Product";
+    public const string AuditLogEntity = "AuditLog";
+    public const string CashDrawerEntity = "CashDrawer";
 
     /// <summary>Texto en español de cada evento, en el orden en que se ofrece en el filtro.</summary>
     public static readonly IReadOnlyDictionary<string, string> All = new Dictionary<string, string>
@@ -132,6 +140,11 @@ public static class AuditActions
         [CategoryDeactivated] = "Categoría desactivada",
         [CategoryActivated] = "Categoría activada",
         [CategoryDeleted] = "Categoría eliminada",
+        [ProductCreated] = "Producto creado",
+        [ProductUpdated] = "Producto modificado",
+        [ProductDeleted] = "Producto eliminado",
+        [SaleDiscountsApplied] = "Venta con descuento",
+        [AuditExported] = "Bitácora exportada",
     }.ToFrozenDictionary();
 
     /// <summary>Texto en español del evento; el código tal cual si no está en el catálogo.</summary>

@@ -8,7 +8,7 @@ namespace Pos.Infrastructure.Reports;
 /// <summary>
 /// XLSX editable con ClosedXML (research §7): hoja "Resumen" (título, período, filtros y métricas),
 /// "Detalle" (tablas con importes y fechas como valores, sin fórmulas ni protección) y "Gráficas"
-/// (imágenes PNG del mismo renderizador que la pantalla).
+/// (imágenes PNG del mismo renderizador que la pantalla), que se omite si el documento no tiene gráficas (018).
 /// </summary>
 public sealed class XlsxReportWriter : IXlsxReportWriter
 {
@@ -30,7 +30,10 @@ public sealed class XlsxReportWriter : IXlsxReportWriter
         using var workbook = new XLWorkbook();
         WriteSummary(workbook.AddWorksheet("Resumen"), document);
         WriteDetail(workbook.AddWorksheet("Detalle"), document);
-        WriteCharts(workbook.AddWorksheet("Gráficas"), document);
+        if (document.Charts.Count > 0)
+        {
+            WriteCharts(workbook.AddWorksheet("Gráficas"), document);
+        }
 
         using var stream = new MemoryStream();
         workbook.SaveAs(stream);
@@ -110,12 +113,6 @@ public sealed class XlsxReportWriter : IXlsxReportWriter
 
     private void WriteCharts(IXLWorksheet sheet, ReportDocument document)
     {
-        if (document.Charts.Count == 0)
-        {
-            sheet.Cell(1, 1).Value = "Este reporte no tiene gráficas.";
-            return;
-        }
-
         var row = 1;
         foreach (var chart in document.Charts)
         {

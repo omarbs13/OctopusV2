@@ -89,6 +89,8 @@ using Pos.Application.Licensing.ExportLicenseRequest;
 using Pos.Application.Licensing.GetLicenseStatus;
 using Pos.Application.Licensing.ImportLicense;
 using Pos.Application.Startup;
+using Pos.Application.Audit.ConfirmAuditExport;
+using Pos.Application.Audit.ExportAuditLog;
 using Pos.Application.Audit.SearchAuditLog;
 using Pos.Application.Security.GetSecuritySettings;
 using Pos.Application.Security.SaveSecuritySettings;
@@ -164,6 +166,10 @@ public static class DependencyInjection
         // Bitácora y seguridad
         services.AddSingleton<IValidator<SearchAuditLogQuery>, SearchAuditLogValidator>();
         services.AddScoped<SearchAuditLogHandler>();
+        services.AddSingleton<IValidator<ExportAuditLogCommand>, ExportAuditLogValidator>();
+        services.AddScoped<AuditLogDocumentBuilder>();
+        services.AddScoped<ExportAuditLogHandler>();
+        services.AddScoped<ConfirmAuditExportHandler>();
         services.AddSingleton<GetSecuritySettingsHandler>();
         services.AddScoped<SaveSecuritySettingsHandler>();
 

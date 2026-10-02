@@ -65,5 +65,10 @@ public abstract class DiscountTestBase : IAsyncLifetime
         return await context.DiscountApprovals.CountAsync(Ct);
     }
 
-    protected Task<int> AppliedAuthorizedCountAsync() => AuditCountAsync(AuditActions.DiscountAppliedAuthorized);
+    /// <summary>Ventas con descuento autorizado: entradas <c>SALE_DISCOUNTS_APPLIED</c> con autorizador (018, research §7).</summary>
+    protected async Task<int> AppliedAuthorizedCountAsync()
+    {
+        await using var context = Db.CreateDbContext();
+        return await context.AuditEntries.CountAsync(e => e.Action == AuditActions.SaleDiscountsApplied && e.AuthorizedBy != null, Ct);
+    }
 }

@@ -11,7 +11,7 @@ public class DeleteProductHandlerTests
     private readonly InMemoryProductRepository _repository = new();
     private readonly FakeClock _clock = new();
 
-    private DeleteProductHandler Handler => new(new AllowAllAccessControl(), _repository, _clock);
+    private DeleteProductHandler Handler => new(new AllowAllAccessControl(), _repository, _clock, new InMemoryCategoryRepository(), new RecordingAuditLog());
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 

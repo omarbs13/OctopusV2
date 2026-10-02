@@ -3,6 +3,7 @@ using Pos.Application.Abstractions;
 using Pos.Application.Audit;
 using Pos.Application.Products;
 using Pos.Application.Users.Access;
+using Pos.Domain.Audit;
 using Pos.Domain.Users;
 
 namespace Pos.Application.Receivables.SaveReceivablesSettings;
@@ -49,13 +50,22 @@ public sealed class SaveReceivablesSettingsHandler
         var previous = _store.Load();
         var settings = new ReceivablesSettings { PaymentTermDays = command.PaymentTermDays };
         _store.Save(settings);
-        _audit.Add(
-            AuditActions.CreditSettingsChanged,
-            AuditActions.ReceivablesSettingsEntity,
-            Guid.CreateVersion7(),
-            $"Plazo de pago: {previous.PaymentTermDays} -> {settings.PaymentTermDays} días",
-            access.AuthorizedBy);
-        await _audit.SaveAsync(cancellationToken);
+
+        // Sin cambio no se registra nada (018, FR-002).
+        if (previous.PaymentTermDays != settings.PaymentTermDays)
+        {
+            _audit.Add(new AuditRecord(
+                AuditActions.CreditSettingsChanged,
+                AuditActions.ReceivablesSettingsEntity,
+                Guid.CreateVersion7(),
+                Details: $"Plazo de pago: {previous.PaymentTermDays} -> {settings.PaymentTermDays} días",
+                Changes: [new AuditFieldChange("Plazo de pago", Days(previous.PaymentTermDays), Days(settings.PaymentTermDays))],
+                AuthorizedBy: access.AuthorizedBy));
+            await _audit.SaveAsync(cancellationToken);
+        }
+
         return Result.Success(settings);
     }
+
+    private static string Days(int days) => $"{days} días";
 }

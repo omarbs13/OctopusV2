@@ -16,6 +16,9 @@ public sealed class PdfReportWriter : IPdfReportWriter
     private const float HeaderHeight = 44;
     private const float FooterHeight = 22;
     private const float RowHeight = 16;
+
+    /// <summary>Alto de cada línea adicional de una celda de texto con varias líneas (018, bitácora).</summary>
+    private const float LineHeight = 11;
     private const float ChartHeight = 210;
     private const string MissingBusinessText = "Datos del negocio no capturados";
 
@@ -102,6 +105,7 @@ public sealed class PdfReportWriter : IPdfReportWriter
         private const float ContentWidth = PageWidth - (2 * Margin);
         private const float Top = Margin + HeaderHeight;
         private const float Bottom = PageHeight - Margin - FooterHeight;
+        private const int MaxLinesPerRow = (int)((Bottom - Top - (2 * RowHeight)) / LineHeight);
 
         private readonly ReportDocument _document;
         private readonly List<SKPicture> _pages = [];
@@ -254,7 +258,12 @@ public sealed class PdfReportWriter : IPdfReportWriter
 
             for (var r = 0; r < table.Rows.Count; r++)
             {
-                if (_y + RowHeight > Bottom)
+                // Una celda de texto puede traer varias líneas: la fila crece hasta lo que quepa en una página.
+                var row = table.Rows[r];
+                var texts = row.Select(ReportCellFormatter.Format).ToList();
+                var lines = Math.Min(texts.Max(t => t.Split('\n').Length), MaxLinesPerRow);
+                var height = RowHeight + ((lines - 1) * LineHeight);
+                if (_y + height > Bottom)
                 {
                     NewPage();
                     DrawHeaderRow(table, widths, headerFont, paint);
@@ -263,19 +272,24 @@ public sealed class PdfReportWriter : IPdfReportWriter
                 if (r % 2 == 1)
                 {
                     paint.Color = Shade;
-                    _canvas.DrawRect(new SKRect(ContentLeft, _y, ContentLeft + ContentWidth, _y + RowHeight), paint);
+                    _canvas.DrawRect(new SKRect(ContentLeft, _y, ContentLeft + ContentWidth, _y + height), paint);
                 }
 
                 paint.Color = Ink;
                 var x = ContentLeft;
-                var row = table.Rows[r];
                 for (var c = 0; c < table.Columns.Count; c++)
                 {
-                    DrawCell(ReportCellFormatter.Format(row[c]), x, widths[c], table.Columns[c].Type, font, paint);
+                    var cellLines = texts[c].Split('\n');
+                    for (var l = 0; l < Math.Min(cellLines.Length, lines); l++)
+                    {
+                        var text = l == lines - 1 && cellLines.Length > lines ? cellLines[l] + " …" : cellLines[l];
+                        DrawCell(text, x, widths[c], table.Columns[c].Type, font, paint, l * LineHeight);
+                    }
+
                     x += widths[c];
                 }
 
-                _y += RowHeight;
+                _y += height;
             }
 
             _y += 10;
@@ -296,17 +310,17 @@ public sealed class PdfReportWriter : IPdfReportWriter
             _y += RowHeight;
         }
 
-        private void DrawCell(string text, float x, float width, ReportColumnType type, SKFont font, SKPaint paint)
+        private void DrawCell(string text, float x, float width, ReportColumnType type, SKFont font, SKPaint paint, float offset = 0)
         {
             var padded = width - 8;
             var fitted = Fit(text, font, padded);
             if (ReportCellFormatter.IsNumeric(type))
             {
-                _canvas.DrawText(fitted, x + width - 4, _y + 11.5f, SKTextAlign.Right, font, paint);
+                _canvas.DrawText(fitted, x + width - 4, _y + 11.5f + offset, SKTextAlign.Right, font, paint);
             }
             else
             {
-                _canvas.DrawText(fitted, x + 4, _y + 11.5f, SKTextAlign.Left, font, paint);
+                _canvas.DrawText(fitted, x + 4, _y + 11.5f + offset, SKTextAlign.Left, font, paint);
             }
         }
 

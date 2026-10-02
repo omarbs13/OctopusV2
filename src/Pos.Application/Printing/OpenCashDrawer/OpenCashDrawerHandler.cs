@@ -15,7 +15,7 @@ namespace Pos.Application.Printing.OpenCashDrawer;
 public sealed partial class OpenCashDrawerHandler
 {
     public const string AuditAction = AuditActions.DrawerOpened;
-    public const string AuditEntityType = "CashDrawer";
+    public const string AuditEntityType = AuditActions.CashDrawerEntity;
 
     private readonly IAccessControl _access;
     private readonly ICashDrawer _drawer;
@@ -68,7 +68,13 @@ public sealed partial class OpenCashDrawerHandler
         if (command.IsManual)
         {
             var reason = command.Reason!.Trim();
-            _audit.Add(AuditAction, AuditEntityType, Guid.CreateVersion7(), $"Motivo: {reason}; Resultado: {(outcome.Succeeded ? "OK" : "FALLO")}", access.AuthorizedBy);
+            _audit.Add(new AuditRecord(
+                AuditAction,
+                AuditEntityType,
+                Guid.CreateVersion7(),
+                Details: $"Resultado: {(outcome.Succeeded ? "OK" : "FALLO")}",
+                Reason: reason,
+                AuthorizedBy: access.AuthorizedBy));
             await _audit.SaveAsync(cancellationToken);
         }
 

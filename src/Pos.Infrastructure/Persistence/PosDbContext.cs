@@ -241,7 +241,8 @@ public class PosDbContext : DbContext
             throw new InvalidOperationException("Un abono solo puede pasar de vigente a anulado.");
         }
 
-        if (ChangeTracker.Entries<AuditEntry>().Any(e => e.State is EntityState.Modified or EntityState.Deleted))
+        if (ChangeTracker.Entries<AuditEntry>().Any(e => e.State is EntityState.Modified or EntityState.Deleted)
+            || ChangeTracker.Entries<AuditFieldChange>().Any(e => e.State is EntityState.Modified or EntityState.Deleted))
         {
             throw new InvalidOperationException("Las entradas de la bitácora de auditoría no se pueden modificar ni borrar.");
         }

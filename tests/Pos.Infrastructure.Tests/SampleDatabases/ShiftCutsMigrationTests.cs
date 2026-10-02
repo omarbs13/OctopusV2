@@ -44,16 +44,6 @@ public sealed class ShiftCutsMigrationTests
     }
 
     [Fact]
-    public async Task ShiftCuts_EsLaUltimaMigracion()
-    {
-        using var db = await TestDb.CreateAsync();
-        await using var context = db.CreateDbContext();
-
-        Assert.EndsWith("_ShiftCuts", context.Database.GetMigrations().Last(), StringComparison.Ordinal);
-        Assert.Empty(await context.Database.GetPendingMigrationsAsync(TestContext.Current.CancellationToken));
-    }
-
-    [Fact]
     public async Task TurnosAnterioresA0120_SeConservanYNoRecibenCorteZ()
     {
         using var dir = new TempDataDirectory();

@@ -83,16 +83,36 @@ public sealed partial class UpdateCustomerHandler
             }
         }
 
+        var before = CustomerAuditFields.Snapshot(customer);
         customer.Update(command.Name, command.Phone, command.Email, command.TaxId);
-        _audit.Add(AuditActions.CustomerUpdated, AuditActions.CustomerEntity, customer.Id, CustomerRules.Describe(customer));
         if (creditChanged)
         {
             customer.ChangeCredit(limit, mode);
-            _audit.Add(
+        }
+
+        // Los datos van en CUSTOMER_UPDATED y el crédito en CUSTOMER_CREDIT_CHANGED (018, FR-002).
+        var changes = AuditChanges.Compare(before, CustomerAuditFields.Snapshot(customer));
+        var dataChanges = changes.Where(c => !IsCreditField(c.Field)).ToList();
+        if (AuditChanges.HasChanges(dataChanges))
+        {
+            _audit.Add(new AuditRecord(
+                AuditActions.CustomerUpdated,
+                AuditActions.CustomerEntity,
+                customer.Id,
+                EntityName: customer.Name,
+                Details: CustomerRules.Describe(customer),
+                Changes: dataChanges));
+        }
+
+        if (creditChanged)
+        {
+            _audit.Add(new AuditRecord(
                 AuditActions.CustomerCreditChanged,
                 AuditActions.CustomerEntity,
                 customer.Id,
-                $"Cliente: {customer.Name}. Antes: {previousMode.ToCode()}, {TicketBuilder.FormatMoney(previousLimit)}. Ahora: {mode.ToCode()}, {TicketBuilder.FormatMoney(limit)}");
+                EntityName: customer.Name,
+                Details: $"Cliente: {customer.Name}. Antes: {previousMode.ToCode()}, {TicketBuilder.FormatMoney(previousLimit)}. Ahora: {mode.ToCode()}, {TicketBuilder.FormatMoney(limit)}",
+                Changes: [.. changes.Where(c => IsCreditField(c.Field))]));
         }
 
         var outcome = await _customers.SaveChangesAsync(cancellationToken);
@@ -105,6 +125,9 @@ public sealed partial class UpdateCustomerHandler
         LogUpdated(customer.Id, creditChanged);
         return Result.Success();
     }
+
+    private static bool IsCreditField(string field) =>
+        field is CustomerAuditFields.CreditMode or CustomerAuditFields.CreditLimit;
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Cliente modificado. CustomerId={CustomerId} CreditoModificado={CreditChanged}")]
     private partial void LogUpdated(Guid customerId, bool creditChanged);

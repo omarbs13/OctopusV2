@@ -1,6 +1,7 @@
 using FluentValidation;
 using Microsoft.Extensions.Logging;
 using Pos.Application.Abstractions;
+using Pos.Application.Audit;
 using Pos.Application.Categories;
 using Pos.Domain.Categories;
 using Pos.Domain.Common;
@@ -13,6 +14,7 @@ namespace Pos.Application.Products.CreateProduct;
 /// <summary>
 /// Alta de producto. Con categoría, la validación (existe, no borrada y activa) y el guardado van en una
 /// transacción de escritura, para que una desactivación o eliminación simultánea no se cuele (016, research §4).
+/// El alta queda en la bitácora con sus valores iniciales, en el mismo guardado (018, FR-001).
 /// </summary>
 public sealed partial class CreateProductHandler
 {
@@ -21,6 +23,7 @@ public sealed partial class CreateProductHandler
     private readonly IValidator<CreateProductCommand> _validator;
     private readonly ICategoryRepository _categories;
     private readonly IWriteTransactions _transactions;
+    private readonly IAuditLog _audit;
     private readonly ILogger<CreateProductHandler> _logger;
 
     public CreateProductHandler(
@@ -29,6 +32,7 @@ public sealed partial class CreateProductHandler
         IValidator<CreateProductCommand> validator,
         ICategoryRepository categories,
         IWriteTransactions transactions,
+        IAuditLog audit,
         ILogger<CreateProductHandler> logger)
     {
         _access = access;
@@ -36,6 +40,7 @@ public sealed partial class CreateProductHandler
         _validator = validator;
         _categories = categories;
         _transactions = transactions;
+        _audit = audit;
         _logger = logger;
     }
 
@@ -86,6 +91,12 @@ public sealed partial class CreateProductHandler
         var product = Product.Create(command.Name, sku, barcode, price, command.UnitCode, command.TracksInventory, minimum, command.CategoryId);
         ProductImages.Apply(product, command.Image);
         _products.Add(product);
+        _audit.Add(new AuditRecord(
+            AuditActions.ProductCreated,
+            AuditActions.ProductEntity,
+            product.Id,
+            EntityName: product.Name,
+            Changes: AuditChanges.Created(ProductAuditFields.Snapshot(product, category?.Name, product.Image is not null))));
 
         var outcome = await _products.SaveChangesAsync(product, expectedVersion: null, cancellationToken);
         if (outcome.Status == SaveStatus.Saved && transaction is not null)

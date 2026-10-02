@@ -3,6 +3,7 @@ using Pos.Application.Abstractions;
 using Pos.Application.Audit;
 using Pos.Application.Products;
 using Pos.Application.Users.Access;
+using Pos.Domain.Audit;
 using Pos.Domain.Users;
 
 namespace Pos.Application.Returns.SaveReturnsSettings;
@@ -46,13 +47,22 @@ public sealed class SaveReturnsSettingsHandler
         var previous = _store.Load();
         var settings = new ReturnsSettings { ReturnWindowDays = command.ReturnWindowDays };
         _store.Save(settings);
-        _audit.Add(
-            AuditActions.ReturnSettingsChanged,
-            AuditActions.ReturnSettingsEntity,
-            Guid.CreateVersion7(),
-            $"Plazo de devoluciones: {previous.ReturnWindowDays} -> {settings.ReturnWindowDays} días",
-            access.AuthorizedBy);
-        await _audit.SaveAsync(cancellationToken);
+
+        // Sin cambio no se registra nada (018, FR-002).
+        if (previous.ReturnWindowDays != settings.ReturnWindowDays)
+        {
+            _audit.Add(new AuditRecord(
+                AuditActions.ReturnSettingsChanged,
+                AuditActions.ReturnSettingsEntity,
+                Guid.CreateVersion7(),
+                Details: $"Plazo de devoluciones: {previous.ReturnWindowDays} -> {settings.ReturnWindowDays} días",
+                Changes: [new AuditFieldChange("Plazo de devoluciones", Days(previous.ReturnWindowDays), Days(settings.ReturnWindowDays))],
+                AuthorizedBy: access.AuthorizedBy));
+            await _audit.SaveAsync(cancellationToken);
+        }
+
         return Result.Success(settings);
     }
+
+    private static string Days(int days) => $"{days} días";
 }

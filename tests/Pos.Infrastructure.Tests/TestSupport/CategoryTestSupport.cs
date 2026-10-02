@@ -162,6 +162,7 @@ public sealed class CategoryTestSupport
                 new CreateProductValidator(),
                 new CategoryRepository(context),
                 new WriteTransactions(context),
+                new AuditLog(context),
                 NullLogger<CreateProductHandler>.Instance)
             .HandleAsync(new CreateProductCommand($"Producto {sku}", sku, null, "10.00", "H87", CategoryId: categoryId), Ct);
     }
@@ -178,6 +179,7 @@ public sealed class CategoryTestSupport
                 new InventoryRepository(context),
                 new WriteTransactions(context),
                 new CategoryRepository(context),
+                new AuditLog(context),
                 NullLogger<UpdateProductHandler>.Instance)
             .HandleAsync(
                 new UpdateProductCommand(productId, current.Version, name, current.Sku, current.Barcode, "10.00", current.UnitCode, current.IsActive, CategoryId: categoryId),

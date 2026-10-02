@@ -1,8 +1,10 @@
 using FluentValidation;
 using Microsoft.Extensions.Logging;
 using Pos.Application.Abstractions;
+using Pos.Application.Audit;
 using Pos.Application.Categories;
 using Pos.Application.Inventory;
+using Pos.Domain.Audit;
 using Pos.Domain.Common;
 using Pos.Domain.Products;
 using Pos.Application.Users.Access;
@@ -10,6 +12,10 @@ using Pos.Domain.Users;
 
 namespace Pos.Application.Products.UpdateProduct;
 
+/// <summary>
+/// Edición de producto. Los campos que cambian quedan en la bitácora con su valor anterior y nuevo, en
+/// el mismo guardado; sin cambios no se registra nada (018, FR-002).
+/// </summary>
 public sealed partial class UpdateProductHandler
 {
     private readonly IAccessControl _access;
@@ -18,6 +24,7 @@ public sealed partial class UpdateProductHandler
     private readonly IInventoryRepository _inventory;
     private readonly IWriteTransactions _transactions;
     private readonly ICategoryRepository _categories;
+    private readonly IAuditLog _audit;
     private readonly ILogger<UpdateProductHandler> _logger;
 
     public UpdateProductHandler(
@@ -27,6 +34,7 @@ public sealed partial class UpdateProductHandler
         IInventoryRepository inventory,
         IWriteTransactions transactions,
         ICategoryRepository categories,
+        IAuditLog audit,
         ILogger<UpdateProductHandler> logger)
     {
         _access = access;
@@ -35,6 +43,7 @@ public sealed partial class UpdateProductHandler
         _inventory = inventory;
         _transactions = transactions;
         _categories = categories;
+        _audit = audit;
         _logger = logger;
     }
 
@@ -113,10 +122,30 @@ public sealed partial class UpdateProductHandler
             return Result.Failure<ProductDto>(new Duplicate(ProductFields.Barcode));
         }
 
+        // Instantánea anterior con la categoría y la imagen vigentes antes del cambio (018, research §5).
+        var previousCategory = product.CategoryId == command.CategoryId
+            ? category
+            : product.CategoryId is { } previousId ? await _categories.GetAsync(previousId, cancellationToken) : null;
+        var hadImage = imageChanges ? product.Image is not null : await _products.HasImageAsync(product.Id, cancellationToken);
+        var before = ProductAuditFields.Snapshot(product, previousCategory?.Name, hadImage);
+
         var price = Money.Parse(command.PriceText).Value!.Value;
         var minimum = ProductRules.ParseMinimum(command.TracksInventory, command.MinimumStockText, command.UnitCode)?.Value;
         product.Update(command.Name, sku, barcode, price, command.UnitCode, command.IsActive, command.TracksInventory, minimum, hasMovements, command.CategoryId);
         ProductImages.Apply(product, command.Image);
+
+        var hasImage = imageChanges ? product.Image is not null : hadImage;
+        var changes = AuditChanges.Compare(before, ProductAuditFields.Snapshot(product, category?.Name, hasImage)).ToList();
+        if (command.Image is ProductImageChange.Replace && hadImage)
+        {
+            // La instantánea no distingue un reemplazo: antes y después valen "Con imagen".
+            changes.Add(new AuditFieldChange(ProductAuditFields.Image, ProductAuditFields.WithImage, ProductAuditFields.ImageReplaced));
+        }
+
+        if (AuditChanges.HasChanges(changes))
+        {
+            _audit.Add(new AuditRecord(AuditActions.ProductUpdated, AuditActions.ProductEntity, product.Id, EntityName: product.Name, Changes: changes));
+        }
 
         var outcome = await _products.SaveChangesAsync(product, command.ExpectedVersion, cancellationToken);
         if (outcome.Status == SaveStatus.Saved)

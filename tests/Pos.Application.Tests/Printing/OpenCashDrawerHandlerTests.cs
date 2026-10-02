@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using Pos.Application.Abstractions;
+using Pos.Application.Audit;
 using Pos.Application.Printing;
 using Pos.Application.Printing.OpenCashDrawer;
 using Pos.Application.Tests.TestSupport;
@@ -52,7 +53,8 @@ public sealed class OpenCashDrawerHandlerTests
         var entry = Assert.Single(_audit.Entries);
         Assert.Equal(OpenCashDrawerHandler.AuditAction, entry.Action);
         Assert.Equal("CashDrawer", entry.EntityType);
-        Assert.Equal("Motivo: Cambio de billetes; Resultado: OK", entry.Details);
+        Assert.Equal("Cambio de billetes", entry.Reason);
+        Assert.Equal("Resultado: OK", entry.Details);
         Assert.Equal(1, _audit.Saves);
     }
 
@@ -64,7 +66,9 @@ public sealed class OpenCashDrawerHandlerTests
         var result = await Handler.HandleAsync(OpenCashDrawerCommand.Manual("Revisión"), Ct);
 
         Assert.IsType<DrawerFailed>(result.Error);
-        Assert.Equal("Motivo: Revisión; Resultado: FALLO", Assert.Single(_audit.Entries).Details);
+        var failed = Assert.Single(_audit.Entries);
+        Assert.Equal("Revisión", failed.Reason);
+        Assert.Equal("Resultado: FALLO", failed.Details);
         Assert.Equal(1, _audit.Saves);
     }
 
@@ -138,12 +142,14 @@ public sealed class OpenCashDrawerHandlerTests
 
     private sealed class FakeAudit : IAuditLog
     {
-        public List<(string Action, string EntityType, Guid EntityId, string? Details)> Entries { get; } = [];
+        public List<AuditRecord> Entries { get; } = [];
 
         public int Saves { get; private set; }
 
         public void Add(string action, string entityType, Guid entityId, string? details, Guid? authorizedBy = null) =>
-            Entries.Add((action, entityType, entityId, details));
+            Entries.Add(new AuditRecord(action, entityType, entityId, Details: details, AuthorizedBy: authorizedBy));
+
+        public void Add(AuditRecord record) => Entries.Add(record);
 
         public Task SaveAsync(CancellationToken cancellationToken)
         {

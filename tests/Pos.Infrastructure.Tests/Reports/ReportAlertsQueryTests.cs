@@ -3,6 +3,7 @@ using Pos.Application.Reports;
 using Pos.Application.Reports.GetReportAlerts;
 using Pos.Application.Reports.SetProductCritical;
 using Pos.Domain.Inventory;
+using Pos.Infrastructure.Audit;
 using Pos.Infrastructure.Products;
 using Pos.Infrastructure.Reports;
 using Pos.Infrastructure.Tests.TestSupport;
@@ -46,7 +47,7 @@ public sealed class ReportAlertsQueryTests
         foreach (var product in new[] { low, normal, empty })
         {
             await using var context = db.CreateDbContext();
-            Assert.True((await new SetProductCriticalHandler(new AllowAllAccessControl(), new ProductRepository(context))
+            Assert.True((await new SetProductCriticalHandler(new AllowAllAccessControl(), new ProductRepository(context), new AuditLog(context))
                 .HandleAsync(new SetProductCriticalCommand(product.Id, true), Ct)).IsSuccess);
         }
 

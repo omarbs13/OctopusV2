@@ -18,6 +18,7 @@ public class CreateProductHandlerTests
         new CreateProductValidator(),
         new InMemoryCategoryRepository(),
         new FakeWriteTransactions(),
+        new RecordingAuditLog(),
         NullLogger<CreateProductHandler>.Instance);
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;

@@ -58,10 +58,17 @@ public sealed partial class SetCategoryActiveHandler
             return Result.Failure(new Conflict());
         }
 
+        var before = CategoryAuditFields.Snapshot(category);
         if (command.IsActive)
         {
             category.Activate();
-            _audit.Add(AuditActions.CategoryActivated, AuditActions.CategoryEntity, category.Id, CategoryRules.Describe(category));
+            _audit.Add(new AuditRecord(
+                AuditActions.CategoryActivated,
+                AuditActions.CategoryEntity,
+                category.Id,
+                EntityName: category.Name,
+                Details: CategoryRules.Describe(category),
+                Changes: AuditChanges.Compare(before, CategoryAuditFields.Snapshot(category))));
         }
         else
         {
@@ -72,11 +79,13 @@ public sealed partial class SetCategoryActiveHandler
             }
 
             category.Deactivate();
-            _audit.Add(
+            _audit.Add(new AuditRecord(
                 AuditActions.CategoryDeactivated,
                 AuditActions.CategoryEntity,
                 category.Id,
-                $"{CategoryRules.Describe(category)}. Productos: {count}");
+                EntityName: category.Name,
+                Details: $"{CategoryRules.Describe(category)}. Productos: {count}",
+                Changes: AuditChanges.Compare(before, CategoryAuditFields.Snapshot(category))));
         }
 
         var outcome = await _categories.SaveChangesAsync(cancellationToken);

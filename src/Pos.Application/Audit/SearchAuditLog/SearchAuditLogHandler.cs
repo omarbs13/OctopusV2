@@ -6,7 +6,10 @@ using Pos.Domain.Users;
 
 namespace Pos.Application.Audit.SearchAuditLog;
 
-/// <summary>Consulta de la bitácora, solo para el Administrador, del más reciente al más antiguo (FR-027).</summary>
+/// <summary>
+/// Consulta de la bitácora, solo para el Administrador, del más reciente al más antiguo; el historial de un
+/// registro, del más antiguo al más reciente (FR-027; 018, FR-017).
+/// </summary>
 public sealed class SearchAuditLogHandler
 {
     private readonly IAccessControl _access;
@@ -36,7 +39,8 @@ public sealed class SearchAuditLogHandler
             return Result.Failure<AuditPage>(ProductRules.ToError(validation));
         }
 
-        var search = new AuditSearch(query.FromUtc, query.ToUtcExclusive, query.UserId, query.Action, Math.Max(query.Page, 1), AuditPage.DefaultPageSize);
+        var filter = new AuditFilter(query.FromUtc, query.ToUtcExclusive, query.UserId, query.Action, query.Entity, query.Record);
+        var search = new AuditSearch(filter, Math.Max(query.Page, 1), AuditPage.DefaultPageSize);
         return Result.Success(await _reader.SearchAsync(search, cancellationToken));
     }
 }

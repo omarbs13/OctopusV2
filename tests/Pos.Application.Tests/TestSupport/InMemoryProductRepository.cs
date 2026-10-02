@@ -63,6 +63,12 @@ public sealed class InMemoryProductRepository : IProductRepository
         return Task.FromResult(_stored.TryGetValue(id, out var p) && !p.IsDeleted ? Clone(p) : null);
     }
 
+    public Task<bool> HasImageAsync(Guid id, CancellationToken cancellationToken)
+    {
+        ThrowIfFailing();
+        return Task.FromResult(_stored.TryGetValue(id, out var p) && p.Image is not null);
+    }
+
     public Task<long> CountActiveAsync(CancellationToken cancellationToken)
     {
         ThrowIfFailing();

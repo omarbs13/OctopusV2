@@ -43,18 +43,35 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("EntityId")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("EntityName")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("EntityType")
                         .IsRequired()
                         .HasMaxLength(40)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Reason")
+                        .HasMaxLength(250)
+                        .HasColumnType("TEXT");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("CreatedAt")
+                    b.HasIndex("AuthorizedBy")
+                        .HasDatabaseName("IX_AuditEntries_AuthorizedBy");
+
+                    b.HasIndex("Action", "CreatedAt")
+                        .HasDatabaseName("IX_AuditEntries_Action_CreatedAt");
+
+                    b.HasIndex("CreatedAt", "Id")
                         .HasDatabaseName("IX_AuditEntries_CreatedAt");
 
-                    b.HasIndex("CreatedBy")
+                    b.HasIndex("CreatedBy", "CreatedAt")
                         .HasDatabaseName("IX_AuditEntries_CreatedBy");
+
+                    b.HasIndex("EntityType", "CreatedAt")
+                        .HasDatabaseName("IX_AuditEntries_EntityType_CreatedAt");
 
                     b.HasIndex("EntityType", "EntityId")
                         .HasDatabaseName("IX_AuditEntries_Entity");
@@ -1755,6 +1772,40 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("LicenseSeals", (string)null);
+                });
+
+            modelBuilder.Entity("Pos.Domain.Audit.AuditEntry", b =>
+                {
+                    b.OwnsMany("Pos.Domain.Audit.AuditFieldChange", "Changes", b1 =>
+                        {
+                            b1.Property<Guid>("AuditEntryId");
+
+                            b1.Property<int>("__synthesizedOrdinal")
+                                .ValueGeneratedOnAddOrUpdate();
+
+                            b1.Property<string>("After")
+                                .HasMaxLength(2000);
+
+                            b1.Property<string>("Before")
+                                .HasMaxLength(2000);
+
+                            b1.Property<string>("Field")
+                                .IsRequired()
+                                .HasMaxLength(80);
+
+                            b1.HasKey("AuditEntryId", "__synthesizedOrdinal");
+
+                            b1.ToTable("AuditEntries");
+
+                            b1
+                                .ToJson("Changes")
+                                .HasColumnType("TEXT");
+
+                            b1.WithOwner()
+                                .HasForeignKey("AuditEntryId");
+                        });
+
+                    b.Navigation("Changes");
                 });
 
             modelBuilder.Entity("Pos.Domain.CashShifts.CashMovement", b =>
