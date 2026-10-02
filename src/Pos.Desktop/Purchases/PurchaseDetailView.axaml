@@ -1,0 +1,117 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Pos.Desktop.Purchases"
+             xmlns:res="using:Pos.Desktop.Resources"
+             x:Class="Pos.Desktop.Purchases.PurchaseDetailView"
+             x:DataType="vm:PurchaseDetailViewModel">
+
+  <UserControl.KeyBindings>
+    <KeyBinding Gesture="Escape" Command="{Binding CancelCommand}" />
+  </UserControl.KeyBindings>
+
+  <UserControl.Styles>
+    <Style Selector="TextBlock.label">
+      <Setter Property="Opacity" Value="0.75" />
+      <Setter Property="FontSize" Value="12" />
+    </Style>
+    <Style Selector="TextBlock.figure">
+      <Setter Property="FontSize" Value="18" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="TextBlock.header">
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+  </UserControl.Styles>
+
+  <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,*" RowSpacing="12" MaxWidth="1100" HorizontalAlignment="Left">
+    <!-- Encabezado: datos guardados al registrar (FR-016) -->
+    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12">
+      <Button Command="{Binding CancelCommand}" ToolTip.Tip="{x:Static res:Strings.Common_Cancel}">
+        <PathIcon Data="{StaticResource Icon.Back}" />
+      </Button>
+      <TextBlock Text="{Binding Title}" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center" />
+      <Border Background="{DynamicResource SystemFillColorCriticalBackgroundBrush}" CornerRadius="4" Padding="8,2"
+              VerticalAlignment="Center" IsVisible="{Binding IsVoided}">
+        <TextBlock Text="{x:Static res:Strings.Purchase_VoidedBadge}" />
+      </Border>
+    </StackPanel>
+
+    <WrapPanel Grid.Row="1" Orientation="Horizontal">
+      <StackPanel Margin="0,0,32,8">
+        <TextBlock Classes="label" Text="{x:Static res:Strings.Purchase_Supplier}" />
+        <TextBlock Classes="figure" Text="{Binding SupplierText}" />
+      </StackPanel>
+      <StackPanel Margin="0,0,32,8">
+        <TextBlock Classes="label" Text="{x:Static res:Strings.Purchase_InvoiceDate}" />
+        <TextBlock Classes="figure" Text="{Binding InvoiceDateText}" />
+      </StackPanel>
+      <StackPanel Margin="0,0,32,8">
+        <TextBlock Classes="label" Text="{x:Static res:Strings.Purchase_RegisteredBy}" />
+        <TextBlock Classes="figure" Text="{Binding RegisteredByText}" />
+      </StackPanel>
+      <StackPanel Margin="0,0,32,8">
+        <TextBlock Classes="label" Text="{x:Static res:Strings.Purchase_RegisteredAt}" />
+        <TextBlock Classes="figure" Text="{Binding RegisteredText}" />
+      </StackPanel>
+      <StackPanel Margin="0,0,32,8">
+        <TextBlock Classes="label" Text="{x:Static res:Strings.Purchase_Subtotal}" />
+        <TextBlock Classes="figure" Text="{Binding SubtotalText}" />
+      </StackPanel>
+      <StackPanel Margin="0,0,32,8">
+        <TextBlock Classes="label" Text="{x:Static res:Strings.Purchase_Tax}" />
+        <TextBlock Classes="figure" Text="{Binding TaxText}" />
+      </StackPanel>
+      <StackPanel Margin="0,0,32,8">
+        <TextBlock Classes="label" Text="{x:Static res:Strings.Purchase_Total}" />
+        <TextBlock Classes="figure" Text="{Binding TotalText}" />
+      </StackPanel>
+    </WrapPanel>
+
+    <TextBlock Grid.Row="2" Text="{Binding VoidedText}" TextWrapping="Wrap" IsVisible="{Binding IsVoided}"
+               Foreground="{DynamicResource SystemFillColorCriticalBrush}" />
+
+    <!-- Única acción: anular la compra completa (sin edición, escenario 11) -->
+    <StackPanel Grid.Row="3" Spacing="6">
+      <Button MinHeight="44" HorizontalAlignment="Left" Content="{x:Static res:Strings.Purchase_Void}" Command="{Binding VoidCommand}"
+              IsVisible="{Binding CanVoid}" />
+      <TextBlock Text="{Binding ErrorMessage}" TextWrapping="Wrap" Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                 IsVisible="{Binding ErrorMessage, Converter={x:Static ObjectConverters.IsNotNull}}" />
+      <ContentControl Content="{Binding ActiveDialog}" HorizontalAlignment="Left" />
+    </StackPanel>
+
+    <Grid Grid.Row="4" Margin="12,0" ColumnDefinitions="50,*,130,110,110,130,130,110">
+      <TextBlock Grid.Column="0" Classes="header" Text="{x:Static res:Strings.Purchase_ColNumber}" />
+      <TextBlock Grid.Column="1" Classes="header" Text="{x:Static res:Strings.Purchase_ColProduct}" />
+      <TextBlock Grid.Column="2" Classes="header" Text="{x:Static res:Strings.Purchase_ColSku}" />
+      <TextBlock Grid.Column="3" Classes="header" Text="{x:Static res:Strings.Purchase_ColQuantity}" TextAlignment="Right" />
+      <TextBlock Grid.Column="4" Classes="header" Text="{x:Static res:Strings.Purchase_ColUnit}" Margin="12,0,0,0" />
+      <TextBlock Grid.Column="5" Classes="header" Text="{x:Static res:Strings.Purchase_ColUnitCost}" TextAlignment="Right" />
+      <TextBlock Grid.Column="6" Classes="header" Text="{x:Static res:Strings.Purchase_ColAmount}" TextAlignment="Right" />
+    </Grid>
+
+    <ListBox Grid.Row="5" ItemsSource="{Binding Lines}">
+      <ListBox.ItemTemplate>
+        <DataTemplate x:DataType="vm:PurchaseDetailLineRow">
+          <Grid ColumnDefinitions="50,*,130,110,110,130,130,110" MinHeight="36">
+            <Grid.Styles>
+              <Style Selector="TextBlock">
+                <Setter Property="VerticalAlignment" Value="Center" />
+              </Style>
+            </Grid.Styles>
+            <TextBlock Grid.Column="0" Text="{Binding Number}" />
+            <TextBlock Grid.Column="1" Text="{Binding ProductName}" TextTrimming="CharacterEllipsis" />
+            <TextBlock Grid.Column="2" Text="{Binding Sku}" TextTrimming="CharacterEllipsis" />
+            <TextBlock Grid.Column="3" Text="{Binding QuantityText}" TextAlignment="Right" />
+            <TextBlock Grid.Column="4" Text="{Binding UnitName}" Margin="12,0,0,0" />
+            <TextBlock Grid.Column="5" Text="{Binding UnitCostText}" TextAlignment="Right" />
+            <TextBlock Grid.Column="6" Text="{Binding AmountText}" TextAlignment="Right" />
+            <Border Grid.Column="7" IsVisible="{Binding IsBonus}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Background="{DynamicResource SystemFillColorSuccessBackgroundBrush}" CornerRadius="4" Padding="6,2">
+              <TextBlock Text="{x:Static res:Strings.Purchase_Bonus}" FontSize="12" />
+            </Border>
+          </Grid>
+        </DataTemplate>
+      </ListBox.ItemTemplate>
+    </ListBox>
+  </Grid>
+</UserControl>

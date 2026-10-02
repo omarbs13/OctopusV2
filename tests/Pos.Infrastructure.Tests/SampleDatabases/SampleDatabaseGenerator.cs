@@ -5,13 +5,19 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Pos.Application.CashShifts.CloseShift;
 using Pos.Application.CashShifts.GenerateShiftReadout;
 using Pos.Application.Customers.CreateCustomer;
+using Pos.Application.Discounts;
 using Pos.Application.Discounts.Coupons.SaveCoupon;
+using Pos.Application.Purchases;
+using Pos.Application.Purchases.RegisterPurchase;
+using Pos.Application.Purchases.VoidPurchase;
 using Pos.Application.Receivables;
 using Pos.Application.Receivables.RegisterCustomerPayment;
 using Pos.Application.Returns;
 using Pos.Application.Sales;
 using Pos.Application.Sales.ConfirmSale;
 using Pos.Application.Sales.SaveSaleDraft;
+using Pos.Application.Suppliers.CreateSupplier;
+using Pos.Application.Suppliers.SetSupplierActive;
 using Pos.Application.Users.Access;
 using Pos.Domain.CashShifts;
 using Pos.Domain.Categories;
@@ -22,6 +28,7 @@ using Pos.Domain.Inventory;
 using Pos.Domain.Products;
 using Pos.Domain.Returns;
 using Pos.Domain.Sales;
+using Pos.Domain.Suppliers;
 using Pos.Domain.Users;
 using Pos.Infrastructure.Audit;
 using Pos.Infrastructure.CashShifts;
@@ -31,9 +38,11 @@ using Pos.Infrastructure.Discounts;
 using Pos.Infrastructure.Inventory;
 using Pos.Infrastructure.Persistence;
 using Pos.Infrastructure.Products;
+using Pos.Infrastructure.Purchases;
 using Pos.Infrastructure.Receivables;
 using Pos.Infrastructure.Returns;
 using Pos.Infrastructure.Sales;
+using Pos.Infrastructure.Suppliers;
 using Pos.Infrastructure.Tests.TestSupport;
 
 namespace Pos.Infrastructure.Tests.SampleDatabases;
@@ -114,6 +123,10 @@ public sealed class SampleDatabaseGenerator
         // Desde 0.12.0: el turno 1 quedó cerrado sin Corte Z (como los anteriores a la actualización); el
         // turno 2 tiene un Corte X y se cierra con el Corte Z; el turno 3 queda abierto.
         await SeedShiftCutsAsync(db, adminId, cashierId);
+
+        // Desde 0.14.0: un proveedor activo con RUC, uno inactivo y uno sin RUC; una compra vigente con una
+        // bonificación y otra anulada, sobre los dos productos que controlan inventario.
+        await SeedPurchasesAsync(db, adminId);
 
         // Un solo archivo autocontenido: sin WAL pendiente. Primero se liberan las conexiones del pool.
         SqliteConnection.ClearAllPools();
@@ -448,6 +461,95 @@ public sealed class SampleDatabaseGenerator
         await SalesTestSupport.EnsureShiftAsync(db);
     }
 
+    private static async Task SeedPurchasesAsync(TestDb db, Guid adminId)
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var access = new AllowAllAccessControl();
+        db.User.UserId = adminId;
+        db.Clock.UtcNow = new DateTime(2026, 9, 30, 21, 0, 0, DateTimeKind.Utc);
+
+        async Task<Guid> CreateSupplierAsync(string name, string? taxId, PaymentTerms terms, string? days)
+        {
+            await using var context = db.CreateDbContext();
+            var result = await new CreateSupplierHandler(
+                    access,
+                    new SupplierRepository(context),
+                    new AuditLog(context),
+                    new WriteTransactions(context),
+                    new CreateSupplierValidator(),
+                    NullLogger<CreateSupplierHandler>.Instance)
+                .HandleAsync(new CreateSupplierCommand(name, taxId, "555-0100", null, null, terms, days), ct);
+            Assert.True(result.IsSuccess, result.Error?.ToString());
+            return result.Value;
+        }
+
+        async Task<PurchaseRegisteredDto> RegisterAsync(Guid supplierId, string invoice, params PurchaseLineInput[] lines)
+        {
+            await using var context = db.CreateDbContext();
+            var result = await new RegisterPurchaseHandler(
+                    access,
+                    new SupplierRepository(context),
+                    new ProductRepository(context),
+                    new InventoryRepository(context),
+                    new PurchaseRepository(context),
+                    new AuditLog(context),
+                    new WriteTransactions(context),
+                    db.Clock,
+                    db.User,
+                    new RegisterPurchaseValidator(),
+                    NullLogger<RegisterPurchaseHandler>.Instance)
+                .HandleAsync(new RegisterPurchaseCommand(supplierId, invoice, DiscountDates.LocalToday(db.Clock).AddDays(-1), lines, "40.00"), ct);
+            Assert.True(result.IsSuccess, result.Error?.ToString());
+            return result.Value;
+        }
+
+        var active = await CreateSupplierAsync(SampleData.SupplierName, SampleData.SupplierTaxId, PaymentTerms.Credit, "30");
+        var inactive = await CreateSupplierAsync("Proveedor inactivo de muestra", "RUC-PROV-2", PaymentTerms.Cash, null);
+        await CreateSupplierAsync("Proveedor sin RUC de muestra", null, PaymentTerms.Cash, null);
+        await using (var context = db.CreateDbContext())
+        {
+            var version = context.Suppliers.Single(x => x.Id == inactive).Version;
+            var result = await new SetSupplierActiveHandler(
+                    access,
+                    new SupplierRepository(context),
+                    new AuditLog(context),
+                    new WriteTransactions(context),
+                    NullLogger<SetSupplierActiveHandler>.Instance)
+                .HandleAsync(new SetSupplierActiveCommand(inactive, version, Active: false), ct);
+            Assert.True(result.IsSuccess, result.Error?.ToString());
+        }
+
+        var kilogram = await FindProductAsync(db, SampleData.InventorySku);
+        var piece = await FindProductAsync(db, SampleData.NegativeStockSku);
+
+        // Compra anulada: entra 1 kg y la anulación lo regresa.
+        var voided = await RegisterAsync(active, SampleData.VoidedInvoice, new PurchaseLineInput(kilogram.Id, "1", "38.00"));
+        await using (var context = db.CreateDbContext())
+        {
+            var version = context.Purchases.Single(p => p.Id == voided.PurchaseId).Version;
+            var result = await new VoidPurchaseHandler(
+                    access,
+                    new PurchaseRepository(context),
+                    new ProductRepository(context),
+                    new InventoryRepository(context),
+                    new AuditLog(context),
+                    new WriteTransactions(context),
+                    db.Clock,
+                    db.User,
+                    new VoidPurchaseValidator(),
+                    NullLogger<VoidPurchaseHandler>.Instance)
+                .HandleAsync(new VoidPurchaseCommand(voided.PurchaseId, version, SampleData.PurchaseVoidReason), ct);
+            Assert.True(result.IsSuccess, result.Error?.ToString());
+        }
+
+        // Compra vigente: 2.5 kg a $40.00 y 1 pieza bonificada ($0.00).
+        await RegisterAsync(
+            active,
+            SampleData.ActiveInvoice,
+            new PurchaseLineInput(kilogram.Id, "2.5", "40.00"),
+            new PurchaseLineInput(piece.Id, "1", "0.00"));
+    }
+
     private static async Task<Product> FindProductAsync(TestDb db, string sku)
     {
         await using var context = db.CreateDbContext();
@@ -557,6 +659,17 @@ public static class SampleData
     public const string ClosingFolio = "Z-000001";
     public const long ClosingShortageCents = 500;
     public const string ClosingComment = "Faltante de muestra";
+
+    /// <summary>Desde 0.14.0: proveedor activo con las dos compras (una vigente y otra anulada).</summary>
+    public const string SupplierName = "Distribuidora de muestra";
+    public const string SupplierTaxId = "RUC-PROV-1";
+    public const string ActiveInvoice = "FAC-0001";
+    public const string VoidedInvoice = "FAC-0002";
+    public const string PurchaseVoidReason = "Factura capturada por error";
+
+    /// <summary>Desde 0.14.0: la compra vigente suma 2.5 kg al producto en kilo y 1 pieza bonificada a la pieza en negativo.</summary>
+    public const long PurchaseKilogramThousandths = 2_500;
+    public const long PurchaseBonusThousandths = 1_000;
 
     /// <summary>Desde 0.6.0: usuarios de muestra. El administrador hace la venta 1; el cajero, la 2 y la 3 y el borrador.</summary>
     public const string AdminUserName = "admin";

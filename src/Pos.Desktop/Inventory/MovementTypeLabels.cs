@@ -16,6 +16,8 @@ internal static class MovementTypeLabels
         MovementType.Sale => Strings.MovementType_Sale,
         MovementType.SaleCancellation => Strings.MovementType_SaleCancellation,
         MovementType.SaleReturn => Strings.MovementType_SaleReturn,
+        MovementType.Purchase => Strings.MovementType_Purchase,
+        MovementType.PurchaseVoid => Strings.MovementType_PurchaseVoid,
         _ => Strings.MovementType_AdjustOut,
     };
 }

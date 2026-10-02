@@ -10,6 +10,7 @@ public enum AuditEntityGroup
     Category,
     Customer,
     Coupon,
+    Purchases,
     CashShift,
     Settings,
     Reports,
@@ -48,6 +49,7 @@ public static class AuditEntityGroups
         AuditEntityGroup.Category => "Categoría",
         AuditEntityGroup.Customer => "Cliente",
         AuditEntityGroup.Coupon => "Cupón",
+        AuditEntityGroup.Purchases => "Proveedores y compras",
         AuditEntityGroup.CashShift => "Caja/Turno",
         AuditEntityGroup.Settings => "Configuración",
         AuditEntityGroup.Reports => "Reportes y exportaciones",
@@ -79,6 +81,7 @@ public static class AuditEntityGroups
         AuditEntityGroup.Category => Types(AuditActions.CategoryEntity),
         AuditEntityGroup.Customer => Types(AuditActions.CustomerEntity, AuditActions.CustomerPaymentEntity),
         AuditEntityGroup.Coupon => Types(AuditActions.CouponEntity),
+        AuditEntityGroup.Purchases => Types(AuditActions.SupplierEntity, AuditActions.PurchaseEntity),
         AuditEntityGroup.CashShift => Types(AuditActions.CashShiftEntity, AuditActions.ShiftCutEntity, AuditActions.CashDrawerEntity),
         AuditEntityGroup.Settings => new(
             [AuditActions.ReturnSettingsEntity, AuditActions.ReceivablesSettingsEntity, AuditActions.DiscountSettingsEntity, AuditActions.LicenseEntity],

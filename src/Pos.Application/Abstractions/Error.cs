@@ -168,6 +168,44 @@ public sealed record CategoryInUse(int ProductCount) : Error;
 /// </summary>
 public sealed record CategoryNotAssignable : Error;
 
+/// <summary>
+/// Otro proveedor (activo o inactivo) ya tiene el RUC (020, FR-003).
+/// Mensaje: "El RUC ya está registrado para el proveedor {nombre}".
+/// </summary>
+public sealed record SupplierTaxIdInUse(Guid SupplierId, string Name) : Error;
+
+/// <summary>
+/// Ya hay una compra vigente del proveedor con esa factura (020, FR-011). Mensaje: "La factura {número} de
+/// {proveedor} ya está registrada (compra del {fecha})".
+/// </summary>
+public sealed record DuplicateInvoice(Guid PurchaseId, DateOnly InvoiceDate, DateTime RegisteredAtUtc) : Error;
+
+/// <summary>
+/// Alguna línea de la compra no se puede revertir; no se cambió nada (020, FR-017b). Trae todas las líneas
+/// afectadas con su causa.
+/// </summary>
+public sealed record PurchaseVoidBlocked(IReadOnlyList<PurchaseVoidBlocker> Lines) : Error;
+
+/// <summary>Línea que impide anular una compra y su causa (020, FR-017b).</summary>
+public sealed record PurchaseVoidBlocker(
+    Guid ProductId,
+    string ProductName,
+    VoidBlockReason Reason,
+    long OnHandThousandths,
+    long RequiredThousandths);
+
+public enum VoidBlockReason
+{
+    /// <summary>La existencia actual es menor que la cantidad comprada.</summary>
+    InsufficientStock,
+
+    /// <summary>El producto está inactivo o borrado.</summary>
+    ProductInactive,
+
+    /// <summary>El producto ya no controla inventario.</summary>
+    NotTracked,
+}
+
 /// <summary>El archivo de licencia importado se rechazó; la licencia vigente no cambió (011, FR-012).</summary>
 public sealed record InvalidLicense(LicenseImportRejection Reason) : Error;
 

@@ -42,16 +42,6 @@ public sealed class AuditTrailMigrationTests
     }
 
     [Fact]
-    public async Task AuditTrail_EsLaUltimaMigracion()
-    {
-        using var db = await TestDb.CreateAsync();
-        await using var context = db.CreateDbContext();
-
-        Assert.EndsWith("_AuditTrail", context.Database.GetMigrations().Last(), StringComparison.Ordinal);
-        Assert.Empty(await context.Database.GetPendingMigrationsAsync(TestContext.Current.CancellationToken));
-    }
-
-    [Fact]
     public async Task EntradasAnterioresA0130_SeConservanConLasColumnasNuevasNulas()
     {
         using var dir = new TempDataDirectory();

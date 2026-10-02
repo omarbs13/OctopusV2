@@ -1068,6 +1068,160 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Pos.Domain.Purchases.Purchase", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly>("InvoiceDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("InvoiceKey")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("InvoiceNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("LineCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("SubtotalCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SupplierName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("TaxCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("TotalCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("VoidReason")
+                        .HasMaxLength(250)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("VoidedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("VoidedBy")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SupplierId", "InvoiceDate")
+                        .HasDatabaseName("IX_Purchases_Supplier_InvoiceDate");
+
+                    b.HasIndex("SupplierId", "InvoiceKey")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Purchases_Supplier_InvoiceKey")
+                        .HasFilter("\"Status\" = 'ACTIVE'");
+
+                    b.HasIndex("InvoiceDate", "CreatedAt", "Id")
+                        .HasDatabaseName("IX_Purchases_InvoiceDate");
+
+                    b.ToTable("Purchases", (string)null);
+                });
+
+            modelBuilder.Entity("Pos.Domain.Purchases.PurchaseLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("AmountCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("LineNumber")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("MovementId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ProductSku")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("PurchaseId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("QuantityThousandths")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("UnitCode")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("UnitCostCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid?>("VoidMovementId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MovementId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_PurchaseLines_MovementId");
+
+                    b.HasIndex("ProductId")
+                        .HasDatabaseName("IX_PurchaseLines_ProductId");
+
+                    b.HasIndex("VoidMovementId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_PurchaseLines_VoidMovementId")
+                        .HasFilter("\"VoidMovementId\" IS NOT NULL");
+
+                    b.HasIndex("PurchaseId", "LineNumber")
+                        .IsUnique()
+                        .HasDatabaseName("IX_PurchaseLines_Purchase_LineNumber");
+
+                    b.HasIndex("PurchaseId", "ProductId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_PurchaseLines_Purchase_Product");
+
+                    b.ToTable("PurchaseLines", (string)null);
+                });
+
             modelBuilder.Entity("Pos.Domain.Receivables.CustomerPayment", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1666,6 +1820,80 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.ToTable("SalePayments", (string)null);
                 });
 
+            modelBuilder.Entity("Pos.Domain.Suppliers.Supplier", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(300)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("CreditDays")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(254)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PaymentTerms")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(30)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SearchText")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TaxId")
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TaxId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Suppliers_TaxId")
+                        .HasFilter("\"TaxId\" IS NOT NULL");
+
+                    b.HasIndex("IsActive", "SearchText")
+                        .HasDatabaseName("IX_Suppliers_Active_Search");
+
+                    b.ToTable("Suppliers", (string)null);
+                });
+
             modelBuilder.Entity("Pos.Domain.Users.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1880,6 +2108,41 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Pos.Domain.Purchases.Purchase", b =>
+                {
+                    b.HasOne("Pos.Domain.Suppliers.Supplier", null)
+                        .WithMany()
+                        .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Pos.Domain.Purchases.PurchaseLine", b =>
+                {
+                    b.HasOne("Pos.Domain.Inventory.InventoryMovement", null)
+                        .WithMany()
+                        .HasForeignKey("MovementId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Pos.Domain.Products.Product", null)
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Pos.Domain.Purchases.Purchase", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("PurchaseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pos.Domain.Inventory.InventoryMovement", null)
+                        .WithMany()
+                        .HasForeignKey("VoidMovementId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
             modelBuilder.Entity("Pos.Domain.Receivables.CustomerPayment", b =>
                 {
                     b.HasOne("Pos.Domain.CashShifts.CashShift", null)
@@ -2023,6 +2286,11 @@ namespace Pos.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Pos.Domain.Products.Product", b =>
                 {
                     b.Navigation("Image");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Purchases.Purchase", b =>
+                {
+                    b.Navigation("Lines");
                 });
 
             modelBuilder.Entity("Pos.Domain.Receivables.Receivable", b =>

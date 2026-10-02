@@ -17,6 +17,7 @@ using Pos.Desktop.Inventory;
 using Pos.Desktop.Licensing;
 using Pos.Desktop.Navigation;
 using Pos.Desktop.Products;
+using Pos.Desktop.Purchases;
 using Pos.Desktop.Reports;
 using Pos.Desktop.Returns;
 using Pos.Desktop.Sales;
@@ -89,6 +90,7 @@ internal static class HostBuilder
         services.AddProductsModule();
         services.AddCategoriesModule();
         services.AddInventoryModule();
+        services.AddPurchasesModule();
         services.AddSalesModule();
         services.AddCashShiftsModule();
         services.AddCashModule();

@@ -63,6 +63,12 @@ public static class AuditActions
     public const string ProductDeleted = "PRODUCT_DELETED";
     public const string SaleDiscountsApplied = "SALE_DISCOUNTS_APPLIED";
     public const string AuditExported = "AUDIT_EXPORTED";
+    public const string SupplierCreated = "SUPPLIER_CREATED";
+    public const string SupplierUpdated = "SUPPLIER_UPDATED";
+    public const string SupplierDeactivated = "SUPPLIER_DEACTIVATED";
+    public const string SupplierActivated = "SUPPLIER_ACTIVATED";
+    public const string PurchaseRegistered = "PURCHASE_REGISTERED";
+    public const string PurchaseVoided = "PURCHASE_VOIDED";
 
     public const string UserEntity = "User";
     public const string CashShiftEntity = "CashShift";
@@ -83,6 +89,8 @@ public static class AuditActions
     public const string ProductEntity = "Product";
     public const string AuditLogEntity = "AuditLog";
     public const string CashDrawerEntity = "CashDrawer";
+    public const string SupplierEntity = "Supplier";
+    public const string PurchaseEntity = "Purchase";
 
     /// <summary>Texto en español de cada evento, en el orden en que se ofrece en el filtro.</summary>
     public static readonly IReadOnlyDictionary<string, string> All = new Dictionary<string, string>
@@ -145,6 +153,12 @@ public static class AuditActions
         [ProductDeleted] = "Producto eliminado",
         [SaleDiscountsApplied] = "Venta con descuento",
         [AuditExported] = "Bitácora exportada",
+        [SupplierCreated] = "Proveedor creado",
+        [SupplierUpdated] = "Proveedor modificado",
+        [SupplierDeactivated] = "Proveedor desactivado",
+        [SupplierActivated] = "Proveedor activado",
+        [PurchaseRegistered] = "Compra registrada",
+        [PurchaseVoided] = "Compra anulada",
     }.ToFrozenDictionary();
 
     /// <summary>Texto en español del evento; el código tal cual si no está en el catálogo.</summary>

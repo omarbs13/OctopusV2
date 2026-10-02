@@ -282,3 +282,33 @@ La migración `AuditTrail` **no reconstruye ninguna tabla** ni transforma datos:
 las entradas conserven sus datos con las columnas nuevas en nulo. La base de ejemplo `v0.13.0.db` trae
 entradas con `EntityName`, `Reason` y `Changes` (la cancelación, la devolución y las ventas con descuento de
 `SampleData`). Ver [auditoria.md](auditoria.md).
+
+## 0.14.0: proveedores y compras (`SuppliersAndPurchases`)
+
+La migración `SuppliersAndPurchases` **no reconstruye ninguna tabla** ni toca datos:
+
+- Crea `Suppliers`, `Purchases` y `PurchaseLines` con llaves foráneas `Restrict` hacia `Suppliers`,
+  `Products` e `InventoryMovements` (y `Cascade` de la línea a su compra, que nunca se borra). Como las
+  tablas son nuevas, ninguna llave obliga a reconstruir.
+- Crea diez índices, entre ellos `IX_Suppliers_TaxId` (único filtrado `WHERE "TaxId" IS NOT NULL`),
+  `IX_Purchases_Supplier_InvoiceKey` (único filtrado `WHERE "Status" = 'ACTIVE'`: una factura vigente por
+  proveedor), `IX_Purchases_InvoiceDate` (`InvoiceDate`, `CreatedAt`, `Id`) para el reporte y
+  `IX_PurchaseLines_MovementId` / `IX_PurchaseLines_VoidMovementId` (únicos) para el enlace con el kárdex.
+- Los tipos de movimiento nuevos `PURCHASE` y `PURCH_VOID` son solo valores nuevos de la columna existente
+  `InventoryMovements.Type` (`TEXT(12)`): `PURCH_VOID` y no `PURCHASE_VOID` (13 caracteres) para no cambiar
+  la longitud y reconstruir la tabla. El enlace movimiento-compra vive en `PurchaseLines` por la misma razón.
+
+`SuppliersAndPurchasesMigrationTests` revisa el SQL (exactamente tres `CREATE TABLE`, diez índices y ningún
+`ALTER TABLE`, `DROP TABLE`, `UPDATE`, `INSERT` de datos ni `ef_temp_`) y que al migrar `v0.13.0.db` se
+conserven los movimientos de inventario y las existencias con las tablas nuevas vacías.
+
+La base `v0.13.0.db` no se había versionado al publicar 0.13.0; se generó con el código de 0.13.0 antes de
+agregar esta migración. Al incorporarla, `SampleDatabaseUpgradeTests` espera para 0.13.0 la entrada
+`SALE_DISCOUNTS_APPLIED` autorizada (formato de 018) en lugar de `DISCOUNT_APPLIED_AUTHORIZED`.
+
+La base de ejemplo `v0.14.0.db` trae, además de lo anterior, tres proveedores (uno activo a crédito con
+RUC, uno inactivo y uno sin RUC), la compra vigente `FAC-0001` (2.5 kg del producto por kilo y 1 pieza
+bonificada del producto en negativo, con impuestos) y la compra anulada `FAC-0002` con su `PURCH_VOID`.
+`SampleDatabaseUpgradeTests` verifica que las tres tablas estén vacías en las bases anteriores y que
+`v0.14.0.db` conserve proveedores, compras, líneas, importes y los enlaces a sus movimientos. Ver
+[compras.md](compras.md).

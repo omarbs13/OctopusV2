@@ -8,14 +8,18 @@ using Pos.Application.Inventory.SearchMovements;
 using Pos.Desktop.Common;
 using Pos.Desktop.Forms;
 using Pos.Desktop.Navigation;
+using Pos.Desktop.Purchases;
 using Pos.Desktop.Resources;
 using Pos.Domain.Inventory;
 using Pos.Domain.Users;
 
 namespace Pos.Desktop.Inventory;
 
-/// <summary>Fila del historial con los textos ya formateados. No ofrece acciones: los movimientos son inmutables.</summary>
-public sealed record MovementRow(MovementDto Item)
+/// <summary>
+/// Fila del historial con los textos ya formateados. Los movimientos son inmutables; la única acción es abrir la
+/// compra que generó o revirtió el movimiento (020), si <paramref name="CanOpenPurchase"/>.
+/// </summary>
+public sealed record MovementRow(MovementDto Item, bool CanOpenPurchase = false)
 {
     public string DateText => Item.CreatedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture);
 
@@ -32,7 +36,14 @@ public sealed record MovementRow(MovementDto Item)
 
     public string Reason => Item.Reason ?? string.Empty;
 
-    public string Reference => Item.Reference ?? string.Empty;
+    /// <summary>"Factura {número} · {proveedor}" en los movimientos de compra (contracts/ui.md "Kárdex").</summary>
+    public string Reference => Item.SupplierName is { } supplier
+        ? string.Format(CultureInfo.CurrentCulture, Strings.Purchase_InvoiceReference, Item.Reference, supplier)
+        : Item.Reference ?? string.Empty;
+
+    public bool ShowPurchaseLink => CanOpenPurchase && Item.PurchaseId is not null;
+
+    public bool ShowReferenceText => !ShowPurchaseLink;
 
     public string UserName => Item.CreatedByName;
 }
@@ -43,6 +54,7 @@ public sealed partial class MovementsViewModel : PageViewModel, INavigationArgum
     private readonly UseCases _useCases;
     private readonly OperationRunner _runner;
     private readonly Func<MovementEditorViewModel> _editorFactory;
+    private readonly Func<PurchaseDetailViewModel>? _purchaseDetailFactory;
 
     private int _searchVersion;
     private bool _suppressAutoSearch;
@@ -51,9 +63,13 @@ public sealed partial class MovementsViewModel : PageViewModel, INavigationArgum
         UseCases useCases,
         OperationRunner runner,
         Func<MovementEditorViewModel> editorFactory,
-        ICurrentPermissions? permissions = null)
+        ICurrentPermissions? permissions = null,
+        Func<PurchaseDetailViewModel>? purchaseDetailFactory = null)
     {
         CanRegisterMovements = permissions?.Has(Permission.RegisterMovements) ?? true;
+        CanOpenPurchases = purchaseDetailFactory is not null
+            && (permissions is null || permissions.Has(Permission.ViewPurchaseReport) || permissions.Has(Permission.RegisterPurchases));
+        _purchaseDetailFactory = purchaseDetailFactory;
         _useCases = useCases;
         _runner = runner;
         _editorFactory = editorFactory;
@@ -74,6 +90,9 @@ public sealed partial class MovementsViewModel : PageViewModel, INavigationArgum
 
     /// <summary>Puede registrar movimientos de inventario; el Cajero solo consulta (FR-010).</summary>
     public bool CanRegisterMovements { get; }
+
+    /// <summary>Puede abrir el detalle de la compra de un movimiento (020, contracts/ui.md "Kárdex").</summary>
+    public bool CanOpenPurchases { get; }
 
     public override FormHost Forms { get; } = new();
 
@@ -190,6 +209,23 @@ public sealed partial class MovementsViewModel : PageViewModel, INavigationArgum
         await Forms.OpenAsync(editor, FormPresentation.SidePanel);
     }
 
+    /// <summary>Abre el detalle de la compra que generó o revirtió el movimiento.</summary>
+    [RelayCommand]
+    private async Task OpenPurchaseAsync(MovementRow? row)
+    {
+        if (row?.Item.PurchaseId is not { } purchaseId || _purchaseDetailFactory is null || !CanOpenPurchases)
+        {
+            return;
+        }
+
+        var detail = _purchaseDetailFactory();
+        detail.Voided += (_, _) => _ = SearchAsync();
+        if (await detail.LoadAsync(purchaseId))
+        {
+            await Forms.OpenAsync(detail, FormPresentation.FullScreen);
+        }
+    }
+
     private bool HasPreviousPage() => CurrentPage > 1;
 
     private bool HasNextPage() => CurrentPage < TotalPages;
@@ -265,7 +301,7 @@ public sealed partial class MovementsViewModel : PageViewModel, INavigationArgum
         Rows.Clear();
         foreach (var item in result.Value.Items)
         {
-            Rows.Add(new MovementRow(item));
+            Rows.Add(new MovementRow(item, CanOpenPurchases));
         }
 
         var page = result.Value;

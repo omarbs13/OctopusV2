@@ -7,7 +7,9 @@ public static class ModuleAccess
 {
     public static LicensedModule? Required(Permission permission) => permission switch
     {
-        Permission.ViewInventory or Permission.RegisterMovements => LicensedModule.Inventory,
+        Permission.ViewInventory or Permission.RegisterMovements or Permission.ManageSuppliers
+            or Permission.RegisterPurchases or Permission.VoidPurchases
+            or Permission.ViewPurchaseReport => LicensedModule.Inventory,
         Permission.ViewReports => LicensedModule.AdvancedReports,
         Permission.OperateShift or Permission.WithdrawCash or Permission.ManageShifts
             or Permission.GenerateShiftReadout => LicensedModule.CashShifts,

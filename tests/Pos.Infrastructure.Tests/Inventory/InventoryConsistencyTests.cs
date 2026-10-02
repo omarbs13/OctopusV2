@@ -100,6 +100,39 @@ public sealed class InventoryConsistencyTests : IAsyncLifetime
         await AssertInvariantsAsync();
     }
 
+    [Fact]
+    public async Task ComprasYAnulaciones_MezcladasConVentasYAjustes_MantienenElKardexConsistente()
+    {
+        // 020: PURCHASE suma y PURCH_VOID resta con las mismas reglas que los demás movimientos.
+        var purchases = await PurchaseTestSupport.CreateAsync(_db);
+        var supplier = await purchases.Suppliers.CreateOkAsync("Norte");
+        var pieza = _products[0];
+        var kilo = _products[1];
+        await SalesTestSupport.StockAsync(_db, pieza, "10");
+
+        var first = await purchases.RegisterOkAsync(supplier, "F-1", PurchaseTestSupport.Line(pieza, "5", "1.00"));
+        await purchases.RegisterOkAsync(supplier, "F-K", PurchaseTestSupport.Line(kilo, "2.5", "40.00"));
+        await SalesTestSupport.SellOkAsync(_db, (pieza, 4_000));
+        await purchases.RegisterOkAsync(supplier, "F-2", PurchaseTestSupport.Line(pieza, "3", "1.10"));
+        await using (var context = _db.CreateDbContext())
+        {
+            var adjust = await InventoryTestSupport.Handler(context)
+                .HandleAsync(new RegisterMovementCommand(kilo.Id, MovementType.AdjustOut, "0.250", "merma", null), Ct);
+            Assert.True(adjust.IsSuccess);
+        }
+
+        Assert.True((await purchases.VoidAsync(first.PurchaseId)).IsSuccess);
+        await SalesTestSupport.SellOkAsync(_db, (pieza, 1_000));
+
+        await using (var context = _db.CreateDbContext())
+        {
+            Assert.Equal(10_000 + 5_000 - 4_000 + 3_000 - 5_000 - 1_000, (await context.ProductStocks.AsNoTracking().SingleAsync(s => s.ProductId == pieza.Id, Ct)).OnHandThousandths);
+        }
+
+        Assert.Equal(2_250, await purchases.StockOfAsync(kilo.Id));
+        await AssertInvariantsAsync();
+    }
+
     private async Task AssertInvariantsAsync()
     {
         await using var context = _db.CreateDbContext();

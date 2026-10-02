@@ -42,6 +42,10 @@ Los permisos se asignan a los roles en un solo lugar: `src/Pos.Domain/Users/Role
 | Cupones y límite de descuento (`ManageDiscounts`) | ✔ | |
 | Descuentos > Reporte (`ViewDiscountReport`) | ✔ | |
 | Generar un Corte X del turno abierto (`GenerateShiftReadout`) | ✔ | con autorización |
+| Proveedores: alta, edición, desactivación y consulta (`ManageSuppliers`) | ✔ | |
+| Registrar compras: Inventario > Entrada de mercancía (`RegisterPurchases`) | ✔ | |
+| Anular compras (`VoidPurchases`) | ✔ | |
+| Reportes > Compras y detalle de una compra (`ViewPurchaseReport`) | ✔ | |
 
 Los 7 permisos de clientes y crédito (0.9.0) pertenecen al módulo **Crédito y clientes** de la licencia:
 sin él no aparecen en el menú y los casos de uso devuelven "módulo no activo". La anulación de abonos
@@ -56,6 +60,11 @@ El permiso del Corte X (0.12.0) pertenece al módulo **Turnos y arqueo**, igual 
 Administrador presente sin abrirle otras operaciones de "Turnos"; el corte y la bitácora guardan quién
 autorizó. El histórico de cortes usa `ManageShifts` (solo Administrador). Ver
 [turnos-de-caja.md](turnos-de-caja.md).
+
+Los 4 permisos de proveedores y compras (0.14.0) pertenecen al módulo **Inventario**, igual que
+`ViewInventory` y `RegisterMovements`. Son solo del Administrador y **ninguno es autorizable**: un Cajero
+no puede registrar ni anular una compra aunque un Administrador capture su contraseña. `RegisterPurchases`
+es independiente de `RegisterMovements`. Ver [compras.md](compras.md).
 
 Los permisos se verifican en los casos de uso, releyendo al usuario de la base en cada operación
 restringida: un usuario desactivado o con otro rol pierde el acceso aunque su sesión siga abierta. El

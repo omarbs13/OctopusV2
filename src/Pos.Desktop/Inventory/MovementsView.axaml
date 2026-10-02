@@ -61,7 +61,7 @@
             <ColumnDefinition Width="110" />
             <ColumnDefinition Width="90" />
             <ColumnDefinition Width="*" MinWidth="100" />
-            <ColumnDefinition Width="90" />
+            <ColumnDefinition Width="*" MinWidth="120" />
             <ColumnDefinition Width="80" />
           </Grid.ColumnDefinitions>
           <Grid.Styles>
@@ -80,7 +80,7 @@
           <TextBlock Grid.Column="8" Text="{x:Static res:Strings.Movements_ColUser}" />
         </Grid>
 
-        <!-- Sin acciones de fila: los movimientos no se editan ni se borran -->
+        <!-- Sin acciones de edición: los movimientos no se editan ni se borran -->
         <ListBox Grid.Row="3" ItemsSource="{Binding Rows}" SelectionMode="Single">
           <ListBox.ItemTemplate>
             <DataTemplate x:DataType="vm:MovementRow">
@@ -98,7 +98,7 @@
                   <ColumnDefinition Width="110" />
                   <ColumnDefinition Width="90" />
                   <ColumnDefinition Width="*" MinWidth="100" />
-                  <ColumnDefinition Width="90" />
+                  <ColumnDefinition Width="*" MinWidth="120" />
                   <ColumnDefinition Width="80" />
                 </Grid.ColumnDefinitions>
                 <TextBlock Grid.Column="0" Text="{Binding DateText}" />
@@ -108,7 +108,15 @@
                 <TextBlock Grid.Column="4" Text="{Binding ResultingText}" TextAlignment="Right" />
                 <TextBlock Grid.Column="5" Text="{Binding UnitName}" TextTrimming="CharacterEllipsis" Margin="12,0,0,0" />
                 <TextBlock Grid.Column="6" Text="{Binding Reason}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Reason}" />
-                <TextBlock Grid.Column="7" Text="{Binding Reference}" TextTrimming="CharacterEllipsis" />
+                <TextBlock Grid.Column="7" Text="{Binding Reference}" TextTrimming="CharacterEllipsis"
+                           IsVisible="{Binding ShowReferenceText}" ToolTip.Tip="{Binding Reference}" />
+                <!-- 020: la referencia de un movimiento de compra abre su detalle -->
+                <Button Grid.Column="7" Padding="0" Background="Transparent" BorderThickness="0"
+                        IsVisible="{Binding ShowPurchaseLink}" ToolTip.Tip="{x:Static res:Strings.Purchase_ViewPurchase}"
+                        Command="{Binding $parent[ListBox].((vm:MovementsViewModel)DataContext).OpenPurchaseCommand}"
+                        CommandParameter="{Binding}">
+                  <TextBlock Text="{Binding Reference}" TextTrimming="CharacterEllipsis" TextDecorations="Underline" />
+                </Button>
                 <TextBlock Grid.Column="8" Text="{Binding UserName}" TextTrimming="CharacterEllipsis" />
               </Grid>
             </DataTemplate>

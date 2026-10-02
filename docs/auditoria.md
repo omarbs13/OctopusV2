@@ -49,6 +49,7 @@ por su nombre). `AuditChanges` compara dos instantáneas:
 | Cliente | Nombre, Teléfono, Email, RUC, Modalidad de crédito, Límite de crédito, Estado |
 | Cupón | Código, Descuento, Desde, Hasta, Límite de usos, Estado |
 | Configuración | El valor que cambió: plazo de devoluciones, plazo de pago, límite de descuento o umbral de alerta de arqueo |
+| Proveedor | Nombre, RUC, Teléfono, Email, Dirección, Condiciones de pago ("Contado" / "Crédito a {n} días"), Estado |
 
 El costo del producto no se audita. Los valores se guardan formateados para conservar cómo se veía el dato
 en ese momento, aunque el registro cambie o se borre después.
@@ -87,6 +88,19 @@ Además, los eventos de usuarios, categorías, clientes, cupones y configuració
 sus cambios de campo. En usuarios y clientes, los datos van en el evento de modificación y el estado (o el
 crédito) en su propio evento (`USER_DEACTIVATED`, `CUSTOMER_CREDIT_CHANGED`…).
 
+## Eventos agregados en 0.14.0
+
+| Código | Texto | Quién lo registra |
+|---|---|---|
+| `SUPPLIER_CREATED` | Proveedor creado | `CreateSupplier`, con la instantánea del proveedor |
+| `SUPPLIER_UPDATED` | Proveedor modificado | `UpdateSupplier`, solo con los campos que cambiaron (sin entrada si no cambió nada) |
+| `SUPPLIER_DEACTIVATED`, `SUPPLIER_ACTIVATED` | Proveedor desactivado / activado | `SetSupplierActive`, con el cambio de "Estado" |
+| `PURCHASE_REGISTERED` | Compra registrada | `RegisterPurchase`; registro "Compra {factura} · {proveedor}" con Proveedor, Factura, Fecha de factura, Líneas, Subtotal, Impuestos y Total |
+| `PURCHASE_VOIDED` | Compra anulada | `VoidPurchase`; el motivo va en "Motivo" y los cambios son Estado "Vigente" → "Anulada" y los importes que dejan de contar |
+
+Las líneas de la compra no se registran en la bitácora: son inmutables y se consultan en el detalle de la
+compra. Ver [compras.md](compras.md).
+
 ## Consulta
 
 **Administración → Bitácora**. Filtros: rango de fechas (inicia en hoy), usuario involucrado (autor,
@@ -105,6 +119,7 @@ detalle muestra el motivo, la tabla Campo | Antes | Después (los vacíos como "
 | Categoría | `Category` |
 | Cliente | `Customer`, `CustomerPayment` |
 | Cupón | `Coupon` |
+| Proveedores y compras | `Supplier`, `Purchase` |
 | Caja/Turno | `CashShift`, `ShiftCut`, `CashDrawer` |
 | Configuración | `ReturnSettings`, `ReceivablesSettings`, `DiscountSettings`, `License` y el evento `REPORT_SETTINGS_CHANGED` |
 | Reportes y exportaciones | `Report` (sin `REPORT_SETTINGS_CHANGED`) y `AuditLog` |

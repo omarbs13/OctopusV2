@@ -12,12 +12,18 @@ public enum MovementType
     Sale,
     SaleCancellation,
     SaleReturn,
+
+    /// <summary>Entrada por una compra registrada (020); solo la genera <see cref="ProductStock.RecordPurchase"/>.</summary>
+    Purchase,
+
+    /// <summary>Salida por la anulación de una compra (020); solo la genera <see cref="ProductStock.RecordPurchaseVoid"/>.</summary>
+    PurchaseVoid,
 }
 
 public static class MovementTypeExtensions
 {
     public static bool IsIncrease(this MovementType type) =>
-        type is not (MovementType.AdjustOut or MovementType.Sale);
+        type is not (MovementType.AdjustOut or MovementType.Sale or MovementType.PurchaseVoid);
 
     public static bool RequiresReason(this MovementType type) =>
         type is MovementType.AdjustIn or MovementType.AdjustOut;
@@ -32,6 +38,8 @@ public static class MovementTypeExtensions
         MovementType.Sale => "SALE",
         MovementType.SaleCancellation => "SALE_CANCEL",
         MovementType.SaleReturn => "SALE_RETURN",
+        MovementType.Purchase => "PURCHASE",
+        MovementType.PurchaseVoid => "PURCH_VOID",
         _ => throw new DomainException("El tipo de movimiento no es válido."),
     };
 
@@ -44,6 +52,8 @@ public static class MovementTypeExtensions
         "SALE" => MovementType.Sale,
         "SALE_CANCEL" => MovementType.SaleCancellation,
         "SALE_RETURN" => MovementType.SaleReturn,
+        "PURCHASE" => MovementType.Purchase,
+        "PURCH_VOID" => MovementType.PurchaseVoid,
         _ => throw new DomainException("El tipo de movimiento no es válido."),
     };
 }

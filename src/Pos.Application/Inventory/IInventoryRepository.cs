@@ -109,7 +109,9 @@ public sealed record MovementDto(
     string? Reason,
     string? Reference,
     Guid CreatedBy,
-    string CreatedByName);
+    string CreatedByName,
+    Guid? PurchaseId = null,
+    string? SupplierName = null);
 
 public sealed record MovementPage(IReadOnlyList<MovementDto> Items, long TotalCount, int Page, int PageSize)
 {

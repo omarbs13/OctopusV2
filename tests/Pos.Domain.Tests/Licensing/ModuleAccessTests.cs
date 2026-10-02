@@ -27,6 +27,10 @@ public sealed class ModuleAccessTests
     [InlineData(Permission.ApproveDiscounts, LicensedModule.Discounts)]
     [InlineData(Permission.ManageDiscounts, LicensedModule.Discounts)]
     [InlineData(Permission.ViewDiscountReport, LicensedModule.Discounts)]
+    [InlineData(Permission.ManageSuppliers, LicensedModule.Inventory)]
+    [InlineData(Permission.RegisterPurchases, LicensedModule.Inventory)]
+    [InlineData(Permission.VoidPurchases, LicensedModule.Inventory)]
+    [InlineData(Permission.ViewPurchaseReport, LicensedModule.Inventory)]
     public void PermisosDeModulo_MapeanASuModulo(Permission permission, LicensedModule expected) =>
         Assert.Equal(expected, ModuleAccess.Required(permission));
 

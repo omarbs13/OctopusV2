@@ -9,4 +9,6 @@ public static class ReportMessages
     public const string NoData = "Sin datos en este período";
     public const string ThresholdRange = "El umbral debe estar entre 0.01 % y 100 %.";
     public const string MissingBusiness = "Faltan los datos del negocio.";
+    public const string AmountInvalid = "Capture el importe como un número mayor o igual que 0, por ejemplo 1500.00.";
+    public const string MinAboveMax = "El total mínimo no puede ser mayor que el máximo.";
 }

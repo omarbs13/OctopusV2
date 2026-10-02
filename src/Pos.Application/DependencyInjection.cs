@@ -50,6 +50,17 @@ using Pos.Application.Customers.GetCustomer;
 using Pos.Application.Customers.SearchCustomers;
 using Pos.Application.Customers.SetCustomerActive;
 using Pos.Application.Customers.UpdateCustomer;
+using Pos.Application.Purchases.CalculatePurchaseTotals;
+using Pos.Application.Purchases.GetPurchase;
+using Pos.Application.Purchases.RegisterPurchase;
+using Pos.Application.Purchases.VoidPurchase;
+using Pos.Application.Suppliers.CreateSupplier;
+using Pos.Application.Suppliers.GetSupplier;
+using Pos.Application.Suppliers.ListSuppliersForPurchase;
+using Pos.Application.Suppliers.ListSuppliersForReport;
+using Pos.Application.Suppliers.SearchSuppliers;
+using Pos.Application.Suppliers.SetSupplierActive;
+using Pos.Application.Suppliers.UpdateSupplier;
 using Pos.Application.Discounts;
 using Pos.Application.Discounts.ApproveDiscount;
 using Pos.Application.Discounts.Coupons.GetCoupon;
@@ -114,6 +125,7 @@ using Pos.Application.Reports.GetCashCountReport;
 using Pos.Application.Reports.GetInventoryReport;
 using Pos.Application.Reports.GetMyShiftSummary;
 using Pos.Application.Reports.GetReportAlerts;
+using Pos.Application.Reports.GetPurchaseReport;
 using Pos.Application.Reports.GetReceivablesReport;
 using Pos.Application.Reports.GetReportSettings;
 using Pos.Application.Reports.GetSalesReport;
@@ -254,6 +266,24 @@ public static class DependencyInjection
         services.AddSingleton<IValidator<SaveReceivablesSettingsCommand>, SaveReceivablesSettingsValidator>();
         services.AddScoped<SaveReceivablesSettingsHandler>();
         services.AddScoped<GetReceivablesReportHandler>();
+
+        // Proveedores y compras (020)
+        services.AddSingleton<IValidator<CreateSupplierCommand>, CreateSupplierValidator>();
+        services.AddScoped<CreateSupplierHandler>();
+        services.AddSingleton<IValidator<UpdateSupplierCommand>, UpdateSupplierValidator>();
+        services.AddScoped<UpdateSupplierHandler>();
+        services.AddScoped<SetSupplierActiveHandler>();
+        services.AddScoped<SearchSuppliersHandler>();
+        services.AddScoped<GetSupplierHandler>();
+        services.AddScoped<ListSuppliersForPurchaseHandler>();
+        services.AddScoped<ListSuppliersForReportHandler>();
+        services.AddScoped<CalculatePurchaseTotalsHandler>();
+        services.AddSingleton<IValidator<RegisterPurchaseCommand>, RegisterPurchaseValidator>();
+        services.AddScoped<RegisterPurchaseHandler>();
+        services.AddSingleton<IValidator<VoidPurchaseCommand>, VoidPurchaseValidator>();
+        services.AddScoped<VoidPurchaseHandler>();
+        services.AddScoped<GetPurchaseHandler>();
+        services.AddScoped<GetPurchaseReportHandler>();
 
         // Turnos de caja (008)
         services.AddScoped<ShiftGuard>();

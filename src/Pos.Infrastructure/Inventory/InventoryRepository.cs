@@ -157,7 +157,24 @@ public sealed class InventoryRepository : IInventoryRepository
             join u in _context.UnitsOfMeasure on p.UnitCode equals u.Code
             join author in _context.Users on m.CreatedBy equals author.Id into authors
             from author in authors.DefaultIfEmpty()
-            select new { Movement = m, Product = p, Unit = u, AuthorName = author == null ? null : author.FullName };
+            // 020, research §3: la compra que generó (MovementId) o revirtió (VoidMovementId) el movimiento.
+            join line in _context.PurchaseLines on m.Id equals line.MovementId into lines
+            from line in lines.DefaultIfEmpty()
+            join voidLine in _context.PurchaseLines on (Guid?)m.Id equals voidLine.VoidMovementId into voidLines
+            from voidLine in voidLines.DefaultIfEmpty()
+            join purchase in _context.Purchases on line.PurchaseId equals purchase.Id into purchases
+            from purchase in purchases.DefaultIfEmpty()
+            join voidPurchase in _context.Purchases on voidLine.PurchaseId equals voidPurchase.Id into voidPurchases
+            from voidPurchase in voidPurchases.DefaultIfEmpty()
+            select new
+            {
+                Movement = m,
+                Product = p,
+                Unit = u,
+                AuthorName = author == null ? null : author.FullName,
+                PurchaseId = purchase != null ? (Guid?)purchase.Id : voidPurchase != null ? (Guid?)voidPurchase.Id : null,
+                SupplierName = purchase != null ? purchase.SupplierName : voidPurchase != null ? voidPurchase.SupplierName : null,
+            };
 
         // El kárdex de un producto se ordena por su secuencia, que es exacta; el historial general,
         // por fecha (research §6).
@@ -182,7 +199,9 @@ public sealed class InventoryRepository : IInventoryRepository
                 x.Movement.Reason,
                 x.Movement.Reference,
                 x.Movement.CreatedBy,
-                x.AuthorName ?? string.Empty))
+                x.AuthorName ?? string.Empty,
+                x.PurchaseId,
+                x.SupplierName))
             .ToListAsync(cancellationToken);
 
         return new MovementPage(items, total, page, search.PageSize);

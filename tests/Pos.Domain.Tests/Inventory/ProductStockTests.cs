@@ -179,4 +179,66 @@ public class ProductStockTests
         Assert.True(ProductStock.IsShort(onHand, Quantity.FromThousandths(3001)));
         Assert.True(ProductStock.IsShort(StockLevel.FromThousandths(-1000), Q("1", 0)));
     }
+
+    [Fact]
+    public void RecordPurchase_adds_stock_with_the_invoice_as_reference()
+    {
+        var stock = StockWith("10");
+
+        var movement = stock.RecordPurchase(Q("5", 0), Piece, productActive: true, tracksInventory: true, "F-100");
+
+        Assert.Equal(15_000, stock.OnHand.Thousandths);
+        Assert.Equal(MovementType.Purchase, movement.Type);
+        Assert.Equal(15_000, movement.ResultingStock.Thousandths);
+        Assert.Equal("F-100", movement.Reference);
+        Assert.Null(movement.Reason);
+        Assert.Equal(2, movement.Sequence);
+    }
+
+    [Fact]
+    public void RecordPurchase_validates_quantity_decimals_product_and_maximum()
+    {
+        var stock = StockWith("10");
+
+        Assert.Throws<DomainException>(() => stock.RecordPurchase(Quantity.Zero, Piece, true, true, "F-1"));
+        Assert.Throws<DomainException>(() => stock.RecordPurchase(Quantity.FromThousandths(1500), Piece, true, true, "F-1"));
+        Assert.Throws<DomainException>(() => stock.RecordPurchase(Q("1", 0), Piece, productActive: false, true, "F-1"));
+        Assert.Throws<DomainException>(() => stock.RecordPurchase(Q("1", 0), Piece, true, tracksInventory: false, "F-1"));
+
+        var full = ProductStock.Start(Guid.NewGuid());
+        var big = Quantity.FromThousandths(Quantity.MaxCaptureThousandths);
+        for (var i = 0; i < 100; i++)
+        {
+            full.RecordPurchase(big, Kilo, true, true, "F-1");
+        }
+
+        Assert.Throws<DomainException>(() => full.RecordPurchase(big, Kilo, true, true, "F-1"));
+        Assert.Equal(10_000, stock.OnHand.Thousandths);
+    }
+
+    [Fact]
+    public void RecordPurchaseVoid_subtracts_and_never_leaves_the_stock_below_zero()
+    {
+        var stock = StockWith("8");
+
+        var movement = stock.RecordPurchaseVoid(Q("5", 0), productActive: true, tracksInventory: true, "F-100");
+
+        Assert.Equal(3000, stock.OnHand.Thousandths);
+        Assert.Equal(MovementType.PurchaseVoid, movement.Type);
+        Assert.False(movement.Type.IsIncrease());
+        Assert.Throws<DomainException>(() => stock.RecordPurchaseVoid(Quantity.FromThousandths(3001), true, true, "F-100"));
+        Assert.Throws<DomainException>(() => stock.RecordPurchaseVoid(Q("1", 0), productActive: false, true, "F-100"));
+        Assert.Throws<DomainException>(() => stock.RecordPurchaseVoid(Q("1", 0), true, tracksInventory: false, "F-100"));
+        Assert.Equal(3000, stock.OnHand.Thousandths);
+    }
+
+    [Fact]
+    public void Record_rejects_the_purchase_movement_types()
+    {
+        var stock = StockWith("3");
+
+        Assert.Throws<DomainException>(() => Record(stock, MovementType.Purchase, "1"));
+        Assert.Throws<DomainException>(() => Record(stock, MovementType.PurchaseVoid, "1"));
+        Assert.Equal(3000, stock.OnHand.Thousandths);
+    }
 }

@@ -141,25 +141,8 @@ public sealed class Customer
 
     public void Activate() => IsActive = true;
 
-    /// <summary>Formato básico: una arroba con texto antes y un dominio con punto, sin espacios.</summary>
-    public static bool IsValidEmail(string? email)
-    {
-        if (string.IsNullOrWhiteSpace(email))
-        {
-            return false;
-        }
-
-        var text = email.Trim();
-        var at = text.IndexOf('@', StringComparison.Ordinal);
-        if (at <= 0 || at != text.LastIndexOf('@') || text.Any(char.IsWhiteSpace))
-        {
-            return false;
-        }
-
-        var domain = text[(at + 1)..];
-        var dot = domain.IndexOf('.', StringComparison.Ordinal);
-        return dot > 0 && !domain.EndsWith('.') && !domain.Contains("..", StringComparison.Ordinal);
-    }
+    /// <summary>Formato básico de email; la regla vive en <see cref="EmailAddress.IsValid"/>.</summary>
+    public static bool IsValidEmail(string? email) => EmailAddress.IsValid(email);
 
     /// <summary>Recorta y pasa a mayúsculas invariantes; vacío o solo espacios se convierte en nulo.</summary>
     public static string? NormalizeTaxId(string? taxId) =>

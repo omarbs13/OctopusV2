@@ -10,9 +10,11 @@ using Pos.Domain.Customers;
 using Pos.Domain.Discounts;
 using Pos.Domain.Inventory;
 using Pos.Domain.Products;
+using Pos.Domain.Purchases;
 using Pos.Domain.Receivables;
 using Pos.Domain.Returns;
 using Pos.Domain.Sales;
+using Pos.Domain.Suppliers;
 using Pos.Domain.Users;
 using Pos.Infrastructure.Licensing;
 using Pos.Infrastructure.Persistence.Configurations;
@@ -33,6 +35,18 @@ public class PosDbContext : DbContext
         nameof(CustomerPayment.VoidAuthorizedBy),
         nameof(CustomerPayment.VoidReason),
         nameof(CustomerPayment.VoidCashShiftId),
+    ];
+
+    /// <summary>Campos que puede cambiar la anulación de una compra vigente (020, research §10).</summary>
+    private static readonly HashSet<string> PurchaseVoidFields =
+    [
+        nameof(Purchase.Status),
+        nameof(Purchase.VoidedAt),
+        nameof(Purchase.VoidedBy),
+        nameof(Purchase.VoidReason),
+        nameof(Purchase.UpdatedAt),
+        nameof(Purchase.UpdatedBy),
+        nameof(Purchase.Version),
     ];
 
     public PosDbContext(DbContextOptions options)
@@ -98,6 +112,12 @@ public class PosDbContext : DbContext
 
     public DbSet<ShiftCut> ShiftCuts => Set<ShiftCut>();
 
+    public DbSet<Supplier> Suppliers => Set<Supplier>();
+
+    public DbSet<Purchase> Purchases => Set<Purchase>();
+
+    public DbSet<PurchaseLine> PurchaseLines => Set<PurchaseLine>();
+
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
         RejectImmutableChanges();
@@ -152,6 +172,9 @@ public class PosDbContext : DbContext
         modelBuilder.ApplyConfiguration(new SaleDiscountConfiguration());
         modelBuilder.ApplyConfiguration(new CategoryConfiguration());
         modelBuilder.ApplyConfiguration(new ShiftCutConfiguration());
+        modelBuilder.ApplyConfiguration(new SupplierConfiguration());
+        modelBuilder.ApplyConfiguration(new PurchaseConfiguration());
+        modelBuilder.ApplyConfiguration(new PurchaseLineConfiguration());
     }
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
@@ -241,6 +264,22 @@ public class PosDbContext : DbContext
             throw new InvalidOperationException("Un abono solo puede pasar de vigente a anulado.");
         }
 
+        // 020: una compra no se borra; una anulada no cambia; en una vigente solo cambian los campos de la anulación.
+        if (ChangeTracker.Entries<Purchase>().Any(e =>
+                e.State is EntityState.Deleted
+                || (e.State is EntityState.Modified && !IsPurchaseVoid(e))))
+        {
+            throw new InvalidOperationException("Una compra no se puede modificar ni borrar; solo se anula.");
+        }
+
+        // 020: la línea de compra solo admite enlazar su movimiento de anulación, una vez.
+        if (ChangeTracker.Entries<PurchaseLine>().Any(e =>
+                e.State is EntityState.Deleted
+                || (e.State is EntityState.Modified && !IsPurchaseLineVoidLink(e))))
+        {
+            throw new InvalidOperationException("Las líneas de una compra no se pueden modificar ni borrar.");
+        }
+
         if (ChangeTracker.Entries<AuditEntry>().Any(e => e.State is EntityState.Modified or EntityState.Deleted)
             || ChangeTracker.Entries<AuditFieldChange>().Any(e => e.State is EntityState.Modified or EntityState.Deleted))
         {
@@ -252,4 +291,13 @@ public class PosDbContext : DbContext
         entry.Property(nameof(CustomerPayment.Status)).OriginalValue is CustomerPaymentStatus.Active
         && entry.Property(nameof(CustomerPayment.Status)).CurrentValue is CustomerPaymentStatus.Voided
         && entry.Properties.Where(p => p.IsModified).All(p => PaymentVoidFields.Contains(p.Metadata.Name));
+
+    private static bool IsPurchaseVoid(EntityEntry<Purchase> entry) =>
+        entry.Property(nameof(Purchase.Status)).OriginalValue is PurchaseStatus.Active
+        && entry.Properties.Where(p => p.IsModified).All(p => PurchaseVoidFields.Contains(p.Metadata.Name));
+
+    private static bool IsPurchaseLineVoidLink(EntityEntry<PurchaseLine> entry) =>
+        entry.Property(nameof(PurchaseLine.VoidMovementId)).OriginalValue is null
+        && entry.Property(nameof(PurchaseLine.VoidMovementId)).CurrentValue is not null
+        && entry.Properties.Where(p => p.IsModified).All(p => p.Metadata.Name == nameof(PurchaseLine.VoidMovementId));
 }

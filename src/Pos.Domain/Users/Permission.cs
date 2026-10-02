@@ -71,4 +71,16 @@ public enum Permission
 
     /// <summary>Generar un Corte X del turno abierto (017); solo el Administrador, autorizable.</summary>
     GenerateShiftReadout,
+
+    /// <summary>Alta, edición, desactivación y consulta de proveedores (020); solo el Administrador.</summary>
+    ManageSuppliers,
+
+    /// <summary>Registrar compras ("Inventario > Entrada de mercancía", 020); solo el Administrador.</summary>
+    RegisterPurchases,
+
+    /// <summary>Anular compras (020); solo el Administrador, no autorizable.</summary>
+    VoidPurchases,
+
+    /// <summary>Ver "Reportes > Compras" y el detalle de una compra (020); solo el Administrador.</summary>
+    ViewPurchaseReport,
 }

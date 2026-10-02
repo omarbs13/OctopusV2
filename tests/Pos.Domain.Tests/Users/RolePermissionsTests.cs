@@ -35,4 +35,24 @@ public class RolePermissionsTests
             ],
             authorizable.Order());
     }
+
+    [Theory]
+    [InlineData(Permission.ManageSuppliers)]
+    [InlineData(Permission.RegisterPurchases)]
+    [InlineData(Permission.VoidPurchases)]
+    [InlineData(Permission.ViewPurchaseReport)]
+    public void PermisosDeCompras_SoloDelAdministradorYNoAutorizables(Permission permission)
+    {
+        Assert.False(RolePermissions.Has(UserRole.Cashier, permission));
+        Assert.True(RolePermissions.Has(UserRole.Admin, permission));
+        Assert.False(RolePermissions.IsAuthorizable(permission));
+    }
+
+    [Fact]
+    public void RegistrarComprasYRegistrarMovimientos_SonPermisosIndependientes()
+    {
+        Assert.NotEqual(Permission.RegisterPurchases, Permission.RegisterMovements);
+        Assert.False(RolePermissions.Has(UserRole.Cashier, Permission.RegisterPurchases));
+        Assert.False(RolePermissions.Has(UserRole.Cashier, Permission.RegisterMovements));
+    }
 }

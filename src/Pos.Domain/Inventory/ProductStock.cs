@@ -70,6 +70,11 @@ public sealed class ProductStock
             throw new DomainException("Los movimientos de venta solo se generan al vender o cancelar una venta.");
         }
 
+        if (type is MovementType.Purchase or MovementType.PurchaseVoid)
+        {
+            throw new DomainException("Los movimientos de compra solo se generan al registrar o anular una compra.");
+        }
+
         if (!tracksInventory)
         {
             throw new DomainException("Este producto no controla inventario.");
@@ -162,6 +167,76 @@ public sealed class ProductStock
     /// </summary>
     public InventoryMovement RecordSaleReturn(Quantity quantity, string reference) =>
         RecordReturnToStock(MovementType.SaleReturn, quantity, reference);
+
+    /// <summary>
+    /// Registra la entrada por una compra (<c>PURCHASE</c>, 020). Valida cantidad, decimales de la unidad,
+    /// producto activo, que controla inventario y la existencia máxima. La referencia es la factura.
+    /// </summary>
+    public InventoryMovement RecordPurchase(
+        Quantity quantity,
+        UnitOfMeasure unit,
+        bool productActive,
+        bool tracksInventory,
+        string reference)
+    {
+        ArgumentNullException.ThrowIfNull(unit);
+        EnsurePurchasable(productActive, tracksInventory);
+        ValidateSaleQuantity(quantity, unit, reference);
+
+        if (WouldExceedMaximum(OnHand, quantity))
+        {
+            throw new DomainException("La existencia excedería el máximo permitido.");
+        }
+
+        var resulting = OnHand + quantity;
+        var movement = new InventoryMovement(ProductId, MovementCount + 1, MovementType.Purchase, quantity, resulting, null, reference);
+        OnHandThousandths = resulting.Thousandths;
+        MovementCount++;
+        return movement;
+    }
+
+    /// <summary>
+    /// Revierte la entrada de una compra anulada (<c>PURCH_VOID</c>, 020). Nunca deja la existencia bajo
+    /// cero (FR-017b): exige producto activo, que controla inventario y existencia suficiente.
+    /// </summary>
+    public InventoryMovement RecordPurchaseVoid(Quantity quantity, bool productActive, bool tracksInventory, string reference)
+    {
+        EnsurePurchasable(productActive, tracksInventory);
+
+        if (quantity <= Quantity.Zero)
+        {
+            throw new DomainException("La cantidad debe ser mayor que 0.");
+        }
+
+        if (InventoryMovement.NormalizeText(reference) is { Length: > InventoryMovement.ReferenceMaxLength })
+        {
+            throw new DomainException("La referencia excede la longitud permitida.");
+        }
+
+        if (WouldGoNegative(OnHand, quantity))
+        {
+            throw new DomainException("La existencia no alcanza para anular la compra.");
+        }
+
+        var resulting = OnHand - quantity;
+        var movement = new InventoryMovement(ProductId, MovementCount + 1, MovementType.PurchaseVoid, quantity, resulting, null, reference);
+        OnHandThousandths = resulting.Thousandths;
+        MovementCount++;
+        return movement;
+    }
+
+    private static void EnsurePurchasable(bool productActive, bool tracksInventory)
+    {
+        if (!tracksInventory)
+        {
+            throw new DomainException("Este producto no controla inventario.");
+        }
+
+        if (!productActive)
+        {
+            throw new DomainException("El producto está inactivo; actívelo para registrar movimientos.");
+        }
+    }
 
     private InventoryMovement RecordReturnToStock(MovementType type, Quantity quantity, string reference)
     {

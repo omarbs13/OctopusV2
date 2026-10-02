@@ -83,6 +83,7 @@ public sealed class SampleDatabaseUpgradeTests
         AssertDiscounts(connection, sampleFile);
         AssertCategories(connection, sampleFile);
         AssertShiftCuts(connection, sampleFile);
+        AssertPurchases(connection, sampleFile);
         await AssertLegacyCancelledCashAsync(db, connection, sampleFile);
 
         foreach (var index in new[] { "IX_Products_Sku", "IX_Products_Barcode", "IX_Products_NameSearch" })
@@ -113,17 +114,23 @@ public sealed class SampleDatabaseUpgradeTests
         }
         else if (HasSales(sampleFile))
         {
-            // 005: la existencia negativa, los movimientos de venta y las ventas se conservan tal cual.
+            // 005: la existencia negativa, los movimientos de venta y las ventas se conservan tal cual. Desde 0.14.0
+            // la compra vigente suma 2.5 kg al producto en kilo y 1 pieza bonificada a la pieza en negativo.
+            var purchased = HasPurchases(sampleFile);
             Assert.Equal(2, Scalar<long>(connection, "SELECT COUNT(*) FROM Products WHERE TracksInventory = 1"));
-            Assert.Equal(SampleData.NegativeStockThousandths, Scalar<long>(connection, $"SELECT s.OnHand FROM ProductStocks s JOIN Products p ON p.Id = s.ProductId WHERE p.Sku = '{SampleData.NegativeStockSku}'"));
-            Assert.Equal(SampleData.InventoryOnHandAfterSalesThousandths, Scalar<long>(connection, $"SELECT s.OnHand FROM ProductStocks s JOIN Products p ON p.Id = s.ProductId WHERE p.Sku = '{SampleData.InventorySku}'"));
+            Assert.Equal(
+                SampleData.NegativeStockThousandths + (purchased ? SampleData.PurchaseBonusThousandths : 0),
+                Scalar<long>(connection, $"SELECT s.OnHand FROM ProductStocks s JOIN Products p ON p.Id = s.ProductId WHERE p.Sku = '{SampleData.NegativeStockSku}'"));
+            Assert.Equal(
+                SampleData.InventoryOnHandAfterSalesThousandths + (purchased ? SampleData.PurchaseKilogramThousandths : 0),
+                Scalar<long>(connection, $"SELECT s.OnHand FROM ProductStocks s JOIN Products p ON p.Id = s.ProductId WHERE p.Sku = '{SampleData.InventorySku}'"));
             Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM InventoryMovements WHERE Type = 'SALE_CANCEL'"));
             Assert.Equal(3, Scalar<long>(connection, "SELECT COUNT(*) FROM InventoryMovements WHERE Type = 'SALE'"));
             Assert.Equal(
                 0,
                 Scalar<long>(connection, """
                     SELECT COUNT(*) FROM ProductStocks s
-                    WHERE s.OnHand <> (SELECT IFNULL(SUM(CASE WHEN m.Type IN ('ADJUST_OUT', 'SALE') THEN -m.Quantity ELSE m.Quantity END), 0)
+                    WHERE s.OnHand <> (SELECT IFNULL(SUM(CASE WHEN m.Type IN ('ADJUST_OUT', 'SALE', 'PURCH_VOID') THEN -m.Quantity ELSE m.Quantity END), 0)
                                        FROM InventoryMovements m WHERE m.ProductId = s.ProductId)
                     """));
         }
@@ -438,7 +445,12 @@ public sealed class SampleDatabaseUpgradeTests
         Assert.Equal(
             1,
             Scalar<long>(connection, $"SELECT COUNT(*) FROM SaleDiscounts WHERE Kind = 'COUPON' AND CouponCode = '{SampleData.CouponCode}' AND AuthorizedBy IS NULL"));
-        Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM AuditEntries WHERE Action = 'DISCOUNT_APPLIED_AUTHORIZED'"));
+        // Desde 0.13.0 (018) la venta con descuento autorizado se registra como SALE_DISCOUNTS_APPLIED con AuthorizedBy.
+        Assert.Equal(
+            1,
+            Scalar<long>(connection, VersionOf(sampleFile) >= new Version(0, 13, 0)
+                ? "SELECT COUNT(*) FROM AuditEntries WHERE Action = 'SALE_DISCOUNTS_APPLIED' AND AuthorizedBy IS NOT NULL"
+                : "SELECT COUNT(*) FROM AuditEntries WHERE Action = 'DISCOUNT_APPLIED_AUTHORIZED'"));
         Assert.Contains("\"discount\"", Scalar<string>(connection, "SELECT LinesJson FROM SaleDrafts"), StringComparison.Ordinal);
     }
 
@@ -509,6 +521,68 @@ public sealed class SampleDatabaseUpgradeTests
                 WHERE s.Status = 'CLOSED' AND NOT EXISTS (SELECT 1 FROM ShiftCuts c WHERE c.ShiftId = s.Id AND c.Type = 'Z')
                 """));
     }
+
+    /// <summary>
+    /// 020: las tablas de proveedores y compras existen; en las bases anteriores a 0.14.0 están vacías. La de 0.14.0
+    /// conserva sus tres proveedores, su compra vigente (con bonificación) y la anulada, con cada línea enlazada a su
+    /// movimiento PURCHASE y, la anulada, a su PURCH_VOID; los importes guardados cuadran con las líneas.
+    /// </summary>
+    private static void AssertPurchases(SqliteConnection connection, string sampleFile)
+    {
+        Assert.Contains(
+            "WHERE \"Status\" = 'ACTIVE'",
+            Scalar<string>(connection, "SELECT sql FROM sqlite_master WHERE type = 'index' AND name = 'IX_Purchases_Supplier_InvoiceKey'"),
+            StringComparison.Ordinal);
+
+        if (!HasPurchases(sampleFile))
+        {
+            foreach (var table in new[] { "Suppliers", "Purchases", "PurchaseLines" })
+            {
+                Assert.Equal(0, Scalar<long>(connection, $"SELECT COUNT(*) FROM {table}"));
+            }
+
+            Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM InventoryMovements WHERE Type IN ('PURCHASE', 'PURCH_VOID')"));
+            return;
+        }
+
+        Assert.Equal(3, Scalar<long>(connection, "SELECT COUNT(*) FROM Suppliers"));
+        Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM Suppliers WHERE IsActive = 0"));
+        Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM Suppliers WHERE TaxId IS NULL"));
+        Assert.Equal(
+            1,
+            Scalar<long>(connection, $"""
+                SELECT COUNT(*) FROM Purchases p JOIN Suppliers s ON s.Id = p.SupplierId
+                WHERE p.InvoiceNumber = '{SampleData.ActiveInvoice}' AND p.Status = 'ACTIVE' AND s.TaxId = '{SampleData.SupplierTaxId}'
+                  AND p.SupplierName = '{SampleData.SupplierName}' AND p.LineCount = 2
+                """));
+        Assert.Equal(
+            1,
+            Scalar<long>(connection, $"""
+                SELECT COUNT(*) FROM Purchases
+                WHERE InvoiceNumber = '{SampleData.VoidedInvoice}' AND Status = 'VOIDED' AND VoidReason = '{SampleData.PurchaseVoidReason}'
+                  AND VoidedAt IS NOT NULL AND VoidedBy IS NOT NULL
+                """));
+        Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM PurchaseLines WHERE UnitCostCents = 0"));
+        Assert.Equal(
+            0,
+            Scalar<long>(connection, """
+                SELECT COUNT(*) FROM Purchases p
+                WHERE p.SubtotalCents <> (SELECT SUM(l.AmountCents) FROM PurchaseLines l WHERE l.PurchaseId = p.Id)
+                   OR p.TotalCents <> p.SubtotalCents + p.TaxCents
+                   OR p.LineCount <> (SELECT COUNT(*) FROM PurchaseLines l WHERE l.PurchaseId = p.Id)
+                """));
+        Assert.Equal(
+            0,
+            Scalar<long>(connection, """
+                SELECT COUNT(*) FROM PurchaseLines l JOIN Purchases p ON p.Id = l.PurchaseId
+                LEFT JOIN InventoryMovements m ON m.Id = l.MovementId AND m.Type = 'PURCHASE' AND m.ProductId = l.ProductId
+                LEFT JOIN InventoryMovements v ON v.Id = l.VoidMovementId AND v.Type = 'PURCH_VOID' AND v.ProductId = l.ProductId
+                WHERE m.Id IS NULL OR (p.Status = 'VOIDED') <> (v.Id IS NOT NULL)
+                """));
+        Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM AuditEntries WHERE Action = 'PURCHASE_VOIDED' AND EntityType = 'Purchase'"));
+    }
+
+    private static bool HasPurchases(string sampleFile) => VersionOf(sampleFile) >= new Version(0, 14, 0);
 
     private static bool HasShiftCuts(string sampleFile) => VersionOf(sampleFile) >= new Version(0, 12, 0);
 

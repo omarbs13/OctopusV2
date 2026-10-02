@@ -14,6 +14,7 @@ public static class ReportsModule
     public const string InventoryPageId = "reports.inventory";
     public const string MyShiftPageId = "sales.myshift";
     public const string ReceivablesPageId = "reports.receivables";
+    public const string PurchasesPageId = "reports.purchases";
 
     /// <summary>
     /// Reportes y análisis (009): grupo "Reportes" con Ventas, Arqueo e Inventario, la vista "Mi turno"
@@ -29,6 +30,9 @@ public static class ReportsModule
         services.AddPage<CashCountReportViewModel, CashCountReportView>(CashCountPageId, Strings.Nav_ReportCashCount, "Icon.Movements", 10, GroupId, permission: Permission.ViewReports);
 
         services.AddPage<InventoryReportViewModel, InventoryReportView>(InventoryPageId, Strings.Nav_ReportInventory, "Icon.Stock", 20, GroupId, permission: Permission.ViewInventory);
+
+        // "Compras" (020): depende de la licencia Inventario (vía ViewPurchaseReport), entre Inventario y Créditos.
+        services.AddPage<PurchaseReportViewModel, PurchaseReportView>(PurchasesPageId, Strings.Nav_ReportPurchases, "Icon.Movements", 25, GroupId, permission: Permission.ViewPurchaseReport);
 
         // "Créditos" (014): depende de la licencia Crédito y clientes (vía ViewReceivables), no de Reportes avanzados.
         services.AddPage<ReceivablesReportViewModel, ReceivablesReportView>(ReceivablesPageId, Strings.Nav_ReportReceivables, "Icon.Users", 30, GroupId, permission: Permission.ViewReceivables);
