@@ -66,6 +66,7 @@ public sealed class CashShiftRepository : ICashShiftRepository
         }
 
         var names = await NamesAsync([shift.OpenedBy, closedBy], cancellationToken);
+        var cutFolio = await ClosingCutFolioAsync(shift.Id, cancellationToken);
         return new ShiftReportDto(
             shift.Id,
             shift.Folio,
@@ -92,7 +93,8 @@ public sealed class CashShiftRepository : ICashShiftRepository
             shift.CashRefundsCents ?? 0,
             shift.NonCashRefundsCents ?? 0,
             shift.CreditNotesIssuedCents ?? 0,
-            ShiftCreditTotals.From(shift));
+            ShiftCreditTotals.From(shift),
+            cutFolio);
     }
 
     public async Task<long> NextNumberAsync(CancellationToken cancellationToken) =>
@@ -101,6 +103,120 @@ public sealed class CashShiftRepository : ICashShiftRepository
     public void Add(CashShift shift) => _context.CashShifts.Add(shift);
 
     public void AddMovement(CashMovement movement) => _context.CashMovements.Add(movement);
+
+    public async Task<long> NextCutNumberAsync(ShiftCutType type, CancellationToken cancellationToken) =>
+        (await _context.ShiftCuts.Where(c => c.Type == type).MaxAsync(c => (long?)c.Number, cancellationToken) ?? 0) + 1;
+
+    public void AddCut(ShiftCut cut) => _context.ShiftCuts.Add(cut);
+
+    public async Task<ShiftCutReportDto?> GetCutReportAsync(Guid cutId, CancellationToken cancellationToken)
+    {
+        var cut = await _context.ShiftCuts.AsNoTracking().SingleOrDefaultAsync(c => c.Id == cutId, cancellationToken);
+        if (cut is null)
+        {
+            return null;
+        }
+
+        var names = await NamesAsync([cut.GeneratedBy, cut.ShiftOpenedBy, cut.AuthorizedBy ?? cut.GeneratedBy], cancellationToken);
+        return new ShiftCutReportDto(
+            cut.Id,
+            cut.Type,
+            cut.Folio,
+            cut.ShiftFolio,
+            CashRegister.DisplayName,
+            cut.GeneratedBy,
+            NameOf(names, cut.GeneratedBy),
+            cut.AuthorizedBy is { } authorizer ? NameOf(names, authorizer) : null,
+            cut.ShiftOpenedBy,
+            NameOf(names, cut.ShiftOpenedBy),
+            cut.ShiftOpenedAt,
+            cut.GeneratedAt,
+            cut.OpeningFloatCents,
+            cut.SalesCount,
+            cut.CancelledCount,
+            cut.TotalSoldCents,
+            cut.CashSalesCents,
+            cut.CashCancelledCents,
+            cut.CardCents,
+            cut.TransferCents,
+            cut.CashRefundsCents,
+            cut.NonCashRefundsCents,
+            cut.CreditNotesIssuedCents,
+            new ShiftCreditTotals(
+                cut.OnAccountSalesCents,
+                cut.CustomerPaymentsCashCents,
+                cut.CustomerPaymentsNonCashCents,
+                cut.CustomerPaymentVoidsCashCents,
+                cut.CustomerPaymentVoidsNonCashCents),
+            cut.DepositsCents,
+            cut.WithdrawalsCents,
+            cut.ExpectedCashCents,
+            cut.CountedCashCents,
+            cut.DifferenceCents,
+            cut.Comment);
+    }
+
+    public async Task<ShiftCutPage> SearchCutsAsync(ShiftCutSearch search, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(search);
+
+        var cuts = _context.ShiftCuts.AsNoTracking().AsQueryable();
+        if (search.Type is { } type)
+        {
+            cuts = cuts.Where(c => c.Type == type);
+        }
+
+        if (search.FromUtc is { } from)
+        {
+            cuts = cuts.Where(c => c.GeneratedAt >= from);
+        }
+
+        if (search.ToUtcExclusive is { } to)
+        {
+            cuts = cuts.Where(c => c.GeneratedAt < to);
+        }
+
+        if (search.UserId is { } user)
+        {
+            cuts = cuts.Where(c => c.GeneratedBy == user);
+        }
+
+        var total = await cuts.LongCountAsync(cancellationToken);
+        var pageCount = total <= 0 ? 1 : (int)((total + search.PageSize - 1) / search.PageSize);
+        var page = Math.Clamp(search.Page, 1, pageCount);
+
+        var rows = await cuts
+            .OrderByDescending(c => c.GeneratedAt)
+            .ThenByDescending(c => c.Id)
+            .Skip((page - 1) * search.PageSize)
+            .Take(search.PageSize)
+            .Select(c => new
+            {
+                c.Id,
+                c.Type,
+                c.Number,
+                c.GeneratedAt,
+                c.GeneratedBy,
+                c.ShiftNumber,
+                c.TotalSoldCents,
+                c.DifferenceCents,
+                GeneratedByName = _context.Users.Where(u => u.Id == c.GeneratedBy).Select(u => u.FullName).FirstOrDefault(),
+            })
+            .ToListAsync(cancellationToken);
+
+        var items = rows
+            .Select(r => new ShiftCutListItemDto(
+                r.Id,
+                r.Type,
+                ShiftCutFolio.Format(r.Type, r.Number),
+                r.GeneratedAt,
+                r.GeneratedByName ?? SystemUser.NameOf(r.GeneratedBy),
+                ShiftFolio.Format(r.ShiftNumber),
+                r.TotalSoldCents,
+                r.DifferenceCents))
+            .ToList();
+        return new ShiftCutPage(items, total, page, search.PageSize);
+    }
 
     public async Task<SaveOutcome> SaveChangesAsync(CancellationToken cancellationToken)
     {
@@ -262,7 +378,18 @@ public sealed class CashShiftRepository : ICashShiftRepository
             shift.ClosedBy is { } closedBy ? NameOf(names, closedBy) : null,
             [],
             movements,
-            reconciliation);
+            reconciliation,
+            shift.Status == CashShiftStatus.Closed ? await ClosingCutFolioAsync(shift.Id, cancellationToken) : null);
+    }
+
+    /// <summary>Folio del Corte Z del turno; nulo en turnos cerrados antes de 0.12.0 (FR-010a).</summary>
+    private async Task<string?> ClosingCutFolioAsync(Guid shiftId, CancellationToken cancellationToken)
+    {
+        var number = await _context.ShiftCuts.AsNoTracking()
+            .Where(c => c.ShiftId == shiftId && c.Type == ShiftCutType.Closing)
+            .Select(c => (long?)c.Number)
+            .SingleOrDefaultAsync(cancellationToken);
+        return number is { } n ? ShiftCutFolio.Format(ShiftCutType.Closing, n) : null;
     }
 
     private IQueryable<CashShift> Filtered(ShiftSearch search)
@@ -307,6 +434,9 @@ public sealed class CashShiftRepository : ICashShiftRepository
     {
         _ when message.Contains("CashShifts.RegisterCode", StringComparison.Ordinal) => SaveOutcome.Duplicate(CashShiftFields.OpenPerRegister),
         _ when message.Contains("CashShifts.Number", StringComparison.Ordinal) => SaveOutcome.Duplicate(CashShiftFields.Number),
+
+        // IX_ShiftCuts_Type_Number o IX_ShiftCuts_ClosingPerShift (017).
+        _ when message.Contains("ShiftCuts.", StringComparison.Ordinal) => SaveOutcome.Duplicate(CashShiftFields.CutNumber),
         _ => SaveOutcome.Conflict,
     };
 }

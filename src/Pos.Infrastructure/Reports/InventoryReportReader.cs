@@ -4,6 +4,7 @@ using Pos.Application.Reports;
 using Pos.Application.Reports.GetInventoryReport;
 using Pos.Domain.Common;
 using Pos.Domain.Inventory;
+using Pos.Infrastructure.Categories;
 using Pos.Infrastructure.Persistence;
 
 namespace Pos.Infrastructure.Reports;
@@ -24,9 +25,11 @@ internal sealed class InventoryReportReader : IInventoryReportReader
         ArgumentNullException.ThrowIfNull(query);
 
         var all = await (
-                from p in _context.Products.AsNoTracking()
+                from p in _context.Products.AsNoTracking().WhereCategory(query.Category)
                 where p.DeletedAt == null && p.TracksInventory && p.CreatedAt < endUtcExclusive
                 join u in _context.UnitsOfMeasure on p.UnitCode equals u.Code
+                join c in _context.Categories on p.CategoryId equals c.Id into categories
+                from c in categories.DefaultIfEmpty()
                 select new
                 {
                     p.Id,
@@ -37,6 +40,9 @@ internal sealed class InventoryReportReader : IInventoryReportReader
                     Minimum = p.MinimumStockThousandths,
                     UnitName = u.Name,
                     u.DecimalPlaces,
+                    CategoryName = c == null ? null : c.Name,
+                    CategoryKey = c == null ? null : c.NameKey,
+                    CategoryIsActive = c == null || c.IsActive,
                     OnHand = _context.InventoryMovements
                         .Where(m => m.ProductId == p.Id && m.CreatedAt < endUtcExclusive)
                         .OrderByDescending(m => m.Sequence)
@@ -80,6 +86,15 @@ internal sealed class InventoryReportReader : IInventoryReportReader
 
         var ordered = (query.Sort, query.Descending) switch
         {
+            // "Sin categoría" queda al final en ambos sentidos: es una agrupación, no un nombre.
+            (InventoryReportSort.Category, false) => filtered
+                .OrderBy(i => i.Product.CategoryKey is null)
+                .ThenBy(i => i.Product.CategoryKey, StringComparer.Ordinal)
+                .ThenBy(i => i.Product.NameSearch, StringComparer.Ordinal),
+            (InventoryReportSort.Category, true) => filtered
+                .OrderBy(i => i.Product.CategoryKey is null)
+                .ThenByDescending(i => i.Product.CategoryKey, StringComparer.Ordinal)
+                .ThenBy(i => i.Product.NameSearch, StringComparer.Ordinal),
             (InventoryReportSort.OnHand, false) => filtered.OrderBy(i => i.Product.OnHand).ThenBy(i => i.Product.NameSearch, StringComparer.Ordinal),
             (InventoryReportSort.OnHand, true) => filtered.OrderByDescending(i => i.Product.OnHand).ThenBy(i => i.Product.NameSearch, StringComparer.Ordinal),
             (InventoryReportSort.Sku, false) => filtered.OrderBy(i => i.Product.Sku, StringComparer.Ordinal),
@@ -101,7 +116,9 @@ internal sealed class InventoryReportReader : IInventoryReportReader
                 i.Product.Minimum,
                 i.Product.UnitName,
                 i.Product.DecimalPlaces,
-                i.Status))
+                i.Status,
+                i.Product.CategoryName,
+                i.Product.CategoryIsActive))
             .ToList();
 
         return new InventoryReport(counts, rows, list.Count, page, query.PageSize);

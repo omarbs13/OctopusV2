@@ -59,6 +59,12 @@ public sealed partial class Product
     /// <summary>Marca de producto crítico: aparece en las alertas de Inicio cuando su existencia es baja (009).</summary>
     public bool IsCritical { get; private set; }
 
+    /// <summary>
+    /// Categoría del producto, o nula ("Sin categoría", 016). Sin clave foránea: que esté activa al
+    /// asignarla lo valida el caso de uso (FR-011).
+    /// </summary>
+    public Guid? CategoryId { get; private set; }
+
     public DateTime CreatedAt { get; private set; }
 
     public Guid CreatedBy { get; private set; }
@@ -92,13 +98,15 @@ public sealed partial class Product
         Money price,
         string unitCode,
         bool tracksInventory = false,
-        Quantity? minimumStock = null)
+        Quantity? minimumStock = null,
+        Guid? categoryId = null)
     {
         var product = new Product
         {
             Id = Guid.CreateVersion7(),
             IsActive = true,
             Version = 1,
+            CategoryId = categoryId,
         };
         product.Apply(name, sku, barcode, price, unitCode);
         product.ApplyInventory(tracksInventory, minimumStock);
@@ -118,7 +126,8 @@ public sealed partial class Product
         bool isActive,
         bool tracksInventory = false,
         Quantity? minimumStock = null,
-        bool hasMovements = false)
+        bool hasMovements = false,
+        Guid? categoryId = null)
     {
         if (!CanChangeInventorySettings(hasMovements, UnitCode, unitCode, TracksInventory, tracksInventory))
         {
@@ -129,6 +138,7 @@ public sealed partial class Product
         Apply(name, sku, barcode, price, unitCode);
         ApplyInventory(tracksInventory, minimumStock);
         IsActive = isActive;
+        CategoryId = categoryId;
     }
 
     /// <summary>Marca o desmarca el producto como crítico; no exige movimientos ni cambia otros campos.</summary>

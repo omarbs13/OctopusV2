@@ -84,10 +84,69 @@ curso guardada, se avisa, se pide confirmación y se **descarta**; el descarte q
 (`HELD_SALE_DISCARDED`). El cierre deja una sola entrada, `SHIFT_CLOSED_BY_ADMIN`, con el nombre del
 dueño.
 
+## Corte X y Corte Z (0.12.0)
+
+El menú **Caja** agrupa los cortes. Sus opciones pertenecen al módulo "Turnos y arqueo": sin licencia
+el grupo desaparece y, al reactivarlo, los cortes registrados siguen ahí.
+
+| Opción | Quién la ve | Qué hace |
+|---|---|---|
+| Corte X | Cajero y Administrador | Lectura parcial del turno abierto |
+| Corte Z | Cajero y Administrador | Cierre del turno con arqueo (el mismo de arriba) |
+| Histórico de cortes | Administrador | Lista, consulta y reimpresión de todos los cortes |
+
+- **Corte X**: copia las cifras del turno abierto en ese momento (ventas, canceladas, formas de pago,
+  devoluciones, crédito, ingresos, retiros y efectivo esperado) **sin modificar el turno**: no pide
+  conteo, no cambia la versión del turno y no interrumpe la venta en curso. Se pueden hacer los que
+  se quieran; cada uno recibe su folio. El Administrador lo genera directamente; el **Cajero necesita
+  la autorización de un Administrador** (permiso `GenerateShiftReadout`, autorizable), que queda en el
+  corte y en la bitácora. El ticket dice "CORTE X" y "LECTURA PARCIAL - NO ES CIERRE DE CAJA".
+- **Corte Z**: todo cierre de turno (propio o ajeno) es un Corte Z. En la misma transacción del cierre
+  se crea el corte con el siguiente folio Z y una copia de la instantánea del turno (esperado, contado,
+  diferencia y comentario). Después ya no se puede vender en ese turno y el siguiente empieza en cero.
+  El ticket del cierre dice "CORTE Z" y su folio.
+- Los cortes **no se modifican ni se borran** (la base rechaza cualquier `UPDATE` o `DELETE`).
+- No hay "gran total" acumulado: la continuidad entre Cortes Z se verifica con su folio consecutivo.
+
+### Folios
+
+`X-000001` y `Z-000001`, consecutivos **por tipo**, sin huecos ni repeticiones, y nunca se reinician.
+El número se calcula como `MAX + 1` dentro de la transacción de escritura (`BEGIN IMMEDIATE`) y el
+índice único `(Type, Number)` es la última defensa. Si un corte falla (por ejemplo, el cierre devuelve
+"El turno cambió") la transacción se revierte y **no se consume folio**. De dos Corte Z simultáneos
+sobre el mismo turno solo uno se completa; el otro recibe "El turno ya está cerrado".
+
+Los turnos cerrados antes de 0.12.0 no tienen Corte Z: siguen en "Turnos" con su "CORTE DE CAJA" y no
+aparecen en el histórico.
+
+### Histórico de cortes
+
+Filtros por tipo, fechas (hoy por omisión) y usuario que generó el corte; del más reciente al más
+antiguo, en páginas de 100. Doble clic o **Ver** abre el corte con las mismas cifras con que se generó
+y **Reimprimir** lo imprime con la leyenda REIMPRESIÓN (queda en la bitácora como `SHIFT_CUT_REPRINTED`).
+Si la impresora no estaba disponible al generar un corte, el corte ya quedó registrado y se reimprime
+desde aquí.
+
+### Verificación de huecos
+
+Con la aplicación cerrada:
+
+```bash
+sqlite3 pos.db 'SELECT "Type", COUNT(*), MIN("Number"), MAX("Number") FROM "ShiftCuts" GROUP BY "Type";'
+```
+
+Para cada tipo debe cumplirse `MIN = 1` y `COUNT = MAX`. Cada turno cerrado desde 0.12.0 tiene
+exactamente un Corte Z:
+
+```bash
+sqlite3 pos.db "SELECT COUNT(*) FROM ShiftCuts WHERE Type = 'Z' GROUP BY ShiftId HAVING COUNT(*) > 1;"   # sin filas
+```
+
 ## Reimpresión del corte y comprobantes
 
-- "Turnos" → detalle del turno cerrado → **Reimprimir corte** (sale con la leyenda REIMPRESIÓN).
-  También puede imprimirlo quien cerró el turno, al cerrarlo.
+- "Turnos" → detalle del turno cerrado → **Reimprimir corte** (sale con la leyenda REIMPRESIÓN y, si
+  el turno tiene Corte Z, con el título "CORTE Z Z-000001"; el detalle muestra "Corte Z: Z-000001").
+  Los Cortes X y Z también se reimprimen desde "Caja > Histórico de cortes".
 - Cada ingreso o retiro ofrece **Imprimir comprobante** al registrarse; el administrador puede
   reimprimirlo desde la pestaña Movimientos del detalle.
 
@@ -98,7 +157,9 @@ dueño.
 | `SHIFT_OPENED` | Apertura del turno (con el fondo) |
 | `CASH_DEPOSIT` / `CASH_WITHDRAWAL` | Ingreso o retiro (con el autorizador, si lo hubo) |
 | `SHIFT_CASH_COUNTED` | Cada conteo del arqueo |
-| `SHIFT_CLOSED` / `SHIFT_CLOSED_BY_ADMIN` | Cierre por el dueño o por un administrador |
+| `SHIFT_CLOSED` / `SHIFT_CLOSED_BY_ADMIN` | Corte Z: cierre por el dueño o por un administrador (el detalle empieza con "Corte Z Z-000001") |
+| `SHIFT_READOUT_GENERATED` | Corte X generado (con el autorizador, si lo hubo) |
+| `SHIFT_CUT_REPRINTED` | Reimpresión de un Corte X o Z |
 | `HELD_SALE_DISCARDED` | Venta conservada descartada al cerrar un turno ajeno |
 
 ## Ventas anteriores a 0.6.0
@@ -118,10 +179,10 @@ sqlite3 pos.db "SELECT COUNT(*) FROM CashShifts WHERE Status = 'OPEN';"   # 0 o 
 sqlite3 pos.db "SELECT COUNT(*) FROM Sales WHERE CashShiftId IS NULL AND CreatedAt > (SELECT MIN(OpenedAt) FROM CashShifts);"   # 0
 ```
 
-Aperturas, movimientos, conteos, cierres y rechazos también se registran en los logs (Serilog) con
-el turno, el usuario y los importes.
+Aperturas, movimientos, conteos, cierres, Cortes X y Z (con `CutId`, folio y autorizador) y rechazos
+también se registran en los logs (Serilog) con el turno, el usuario y los importes.
 
 ## Fuera de alcance
 
-Varias cajas, conteo por denominaciones, corte X, depósitos bancarios y cancelación de ventas de
-turnos cerrados.
+Varias cajas, conteo por denominaciones, gran total acumulado entre Cortes Z, facturación electrónica
+(CFDI), depósitos bancarios y cancelación de ventas de turnos cerrados.

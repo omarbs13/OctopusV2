@@ -51,6 +51,13 @@ public static class AuditActions
     public const string CouponDeactivated = "COUPON_DEACTIVATED";
     public const string CouponUseReleased = "COUPON_USE_RELEASED";
     public const string DiscountLimitChanged = "DISCOUNT_LIMIT_CHANGED";
+    public const string CategoryCreated = "CATEGORY_CREATED";
+    public const string CategoryUpdated = "CATEGORY_UPDATED";
+    public const string CategoryDeactivated = "CATEGORY_DEACTIVATED";
+    public const string CategoryActivated = "CATEGORY_ACTIVATED";
+    public const string CategoryDeleted = "CATEGORY_DELETED";
+    public const string ShiftReadoutGenerated = "SHIFT_READOUT_GENERATED";
+    public const string ShiftCutReprinted = "SHIFT_CUT_REPRINTED";
 
     public const string UserEntity = "User";
     public const string CashShiftEntity = "CashShift";
@@ -66,6 +73,8 @@ public static class AuditActions
     public const string DiscountApprovalEntity = "DiscountApproval";
     public const string CouponEntity = "Coupon";
     public const string DiscountSettingsEntity = "DiscountSettings";
+    public const string CategoryEntity = "Category";
+    public const string ShiftCutEntity = "ShiftCut";
 
     /// <summary>Texto en español de cada evento, en el orden en que se ofrece en el filtro.</summary>
     public static readonly IReadOnlyDictionary<string, string> All = new Dictionary<string, string>
@@ -93,8 +102,10 @@ public static class AuditActions
         [CashDeposit] = "Ingreso de efectivo",
         [CashWithdrawal] = "Retiro de efectivo",
         [ShiftCashCounted] = "Conteo de caja",
-        [ShiftClosed] = "Turno cerrado",
-        [ShiftClosedByAdmin] = "Turno cerrado por administrador",
+        [ShiftClosed] = "Turno cerrado (Corte Z)",
+        [ShiftClosedByAdmin] = "Turno cerrado por administrador (Corte Z)",
+        [ShiftReadoutGenerated] = "Corte X generado",
+        [ShiftCutReprinted] = "Corte reimpreso",
         [ReportExported] = "Reporte exportado",
         [ReportSettingsChanged] = "Configuración de reportes modificada",
         [LicenseImported] = "Licencia importada",
@@ -116,6 +127,11 @@ public static class AuditActions
         [CouponDeactivated] = "Cupón desactivado",
         [CouponUseReleased] = "Uso de cupón devuelto",
         [DiscountLimitChanged] = "Límite de descuento modificado",
+        [CategoryCreated] = "Categoría creada",
+        [CategoryUpdated] = "Categoría modificada",
+        [CategoryDeactivated] = "Categoría desactivada",
+        [CategoryActivated] = "Categoría activada",
+        [CategoryDeleted] = "Categoría eliminada",
     }.ToFrozenDictionary();
 
     /// <summary>Texto en español del evento; el código tal cual si no está en el catálogo.</summary>

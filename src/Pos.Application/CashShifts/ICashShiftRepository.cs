@@ -30,10 +30,22 @@ public interface ICashShiftRepository
     /// <summary>Detalle de solo lectura; el arqueo de un turno abierto usa <paramref name="openShiftTotals"/>.</summary>
     Task<ShiftDetailDto?> GetDetailAsync(Guid id, ShiftSalesTotals openShiftTotals, CancellationToken cancellationToken);
 
+    /// <summary><c>MAX(Number) + 1</c> del tipo de corte; se llama dentro de la transacción de escritura (017, research §3).</summary>
+    Task<long> NextCutNumberAsync(ShiftCutType type, CancellationToken cancellationToken);
+
+    /// <summary>Agrega un corte; los cortes nunca se modifican ni se borran (FR-013).</summary>
+    void AddCut(ShiftCut cut);
+
+    /// <summary>Reporte fijo de un corte con los nombres resueltos; nulo si no existe.</summary>
+    Task<ShiftCutReportDto?> GetCutReportAsync(Guid cutId, CancellationToken cancellationToken);
+
+    /// <summary>Histórico de cortes del más reciente al más antiguo (<c>GeneratedAt DESC, Id DESC</c>).</summary>
+    Task<ShiftCutPage> SearchCutsAsync(ShiftCutSearch search, CancellationToken cancellationToken);
+
     /// <summary>
     /// Guarda la unidad de trabajo. <see cref="SaveStatus.Duplicate"/> con
-    /// <see cref="CashShiftFields.OpenPerRegister"/> o <see cref="CashShiftFields.Number"/>;
-    /// <see cref="SaveStatus.Conflict"/> por versión.
+    /// <see cref="CashShiftFields.OpenPerRegister"/>, <see cref="CashShiftFields.Number"/> o
+    /// <see cref="CashShiftFields.CutNumber"/>; <see cref="SaveStatus.Conflict"/> por versión.
     /// </summary>
     Task<SaveOutcome> SaveChangesAsync(CancellationToken cancellationToken);
 }

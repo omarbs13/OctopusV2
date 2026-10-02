@@ -150,6 +150,24 @@ public sealed record CodeCollidesWithProduct : Error;
 /// <summary>Un cupón con usos no admite cambiar código, modalidad ni valor (015, FR-010).</summary>
 public sealed record CouponHasUses : Error;
 
+/// <summary>
+/// Se desactiva una categoría con productos sin confirmar (016, FR-005). Mensaje: "La categoría tiene {n}
+/// productos. Seguirán asignados a ella, pero no podrá asignarse a productos nuevos".
+/// </summary>
+public sealed record ConfirmationRequired(int ProductCount) : Error;
+
+/// <summary>
+/// Se intenta eliminar una categoría con productos no borrados (016, FR-007). Mensaje: "No se puede
+/// eliminar: la categoría tiene {n} productos. Reasígnalos o desactívala".
+/// </summary>
+public sealed record CategoryInUse(int ProductCount) : Error;
+
+/// <summary>
+/// La categoría elegida para un producto está inactiva, borrada o no existe (016, FR-011). Mensaje: "La
+/// categoría elegida ya no está disponible. Elige otra".
+/// </summary>
+public sealed record CategoryNotAssignable : Error;
+
 /// <summary>El archivo de licencia importado se rechazó; la licencia vigente no cambió (011, FR-012).</summary>
 public sealed record InvalidLicense(LicenseImportRejection Reason) : Error;
 

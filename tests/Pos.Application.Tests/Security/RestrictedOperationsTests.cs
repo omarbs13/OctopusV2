@@ -44,8 +44,8 @@ public class RestrictedOperationsTests
 
     public static TheoryData<string, Permission, Func<AuthFixture, Task<Result>>> Restricted() => new()
     {
-        { "CreateProduct", Permission.ManageProducts, f => R(new CreateProductHandler(f.Access, null!, null!).HandleAsync(new CreateProductCommand("a", "b", null, "1", "H87"), Ct)) },
-        { "UpdateProduct", Permission.ManageProducts, f => R(new UpdateProductHandler(f.Access, null!, null!, null!, null!).HandleAsync(new UpdateProductCommand(Guid.NewGuid(), 1, "a", "b", null, "1", "H87", true), Ct)) },
+        { "CreateProduct", Permission.ManageProducts, f => R(new CreateProductHandler(f.Access, null!, null!, null!, null!, null!).HandleAsync(new CreateProductCommand("a", "b", null, "1", "H87"), Ct)) },
+        { "UpdateProduct", Permission.ManageProducts, f => R(new UpdateProductHandler(f.Access, null!, null!, null!, null!, null!, null!).HandleAsync(new UpdateProductCommand(Guid.NewGuid(), 1, "a", "b", null, "1", "H87", true), Ct)) },
         { "DeleteProduct", Permission.ManageProducts, f => R(new DeleteProductHandler(f.Access, null!, null!).HandleAsync(new DeleteProductCommand(Guid.NewGuid(), 1), Ct)) },
         { "PrepareProductImage", Permission.ManageProducts, f => R(new PrepareProductImageHandler(f.Access, null!).HandleAsync(new PrepareProductImageCommand(Stream.Null, 0), Ct)) },
         { "RegisterMovement", Permission.RegisterMovements, f => R(new RegisterMovementHandler(f.Access, f.Session, null!, null!, null!, null!, NullLogger<RegisterMovementHandler>.Instance).HandleAsync(new RegisterMovementCommand(Guid.NewGuid(), MovementType.Receipt, "1", null, null), Ct)) },

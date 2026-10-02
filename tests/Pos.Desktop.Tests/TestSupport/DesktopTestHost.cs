@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Pos.Application;
 using Pos.Application.Abstractions;
+using Pos.Application.Categories;
 using Pos.Application.Diagnostics;
 using Pos.Application.Inventory;
 using Pos.Application.Products;
@@ -25,8 +26,10 @@ public sealed class DesktopTestHost : IDisposable
     {
         var services = new ServiceCollection();
         services.AddApplication();
+        services.AddLogging();
         services.AddSingleton<IProductRepository>(Repository);
         services.AddSingleton<IInventoryRepository>(Inventory);
+        services.AddSingleton<ICategoryRepository>(Categories);
         services.AddSingleton<ISaleRepository>(Sales);
         services.AddSingleton<IWriteTransactions>(new FakeWriteTransactions());
         services.AddSingleton<ICurrentUser, FixedCurrentUser>();
@@ -56,6 +59,8 @@ public sealed class DesktopTestHost : IDisposable
     public InMemoryProductRepository Repository { get; } = new();
 
     public InMemoryInventoryRepository Inventory { get; } = new();
+
+    public InMemoryCategoryRepository Categories { get; } = new();
 
     public FakeSaleRepository Sales { get; } = new();
 

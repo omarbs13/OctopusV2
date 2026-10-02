@@ -68,4 +68,7 @@ public enum Permission
 
     /// <summary>Ver "Descuentos > Reporte" (015); solo el Administrador.</summary>
     ViewDiscountReport,
+
+    /// <summary>Generar un Corte X del turno abierto (017); solo el Administrador, autorizable.</summary>
+    GenerateShiftReadout,
 }

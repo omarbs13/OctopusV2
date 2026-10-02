@@ -1,9 +1,12 @@
 using System.Diagnostics;
+using Microsoft.Extensions.Logging.Abstractions;
 using Pos.Application.Products;
 using Pos.Application.Products.CreateProduct;
 using Pos.Application.Products.SearchProducts;
 using Pos.Domain.Common;
 using Pos.Domain.Products;
+using Pos.Infrastructure.Categories;
+using Pos.Infrastructure.Persistence;
 using Pos.Infrastructure.Products;
 using Pos.Infrastructure.Tests.TestSupport;
 
@@ -109,7 +112,13 @@ public sealed class ProductPerformanceTests : IAsyncLifetime
         var watch = Stopwatch.StartNew();
         await using (var context = _db.CreateDbContext())
         {
-            var created = await new CreateProductHandler(new AllowAllAccessControl(), new ProductRepository(context), new CreateProductValidator())
+            var created = await new CreateProductHandler(
+                new AllowAllAccessControl(),
+                new ProductRepository(context),
+                new CreateProductValidator(),
+                new CategoryRepository(context),
+                new WriteTransactions(context),
+                NullLogger<CreateProductHandler>.Instance)
                 .HandleAsync(new CreateProductCommand("Nuevo producto", "NUEVO-1", null, "10.00", "H87"), Ct);
             Assert.True(created.IsSuccess);
         }

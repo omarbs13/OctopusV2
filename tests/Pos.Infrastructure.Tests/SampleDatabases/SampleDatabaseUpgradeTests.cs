@@ -81,6 +81,8 @@ public sealed class SampleDatabaseUpgradeTests
         AssertReturns(connection, sampleFile);
         AssertCredit(connection, sampleFile);
         AssertDiscounts(connection, sampleFile);
+        AssertCategories(connection, sampleFile);
+        AssertShiftCuts(connection, sampleFile);
         await AssertLegacyCancelledCashAsync(db, connection, sampleFile);
 
         foreach (var index in new[] { "IX_Products_Sku", "IX_Products_Barcode", "IX_Products_NameSearch" })
@@ -225,9 +227,11 @@ public sealed class SampleDatabaseUpgradeTests
     {
         if (VersionOf(sampleFile) >= new Version(0, 7, 0))
         {
-            // Desde 0.7.0 la base de ejemplo ya trae turnos (uno cerrado y uno abierto) y sus ventas.
-            Assert.Equal(2, Scalar<long>(connection, "SELECT COUNT(*) FROM CashShifts"));
-            Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM CashShifts WHERE Status = 'CLOSED' AND CountedCashCents IS NOT NULL"));
+            // Desde 0.7.0 la base de ejemplo ya trae turnos (uno cerrado y uno abierto) y sus ventas; desde
+            // 0.12.0 el turno del cajero también está cerrado (con su Corte Z) y hay otro abierto.
+            var closed = HasShiftCuts(sampleFile) ? 2 : 1;
+            Assert.Equal(closed + 1, Scalar<long>(connection, "SELECT COUNT(*) FROM CashShifts"));
+            Assert.Equal(closed, Scalar<long>(connection, "SELECT COUNT(*) FROM CashShifts WHERE Status = 'CLOSED' AND CountedCashCents IS NOT NULL"));
             Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM CashShifts WHERE Status = 'OPEN' AND ExpectedCashCents IS NULL"));
             Assert.Equal(
                 SampleData.SaleCount + (HasCredit(sampleFile) ? SampleData.CreditSaleCount : 0) + (HasDiscounts(sampleFile) ? SampleData.DiscountSaleCount : 0),
@@ -437,6 +441,76 @@ public sealed class SampleDatabaseUpgradeTests
         Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM AuditEntries WHERE Action = 'DISCOUNT_APPLIED_AUTHORIZED'"));
         Assert.Contains("\"discount\"", Scalar<string>(connection, "SELECT LinesJson FROM SaleDrafts"), StringComparison.Ordinal);
     }
+
+    /// <summary>
+    /// 016: la tabla de categorías existe; en las bases anteriores a 0.11.0 está vacía y todos los productos quedan
+    /// sin categoría. La de 0.11.0 conserva sus tres categorías y ningún producto no borrado apunta a una
+    /// categoría borrada o inexistente (data-model.md, invariante 3).
+    /// </summary>
+    private static void AssertCategories(SqliteConnection connection, string sampleFile)
+    {
+        Assert.Equal(
+            0,
+            Scalar<long>(connection, """
+                SELECT COUNT(*) FROM Products p
+                WHERE p.DeletedAt IS NULL AND p.CategoryId IS NOT NULL
+                  AND NOT EXISTS (SELECT 1 FROM Categories c WHERE c.Id = p.CategoryId AND c.DeletedAt IS NULL)
+                """));
+
+        if (VersionOf(sampleFile) < new Version(0, 11, 0))
+        {
+            Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM Categories"));
+            Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM Products WHERE CategoryId IS NOT NULL"));
+            return;
+        }
+
+        Assert.Equal(3, Scalar<long>(connection, "SELECT COUNT(*) FROM Categories"));
+        Assert.Equal(
+            SampleData.ActiveCategorySkus.Length,
+            Scalar<long>(connection, $"SELECT COUNT(*) FROM Products p JOIN Categories c ON c.Id = p.CategoryId WHERE c.Name = '{SampleData.ActiveCategoryName}' AND c.IsActive = 1"));
+        Assert.Equal(
+            SampleData.InactiveCategorySku,
+            Scalar<string>(connection, $"SELECT p.Sku FROM Products p JOIN Categories c ON c.Id = p.CategoryId WHERE c.Name = '{SampleData.InactiveCategoryName}' AND c.IsActive = 0"));
+        Assert.Equal(1, Scalar<long>(connection, "SELECT COUNT(*) FROM Categories WHERE DeletedAt IS NOT NULL"));
+    }
+
+    /// <summary>
+    /// 017: la tabla de cortes existe; en las bases anteriores a 0.12.0 está vacía (sin Corte Z retroactivo,
+    /// FR-010a). La de 0.12.0 conserva su Corte X y su Corte Z con sus folios, y el turno cerrado antes
+    /// de la actualización sigue sin Corte Z.
+    /// </summary>
+    private static void AssertShiftCuts(SqliteConnection connection, string sampleFile)
+    {
+        if (!HasShiftCuts(sampleFile))
+        {
+            Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM ShiftCuts"));
+            return;
+        }
+
+        Assert.Equal(2, Scalar<long>(connection, "SELECT COUNT(*) FROM ShiftCuts"));
+        Assert.Equal(
+            1,
+            Scalar<long>(connection, """
+                SELECT COUNT(*) FROM ShiftCuts c JOIN CashShifts s ON s.Id = c.ShiftId
+                WHERE c.Type = 'X' AND c.Number = 1 AND s.Number = 2 AND c.ShiftNumber = 2 AND c.CountedCashCents IS NULL
+                """));
+        Assert.Equal(
+            1,
+            Scalar<long>(connection, $"""
+                SELECT COUNT(*) FROM ShiftCuts c JOIN CashShifts s ON s.Id = c.ShiftId
+                WHERE c.Type = 'Z' AND c.Number = 1 AND s.Status = 'CLOSED' AND c.ExpectedCashCents = s.ExpectedCashCents
+                  AND c.CountedCashCents = s.CountedCashCents AND c.DifferenceCents = -{SampleData.ClosingShortageCents}
+                  AND c.Comment = '{SampleData.ClosingComment}'
+                """));
+        Assert.Equal(
+            1,
+            Scalar<long>(connection, """
+                SELECT COUNT(*) FROM CashShifts s
+                WHERE s.Status = 'CLOSED' AND NOT EXISTS (SELECT 1 FROM ShiftCuts c WHERE c.ShiftId = s.Id AND c.Type = 'Z')
+                """));
+    }
+
+    private static bool HasShiftCuts(string sampleFile) => VersionOf(sampleFile) >= new Version(0, 12, 0);
 
     private static bool HasSales(string sampleFile) => VersionOf(sampleFile) >= new Version(0, 4, 0);
 

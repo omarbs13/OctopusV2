@@ -41,6 +41,7 @@ Los permisos se asignan a los roles en un solo lugar: `src/Pos.Domain/Users/Role
 | Descuentos sobre el límite (`ApproveDiscounts`) | ✔ (sin contraseña) | con autorización |
 | Cupones y límite de descuento (`ManageDiscounts`) | ✔ | |
 | Descuentos > Reporte (`ViewDiscountReport`) | ✔ | |
+| Generar un Corte X del turno abierto (`GenerateShiftReadout`) | ✔ | con autorización |
 
 Los 7 permisos de clientes y crédito (0.9.0) pertenecen al módulo **Crédito y clientes** de la licencia:
 sin él no aparecen en el menú y los casos de uso devuelven "módulo no activo". La anulación de abonos
@@ -50,13 +51,20 @@ Los 4 permisos de descuentos (0.10.0) pertenecen al módulo **Descuentos y promo
 supera el límite queda con aprobación guardada y autorizador registrado, también cuando lo aplica el
 Administrador. Ver [descuentos.md](descuentos.md).
 
+El permiso del Corte X (0.12.0) pertenece al módulo **Turnos y arqueo**, igual que `OperateShift`,
+`WithdrawCash` y `ManageShifts`. Es autorizable para que el Cajero pueda hacer un Corte X con un
+Administrador presente sin abrirle otras operaciones de "Turnos"; el corte y la bitácora guardan quién
+autorizó. El histórico de cortes usa `ManageShifts` (solo Administrador). Ver
+[turnos-de-caja.md](turnos-de-caja.md).
+
 Los permisos se verifican en los casos de uso, releyendo al usuario de la base en cada operación
 restringida: un usuario desactivado o con otro rol pierde el acceso aunque su sesión siga abierta. El
 menú solo oculta lo que se rechazaría.
 
 ### Autorización de administrador
 
-Ante una operación restringida autorizable (cancelar una venta, abrir el cajón sin venta), el cajero
+Ante una operación restringida autorizable (cancelar una venta, abrir el cajón sin venta, generar un
+Corte X), el cajero
 puede pedir la autorización de un administrador: este captura su usuario y contraseña en un diálogo,
 sin cerrar la sesión del cajero. La concesión es de un solo uso, vence a los 2 minutos y solo vale para
 esa operación y ese solicitante. La bitácora registra al solicitante (`CreatedBy`) y al autorizador

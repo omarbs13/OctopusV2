@@ -18,7 +18,42 @@ vuelve a imprimir la misma venta; no crea otra.
 | **Datos del negocio** | **Configuración → Datos del negocio** | Nombre comercial, dirección, teléfono, RFC, logotipo y mensaje de pie del ticket. Se guardan en la base de datos. |
 | **Impresora** | **Configuración → Impresora** | Impresora (o impresora virtual), ancho de papel (58 u 80 mm), impresión automática, cajón automático e **Impresión de prueba**. Es local a cada computadora. |
 | **Reimprimir** | Detalle de una venta | Reimprime con la leyenda `REIMPRESIÓN`; las ventas canceladas llevan además `CANCELADA`. |
+| **Corte X / Corte Z** | **Caja → Corte X**, cierre de turno (**Caja → Corte Z**) e **Histórico de cortes** | El Corte X se imprime desde su vista ("Imprimir"); el Corte Z, automáticamente al cerrar el turno. Desde el histórico se reimprimen con la leyenda `REIMPRESIÓN`. Ver abajo. |
 | **Abrir cajón** | Punto de venta | Abre el cajón sin venta; pide un motivo obligatorio que queda en la bitácora. Un Cajero necesita la autorización de un administrador (solo Administrador puede abrirlo directamente). |
+
+## Tickets de Corte X y Corte Z
+
+Los dos usan las cifras guardadas en el corte, sin recalcular: una reimpresión sale idéntica a la
+original aunque el turno haya tenido más ventas.
+
+```text
+        {encabezado del negocio}
+              CORTE X                 | CORTE Z
+   LECTURA PARCIAL - NO ES CIERRE     | (sin leyenda)
+   DE CAJA
+         [REIMPRESIÓN si aplica]
+Corte                       X-000004
+Turno                       T-000123
+Caja                          Caja 1
+Usuario: {dueño del turno}
+Generado por: {usuario}
+Autorizó: {administrador}            (solo si aplica)
+Apertura: dd/MM/yyyy HH:mm
+Fecha corte: dd/MM/yyyy HH:mm
+--------------------------------
+{fondo, ventas, total vendido, formas de pago, devoluciones, crédito, ingresos, retiros}
+Efectivo esperado            $X
+Efectivo contado / diferencia / comentario   (solo Z)
+```
+
+- Imprimir un corte lo puede quien lo generó (el Cajero autorizado imprime su Corte X) o un
+  Administrador.
+- Cada **reimpresión** queda en la bitácora como `SHIFT_CUT_REPRINTED` (entidad `ShiftCut`, con tipo,
+  folio y turno). La primera impresión no se registra aparte: la generación ya está en la bitácora.
+- Si la impresora no está disponible, el corte ya quedó guardado: se ofrece **Reintentar** y se puede
+  reimprimir después desde **Caja → Histórico de cortes**.
+- El corte impreso desde **Ventas → Turnos** lleva el título `CORTE Z Z-000001` cuando el turno tiene
+  Corte Z; los turnos cerrados antes de 0.12.0 conservan `CORTE DE CAJA`.
 
 ## Dónde se guarda cada cosa
 

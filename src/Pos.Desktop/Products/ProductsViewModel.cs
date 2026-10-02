@@ -6,6 +6,7 @@ using Pos.Application.Abstractions;
 using Pos.Application.Products;
 using Pos.Application.Products.DeleteProduct;
 using Pos.Application.Products.SearchProducts;
+using Pos.Desktop.Categories;
 using Pos.Desktop.Common;
 using Pos.Desktop.Forms;
 using Pos.Desktop.Inventory;
@@ -45,6 +46,12 @@ public sealed partial class ProductsViewModel : PageViewModel, IDisposable
         _runner = runner;
         _dialogs = dialogs;
         _editorFactory = editorFactory;
+        CategoryFilter = new CategoryPickerViewModel(useCases, runner, CategoryPickerMode.Filter);
+        CategoryFilter.SelectionChanged += (_, _) =>
+        {
+            CurrentPage = 1;
+            _ = SearchNowAsync();
+        };
         Forms.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(FormHost.ActiveForm))
@@ -60,6 +67,9 @@ public sealed partial class ProductsViewModel : PageViewModel, IDisposable
     public bool CanManage { get; }
 
     public ObservableCollection<ProductListItemDto> Items { get; } = [];
+
+    /// <summary>Filtro "Categoría" junto a la búsqueda (016, FR-012): Todas, Sin categoría o una categoría.</summary>
+    public CategoryPickerViewModel CategoryFilter { get; }
 
     [ObservableProperty]
     public partial string SearchText { get; set; } = string.Empty;
@@ -105,7 +115,11 @@ public sealed partial class ProductsViewModel : PageViewModel, IDisposable
     /// <summary>Editor abierto, si hay.</summary>
     public ProductEditorViewModel? Editor => Forms.ActiveForm as ProductEditorViewModel;
 
-    public override Task OnActivatedAsync() => SearchAsync();
+    public override async Task OnActivatedAsync()
+    {
+        await CategoryFilter.LoadAsync();
+        await SearchAsync();
+    }
 
     public void Dispose()
     {
@@ -149,7 +163,17 @@ public sealed partial class ProductsViewModel : PageViewModel, IDisposable
     private Task LastPageAsync() => GoToPageAsync(TotalPages);
 
     [RelayCommand]
-    private Task NewProductAsync() => CanManage ? OpenEditorAsync(_editorFactory()) : Task.CompletedTask;
+    private async Task NewProductAsync()
+    {
+        if (!CanManage)
+        {
+            return;
+        }
+
+        var editor = _editorFactory();
+        await editor.PrepareNewAsync();
+        await OpenEditorAsync(editor);
+    }
 
     [RelayCommand(CanExecute = nameof(HasSelection))]
     private async Task EditAsync()
@@ -275,7 +299,7 @@ public sealed partial class ProductsViewModel : PageViewModel, IDisposable
     private async Task SearchAsync(Guid? locateProductId = null)
     {
         var version = Interlocked.Increment(ref _searchVersion);
-        var query = new SearchProductsQuery(SearchText, IncludeInactive, CurrentPage, locateProductId);
+        var query = new SearchProductsQuery(SearchText, IncludeInactive, CurrentPage, locateProductId, CategoryFilter.Filter);
 
         var (completed, result) = await _runner.RunAsync(
             "BuscarProductos",
@@ -286,6 +310,7 @@ public sealed partial class ProductsViewModel : PageViewModel, IDisposable
                 ["SearchText"] = query.Text,
                 ["IncludeInactive"] = query.IncludeInactive,
                 ["Page"] = query.Page,
+                ["Category"] = query.Category.Kind,
             });
 
         // Se descartan resultados de búsquedas que ya fueron reemplazadas por otra más reciente.

@@ -13,8 +13,9 @@ namespace Pos.Application.CashShifts.CloseShift;
 
 /// <summary>
 /// Segundo paso del cierre: recalcula todo dentro de la transacción, exige comentario si hay
-/// diferencia y deja el turno cerrado con su instantánea inmutable (research §8 y §10). Una sola
-/// entrada de cierre en la bitácora: <c>SHIFT_CLOSED</c> o, si lo cierra otro usuario,
+/// diferencia y deja el turno cerrado con su instantánea inmutable (research §8 y §10). Todo cierre es
+/// un Corte Z (017): en la misma transacción se crea el corte con el siguiente folio Z (FR-009). Una
+/// sola entrada de cierre en la bitácora: <c>SHIFT_CLOSED</c> o, si lo cierra otro usuario,
 /// <c>SHIFT_CLOSED_BY_ADMIN</c>.
 /// </summary>
 public sealed partial class CloseShiftHandler
@@ -148,7 +149,11 @@ public sealed partial class CloseShiftHandler
             return Result.Failure<ClosedShift>(new ValidationFailed([new FieldError(CashShiftFields.Comment, ex.Message)]));
         }
 
-        var summary = $"Turno {shift.Folio}. Esperado {TicketBuilder.FormatMoney(expected)}, "
+        var number = await _shifts.NextCutNumberAsync(ShiftCutType.Closing, cancellationToken);
+        var cut = ShiftCut.Closing(number, shift, _currentUser.UserId);
+        _shifts.AddCut(cut);
+
+        var summary = $"Corte Z {cut.Folio}. Turno {shift.Folio}. Esperado {TicketBuilder.FormatMoney(expected)}, "
             + $"contado {TicketBuilder.FormatMoney(command.CountedCents)}, diferencia {TicketBuilder.FormatMoney(difference)}";
         _audit.Add(
             isOwn ? AuditActions.ShiftClosed : AuditActions.ShiftClosedByAdmin,
@@ -163,13 +168,13 @@ public sealed partial class CloseShiftHandler
         }
 
         await transaction.CommitAsync(cancellationToken);
-        LogClosed(shift.Id, shift.Folio, _currentUser.UserId, expected, command.CountedCents, difference);
-        return Result.Success(new ClosedShift(shift.Id, shift.Folio));
+        LogClosed(shift.Id, shift.Folio, cut.Id, cut.Folio, _currentUser.UserId, expected, command.CountedCents, difference);
+        return Result.Success(new ClosedShift(shift.Id, shift.Folio, cut.Id, cut.Folio));
     }
 
     [LoggerMessage(Level = LogLevel.Information,
-        Message = "Turno cerrado. ShiftId={ShiftId} Folio={Folio} UserId={UserId} EsperadoCents={ExpectedCents} ContadoCents={CountedCents} DiferenciaCents={DifferenceCents}")]
-    private partial void LogClosed(Guid shiftId, string folio, Guid userId, long expectedCents, long countedCents, long differenceCents);
+        Message = "Turno cerrado (Corte Z). ShiftId={ShiftId} Folio={Folio} CutId={CutId} CorteZ={CutFolio} UserId={UserId} EsperadoCents={ExpectedCents} ContadoCents={CountedCents} DiferenciaCents={DifferenceCents}")]
+    private partial void LogClosed(Guid shiftId, string folio, Guid cutId, string cutFolio, Guid userId, long expectedCents, long countedCents, long differenceCents);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Cierre de turno rechazado: el esperado cambió. ShiftId={ShiftId} UserId={UserId}")]
     private partial void LogChanged(Guid shiftId, Guid userId);

@@ -2,7 +2,8 @@ namespace Pos.Application.Products.CreateProduct;
 
 /// <summary>
 /// Alta de producto; el precio llega como texto capturado ("1234.50" o "1,234.50"). Una imagen
-/// nula equivale a <see cref="ProductImageChange.KeepCurrent"/> (sin imagen).
+/// nula equivale a <see cref="ProductImageChange.KeepCurrent"/> (sin imagen). <c>CategoryId</c> nulo =
+/// "Sin categoría"; si no es nulo debe ser una categoría activa (016, FR-011).
 /// </summary>
 public sealed record CreateProductCommand(
     string Name,
@@ -12,4 +13,5 @@ public sealed record CreateProductCommand(
     string UnitCode,
     ProductImageChange? Image = null,
     bool TracksInventory = false,
-    string? MinimumStockText = null);
+    string? MinimumStockText = null,
+    Guid? CategoryId = null);

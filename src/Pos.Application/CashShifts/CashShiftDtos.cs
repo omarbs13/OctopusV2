@@ -139,7 +139,8 @@ public sealed record ShiftDetailDto(
     string? ClosedByName,
     IReadOnlyList<ShiftSaleRowDto> Sales,
     IReadOnlyList<CashMovementDto> Movements,
-    ShiftReconciliationDto Reconciliation);
+    ShiftReconciliationDto Reconciliation,
+    string? CutFolio = null);
 
 /// <summary>Cifras que se revelan solo después de capturar el conteo (research §8).</summary>
 public sealed record ShiftCountResult(
@@ -153,9 +154,13 @@ public sealed record ShiftCountResult(
 
 public sealed record RegisteredMovement(Guid MovementId, string Folio);
 
-public sealed record ClosedShift(Guid ShiftId, string Folio);
+/// <summary>Turno cerrado con su Corte Z (017): <c>CutFolio</c> es <c>Z-000001</c>.</summary>
+public sealed record ClosedShift(Guid ShiftId, string Folio, Guid CutId, string CutFolio);
 
-/// <summary>Datos del corte: solo los de FR-019, leídos de la instantánea del turno cerrado.</summary>
+/// <summary>
+/// Datos del corte: solo los de FR-019, leídos de la instantánea del turno cerrado. <c>CutFolio</c> es
+/// el folio de su Corte Z (017); nulo en turnos cerrados antes de 0.12.0.
+/// </summary>
 public sealed record ShiftReportDto(
     Guid ShiftId,
     string Folio,
@@ -182,7 +187,8 @@ public sealed record ShiftReportDto(
     long CashRefundsCents = 0,
     long NonCashRefundsCents = 0,
     long CreditNotesIssuedCents = 0,
-    ShiftCreditTotals? Credit = null);
+    ShiftCreditTotals? Credit = null,
+    string? CutFolio = null);
 
 /// <summary>Datos del comprobante de un movimiento de efectivo, más lo necesario para decidir el acceso.</summary>
 public sealed record CashMovementReceiptDto(

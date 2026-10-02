@@ -23,7 +23,12 @@ public abstract record PrintSource
     /// <summary>Recibo de un abono recién registrado o su reimpresión (014, FR-013).</summary>
     public static PrintSource CustomerPayment(Guid paymentId) => new CustomerPaymentSource(paymentId);
 
+    /// <summary>Corte X o Z recién generado o su reimpresión desde el histórico (017, FR-014).</summary>
+    public static PrintSource ShiftCut(Guid cutId) => new ShiftCutSource(cutId);
+
     public sealed record SaleSource(Guid SaleId) : PrintSource;
+
+    public sealed record ShiftCutSource(Guid CutId) : PrintSource;
 
     public sealed record CustomerPaymentSource(Guid PaymentId) : PrintSource;
 

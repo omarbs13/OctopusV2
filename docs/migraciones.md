@@ -224,3 +224,43 @@ TABLE` y el `UPDATE`) y que al migrar `v0.9.0.db` toda línea quede con `Origina
 AmountCents` y sin descuentos. `SampleDatabaseUpgradeTests` migra de `v0.1.0.db` a `v0.10.0.db`, verifica
 que las tablas nuevas existan (vacías, salvo en `v0.10.0.db`) y que en toda venta las líneas sumen el
 total y el descontado sea la suma de sus descuentos. Ver [descuentos.md](descuentos.md).
+
+## 0.11.0: categorías de productos (`ProductCategories`)
+
+La base de ejemplo `v0.11.0.db` trae, además de lo anterior, tres categorías: "Bebidas de muestra"
+(activa, con el producto sin inventario y el del cupón, ambos vendidos), "Lácteos de muestra" (inactiva, con
+el producto inactivo `REF-001`) y "Temporal de muestra" (borrada, sin productos); el resto de los productos
+queda sin categoría. La migración `ProductCategories` **no reconstruye ninguna tabla**:
+
+- Crea `Categories` con el índice único filtrado `IX_Categories_NameKey ... WHERE "DeletedAt" IS NULL` y
+  `IX_Categories_IsActive_NameKey`.
+- Agrega `Products.CategoryId TEXT NULL` con `ALTER TABLE ... ADD` y su índice
+  `IX_Products_CategoryId ... WHERE "DeletedAt" IS NULL`. **Sin `FOREIGN KEY`**: agregarla obligaría a
+  reconstruir `Products`; la integridad la dan los casos de uso (ver [categorias.md](categorias.md)).
+- No rellena datos: todos los productos existentes quedan "Sin categoría".
+
+`ProductCategoriesMigrationTests` revisa el SQL (un solo `ALTER TABLE`, sin `FOREIGN KEY`, `DROP TABLE` ni
+`ef_temp_`) y que al migrar `v0.10.0.db` los productos conserven sus datos con `CategoryId` nulo.
+`SampleDatabaseUpgradeTests` migra de `v0.1.0.db` a `v0.11.0.db`, verifica que `Categories` exista (vacía,
+salvo en `v0.11.0.db`) y que ningún producto no borrado apunte a una categoría borrada o inexistente.
+
+## 0.12.0: Corte X y Corte Z (`ShiftCuts`)
+
+La base de ejemplo `v0.12.0.db` trae, además de lo anterior, tres turnos: `T-000001` cerrado **sin**
+Corte Z (como los turnos cerrados antes de la actualización), `T-000002` del cajero con un Corte X
+(`X-000001`) y cerrado por el administrador con un Corte Z (`Z-000001`, faltante de $5.00 con
+comentario), y `T-000003` abierto. La venta conservada del cajero se vuelve a guardar después del cierre.
+La migración `ShiftCuts` **no reconstruye ninguna tabla**:
+
+- Crea `ShiftCuts` con llave foránea `Restrict` hacia `CashShifts` (la tabla es nueva, así que no
+  reconstruye nada) y cinco índices: `IX_ShiftCuts_Type_Number` (único: folio por tipo),
+  `IX_ShiftCuts_ClosingPerShift` (único filtrado `WHERE "Type" = 'Z'`: un Corte Z por turno),
+  `IX_ShiftCuts_ShiftId`, `IX_ShiftCuts_GeneratedAt` e `IX_ShiftCuts_GeneratedBy_GeneratedAt`.
+- No toca `CashShifts` ni inserta filas: los turnos cerrados antes de 0.12.0 **no reciben Corte Z
+  retroactivo** y no aparecen en el histórico de cortes. El primer Corte Z posterior es `Z-000001`.
+
+`ShiftCutsMigrationTests` revisa el SQL (un solo `CREATE TABLE`, los cinco índices, sin `ALTER TABLE`,
+`DROP TABLE`, `INSERT` ni `ef_temp_`) y que al migrar `v0.11.0.db` los turnos conserven sus datos y
+`ShiftCuts` quede vacía. `SampleDatabaseUpgradeTests` verifica que `ShiftCuts` esté vacía en las bases
+anteriores y que `v0.12.0.db` conserve su Corte X y su Corte Z con sus folios y cifras. Ver
+[turnos-de-caja.md](turnos-de-caja.md).

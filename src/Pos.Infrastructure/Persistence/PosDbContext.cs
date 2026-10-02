@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Pos.Domain.Audit;
 using Pos.Domain.Business;
 using Pos.Domain.CashShifts;
+using Pos.Domain.Categories;
 using Pos.Domain.CreditNotes;
 using Pos.Domain.Customers;
 using Pos.Domain.Discounts;
@@ -93,6 +94,10 @@ public class PosDbContext : DbContext
 
     public DbSet<SaleDiscount> SaleDiscounts => Set<SaleDiscount>();
 
+    public DbSet<Category> Categories => Set<Category>();
+
+    public DbSet<ShiftCut> ShiftCuts => Set<ShiftCut>();
+
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
         RejectImmutableChanges();
@@ -145,6 +150,8 @@ public class PosDbContext : DbContext
         modelBuilder.ApplyConfiguration(new CouponConfiguration());
         modelBuilder.ApplyConfiguration(new DiscountApprovalConfiguration());
         modelBuilder.ApplyConfiguration(new SaleDiscountConfiguration());
+        modelBuilder.ApplyConfiguration(new CategoryConfiguration());
+        modelBuilder.ApplyConfiguration(new ShiftCutConfiguration());
     }
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
@@ -157,9 +164,9 @@ public class PosDbContext : DbContext
     }
 
     /// <summary>
-    /// Los movimientos de inventario y de efectivo, la bitácora de auditoría, los turnos cerrados y el
-    /// libro de las cuentas por cobrar son inmutables: no se modifican ni se borran (004 FR-010,
-    /// 005 Principio IX, 008 research §10, 014 FR-014).
+    /// Los movimientos de inventario y de efectivo, la bitácora de auditoría, los turnos cerrados, los
+    /// cortes de caja y el libro de las cuentas por cobrar son inmutables: no se modifican ni se borran (004 FR-010,
+    /// 005 Principio IX, 008 research §10, 014 FR-014, 017 FR-013).
     /// </summary>
     private void RejectImmutableChanges()
     {
@@ -178,6 +185,12 @@ public class PosDbContext : DbContext
                 && e.Property(nameof(CashShift.Status)).OriginalValue is CashShiftStatus.Closed))
         {
             throw new InvalidOperationException("Un turno cerrado no se puede modificar ni borrar.");
+        }
+
+        // 017, FR-013: los Cortes X y Z no se deshacen, modifican ni borran.
+        if (ChangeTracker.Entries<ShiftCut>().Any(e => e.State is EntityState.Modified or EntityState.Deleted))
+        {
+            throw new InvalidOperationException("Los cortes de caja no se pueden modificar ni borrar.");
         }
 
         if (ChangeTracker.Entries<SaleReturn>().Any(e => e.State is EntityState.Modified or EntityState.Deleted)

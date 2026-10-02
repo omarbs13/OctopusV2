@@ -77,6 +77,15 @@ public static class ReportTexts
     public const string InventoryTableTitle = "Detalle de existencias";
     public const string InventoryNote = "Existencias al cierre de la fecha. Mínimos y datos del producto: valores actuales.";
 
+    public const string CategoryFilter = "Categoría";
+    public const string ColCategory = "Categoría";
+    public const string ColUnits = "Unidades";
+    public const string ColShare = "% del total";
+    public const string CategoriesTableTitle = "Ventas por categoría";
+    public const string CategoriesTotal = "Total";
+    public const string NotSplitByCategory = "—";
+    public const string PaymentsNotSplitNote = "Formas de pago: no se desglosan por categoría";
+
     public const string SortAsc = "ascendente";
     public const string SortDesc = "descendente";
 

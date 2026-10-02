@@ -31,6 +31,7 @@ public static class RolePermissions
         Permission.ApproveCreditOverLimit,
         Permission.VoidCustomerPayments,
         Permission.ApproveDiscounts,
+        Permission.GenerateShiftReadout,
     }.ToFrozenSet();
 
     public static IReadOnlySet<Permission> For(UserRole role) => role switch

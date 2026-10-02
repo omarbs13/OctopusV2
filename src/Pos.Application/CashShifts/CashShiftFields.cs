@@ -11,4 +11,5 @@ public static class CashShiftFields
     public const string DateRange = "DateRange";
     public const string Number = "Number";
     public const string OpenPerRegister = "OpenPerRegister";
+    public const string CutNumber = "CutNumber";
 }

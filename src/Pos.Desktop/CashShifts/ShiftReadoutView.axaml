@@ -1,0 +1,26 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Pos.Desktop.CashShifts"
+             xmlns:res="using:Pos.Desktop.Resources"
+             xmlns:forms="using:Pos.Desktop.Forms"
+             x:Class="Pos.Desktop.CashShifts.ShiftReadoutView"
+             x:DataType="vm:ShiftReadoutViewModel">
+
+  <forms:FormHostView Host="{Binding Forms}">
+    <forms:FormHostView.ListContent>
+      <StackPanel Spacing="12" MaxWidth="640" HorizontalAlignment="Left">
+        <TextBlock Text="{x:Static res:Strings.Cut_NoShiftReadout}" TextWrapping="Wrap"
+                   IsVisible="{Binding HasNoShift}" />
+        <TextBlock Text="{Binding ShiftText}" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap"
+                   IsVisible="{Binding HasShift}" />
+        <TextBlock Text="{x:Static res:Strings.Cut_ReadoutHint}" TextWrapping="Wrap" />
+        <Button Classes="accent" MinHeight="44" HorizontalAlignment="Left"
+                Content="{x:Static res:Strings.Cut_GenerateReadout}"
+                Command="{Binding GenerateCommand}" />
+        <TextBlock Text="{Binding ErrorMessage}" TextWrapping="Wrap"
+                   Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                   IsVisible="{Binding ErrorMessage, Converter={x:Static ObjectConverters.IsNotNull}}" />
+      </StackPanel>
+    </forms:FormHostView.ListContent>
+  </forms:FormHostView>
+</UserControl>

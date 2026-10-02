@@ -36,7 +36,7 @@ public sealed class SearchProductsHandler
         var page = Math.Max(query.Page, 1);
         var pageSize = ProductPage.DefaultPageSize;
         var search = string.IsNullOrEmpty(text)
-            ? new ProductSearch(null, null, null, BarcodeExact: false, query.IncludeInactive, page, pageSize)
+            ? new ProductSearch(null, null, null, BarcodeExact: false, query.IncludeInactive, page, pageSize, query.Category)
             : new ProductSearch(
                 TextNormalizer.ForSearch(text),
                 text.ToUpperInvariant(),
@@ -44,7 +44,8 @@ public sealed class SearchProductsHandler
                 Product.LooksLikeFullBarcode(text),
                 query.IncludeInactive,
                 page,
-                pageSize);
+                pageSize,
+                query.Category);
 
         if (query.LocateProductId is { } productId
             && await _products.LocatePageAsync(search, productId, cancellationToken) is { } located)

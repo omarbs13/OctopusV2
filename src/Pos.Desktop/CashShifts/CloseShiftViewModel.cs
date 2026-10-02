@@ -22,9 +22,9 @@ public enum CloseShiftStep
 }
 
 /// <summary>
-/// Cierre de turno en tres pasos (Historia 3, contracts/ui.md): 1 conteo sin ninguna cifra esperada
-/// (arqueo ciego, FR-014); 2 cifras con comentario obligatorio si hay diferencia; 3 cierre e impresión
-/// del corte. Solo presenta: esperado y diferencia los calcula <c>CountShiftCash</c> (Principio III).
+/// Corte Z (cierre de turno, 008 y 017) en tres pasos (Historia 3, contracts/ui.md): 1 conteo sin
+/// ninguna cifra esperada (arqueo ciego, FR-014); 2 cifras con comentario obligatorio si hay
+/// diferencia; 3 cierre e impresión del Corte Z. Solo presenta: esperado y diferencia los calcula <c>CountShiftCash</c> (Principio III).
 /// </summary>
 public sealed partial class CloseShiftViewModel : ViewModelBase
 {
@@ -118,7 +118,8 @@ public sealed partial class CloseShiftViewModel : ViewModelBase
 
     public string? CommentRequiredText => NeedsComment ? Strings.Shift_CommentRequired : null;
 
-    public string DoneText => _closed is null ? string.Empty : string.Format(CultureInfo.CurrentCulture, Strings.Shift_Closed, _closed.Folio);
+    /// <summary>"Corte Z Z-000001 · Turno T-000123 cerrado" (017).</summary>
+    public string DoneText => _closed is null ? string.Empty : string.Format(CultureInfo.CurrentCulture, Strings.Cut_ClosingDone, _closed.CutFolio, _closed.Folio);
 
     [RelayCommand(CanExecute = nameof(CanAct))]
     private Task CountAsync() => CountCoreAsync(keepNotice: false);
@@ -212,7 +213,10 @@ public sealed partial class CloseShiftViewModel : ViewModelBase
 
     private bool CanConfirmClose() => !IsBusy && (!NeedsComment || !string.IsNullOrWhiteSpace(Comment));
 
-    /// <summary>Corte impreso tras confirmar el cierre: una falla de impresión no revierte el cierre (research §12).</summary>
+    /// <summary>
+    /// Corte Z impreso tras confirmar el cierre: una falla de impresión no revierte el cierre (research §12)
+    /// y el corte se reimprime desde el histórico.
+    /// </summary>
     private async Task PrintReportCoreAsync(bool automatic)
     {
         if (_closed is null)
@@ -224,7 +228,7 @@ public sealed partial class CloseShiftViewModel : ViewModelBase
         IsBusy = true;
         try
         {
-            await _printing.PrintAsync(PrintSource.ShiftReport(_closed.ShiftId), isReprint: !automatic, _closed.Folio, automatic);
+            await _printing.PrintAsync(PrintSource.ShiftCut(_closed.CutId), isReprint: !automatic, _closed.CutFolio, automatic);
         }
         finally
         {

@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Pos.Application.Abstractions;
+using Pos.Application.Categories;
 using Pos.Application.Products;
 using Pos.Application.Products.CreateProduct;
 using Pos.Application.Products.GetProduct;
@@ -8,6 +9,7 @@ using Pos.Application.Products.ListUnitsOfMeasure;
 using Pos.Application.Products.PrepareProductImage;
 using Pos.Application.Products.UpdateProduct;
 using Pos.Application.Reports.SetProductCritical;
+using Pos.Desktop.Categories;
 using Pos.Desktop.Common;
 using Pos.Desktop.Forms;
 using Pos.Desktop.Resources;
@@ -32,6 +34,8 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
     private int _expectedVersion;
     private bool _loadedIsCritical;
     private long? _onHandThousandths;
+    private Guid? _loadedCategoryId;
+    private string? _loadedCategoryName;
 
     /// <summary>Cambio de imagen pendiente; se aplica solo al guardar (003, FR-025).</summary>
     private ProductImageChange _imageChange = ProductImageChange.KeepCurrent;
@@ -41,8 +45,15 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
     {
         _useCases = useCases;
         _runner = runner;
+        Category = new CategoryPickerViewModel(useCases, runner, CategoryPickerMode.Assignment);
         ResetOriginalState();
     }
+
+    /// <summary>Campo "Categoría" (016, FR-010): "Sin categoría" y las activas; la actual inactiva solo si ya la tenía.</summary>
+    public CategoryPickerViewModel Category { get; }
+
+    [ObservableProperty]
+    public partial string? CategoryError { get; set; }
 
     [ObservableProperty]
     public partial string Name { get; set; } = string.Empty;
@@ -156,6 +167,13 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
     /// <summary>Catálogo fijo; no depende de la base, así que se obtiene sin ámbito de caso de uso.</summary>
     public IReadOnlyList<UnitOfMeasureDto> Units { get; } = new ListUnitsOfMeasureHandler().Handle();
 
+    /// <summary>Prepara el alta: carga las categorías activas para el selector.</summary>
+    public async Task PrepareNewAsync()
+    {
+        await Category.LoadAsync();
+        ResetOriginalState();
+    }
+
     /// <summary>Carga un producto para editarlo. Devuelve falso si ya no existe (y lo informa).</summary>
     public async Task<bool> LoadAsync(Guid productId)
     {
@@ -177,6 +195,8 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
         }
 
         Fill(result.Value);
+        await Category.LoadAsync(_loadedCategoryId, _loadedCategoryName);
+        ResetOriginalState();
         return true;
     }
 
@@ -192,10 +212,10 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
             "GuardarProducto",
             () => _productId is { } id
                 ? _useCases.RunAsync<UpdateProductHandler, Result<ProductDto>>(h => h.HandleAsync(
-                    new UpdateProductCommand(id, _expectedVersion, Name, Sku, Barcode, PriceText, UnitCode, IsActive, _imageChange, TracksInventory, MinimumStockText),
+                    new UpdateProductCommand(id, _expectedVersion, Name, Sku, Barcode, PriceText, UnitCode, IsActive, _imageChange, TracksInventory, MinimumStockText, Category.SelectedCategoryId),
                     CancellationToken.None))
                 : _useCases.RunAsync<CreateProductHandler, Result<ProductDto>>(h => h.HandleAsync(
-                    new CreateProductCommand(Name, Sku, Barcode, PriceText, UnitCode, _imageChange, TracksInventory, MinimumStockText),
+                    new CreateProductCommand(Name, Sku, Barcode, PriceText, UnitCode, _imageChange, TracksInventory, MinimumStockText, Category.SelectedCategoryId),
                     CancellationToken.None)),
             new Dictionary<string, object?> { ["ProductId"] = _productId, ["Sku"] = Sku });
 
@@ -254,7 +274,8 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
         _imageChange,
         TracksInventory,
         TracksInventory ? MinimumStockText.Trim() : string.Empty,
-        TracksInventory && IsCritical);
+        TracksInventory && IsCritical,
+        Category.SelectedCategoryId);
 
     [RelayCommand(CanExecute = nameof(CanChangeImage))]
     private async Task SelectImageAsync()
@@ -333,6 +354,13 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
                 FocusField = duplicate.Field;
                 break;
 
+            case CategoryNotAssignable:
+                // La categoría elegida se desactivó o eliminó mientras se editaba (spec, casos límite).
+                CategoryError = CategoryMessages.NotAssignable;
+                FocusField = CategoryFields.Category;
+                await Category.LoadAsync(_loadedCategoryId, _loadedCategoryName);
+                break;
+
             case Conflict when _productId is { } id:
                 if (await Dialogs.ConfirmAsync(Strings.Editor_ConflictTitle, Strings.Editor_Conflict, Strings.Editor_Reload))
                 {
@@ -370,6 +398,8 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
             ? Quantity.FromThousandths(minimum).ToEditableString(product.DecimalPlaces)
             : string.Empty;
         _onHandThousandths = product.OnHandThousandths;
+        _loadedCategoryId = product.CategoryId;
+        _loadedCategoryName = product.CategoryName;
         HasMovements = product.HasMovements;
         OnPropertyChanged(nameof(OnHandText));
         PreviewImage = product.Image;
@@ -409,7 +439,7 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
 
     private void ClearErrors()
     {
-        NameError = SkuError = BarcodeError = PriceError = UnitCodeError = MinimumStockError = TracksInventoryError = null;
+        NameError = SkuError = BarcodeError = PriceError = UnitCodeError = MinimumStockError = TracksInventoryError = CategoryError = null;
         FocusField = null;
     }
 }
@@ -426,4 +456,5 @@ internal sealed record ProductFormState(
     ProductImageChange Image,
     bool TracksInventory,
     string MinimumStock,
-    bool IsCritical);
+    bool IsCritical,
+    Guid? CategoryId);

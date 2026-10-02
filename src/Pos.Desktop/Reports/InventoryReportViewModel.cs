@@ -3,10 +3,12 @@ using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Pos.Application.Abstractions;
+using Pos.Application.Categories;
 using Pos.Application.Inventory;
 using Pos.Application.Reports;
 using Pos.Application.Reports.Export;
 using Pos.Application.Reports.GetInventoryReport;
+using Pos.Desktop.Categories;
 using Pos.Desktop.Common;
 using Pos.Desktop.Resources;
 using Pos.Domain.Inventory;
@@ -30,6 +32,9 @@ public sealed record InventoryReportRowItem(InventoryReportRow Row)
 
     public string Unit => Row.UnitName;
 
+    /// <summary>"Sin categoría" si no tiene; "(inactiva)" si corresponde (016, FR-020).</summary>
+    public string Category => CategoryMessages.Display(Row.CategoryName, Row.CategoryIsActive);
+
     public string StatusText => Row.Status switch
     {
         StockStatus.Low => Strings.Stock_StatusLow,
@@ -40,7 +45,8 @@ public sealed record InventoryReportRowItem(InventoryReportRow Row)
 
 /// <summary>
 /// Reportes > Inventario: estado del inventario al cierre de una fecha (Historia 3). Tarjetas y gráfica
-/// usan todos los productos; el filtro de estado, la búsqueda y el orden solo afectan a la tabla.
+/// usan todos los productos de la categoría elegida (016); el filtro de estado, la búsqueda y el orden solo
+/// afectan a la tabla.
 /// </summary>
 public sealed partial class InventoryReportViewModel : ReportPageViewModel
 {
@@ -56,6 +62,8 @@ public sealed partial class InventoryReportViewModel : ReportPageViewModel
         : base(runner, renderer, exporter, ReportPreset.Today)
     {
         _useCases = useCases;
+        CategoryFilter = new CategoryPickerViewModel(useCases, runner, CategoryPickerMode.Filter);
+        CategoryFilter.SelectionChanged += (_, _) => RestartFromFirstPage();
         StatusOptions =
         [
             new(StockFilter.All, Strings.Stock_FilterAll),
@@ -123,11 +131,22 @@ public sealed partial class InventoryReportViewModel : ReportPageViewModel
     public string PageSummary =>
         string.Format(CultureInfo.CurrentCulture, Strings.Reports_PageSummary, Rows.Count, TotalRows, CurrentPage, TotalPages);
 
+    /// <summary>Filtro "Categoría" (016, FR-013): limita tarjetas, gráfica y tabla.</summary>
+    public CategoryPickerViewModel CategoryFilter { get; }
+
+    public string CategoryHeader => Header(InventoryReportSort.Category, Strings.Category_ColCategory);
+
     public string NameHeader => Header(InventoryReportSort.Name, Strings.Reports_Inventory_ColName);
 
     public string SkuHeader => Header(InventoryReportSort.Sku, Strings.Reports_Inventory_ColSku);
 
     public string OnHandHeader => Header(InventoryReportSort.OnHand, Strings.Reports_Inventory_ColOnHand);
+
+    public override async Task OnActivatedAsync()
+    {
+        await CategoryFilter.LoadAsync();
+        await ReloadAsync();
+    }
 
     partial void OnSelectedStatusChanged(InventoryStatusOption value) => RestartFromFirstPage();
 
@@ -147,6 +166,7 @@ public sealed partial class InventoryReportViewModel : ReportPageViewModel
         }
 
         OnPropertyChanged(nameof(NameHeader));
+        OnPropertyChanged(nameof(CategoryHeader));
         OnPropertyChanged(nameof(SkuHeader));
         OnPropertyChanged(nameof(OnHandHeader));
         RestartFromFirstPage();
@@ -189,7 +209,8 @@ public sealed partial class InventoryReportViewModel : ReportPageViewModel
         SearchText,
         SortColumn,
         SortDescending,
-        CurrentPage);
+        CurrentPage,
+        Category: CategoryFilter.Filter);
 
     private void Apply(InventoryReport report)
     {

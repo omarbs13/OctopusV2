@@ -15,6 +15,7 @@
     <Compile Include="..\Pos.Application.Tests\TestSupport\InMemoryProductRepository.cs" Link="TestSupport\InMemoryProductRepository.cs" />
     <Compile Include="..\Pos.Application.Tests\TestSupport\FakeClock.cs" Link="TestSupport\FakeClock.cs" />
     <Compile Include="..\Pos.Application.Tests\TestSupport\InMemoryInventoryRepository.cs" Link="TestSupport\InMemoryInventoryRepository.cs" />
+    <Compile Include="..\Pos.Application.Tests\TestSupport\InMemoryCategoryRepository.cs" Link="TestSupport\InMemoryCategoryRepository.cs" />
     <Compile Include="..\Pos.Application.Tests\TestSupport\FakeWriteTransactions.cs" Link="TestSupport\FakeWriteTransactions.cs" />
     <Compile Include="..\Pos.Application.Tests\TestSupport\AllowAllAccessControl.cs" Link="TestSupport\AllowAllAccessControl.cs" />
   </ItemGroup>

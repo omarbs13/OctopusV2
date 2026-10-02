@@ -1,0 +1,71 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Pos.Desktop.Categories"
+             xmlns:products="using:Pos.Desktop.Products"
+             xmlns:res="using:Pos.Desktop.Resources"
+             xmlns:forms="using:Pos.Desktop.Forms"
+             x:Class="Pos.Desktop.Categories.CategoriesView"
+             x:DataType="vm:CategoriesViewModel">
+
+  <UserControl.KeyBindings>
+    <KeyBinding Gesture="Ctrl+N" Command="{Binding NewCategoryCommand}" />
+  </UserControl.KeyBindings>
+
+  <forms:FormHostView Host="{Binding Forms}">
+    <forms:FormHostView.ListContent>
+      <Grid RowDefinitions="Auto,Auto,*">
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" RowSpacing="8" Margin="0,0,0,12">
+          <TextBox x:Name="SearchBox" Grid.Column="0" Text="{Binding SearchText}"
+                   PlaceholderText="{x:Static res:Strings.Category_SearchPlaceholder}">
+            <TextBox.KeyBindings>
+              <KeyBinding Gesture="Enter" Command="{Binding SearchNowCommand}" />
+            </TextBox.KeyBindings>
+          </TextBox>
+          <ComboBox Grid.Column="1" Margin="12,0,0,0" MinWidth="160"
+                    ItemsSource="{Binding StatusOptions}" SelectedItem="{Binding SelectedStatus}"
+                    DisplayMemberBinding="{Binding Label, x:DataType=vm:CategoryStatusOption}" />
+          <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="8">
+            <Button Classes="accent" Content="{x:Static res:Strings.Category_New}" Command="{Binding NewCategoryCommand}" />
+            <Button Content="{x:Static res:Strings.Category_Edit}" Command="{Binding EditCommand}" />
+            <Button Content="{Binding ToggleText}" Command="{Binding ToggleActiveCommand}" />
+            <Button Content="{x:Static res:Strings.Category_Delete}" Command="{Binding DeleteCommand}" />
+          </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="1" Margin="12,0,12,4" ColumnDefinitions="220,*,100,100">
+          <Grid.Styles>
+            <Style Selector="TextBlock"><Setter Property="FontWeight" Value="SemiBold" /></Style>
+          </Grid.Styles>
+          <TextBlock Grid.Column="0" Text="{x:Static res:Strings.Category_ColName}" />
+          <TextBlock Grid.Column="1" Text="{x:Static res:Strings.Category_ColDescription}" Margin="12,0,0,0" />
+          <TextBlock Grid.Column="2" Text="{x:Static res:Strings.Category_ColProducts}" TextAlignment="Right" />
+          <TextBlock Grid.Column="3" Text="{x:Static res:Strings.Category_ColStatus}" Margin="12,0,0,0" />
+        </Grid>
+
+        <ListBox Grid.Row="2" ItemsSource="{Binding Rows}" SelectedItem="{Binding SelectedRow}" DoubleTapped="OnRowDoubleTapped">
+          <ListBox.KeyBindings>
+            <KeyBinding Gesture="Enter" Command="{Binding EditCommand}" />
+            <KeyBinding Gesture="Delete" Command="{Binding DeleteCommand}" />
+          </ListBox.KeyBindings>
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:CategoryRow">
+              <Grid ColumnDefinitions="220,*,100,100" MinHeight="40"
+                    Opacity="{Binding IsActive, Converter={x:Static products:InactiveOpacityConverter.Instance}}">
+                <Grid.Styles>
+                  <Style Selector="TextBlock"><Setter Property="VerticalAlignment" Value="Center" /></Style>
+                </Grid.Styles>
+                <TextBlock Grid.Column="0" Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                <TextBlock Grid.Column="1" Text="{Binding Description}" Margin="12,0,0,0" TextTrimming="CharacterEllipsis" />
+                <TextBlock Grid.Column="2" Text="{Binding ProductsText}" TextAlignment="Right" />
+                <TextBlock Grid.Column="3" Text="{Binding StatusText}" Margin="12,0,0,0" />
+              </Grid>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+
+        <TextBlock Grid.Row="2" Margin="12" Text="{x:Static res:Strings.Category_Empty}"
+                   IsVisible="{Binding IsEmpty}" HorizontalAlignment="Center" VerticalAlignment="Top" />
+      </Grid>
+    </forms:FormHostView.ListContent>
+  </forms:FormHostView>
+</UserControl>

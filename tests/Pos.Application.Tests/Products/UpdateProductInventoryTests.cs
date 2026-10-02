@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using Pos.Application.Abstractions;
 using Pos.Application.Inventory;
 using Pos.Application.Products;
@@ -14,7 +15,14 @@ public class UpdateProductInventoryTests
     private readonly InMemoryInventoryRepository _inventory = new();
     private readonly FakeWriteTransactions _transactions = new();
 
-    private UpdateProductHandler Handler => new(new AllowAllAccessControl(), _products, new UpdateProductValidator(), _inventory, _transactions);
+    private UpdateProductHandler Handler => new(
+        new AllowAllAccessControl(),
+        _products,
+        new UpdateProductValidator(),
+        _inventory,
+        _transactions,
+        new InMemoryCategoryRepository(),
+        NullLogger<UpdateProductHandler>.Instance);
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 

@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using Pos.Application.Abstractions;
 using Pos.Application.Products;
 using Pos.Application.Products.CreateProduct;
@@ -11,7 +12,13 @@ public class CreateProductHandlerTests
 {
     private readonly InMemoryProductRepository _repository = new();
 
-    private CreateProductHandler Handler => new(new AllowAllAccessControl(), _repository, new CreateProductValidator());
+    private CreateProductHandler Handler => new(
+        new AllowAllAccessControl(),
+        _repository,
+        new CreateProductValidator(),
+        new InMemoryCategoryRepository(),
+        new FakeWriteTransactions(),
+        NullLogger<CreateProductHandler>.Instance);
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 

@@ -54,6 +54,41 @@ Inventario usa una sola fecha ("Al cierre del día"): se toma la fecha final del
   - Las tarjetas y la gráfica usan todos los productos; el filtro de estado, la búsqueda por nombre o SKU y
     el orden solo afectan a la tabla (100 por página). No muestra costos, valuación ni márgenes.
 
+## Categorías (016)
+
+Desde 0.11.0, "Reportes > Ventas" y "Reportes > Inventario" tienen un filtro **Categoría**: Todas (por
+defecto), Sin categoría y cada categoría no borrada (las inactivas marcadas "(inactiva)"). Las cifras usan la
+**categoría vigente** del producto al consultar; la venta no guarda la categoría. Reglas del catálogo en
+[categorias.md](categorias.md).
+
+- **Importe de una línea**: `SaleLine.AmountCents` (ya neto del descuento de línea y de su parte del
+  descuento global, 015) menos lo devuelto de esa línea (`Σ SaleReturnLine.AmountCents`, 013). Unidades:
+  `QuantityThousandths − ReturnedQuantity`. Solo ventas completadas: las canceladas no cuentan.
+- **Cuadre**: como las líneas suman el total de cada venta y las devoluciones por línea suman lo devuelto,
+  la suma de todas las categorías es **exactamente** el total vendido sin filtro, al centavo. Los porcentajes
+  se muestran con un decimal y no se ajustan: pueden sumar 99.9 % o 100.1 %.
+- **"Ventas por categoría"** (debajo de la gráfica): una fila por categoría con ventas en el período (más
+  "Sin categoría" si tiene), con unidades, importe y % del total, ordenadas por importe; cada fila se expande
+  a sus productos, de más a menos unidades. Un producto cuyas ventas se devolvieron por completo no aparece.
+  Un producto borrado se muestra con el último nombre con que se vendió.
+- **Unidades mezcladas**: las unidades de una categoría suman las cantidades tal cual (piezas, kilos…), por
+  lo que son indicativas; el desglose muestra cada producto con su unidad.
+- **Con filtro de categoría**: ventas consideradas = las que tienen al menos una línea de la categoría; el
+  total, la gráfica por día, el comparativo y el descontado usan solo esas líneas; la cantidad de ventas cuenta
+  cada venta una vez y el ticket promedio = total / ventas. En el detalle, cada venta muestra el importe
+  **vendido** de sus líneas de la categoría, **sin restar devoluciones**, igual que la fila sin filtro muestra
+  el total original; el total (tarjeta) sí las resta. La sección "Ventas por categoría" muestra solo esa
+  categoría.
+- **Formas de pago**: no se desglosan por categoría porque un pago cubre la venta completa y no se
+  prorratea. Con filtro, sus tarjetas muestran "—" con la nota "No se desglosa por categoría", también en
+  PDF y Excel.
+- **Inventario**: el filtro de categoría se aplica **antes** de contar, así que limita tarjetas, gráfica y
+  tabla (a diferencia del filtro de estado y la búsqueda). La tabla agrega la columna "Categoría", ordenable
+  ("Sin categoría" al final).
+- **Exportaciones**: los filtros aplicados incluyen "Categoría: {nombre}" o "Categoría: Sin categoría" (se
+  omite con Todas). El reporte de ventas incluye la tabla "Ventas por categoría" con sus productos (con
+  sangría) y la fila de total; el de inventario, la columna "Categoría".
+
 ## Umbral de alerta de arqueo
 
 Se guarda por instalación en las preferencias locales (`reports`, valor `CashDifferenceAlertBasisPoints`;

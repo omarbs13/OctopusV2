@@ -1,3 +1,4 @@
+using Pos.Application.Categories;
 using Pos.Domain.Products;
 
 namespace Pos.Application.Products;
@@ -73,6 +74,7 @@ public interface IProductRepository
 /// <param name="IncludeInactive">Incluir productos inactivos; los borrados nunca se incluyen.</param>
 /// <param name="Page">Página solicitada, base 1; si excede el total se devuelve la última.</param>
 /// <param name="PageSize">Registros por página.</param>
+/// <param name="Category">Filtro por categoría (016, FR-012); por omisión, todas.</param>
 public sealed record ProductSearch(
     string? NameText,
     string? SkuText,
@@ -80,7 +82,8 @@ public sealed record ProductSearch(
     bool BarcodeExact,
     bool IncludeInactive,
     int Page,
-    int PageSize);
+    int PageSize,
+    CategoryFilter Category = default);
 
 /// <summary>Página del listado de productos (FR-006 y FR-007).</summary>
 /// <param name="Items">Productos de la página, ordenados por nombre y SKU.</param>

@@ -42,16 +42,6 @@ public sealed class DiscountsMigrationTests
     }
 
     [Fact]
-    public async Task DiscountsAndCoupons_EsLaUltimaMigracion()
-    {
-        using var db = await TestDb.CreateAsync();
-        await using var context = db.CreateDbContext();
-
-        Assert.EndsWith("_DiscountsAndCoupons", context.Database.GetMigrations().Last(), StringComparison.Ordinal);
-        Assert.Empty(await context.Database.GetPendingMigrationsAsync(TestContext.Current.CancellationToken));
-    }
-
-    [Fact]
     public async Task VentasAnterioresA0100_QuedanConImporteOriginalIgualAlRegistradoYSinDescuentos()
     {
         using var dir = new TempDataDirectory();

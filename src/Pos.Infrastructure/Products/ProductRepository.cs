@@ -2,6 +2,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Pos.Application.Products;
 using Pos.Domain.Products;
+using Pos.Infrastructure.Categories;
 using Pos.Infrastructure.Persistence;
 
 namespace Pos.Infrastructure.Products;
@@ -59,6 +60,8 @@ public sealed class ProductRepository : IProductRepository
                 join u in _context.UnitsOfMeasure on p.UnitCode equals u.Code
                 join s in _context.ProductStocks on p.Id equals s.ProductId into stocks
                 from s in stocks.DefaultIfEmpty()
+                join c in _context.Categories on p.CategoryId equals c.Id into categories
+                from c in categories.DefaultIfEmpty()
                 orderby p.NameSearch, p.Sku
                 select new ProductListItemDto(
                     p.Id,
@@ -70,10 +73,12 @@ public sealed class ProductRepository : IProductRepository
                     u.Name,
                     p.IsActive,
                     p.Version,
-                    p.Image != null ? p.Image.Thumbnail : null,
+                    p.Image != null ? p.Image!.Thumbnail : null,
                     p.TracksInventory,
                     p.TracksInventory ? (s == null ? 0L : s.OnHandThousandths) : null,
-                    u.DecimalPlaces))
+                    u.DecimalPlaces,
+                    c == null ? null : c.Name,
+                    c == null || c.IsActive))
             .Skip((page - 1) * search.PageSize)
             .Take(search.PageSize)
             .ToListAsync(cancellationToken);
@@ -186,7 +191,7 @@ public sealed class ProductRepository : IProductRepository
         }
     }
 
-    /// <summary>Productos no borrados que cumplen el filtro de estado y el texto buscado.</summary>
+    /// <summary>Productos no borrados que cumplen el filtro de estado, de categoría y el texto buscado.</summary>
     private IQueryable<Product> Visible(ProductSearch search)
     {
         var query = _context.Products.AsNoTracking().Where(p => p.DeletedAt == null);
@@ -197,7 +202,7 @@ public sealed class ProductRepository : IProductRepository
 
         query = ProductTextFilter.Apply(query, search.NameText, search.SkuText, search.BarcodeText, search.BarcodeExact);
 
-        return query;
+        return query.WhereCategory(search.Category);
     }
 
     /// <summary>SQLite indica en el mensaje la columna del índice violado: "UNIQUE constraint failed: Products.Sku".</summary>

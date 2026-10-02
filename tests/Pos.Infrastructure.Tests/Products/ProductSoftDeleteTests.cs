@@ -1,7 +1,10 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using Pos.Application.Products;
 using Pos.Application.Products.CreateProduct;
 using Pos.Application.Products.DeleteProduct;
 using Pos.Application.Products.SearchProducts;
+using Pos.Infrastructure.Categories;
+using Pos.Infrastructure.Persistence;
 using Pos.Infrastructure.Products;
 using Pos.Infrastructure.Tests.TestSupport;
 
@@ -25,7 +28,13 @@ public sealed class ProductSoftDeleteTests : IAsyncLifetime
     private async Task<ProductDto> CreateAsync(string name, string sku, string? barcode)
     {
         await using var context = _db.CreateDbContext();
-        var result = await new CreateProductHandler(new AllowAllAccessControl(), new ProductRepository(context), new CreateProductValidator())
+        var result = await new CreateProductHandler(
+                new AllowAllAccessControl(),
+                new ProductRepository(context),
+                new CreateProductValidator(),
+                new CategoryRepository(context),
+                new WriteTransactions(context),
+                NullLogger<CreateProductHandler>.Instance)
             .HandleAsync(new CreateProductCommand(name, sku, barcode, "10.00", "H87"), Ct);
         Assert.True(result.IsSuccess, result.Error?.ToString());
         return result.Value;

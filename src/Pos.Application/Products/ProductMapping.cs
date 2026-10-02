@@ -1,3 +1,4 @@
+using Pos.Domain.Categories;
 using Pos.Domain.Inventory;
 using Pos.Domain.Products;
 
@@ -7,7 +8,8 @@ public static class ProductMapping
 {
     /// <param name="product">Producto a convertir.</param>
     /// <param name="stock">Existencia del producto, o nula si no tiene movimientos.</param>
-    public static ProductDto ToDto(this Product product, ProductStock? stock = null)
+    /// <param name="category">Categoría del producto, o nula si no tiene (016).</param>
+    public static ProductDto ToDto(this Product product, ProductStock? stock = null, Category? category = null)
     {
         ArgumentNullException.ThrowIfNull(product);
         return new ProductDto(
@@ -27,6 +29,9 @@ public static class ProductMapping
             product.TracksInventory ? stock?.OnHandThousandths ?? 0 : null,
             stock is not null,
             UnitOfMeasure.Find(product.UnitCode)?.DecimalPlaces ?? 0,
-            product.IsCritical);
+            product.IsCritical,
+            product.CategoryId,
+            category?.Name,
+            category?.IsActive ?? true);
     }
 }

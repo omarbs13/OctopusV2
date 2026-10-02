@@ -295,6 +295,207 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.ToTable("CashShifts", (string)null);
                 });
 
+            modelBuilder.Entity("Pos.Domain.CashShifts.ShiftCut", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("AuthorizedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("CancelledCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("CardCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("CashCancelledCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("CashRefundsCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("CashSalesCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(250)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long?>("CountedCashCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("CreditNotesIssuedCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("CustomerPaymentVoidsCashCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("CustomerPaymentVoidsNonCashCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("CustomerPaymentsCashCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("CustomerPaymentsNonCashCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("DepositsCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("DifferenceCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("ExpectedCashCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("GeneratedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("GeneratedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("NonCashRefundsCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("Number")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("OnAccountSalesCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("OpeningFloatCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("RegisterCode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("SalesCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("ShiftId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("ShiftNumber")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("ShiftOpenedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ShiftOpenedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("TotalSoldCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("TransferCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(1)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("WithdrawalsCents")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GeneratedAt", "Id")
+                        .HasDatabaseName("IX_ShiftCuts_GeneratedAt");
+
+                    b.HasIndex("GeneratedBy", "GeneratedAt")
+                        .HasDatabaseName("IX_ShiftCuts_GeneratedBy_GeneratedAt");
+
+                    b.HasIndex("Type", "Number")
+                        .IsUnique()
+                        .HasDatabaseName("IX_ShiftCuts_Type_Number");
+
+                    b.HasIndex(new[] { "ShiftId" }, "IX_ShiftCuts_ClosingPerShift")
+                        .IsUnique()
+                        .HasFilter("\"Type\" = 'Z'");
+
+                    b.HasIndex(new[] { "ShiftId" }, "IX_ShiftCuts_ShiftId");
+
+                    b.ToTable("ShiftCuts", (string)null);
+                });
+
+            modelBuilder.Entity("Pos.Domain.Categories.Category", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("NameKey")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NameKey")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Categories_NameKey")
+                        .HasFilter("\"DeletedAt\" IS NULL");
+
+                    b.HasIndex("IsActive", "NameKey")
+                        .HasDatabaseName("IX_Categories_IsActive_NameKey")
+                        .HasFilter("\"DeletedAt\" IS NULL");
+
+                    b.ToTable("Categories", (string)null);
+                });
+
             modelBuilder.Entity("Pos.Domain.CreditNotes.CreditNote", b =>
                 {
                     b.Property<Guid>("Id")
@@ -633,6 +834,9 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         .HasMaxLength(14)
                         .HasColumnType("TEXT");
 
+                    b.Property<Guid?>("CategoryId")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
@@ -701,6 +905,10 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("IX_Products_Barcode")
                         .HasFilter("\"DeletedAt\" IS NULL AND \"Barcode\" IS NOT NULL");
+
+                    b.HasIndex("CategoryId")
+                        .HasDatabaseName("IX_Products_CategoryId")
+                        .HasFilter("\"DeletedAt\" IS NULL");
 
                     b.HasIndex("Sku")
                         .IsUnique()
@@ -1554,6 +1762,15 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.HasOne("Pos.Domain.CashShifts.CashShift", null)
                         .WithMany("Movements")
                         .HasForeignKey("CashShiftId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Pos.Domain.CashShifts.ShiftCut", b =>
+                {
+                    b.HasOne("Pos.Domain.CashShifts.CashShift", null)
+                        .WithMany()
+                        .HasForeignKey("ShiftId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

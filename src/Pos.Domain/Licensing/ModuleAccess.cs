@@ -9,7 +9,8 @@ public static class ModuleAccess
     {
         Permission.ViewInventory or Permission.RegisterMovements => LicensedModule.Inventory,
         Permission.ViewReports => LicensedModule.AdvancedReports,
-        Permission.OperateShift or Permission.WithdrawCash or Permission.ManageShifts => LicensedModule.CashShifts,
+        Permission.OperateShift or Permission.WithdrawCash or Permission.ManageShifts
+            or Permission.GenerateShiftReadout => LicensedModule.CashShifts,
         Permission.ProcessReturns or Permission.ApproveReturns or Permission.ManageCreditNotes => LicensedModule.Returns,
         Permission.ManageCustomers or Permission.SellOnCredit or Permission.RegisterCustomerPayments
             or Permission.ManageCustomerCredit or Permission.ApproveCreditOverLimit or Permission.VoidCustomerPayments

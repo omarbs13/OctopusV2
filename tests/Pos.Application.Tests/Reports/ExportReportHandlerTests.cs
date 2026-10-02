@@ -169,7 +169,7 @@ public class ExportReportHandlerTests
     private sealed class EmptySalesReader : ISalesReportReader
     {
         public Task<SalesReport> GetAsync(SalesReportWindow window, SalesReportQuery query, CancellationToken cancellationToken) =>
-            Task.FromResult(new SalesReport(SalesTotals.Empty, null, [], [], 0, 1, query.PageSize));
+            Task.FromResult(new SalesReport(SalesTotals.Empty, null, [], [], 0, 1, query.PageSize, []));
     }
 
     private sealed class CashReader(Environment env) : ICashCountReportReader

@@ -4,6 +4,7 @@
              xmlns:res="using:Pos.Desktop.Resources"
              xmlns:sales="using:Pos.Desktop.Sales"
              xmlns:rep="using:Pos.Application.Reports.GetSalesReport"
+             xmlns:categories="using:Pos.Desktop.Categories"
              x:Class="Pos.Desktop.Reports.SalesReportView"
              x:DataType="vm:SalesReportViewModel">
 
@@ -20,6 +21,11 @@
                     ItemsSource="{Binding CashierOptions}"
                     SelectedItem="{Binding SelectedCashier}"
                     DisplayMemberBinding="{Binding Label, x:DataType=sales:CashierOption}" />
+        </StackPanel>
+        <!-- 016: filtro por categoría (Todas, Sin categoría o una categoría) -->
+        <StackPanel Spacing="4" MinWidth="220">
+          <TextBlock Text="{x:Static res:Strings.Category_Field}" FontWeight="SemiBold" />
+          <categories:CategoryPicker DataContext="{Binding CategoryFilter}" />
         </StackPanel>
         <ToggleSwitch VerticalAlignment="Bottom"
                       IsChecked="{Binding Compare}"
@@ -54,6 +60,9 @@
           <!-- 015: total descontado del período; no depende de la licencia de Descuentos (FR-023) -->
           <vm:MetricCard Label="{x:Static res:Strings.Reports_Sales_TotalDiscounted}" Value="{Binding DiscountedText}" />
         </WrapPanel>
+        <!-- 016: con filtro de categoría las formas de pago no se desglosan (un pago cubre la venta completa) -->
+        <TextBlock Text="{x:Static res:Strings.Category_PaymentsNotSplit}" IsVisible="{Binding PaymentsNotSplit}"
+                   FontSize="12" Opacity="0.75" Margin="0,-8,0,0" />
 
         <!-- Comparativo -->
         <WrapPanel IsVisible="{Binding HasComparison}">
@@ -64,6 +73,55 @@
 
         <!-- Gráfica -->
         <ContentControl Content="{Binding Chart}" />
+
+        <!-- 016: Ventas por categoría (FR-016, FR-017); cada fila se expande a sus productos -->
+        <TextBlock Text="{x:Static res:Strings.Reports_Sales_ByCategory}" FontSize="18" FontWeight="SemiBold" Margin="0,8,0,0" />
+        <Grid ColumnDefinitions="*,140,140,110" Margin="12,0">
+          <Grid.Styles>
+            <Style Selector="TextBlock"><Setter Property="FontWeight" Value="SemiBold" /></Style>
+          </Grid.Styles>
+          <TextBlock Grid.Column="0" Text="{x:Static res:Strings.Category_ColCategory}" Margin="24,0,0,0" />
+          <TextBlock Grid.Column="1" Text="{x:Static res:Strings.Category_ColUnits}" TextAlignment="Right" />
+          <TextBlock Grid.Column="2" Text="{x:Static res:Strings.Category_ColAmount}" TextAlignment="Right" />
+          <TextBlock Grid.Column="3" Text="{x:Static res:Strings.Category_ColShare}" TextAlignment="Right" />
+        </Grid>
+        <ItemsControl ItemsSource="{Binding Categories}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:CategorySalesItem">
+              <StackPanel>
+                <Button Classes="flat" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Padding="12,0"
+                        MinHeight="36" Command="{Binding ToggleCommand}" AutomationProperties.Name="{Binding Name}">
+                  <Grid ColumnDefinitions="24,*,140,140,110">
+                    <TextBlock Grid.Column="0" Text="{Binding Glyph}" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1" Text="{Binding Name}" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Grid.Column="2" Text="{Binding UnitsText}" TextAlignment="Right" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="3" Text="{Binding AmountText}" TextAlignment="Right" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="4" Text="{Binding ShareText}" TextAlignment="Right" VerticalAlignment="Center" />
+                  </Grid>
+                </Button>
+                <ItemsControl ItemsSource="{Binding Products}" IsVisible="{Binding IsExpanded}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ProductSalesItem">
+                      <Grid ColumnDefinitions="48,*,140,140,110" Margin="12,0" MinHeight="30">
+                        <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Grid.Column="2" Text="{Binding UnitsText}" TextAlignment="Right" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="3" Text="{Binding AmountText}" TextAlignment="Right" VerticalAlignment="Center" />
+                      </Grid>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <Grid ColumnDefinitions="24,*,140,140,110" Margin="24,0,24,8">
+          <Grid.Styles>
+            <Style Selector="TextBlock"><Setter Property="FontWeight" Value="SemiBold" /></Style>
+          </Grid.Styles>
+          <TextBlock Grid.Column="1" Text="{x:Static res:Strings.Category_Total}" />
+          <TextBlock Grid.Column="2" Text="{Binding CategoriesUnitsText}" TextAlignment="Right" />
+          <TextBlock Grid.Column="3" Text="{Binding CategoriesAmountText}" TextAlignment="Right" />
+        </Grid>
 
         <!-- Tabla -->
         <Grid ColumnDefinitions="140,170,*,140" Margin="12,0,12,0">

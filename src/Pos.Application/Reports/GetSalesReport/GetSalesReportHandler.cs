@@ -42,6 +42,13 @@ public sealed class GetSalesReportHandler
             normalized.Compare ? _resolver.Resolve(normalized.Period.Previous()) : null);
 
         var report = await _reader.GetAsync(window, normalized, cancellationToken);
+
+        // Porcentaje del total de cada categoría (016, research §10); la interfaz no lo calcula.
+        var categoriesTotal = report.Categories.Sum(c => c.AmountCents);
+        report = report with
+        {
+            Categories = [.. report.Categories.Select(c => c with { ShareBasisPoints = ShareMath.BasisPoints(c.AmountCents, categoriesTotal) })],
+        };
         if (report.Comparison is { } comparison)
         {
             report = report with

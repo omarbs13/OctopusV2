@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Pos.Application.Categories;
 using Pos.Application.Reports;
 using Pos.Application.Reports.Export;
 using Pos.Application.Reports.GetSalesReport;
@@ -9,7 +10,10 @@ using Pos.Infrastructure.Tests.TestSupport;
 
 namespace Pos.Infrastructure.Tests.Reports;
 
-/// <summary>SC-002 y SC-006: con 10,000 ventas los reportes responden en menos de 2 s y el PDF se genera en menos de 10 s.</summary>
+/// <summary>
+/// SC-002 y SC-006 (009): con 10,000 ventas los reportes responden en menos de 2 s y el PDF se genera en menos de 10 s.
+/// 016, SC-004: también con "Ventas por categoría" y con el filtro de categoría.
+/// </summary>
 public sealed class SalesReportPerformanceTests
 {
     private const int Sales = 10_000;
@@ -21,7 +25,17 @@ public sealed class SalesReportPerformanceTests
     {
         using var db = await TestDb.CreateAsync();
         var user = await ReportTestSupport.AddUserAsync(db, "cajero");
-        Seed(db, user.Id);
+        var bebidas = await CategoryTestSupport.AddCategoryAsync(db, "Bebidas");
+        var botanas = await CategoryTestSupport.AddCategoryAsync(db, "Botanas");
+        var products = new List<Guid>();
+        foreach (var (sku, category) in new[] { ("PERF-1", (Guid?)bebidas), ("PERF-2", botanas), ("PERF-3", null) })
+        {
+            var product = await ReportTestSupport.SeedProductAsync(db, sku);
+            await CategoryTestSupport.AssignAsync(db, product.Id, category);
+            products.Add(product.Id);
+        }
+
+        Seed(db, user.Id, products);
 
         await using var context = db.CreateDbContext();
         var window = new SalesReportWindow(Resolver.Resolve(Period), Resolver.Days(Period), null);
@@ -34,7 +48,15 @@ public sealed class SalesReportPerformanceTests
         var shifts = await new CashCountReportReader(context).GetAsync(Resolver.Resolve(Period), null, Ct);
         var cashTime = watch.Elapsed;
 
+        watch.Restart();
+        var filtered = await new SalesReportReader(context).GetAsync(window, new SalesReportQuery(Period, Category: CategoryFilter.Only(bebidas)), Ct);
+        var filteredTime = watch.Elapsed;
+
         Assert.Equal(Sales, report.Totals.SalesCount);
+        Assert.Equal(report.Totals.TotalCents, report.Categories.Sum(c => c.AmountCents));
+        Assert.Equal(3, report.Categories.Count);
+        Assert.Equal(report.Categories.Single(c => c.CategoryId == bebidas).AmountCents, filtered.Totals.TotalCents);
+        Assert.True(filteredTime < TimeSpan.FromSeconds(2), $"Ventas filtradas por categoría tardó {filteredTime.TotalMilliseconds:N0} ms.");
         Assert.Equal(200, shifts.Count);
         Assert.True(salesTime < TimeSpan.FromSeconds(2), $"Ventas tardó {salesTime.TotalMilliseconds:N0} ms.");
         Assert.True(cashTime < TimeSpan.FromSeconds(2), $"Arqueo tardó {cashTime.TotalMilliseconds:N0} ms.");
@@ -71,10 +93,14 @@ public sealed class SalesReportPerformanceTests
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    /// <summary>Inserta 10,000 ventas con su pago y 200 turnos cerrados con SQL directo (sembrar con los casos de uso tardaría minutos).</summary>
-    private static void Seed(TestDb db, Guid userId)
+    /// <summary>
+    /// Inserta 10,000 ventas con una línea (de uno de los 3 productos) y su pago, y 200 turnos cerrados con SQL
+    /// directo (sembrar con los casos de uso tardaría minutos).
+    /// </summary>
+    private static void Seed(TestDb db, Guid userId, List<Guid> products)
     {
         var id = userId.ToString().ToUpperInvariant();
+        var (p0, p1, p2) = (products[0].ToString().ToUpperInvariant(), products[1].ToString().ToUpperInvariant(), products[2].ToString().ToUpperInvariant());
         DatabaseTestHelpers.Execute(
             db.Directory.Paths.DatabaseFile,
             $"""
@@ -84,6 +110,13 @@ public sealed class SalesReportPerformanceTests
                    'COMPLETED', datetime('2026-09-01', '+' || (i % 30) || ' days', '+' || (i % 1440) || ' minutes'),
                    '{id}', '2026-09-30 00:00:00', '{id}', 1
             FROM n;
+
+            INSERT INTO SaleLines (Id, SaleId, Position, ProductId, ProductName, ProductSku, UnitCode, DecimalPlaces,
+                                   UnitPriceCents, QuantityThousandths, AmountCents, OriginalAmountCents)
+            SELECT printf('44444444-0000-7000-8000-%012d', FolioNumber), Id, 1,
+                   CASE FolioNumber % 3 WHEN 0 THEN '{p0}' WHEN 1 THEN '{p1}' ELSE '{p2}' END,
+                   'Producto', 'PERF', 'H87', 0, TotalCents, 1000, TotalCents, TotalCents
+            FROM Sales;
 
             INSERT INTO SalePayments (Id, SaleId, Method, AmountCents)
             SELECT printf('22222222-0000-7000-8000-%012d', FolioNumber), Id,

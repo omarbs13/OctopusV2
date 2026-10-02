@@ -68,7 +68,8 @@ public class GetSalesReportHandlerTests
             [],
             0,
             1,
-            100);
+            100,
+            []);
 
     private sealed class FakeSalesReader : ISalesReportReader
     {
@@ -76,7 +77,7 @@ public class GetSalesReportHandlerTests
 
         public SalesReportWindow? LastWindow { get; private set; }
 
-        public SalesReport Report { get; init; } = new(SalesTotals.Empty, null, [], [], 0, 1, 100);
+        public SalesReport Report { get; init; } = new(SalesTotals.Empty, null, [], [], 0, 1, 100, []);
 
         public Task<SalesReport> GetAsync(SalesReportWindow window, SalesReportQuery query, CancellationToken cancellationToken)
         {

@@ -96,7 +96,7 @@ public sealed partial class ShiftDetailViewModel : FormViewModel
     public ObservableCollection<ReconciliationRow> Reconciliation { get; } = [];
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(Title), nameof(HeaderText), nameof(ClosedText), nameof(IsClosed), nameof(IsOpen), nameof(HasClosedText))]
+    [NotifyPropertyChangedFor(nameof(Title), nameof(HeaderText), nameof(ClosedText), nameof(IsClosed), nameof(IsOpen), nameof(HasClosedText), nameof(CutFolioText), nameof(HasCutFolio))]
     public partial ShiftDetailDto? Detail { get; private set; }
 
     public string HeaderText => Detail is null
@@ -114,6 +114,11 @@ public sealed partial class ShiftDetailViewModel : FormViewModel
         : string.Empty;
 
     public bool HasClosedText => ClosedText.Length > 0;
+
+    /// <summary>"Corte Z: Z-000001" en los turnos cerrados desde 0.12.0 (017).</summary>
+    public string CutFolioText => Detail?.CutFolio is { } folio ? string.Format(Display, Strings.Cut_FolioLabel, folio) : string.Empty;
+
+    public bool HasCutFolio => Detail?.CutFolio is not null;
 
     public bool IsClosed => Detail?.Status == CashShiftStatus.Closed;
 

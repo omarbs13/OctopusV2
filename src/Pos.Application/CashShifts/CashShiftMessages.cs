@@ -22,6 +22,8 @@ public static class CashShiftMessages
     public const string WithdrawalExceedsCash = "El retiro excede el efectivo disponible en caja";
     public const string RefundExceedsCash = "No hay efectivo suficiente en caja para devolver esta venta. Registre un ingreso e intente de nuevo";
     public const string SaleFromClosedShift = "La venta pertenece a un turno cerrado";
+    public const string ReadoutNeedsOpenShift = "No hay un turno abierto. El Corte X se genera sobre el turno abierto de la caja.";
+    public const string CutNumberTaken = "Otro corte tomó el mismo folio. Intente de nuevo";
 
     public static string ShiftOwnedByOther(string name) =>
         $"Hay un turno abierto de {name}. Debe cerrarse antes de vender";

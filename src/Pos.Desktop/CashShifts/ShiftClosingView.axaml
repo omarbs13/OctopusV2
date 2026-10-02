@@ -1,0 +1,20 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Pos.Desktop.CashShifts"
+             xmlns:res="using:Pos.Desktop.Resources"
+             x:Class="Pos.Desktop.CashShifts.ShiftClosingView"
+             x:DataType="vm:ShiftClosingViewModel">
+
+  <StackPanel Spacing="12" MaxWidth="640" HorizontalAlignment="Left">
+    <TextBlock Text="{x:Static res:Strings.Cut_NoShift}" TextWrapping="Wrap" IsVisible="{Binding HasNoShift}" />
+    <TextBlock Text="{Binding ShiftText}" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap"
+               IsVisible="{Binding HasShift}" />
+    <TextBlock Text="{x:Static res:Strings.Cut_ClosingHint}" TextWrapping="Wrap" />
+    <TextBlock Text="{x:Static res:Strings.Cut_ClosingOtherOwner}" TextWrapping="Wrap"
+               IsVisible="{Binding IsOtherOwnerBlocked}" />
+    <Button Classes="accent" MinHeight="44" HorizontalAlignment="Left"
+            Content="{x:Static res:Strings.Cut_MakeClosing}"
+            Command="{Binding CloseCommand}"
+            IsVisible="{Binding CanClose}" />
+  </StackPanel>
+</UserControl>

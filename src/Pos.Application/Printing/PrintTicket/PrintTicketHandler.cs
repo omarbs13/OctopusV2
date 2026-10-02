@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Pos.Application.Abstractions;
+using Pos.Application.Audit;
 using Pos.Application.Business;
 using Pos.Application.CashShifts;
 using Pos.Application.CreditNotes;
@@ -7,13 +8,15 @@ using Pos.Application.Printing.Ticket;
 using Pos.Application.Receivables;
 using Pos.Application.Sales;
 using Pos.Application.Users.Access;
+using Pos.Domain.CashShifts;
 using Pos.Domain.Users;
 
 namespace Pos.Application.Printing.PrintTicket;
 
 /// <summary>
-/// Imprime el ticket de una venta o el de prueba. Solo lee: no escribe en la base ni consume folio.
-/// Una falla del dispositivo se registra y se devuelve como error de negocio; nunca lanza (006, FR-009).
+/// Imprime el ticket de una venta o el de prueba. Solo lee: no escribe en la base ni consume folio,
+/// salvo la bitácora de la reimpresión de un corte (017, FR-017). Una falla del dispositivo se registra
+/// y se devuelve como error de negocio; nunca lanza (006, FR-009).
 /// </summary>
 public sealed partial class PrintTicketHandler
 {
@@ -23,6 +26,7 @@ public sealed partial class PrintTicketHandler
     private readonly ICashShiftRepository _shifts;
     private readonly ICreditNoteRepository? _creditNotes;
     private readonly ICustomerPaymentRepository? _customerPayments;
+    private readonly IAuditLog? _audit;
     private readonly IBusinessProfileRepository _profiles;
     private readonly IPrintingSettingsStore _settings;
     private readonly ITicketPrinter _printer;
@@ -38,8 +42,10 @@ public sealed partial class PrintTicketHandler
         ITicketPrinter printer,
         ILogger<PrintTicketHandler> logger,
         ICreditNoteRepository? creditNotes = null,
-        ICustomerPaymentRepository? customerPayments = null)
+        ICustomerPaymentRepository? customerPayments = null,
+        IAuditLog? audit = null)
     {
+        _audit = audit;
         _creditNotes = creditNotes;
         _customerPayments = customerPayments;
         _access = access;
@@ -62,7 +68,7 @@ public sealed partial class PrintTicketHandler
             command.Source switch
             {
                 PrintSource.SaleSource => Permission.ViewOwnSales,
-                PrintSource.ShiftReportSource or PrintSource.CashMovementSource => Permission.OperateShift,
+                PrintSource.ShiftReportSource or PrintSource.CashMovementSource or PrintSource.ShiftCutSource => Permission.OperateShift,
                 // Quien emite la nota (ProcessReturns) la imprime al emitirla; reimprimir exige ManageCreditNotes (research §13).
                 PrintSource.CreditNoteSource => command.IsReprint ? Permission.ManageCreditNotes : Permission.ProcessReturns,
                 // Quien registra abonos imprime y reimprime su recibo (014, contracts/ui.md "Abonos").
@@ -77,6 +83,7 @@ public sealed partial class PrintTicketHandler
 
         var settings = _settings.Load();
         var folio = TicketBuilder.SampleFolio;
+        ShiftCutReportDto? reprintedCut = null;
         try
         {
             var profileEntity = await _profiles.GetAsync(cancellationToken);
@@ -116,6 +123,25 @@ public sealed partial class PrintTicketHandler
 
                 folio = report.Folio;
                 ticket = ShiftTicketBuilder.BuildReport(profile, report, settings.Columns, new TicketOptions(command.IsReprint));
+            }
+            else if (command.Source is PrintSource.ShiftCutSource cutSource)
+            {
+                var cut = await _shifts.GetCutReportAsync(cutSource.CutId, cancellationToken);
+                if (cut is null)
+                {
+                    return Result.Failure<PrintedTicket>(new NotFound());
+                }
+
+                // El corte es de quien lo generó (el Cajero autorizado imprime su Corte X) o del administrador (research §10).
+                if (cut.GeneratedById != _currentUser.UserId
+                    && await _access.CheckAsync(Permission.ManageShifts, cancellationToken) is { Allowed: false } denied)
+                {
+                    return Result.Failure<PrintedTicket>(denied.Error!);
+                }
+
+                folio = cut.Folio;
+                reprintedCut = command.IsReprint ? cut : null;
+                ticket = ShiftTicketBuilder.BuildCut(profile, cut, settings.Columns, new TicketOptions(command.IsReprint));
             }
             else if (command.Source is PrintSource.CreditNoteSource noteSource)
             {
@@ -170,6 +196,17 @@ public sealed partial class PrintTicketHandler
             var outcome = await _printer.PrintAsync(ticket, settings, cancellationToken);
             if (outcome.Succeeded)
             {
+                if (reprintedCut is not null && _audit is not null)
+                {
+                    var kind = reprintedCut.Type == ShiftCutType.Readout ? "Corte X" : "Corte Z";
+                    _audit.Add(
+                        AuditActions.ShiftCutReprinted,
+                        AuditActions.ShiftCutEntity,
+                        reprintedCut.CutId,
+                        $"{kind} {reprintedCut.Folio}. Turno {reprintedCut.ShiftFolio}");
+                    await _audit.SaveAsync(cancellationToken);
+                }
+
                 return Result.Success(new PrintedTicket(outcome.Destination ?? string.Empty));
             }
 

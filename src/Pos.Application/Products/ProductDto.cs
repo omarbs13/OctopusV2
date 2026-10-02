@@ -21,9 +21,12 @@ public sealed record ProductDto(
     long? OnHandThousandths = null,
     bool HasMovements = false,
     int DecimalPlaces = 0,
-    bool IsCritical = false);
+    bool IsCritical = false,
+    Guid? CategoryId = null,
+    string? CategoryName = null,
+    bool CategoryIsActive = true);
 
-/// <summary>Fila del listado de productos.</summary>
+/// <summary>Fila del listado de productos; <c>CategoryName</c> nulo = "Sin categoría" (016).</summary>
 public sealed record ProductListItemDto(
     Guid Id,
     string Name,
@@ -37,4 +40,6 @@ public sealed record ProductListItemDto(
     byte[]? Thumbnail = null,
     bool TracksInventory = false,
     long? OnHandThousandths = null,
-    int DecimalPlaces = 0);
+    int DecimalPlaces = 0,
+    string? CategoryName = null,
+    bool CategoryIsActive = true);

@@ -8,6 +8,7 @@ using Pos.Application.Reports.Export;
 using Pos.Application.Reports.GetSalesReport;
 using Pos.Application.Users;
 using Pos.Application.Users.ListCashiers;
+using Pos.Desktop.Categories;
 using Pos.Desktop.Common;
 using Pos.Desktop.Resources;
 using Pos.Desktop.Sales;
@@ -27,7 +28,10 @@ public sealed record SalesReportRowItem(SalesReportRow Row)
     public string TotalText => MoneyConverter.Format(Row.TotalCents);
 }
 
-/// <summary>Reportes > Ventas: tarjetas, gráfica por día y tabla de detalle de un período (Historia 1).</summary>
+/// <summary>
+/// Reportes > Ventas: tarjetas, gráfica por día, "Ventas por categoría" y tabla de detalle de un período
+/// (Historia 1; 016, Historia 3). El filtro de categoría limita todo a las líneas de esa categoría.
+/// </summary>
 public sealed partial class SalesReportViewModel : ReportPageViewModel
 {
     private readonly UseCases _useCases;
@@ -41,6 +45,8 @@ public sealed partial class SalesReportViewModel : ReportPageViewModel
         _suppress = true;
         SelectedCashier = CashierOptions[0];
         _suppress = false;
+        CategoryFilter = new CategoryPickerViewModel(useCases, runner, CategoryPickerMode.Filter);
+        CategoryFilter.SelectionChanged += (_, _) => RestartFromFirstPage();
     }
 
     public override string Title => Strings.Nav_ReportSales;
@@ -50,6 +56,25 @@ public sealed partial class SalesReportViewModel : ReportPageViewModel
     public ObservableCollection<CashierOption> CashierOptions { get; }
 
     public ObservableCollection<SalesReportRowItem> Rows { get; } = [];
+
+    /// <summary>Filtro "Categoría" junto a período y cajero (016, FR-013).</summary>
+    public CategoryPickerViewModel CategoryFilter { get; }
+
+    /// <summary>"Ventas por categoría" (016, FR-016): una fila por categoría, expandible a sus productos.</summary>
+    public ObservableCollection<CategorySalesItem> Categories { get; } = [];
+
+    [ObservableProperty]
+    public partial string CategoriesUnitsText { get; private set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string CategoriesAmountText { get; private set; } = string.Empty;
+
+    /// <summary>Falso con filtro de categoría: las formas de pago muestran "—" con su nota (research §11).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PaymentsNotSplit))]
+    public partial bool PaymentsBreakdownAvailable { get; private set; } = true;
+
+    public bool PaymentsNotSplit => !PaymentsBreakdownAvailable;
 
     [ObservableProperty]
     public partial CashierOption SelectedCashier { get; set; }
@@ -127,6 +152,7 @@ public sealed partial class SalesReportViewModel : ReportPageViewModel
     public override async Task OnActivatedAsync()
     {
         await LoadCashiersAsync();
+        await CategoryFilter.LoadAsync();
         await ReloadAsync();
     }
 
@@ -191,7 +217,8 @@ public sealed partial class SalesReportViewModel : ReportPageViewModel
         Compare,
         SortColumn,
         SortDescending,
-        CurrentPage);
+        CurrentPage,
+        Category: CategoryFilter.Filter);
 
     private void Apply(SalesReport report)
     {
@@ -200,10 +227,20 @@ public sealed partial class SalesReportViewModel : ReportPageViewModel
         TotalText = MoneyConverter.Format(totals.TotalCents);
         CountText = totals.SalesCount.ToString("N0", CultureInfo.CurrentCulture);
         AverageText = MoneyConverter.Format(totals.AverageTicketCents);
-        CashText = MoneyConverter.Format(totals.CashCents);
-        CardText = MoneyConverter.Format(totals.CardCents);
-        TransferText = MoneyConverter.Format(totals.TransferCents);
-        OnAccountText = MoneyConverter.Format(totals.OnAccountCents);
+        PaymentsBreakdownAvailable = totals.PaymentsBreakdownAvailable;
+        CashText = Payment(totals.CashCents);
+        CardText = Payment(totals.CardCents);
+        TransferText = Payment(totals.TransferCents);
+        OnAccountText = Payment(totals.OnAccountCents);
+
+        Categories.Clear();
+        foreach (var category in report.Categories)
+        {
+            Categories.Add(new CategorySalesItem(category));
+        }
+
+        CategoriesUnitsText = QuantityConverter.Format(report.CategoriesUnitsThousandths, 3);
+        CategoriesAmountText = MoneyConverter.Format(report.CategoriesAmountCents);
         DiscountedText = MoneyConverter.Format(totals.DiscountCents);
 
         HasComparison = report.Comparison is not null;
@@ -231,6 +268,8 @@ public sealed partial class SalesReportViewModel : ReportPageViewModel
                 [.. report.Days.Select(d => new ChartPoint(d.LocalDate.ToString("dd/MM", CultureInfo.InvariantCulture), d.TotalCents))],
                 ChartValueFormat.Money));
     }
+
+    private string Payment(long cents) => PaymentsBreakdownAvailable ? MoneyConverter.Format(cents) : QuantityConverter.NoValue;
 
     /// <summary>"+12.50 %", "-5.00 %" o "No calculable" si el período anterior no tuvo ventas.</summary>
     internal static string FormatVariation(long? basisPoints) =>

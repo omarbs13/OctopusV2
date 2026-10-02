@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Pos.Application.Categories;
 using Pos.Application.Products;
 
 namespace Pos.Desktop.Products;
@@ -42,6 +43,12 @@ public partial class ProductEditorView : UserControl
         if (field == ProductFields.UnitCode)
         {
             UnitBox.Focus();
+            return;
+        }
+
+        if (field == CategoryFields.Category)
+        {
+            CategoryBox.FocusSelector();
             return;
         }
 

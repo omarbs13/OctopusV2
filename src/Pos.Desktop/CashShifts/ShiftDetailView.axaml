@@ -13,6 +13,7 @@
     <TextBlock Text="{Binding Title}" FontSize="22" FontWeight="SemiBold" />
     <TextBlock Text="{Binding HeaderText}" TextWrapping="Wrap" />
     <TextBlock Text="{Binding ClosedText}" TextWrapping="Wrap" IsVisible="{Binding HasClosedText}" />
+    <TextBlock Text="{Binding CutFolioText}" FontWeight="SemiBold" IsVisible="{Binding HasCutFolio}" />
 
     <StackPanel Orientation="Horizontal" Spacing="8">
       <Button MinHeight="44" Content="{x:Static res:Strings.Shift_PrintReport}"

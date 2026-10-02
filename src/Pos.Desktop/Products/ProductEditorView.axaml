@@ -5,6 +5,7 @@
              xmlns:common="using:Pos.Desktop.Common"
              xmlns:forms="using:Pos.Desktop.Forms"
              xmlns:units="using:Pos.Application.Products.ListUnitsOfMeasure"
+             xmlns:categories="using:Pos.Desktop.Categories"
              x:Class="Pos.Desktop.Products.ProductEditorView"
              x:DataType="vm:ProductEditorViewModel">
 
@@ -62,6 +63,13 @@
                 SelectedValueBinding="{Binding Code, x:DataType=units:UnitOfMeasureDto}"
                 DisplayMemberBinding="{Binding Name, x:DataType=units:UnitOfMeasureDto}" />
       <TextBlock Classes="error" Text="{Binding UnitCodeError}" IsVisible="{Binding UnitCodeError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+    </StackPanel>
+
+    <!-- Categoría (016, FR-010): opcional -->
+    <StackPanel Classes="field">
+      <forms:FieldLabel Text="{x:Static res:Strings.Category_Field}" />
+      <categories:CategoryPicker x:Name="CategoryBox" DataContext="{Binding Category}" />
+      <TextBlock Classes="error" Text="{Binding CategoryError}" IsVisible="{Binding CategoryError, Converter={x:Static ObjectConverters.IsNotNull}}" />
     </StackPanel>
 
     <!-- Inventario (004, FR-001, FR-004, FR-005, FR-006) -->

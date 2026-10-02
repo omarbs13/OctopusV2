@@ -1,6 +1,7 @@
 using System.Globalization;
 using Pos.Application.Abstractions;
 using Pos.Application.Business;
+using Pos.Application.Categories;
 using Pos.Application.Discounts;
 using Pos.Application.Discounts.GetDiscountReport;
 using Pos.Application.Inventory;
@@ -31,6 +32,7 @@ public sealed class ReportDocumentBuilder
     private readonly IUserSession _session;
     private readonly IClock _clock;
     private readonly GetDiscountReportHandler? _discounts;
+    private readonly ICategoryRepository? _categories;
 
     public ReportDocumentBuilder(
         GetSalesReportHandler sales,
@@ -40,9 +42,11 @@ public sealed class ReportDocumentBuilder
         IBusinessProfileRepository business,
         IUserSession session,
         IClock clock,
-        GetDiscountReportHandler? discounts = null)
+        GetDiscountReportHandler? discounts = null,
+        ICategoryRepository? categories = null)
     {
         _discounts = discounts;
+        _categories = categories;
         _sales = sales;
         _cashCount = cashCount;
         _inventory = inventory;
@@ -116,18 +120,30 @@ public sealed class ReportDocumentBuilder
             filters.Add($"{ReportTexts.CompareFilter}: {ReportTexts.Yes}");
         }
 
+        if (await CategoryFilterTextAsync(query.Category, cancellationToken) is { } categoryFilter)
+        {
+            filters.Add(categoryFilter);
+        }
+
         filters.Add($"{ReportTexts.SortFilter}: {SalesSortText(query.Sort)} ({(query.Descending ? ReportTexts.SortDesc : ReportTexts.SortAsc)})");
 
+        // Con filtro de categoría las formas de pago no se desglosan: un pago cubre la venta completa (016, research §11).
         var totals = report.Totals;
+        ReportCell Payment(long cents) => totals.PaymentsBreakdownAvailable ? new MoneyCell(cents) : new TextCell(ReportTexts.NotSplitByCategory);
+        if (!totals.PaymentsBreakdownAvailable)
+        {
+            filters.Add(ReportTexts.PaymentsNotSplitNote);
+        }
+
         List<ReportMetric> metrics =
         [
             new(ReportTexts.TotalSold, new MoneyCell(totals.TotalCents)),
             new(ReportTexts.SalesCount, new CountCell(totals.SalesCount)),
             new(ReportTexts.AverageTicket, new MoneyCell(totals.AverageTicketCents)),
-            new(ReportTexts.Cash, new MoneyCell(totals.CashCents)),
-            new(ReportTexts.Card, new MoneyCell(totals.CardCents)),
-            new(ReportTexts.Transfer, new MoneyCell(totals.TransferCents)),
-            new(ReportTexts.OnAccount, new MoneyCell(totals.OnAccountCents)),
+            new(ReportTexts.Cash, Payment(totals.CashCents)),
+            new(ReportTexts.Card, Payment(totals.CardCents)),
+            new(ReportTexts.Transfer, Payment(totals.TransferCents)),
+            new(ReportTexts.OnAccount, Payment(totals.OnAccountCents)),
             new(ReportTexts.TotalDiscounted, new MoneyCell(totals.DiscountCents)),
         ];
         if (report.Comparison is { } comparison)
@@ -155,7 +171,7 @@ public sealed class ReportDocumentBuilder
 
         var period = PeriodText(query.Period.FromDate, query.Period.ToDate);
         var document = await CompleteAsync(
-            new PartialDocument(ReportTexts.SalesTitle, period, filters, metrics, [table], [chart]),
+            new PartialDocument(ReportTexts.SalesTitle, period, filters, metrics, [CategoriesTable(report), table], [chart]),
             cancellationToken);
         return Result.Success(new BuiltReport(
             document,
@@ -280,6 +296,11 @@ public sealed class ReportDocumentBuilder
             filters.Add($"{ReportTexts.SearchFilter}: {query.SearchText}");
         }
 
+        if (await CategoryFilterTextAsync(query.Category, cancellationToken) is { } categoryFilter)
+        {
+            filters.Add(categoryFilter);
+        }
+
         filters.Add(ReportTexts.InventoryNote);
 
         var counts = report.Counts;
@@ -296,6 +317,7 @@ public sealed class ReportDocumentBuilder
             [
                 new(ReportTexts.ColName, ReportColumnType.Text),
                 new(ReportTexts.ColSku, ReportColumnType.Text),
+                new(ReportTexts.ColCategory, ReportColumnType.Text),
                 new(ReportTexts.ColOnHand, ReportColumnType.Quantity),
                 new(ReportTexts.ColMinimum, ReportColumnType.Quantity),
                 new(ReportTexts.ColUnit, ReportColumnType.Text),
@@ -305,6 +327,7 @@ public sealed class ReportDocumentBuilder
             [
                 new TextCell(r.Name),
                 new TextCell(r.Sku),
+                new TextCell(CategoryMessages.Display(r.CategoryName, r.CategoryIsActive)),
                 new QuantityCell(r.OnHandThousandths, r.DecimalPlaces),
                 r.MinimumThousandths is { } minimum ? new QuantityCell(minimum, r.DecimalPlaces) : EmptyCell.Instance,
                 new TextCell(r.UnitName),
@@ -458,6 +481,70 @@ public sealed class ReportDocumentBuilder
         DateTime.SpecifyKind(utc, DateTimeKind.Utc).ToLocalTime().ToString("dd/MM/yyyy HH:mm", Culture);
 
     private static InvalidState NoData() => new(ReportMessages.NoData);
+
+    /// <summary>
+    /// "Ventas por categoría" (016, FR-021): una fila por categoría seguida de sus productos con sangría y la
+    /// fila de total; mismas cifras que la pantalla porque salen del mismo <see cref="SalesReport"/>.
+    /// </summary>
+    private static ReportTable CategoriesTable(SalesReport report)
+    {
+        var categories = report.Categories;
+        const int UnitsDecimals = 3;
+        var rows = new List<IReadOnlyList<ReportCell>>();
+        foreach (var category in categories)
+        {
+            rows.Add(
+            [
+                new TextCell(CategoryMessages.Display(category.CategoryId is null ? null : category.Name, category.IsActive)),
+                new QuantityCell(category.UnitsThousandths, UnitsDecimals),
+                new MoneyCell(category.AmountCents),
+                new PercentCell(category.ShareBasisPoints),
+            ]);
+            foreach (var product in category.Products)
+            {
+                rows.Add(
+                [
+                    new TextCell($"    {product.Name} ({product.UnitName})"),
+                    new QuantityCell(product.UnitsThousandths, product.DecimalPlaces),
+                    new MoneyCell(product.AmountCents),
+                    EmptyCell.Instance,
+                ]);
+            }
+        }
+
+        rows.Add(
+        [
+            new TextCell(ReportTexts.CategoriesTotal),
+            new QuantityCell(report.CategoriesUnitsThousandths, UnitsDecimals),
+            new MoneyCell(report.CategoriesAmountCents),
+            EmptyCell.Instance,
+        ]);
+
+        return new ReportTable(
+            ReportTexts.CategoriesTableTitle,
+            [
+                new(ReportTexts.ColCategory, ReportColumnType.Text),
+                new(ReportTexts.ColUnits, ReportColumnType.Quantity),
+                new(ReportTexts.ColAmount, ReportColumnType.Money),
+                new(ReportTexts.ColShare, ReportColumnType.Percent),
+            ],
+            rows);
+    }
+
+    /// <summary>"Categoría: {nombre}" o "Categoría: Sin categoría"; nulo con "Todas" (016, contracts/ui.md).</summary>
+    private async Task<string?> CategoryFilterTextAsync(CategoryFilter filter, CancellationToken cancellationToken)
+    {
+        switch (filter.Kind)
+        {
+            case CategoryFilterKind.Uncategorized:
+                return $"{ReportTexts.CategoryFilter}: {CategoryMessages.Uncategorized}";
+            case CategoryFilterKind.Only when filter.CategoryId is { } id:
+                var category = _categories is null ? null : await _categories.GetAsync(id, cancellationToken);
+                return $"{ReportTexts.CategoryFilter}: {(category is null ? string.Empty : CategoryMessages.Display(category.Name, category.IsActive))}";
+            default:
+                return null;
+        }
+    }
 
     private static string PeriodText(DateOnly from, DateOnly to) =>
         from == to

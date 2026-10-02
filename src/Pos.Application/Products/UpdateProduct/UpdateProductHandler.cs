@@ -1,5 +1,7 @@
 using FluentValidation;
+using Microsoft.Extensions.Logging;
 using Pos.Application.Abstractions;
+using Pos.Application.Categories;
 using Pos.Application.Inventory;
 using Pos.Domain.Common;
 using Pos.Domain.Products;
@@ -8,26 +10,32 @@ using Pos.Domain.Users;
 
 namespace Pos.Application.Products.UpdateProduct;
 
-public sealed class UpdateProductHandler
+public sealed partial class UpdateProductHandler
 {
     private readonly IAccessControl _access;
     private readonly IProductRepository _products;
     private readonly IValidator<UpdateProductCommand> _validator;
     private readonly IInventoryRepository _inventory;
     private readonly IWriteTransactions _transactions;
+    private readonly ICategoryRepository _categories;
+    private readonly ILogger<UpdateProductHandler> _logger;
 
     public UpdateProductHandler(
         IAccessControl access,
         IProductRepository products,
         IValidator<UpdateProductCommand> validator,
         IInventoryRepository inventory,
-        IWriteTransactions transactions)
+        IWriteTransactions transactions,
+        ICategoryRepository categories,
+        ILogger<UpdateProductHandler> logger)
     {
         _access = access;
         _products = products;
         _validator = validator;
         _inventory = inventory;
         _transactions = transactions;
+        _categories = categories;
+        _logger = logger;
     }
 
     public async Task<Result<ProductDto>> HandleAsync(UpdateProductCommand command, CancellationToken cancellationToken)
@@ -84,6 +92,14 @@ public sealed class UpdateProductHandler
             return Result.Failure<ProductDto>(new ValidationFailed(inventoryErrors));
         }
 
+        // FR-011: una categoría nueva debe estar activa; la que ya tenía se conserva aunque esté inactiva.
+        var category = command.CategoryId is { } categoryId ? await _categories.GetAsync(categoryId, cancellationToken) : null;
+        if (command.CategoryId is { } chosen && chosen != product.CategoryId && category is not { IsActive: true })
+        {
+            LogNotAssignable(product.Id, chosen);
+            return Result.Failure<ProductDto>(new CategoryNotAssignable());
+        }
+
         var sku = Product.NormalizeSku(command.Sku);
         var barcode = Product.NormalizeBarcode(command.Barcode);
 
@@ -99,7 +115,7 @@ public sealed class UpdateProductHandler
 
         var price = Money.Parse(command.PriceText).Value!.Value;
         var minimum = ProductRules.ParseMinimum(command.TracksInventory, command.MinimumStockText, command.UnitCode)?.Value;
-        product.Update(command.Name, sku, barcode, price, command.UnitCode, command.IsActive, command.TracksInventory, minimum, hasMovements);
+        product.Update(command.Name, sku, barcode, price, command.UnitCode, command.IsActive, command.TracksInventory, minimum, hasMovements, command.CategoryId);
         ProductImages.Apply(product, command.Image);
 
         var outcome = await _products.SaveChangesAsync(product, command.ExpectedVersion, cancellationToken);
@@ -110,9 +126,12 @@ public sealed class UpdateProductHandler
 
         return outcome.Status switch
         {
-            SaveStatus.Saved => Result.Success(product.ToDto(stock)),
+            SaveStatus.Saved => Result.Success(product.ToDto(stock, category)),
             SaveStatus.Duplicate => Result.Failure<ProductDto>(new Duplicate(outcome.DuplicateField!)),
             _ => Result.Failure<ProductDto>(new Conflict()),
         };
     }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Edición de producto rechazada: la categoría no está disponible. ProductId={ProductId} CategoryId={CategoryId}")]
+    private partial void LogNotAssignable(Guid productId, Guid categoryId);
 }

@@ -2,6 +2,8 @@ using System.Reflection;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
+using Pos.Application.CashShifts.CloseShift;
+using Pos.Application.CashShifts.GenerateShiftReadout;
 using Pos.Application.Customers.CreateCustomer;
 using Pos.Application.Discounts.Coupons.SaveCoupon;
 using Pos.Application.Receivables;
@@ -11,6 +13,8 @@ using Pos.Application.Sales;
 using Pos.Application.Sales.ConfirmSale;
 using Pos.Application.Sales.SaveSaleDraft;
 using Pos.Application.Users.Access;
+using Pos.Domain.CashShifts;
+using Pos.Domain.Categories;
 using Pos.Domain.Common;
 using Pos.Domain.Customers;
 using Pos.Domain.Discounts;
@@ -102,6 +106,14 @@ public sealed class SampleDatabaseGenerator
 
         // Desde 0.10.0: un cupón, una venta con descuento de línea autorizado, una con cupón y un borrador con descuento.
         await SeedDiscountsAsync(db, adminId, cashierId);
+
+        // Desde 0.11.0: una categoría activa con productos vendidos, una inactiva con un producto, una borrada sin
+        // productos y el resto de los productos sin categoría.
+        await SeedCategoriesAsync(db, adminId);
+
+        // Desde 0.12.0: el turno 1 quedó cerrado sin Corte Z (como los anteriores a la actualización); el
+        // turno 2 tiene un Corte X y se cierra con el Corte Z; el turno 3 queda abierto.
+        await SeedShiftCutsAsync(db, adminId, cashierId);
 
         // Un solo archivo autocontenido: sin WAL pendiente. Primero se liberan las conexiones del pool.
         SqliteConnection.ClearAllPools();
@@ -355,6 +367,87 @@ public sealed class SampleDatabaseGenerator
         Assert.True(sold.IsSuccess, sold.Error?.ToString());
     }
 
+    private static async Task SeedCategoriesAsync(TestDb db, Guid adminId)
+    {
+        db.User.UserId = adminId;
+        await using var context = db.CreateDbContext();
+        var active = Category.Create(SampleData.ActiveCategoryName, "Categoría de muestra con ventas");
+        var inactive = Category.Create(SampleData.InactiveCategoryName, null);
+        inactive.Deactivate();
+        var deleted = Category.Create(SampleData.DeletedCategoryName, null);
+        deleted.Delete(db.Clock.UtcNow);
+        context.Categories.AddRange(active, inactive, deleted);
+
+        foreach (var product in context.Products.Where(p => SampleData.ActiveCategorySkus.Contains(p.Sku) || p.Sku == SampleData.InactiveCategorySku))
+        {
+            var categoryId = product.Sku == SampleData.InactiveCategorySku ? inactive.Id : active.Id;
+            product.Update(product.Name, product.Sku, product.Barcode, product.Price, product.UnitCode, product.IsActive, product.TracksInventory, product.MinimumStock, hasMovements: true, categoryId: categoryId);
+        }
+
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+    }
+
+    private static async Task SeedShiftCutsAsync(TestDb db, Guid adminId, Guid cashierId)
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var access = new AllowAllAccessControl();
+
+        db.User.UserId = adminId;
+        db.Clock.UtcNow = new DateTime(2026, 9, 30, 18, 0, 0, DateTimeKind.Utc);
+        await using (var context = db.CreateDbContext())
+        {
+            var readout = await new GenerateShiftReadoutHandler(
+                access,
+                db.User,
+                new CashShiftRepository(context),
+                new SaleRepository(context),
+                new AuditLog(context),
+                new WriteTransactions(context),
+                db.Clock,
+                NullLogger<GenerateShiftReadoutHandler>.Instance).HandleAsync(new GenerateShiftReadoutCommand(), ct);
+            Assert.True(readout.IsSuccess, readout.Error?.ToString());
+        }
+
+        // El administrador cierra el turno del cajero (cierre de turno ajeno, que descarta su venta
+        // conservada) con un faltante: Corte Z con comentario.
+        db.Clock.UtcNow = new DateTime(2026, 9, 30, 19, 0, 0, DateTimeKind.Utc);
+        await using (var context = db.CreateDbContext())
+        {
+            var shift = (await new CashShiftRepository(context).GetOpenAsync(CashRegister.Default, ct))!;
+            var expected = shift.ExpectedCash(await new SaleRepository(context).GetShiftTotalsAsync(shift.Id, ct));
+            var counted = expected - SampleData.ClosingShortageCents;
+            var closed = await new CloseShiftHandler(
+                access,
+                db.User,
+                new CashShiftRepository(context),
+                new SaleRepository(context),
+                new SqliteSaleDraftStore(context, db.Clock, db.User),
+                SalesTestSupport.ShiftGuardFor(db, context),
+                new AuditLog(context),
+                new WriteTransactions(context),
+                db.Clock,
+                NullLogger<CloseShiftHandler>.Instance)
+                .HandleAsync(new CloseShiftCommand(shift.Id, shift.Version, counted, expected, SampleData.ClosingComment, DiscardHeldSale: true), ct);
+            Assert.True(closed.IsSuccess, closed.Error?.ToString());
+        }
+
+        // Se vuelve a conservar la venta del cajero con su descuento, como en 0.10.0 y 0.11.0.
+        db.User.UserId = cashierId;
+        var draftLine = await FindProductAsync(db, SampleData.ImageSku);
+        await using (var draftContext = db.CreateDbContext())
+        {
+            await SalesTestSupport.SaveDraftHandler(db, draftContext).HandleAsync(
+                new SaveSaleDraftCommand(
+                    Guid.CreateVersion7(),
+                    [new DraftLineDto(draftLine.Id, 2000, draftLine.Price.Cents, new DraftDiscountDto(DiscountMode.Percent, 500))]),
+                ct);
+        }
+
+        db.User.UserId = adminId;
+        db.Clock.UtcNow = new DateTime(2026, 9, 30, 20, 0, 0, DateTimeKind.Utc);
+        await SalesTestSupport.EnsureShiftAsync(db);
+    }
+
     private static async Task<Product> FindProductAsync(TestDb db, string sku)
     {
         await using var context = db.CreateDbContext();
@@ -447,6 +540,23 @@ public static class SampleData
     /// <summary>Desde 0.10.0: la venta 5 son 2 piezas del producto sin inventario ($100.00) con $15.00 autorizados.</summary>
     public const long LineDiscountCents = 1_500;
     public const long CouponDiscountCents = 600;
+
+    /// <summary>Desde 0.11.0: categoría activa con el producto sin inventario y el del cupón (ambos vendidos).</summary>
+    public const string ActiveCategoryName = "Bebidas de muestra";
+    public static readonly string[] ActiveCategorySkus = [SaleWithoutInventorySku, CouponProductSku];
+
+    /// <summary>Desde 0.11.0: categoría inactiva con el producto inactivo.</summary>
+    public const string InactiveCategoryName = "Lácteos de muestra";
+    public const string InactiveCategorySku = "REF-001";
+
+    /// <summary>Desde 0.11.0: categoría borrada sin productos.</summary>
+    public const string DeletedCategoryName = "Temporal de muestra";
+
+    /// <summary>Desde 0.12.0: un Corte X (X-000001) y un Corte Z (Z-000001) del turno T-000002; T-000001 sin Corte Z.</summary>
+    public const string ReadoutFolio = "X-000001";
+    public const string ClosingFolio = "Z-000001";
+    public const long ClosingShortageCents = 500;
+    public const string ClosingComment = "Faltante de muestra";
 
     /// <summary>Desde 0.6.0: usuarios de muestra. El administrador hace la venta 1; el cajero, la 2 y la 3 y el borrador.</summary>
     public const string AdminUserName = "admin";

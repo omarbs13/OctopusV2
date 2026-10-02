@@ -46,6 +46,11 @@ internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
 
         // Los productos existentes quedan como "no crítico" (009); AddColumn sin reconstruir la tabla.
         builder.Property(p => p.IsCritical).IsRequired().HasDefaultValue(false);
+
+        // Sin relación ni clave foránea (016, research §2): agregarla obligaría a reconstruir Products en
+        // SQLite y no impediría apuntar a una categoría borrada (borrado lógico). La integridad la dan los
+        // casos de uso en transacciones de escritura serializadas.
+        builder.Property(p => p.CategoryId);
         builder.Property(p => p.CreatedAt).IsRequired();
         builder.Property(p => p.CreatedBy).IsRequired();
         builder.Property(p => p.UpdatedAt).IsRequired();
@@ -75,6 +80,10 @@ internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
 
         builder.HasIndex(p => new { p.TracksInventory, p.IsActive })
             .HasDatabaseName("IX_Products_TracksInventory")
+            .HasFilter("\"DeletedAt\" IS NULL");
+
+        builder.HasIndex(p => p.CategoryId)
+            .HasDatabaseName("IX_Products_CategoryId")
             .HasFilter("\"DeletedAt\" IS NULL");
 
         // Compuesto para que el orden del listado paginado salga del índice (003, research §2).

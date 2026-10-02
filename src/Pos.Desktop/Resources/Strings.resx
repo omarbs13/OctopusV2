@@ -448,7 +448,7 @@
   <data name="Shift_SalesMany" xml:space="preserve"><value>{0} ventas</value></data>
   <data name="Shift_Deposit" xml:space="preserve"><value>Ingreso</value></data>
   <data name="Shift_Withdrawal" xml:space="preserve"><value>Retiro</value></data>
-  <data name="Shift_Close" xml:space="preserve"><value>Cerrar turno</value></data>
+  <data name="Shift_Close" xml:space="preserve"><value>Corte Z</value></data>
   <data name="Shift_Open" xml:space="preserve"><value>Abrir turno</value></data>
   <data name="Shift_Finish" xml:space="preserve"><value>Terminar</value></data>
   <data name="Shift_OpenTitle" xml:space="preserve"><value>Abrir turno</value></data>
@@ -457,7 +457,7 @@
   <data name="Shift_ZeroFloatTitle" xml:space="preserve"><value>Fondo inicial en cero</value></data>
   <data name="Shift_ZeroFloatQuestion" xml:space="preserve"><value>¿Abrir el turno sin fondo inicial?</value></data>
   <data name="Shift_ZeroFloatConfirm" xml:space="preserve"><value>Abrir sin fondo</value></data>
-  <data name="Shift_CloseTitle" xml:space="preserve"><value>Cerrar turno</value></data>
+  <data name="Shift_CloseTitle" xml:space="preserve"><value>Corte Z</value></data>
   <data name="Shift_CloseOwnerNote" xml:space="preserve"><value>Turno de {0}</value></data>
   <data name="Shift_CountedLabel" xml:space="preserve"><value>Efectivo contado en caja</value></data>
   <data name="Shift_CountNext" xml:space="preserve"><value>Continuar</value></data>
@@ -472,7 +472,7 @@
   <data name="Shift_Comment" xml:space="preserve"><value>Comentario</value></data>
   <data name="Shift_CommentRequired" xml:space="preserve"><value>Capture un comentario: el efectivo contado no coincide con el esperado.</value></data>
   <data name="Shift_Recount" xml:space="preserve"><value>Volver a contar</value></data>
-  <data name="Shift_ConfirmClose" xml:space="preserve"><value>Confirmar cierre</value></data>
+  <data name="Shift_ConfirmClose" xml:space="preserve"><value>Confirmar Corte Z</value></data>
   <data name="Shift_ClosedTitle" xml:space="preserve"><value>Turno cerrado</value></data>
   <data name="Shift_Closed" xml:space="preserve"><value>Turno {0} cerrado</value></data>
   <data name="Shift_PrintReport" xml:space="preserve"><value>Reimprimir corte</value></data>
@@ -1036,4 +1036,86 @@
   <data name="SaleDetail_Subtotal" xml:space="preserve"><value>Subtotal</value></data>
   <data name="SaleDetail_TotalSaved" xml:space="preserve"><value>Usted ahorró</value></data>
   <data name="Reports_Sales_TotalDiscounted" xml:space="preserve"><value>Total descontado</value></data>
+  <data name="Nav_Categories" xml:space="preserve"><value>Categorías</value></data>
+  <data name="Category_ListTitle" xml:space="preserve"><value>Categorías</value></data>
+  <data name="Category_SearchPlaceholder" xml:space="preserve"><value>Buscar por nombre</value></data>
+  <data name="Category_StatusActive" xml:space="preserve"><value>Activas</value></data>
+  <data name="Category_StatusInactive" xml:space="preserve"><value>Inactivas</value></data>
+  <data name="Category_StatusAll" xml:space="preserve"><value>Todas</value></data>
+  <data name="Category_New" xml:space="preserve"><value>Nueva categoría</value></data>
+  <data name="Category_Edit" xml:space="preserve"><value>Editar</value></data>
+  <data name="Category_Deactivate" xml:space="preserve"><value>Desactivar</value></data>
+  <data name="Category_Activate" xml:space="preserve"><value>Reactivar</value></data>
+  <data name="Category_Delete" xml:space="preserve"><value>Eliminar</value></data>
+  <data name="Category_ColName" xml:space="preserve"><value>Nombre</value></data>
+  <data name="Category_ColDescription" xml:space="preserve"><value>Descripción</value></data>
+  <data name="Category_ColProducts" xml:space="preserve"><value>Productos</value></data>
+  <data name="Category_ColStatus" xml:space="preserve"><value>Estado</value></data>
+  <data name="Category_Active" xml:space="preserve"><value>Activa</value></data>
+  <data name="Category_Inactive" xml:space="preserve"><value>Inactiva</value></data>
+  <data name="Category_Empty" xml:space="preserve"><value>No hay categorías con estos filtros.</value></data>
+  <data name="Category_NewTitle" xml:space="preserve"><value>Nueva categoría</value></data>
+  <data name="Category_EditTitle" xml:space="preserve"><value>Editar categoría</value></data>
+  <data name="Category_Name" xml:space="preserve"><value>Nombre</value></data>
+  <data name="Category_Description" xml:space="preserve"><value>Descripción</value></data>
+  <data name="Category_DeactivateTitle" xml:space="preserve"><value>Desactivar categoría</value></data>
+  <data name="Category_DeleteTitle" xml:space="preserve"><value>Eliminar categoría</value></data>
+  <data name="Category_DeleteConfirm" xml:space="preserve"><value>¿Eliminar la categoría {0}?</value></data>
+  <data name="Category_NotFound" xml:space="preserve"><value>La categoría ya no existe.</value></data>
+  <data name="Category_ConflictTitle" xml:space="preserve"><value>La categoría cambió</value></data>
+  <data name="Category_Field" xml:space="preserve"><value>Categoría</value></data>
+  <data name="Category_FilterAll" xml:space="preserve"><value>Todas</value></data>
+  <data name="Category_PaymentsNotSplit" xml:space="preserve"><value>No se desglosa por categoría</value></data>
+  <data name="Category_NoData" xml:space="preserve"><value>Sin datos en este período</value></data>
+  <data name="Category_ColCategory" xml:space="preserve"><value>Categoría</value></data>
+  <data name="Category_ColUnits" xml:space="preserve"><value>Unidades</value></data>
+  <data name="Category_ColAmount" xml:space="preserve"><value>Importe</value></data>
+  <data name="Category_ColShare" xml:space="preserve"><value>% del total</value></data>
+  <data name="Category_Total" xml:space="preserve"><value>Total</value></data>
+  <data name="Reports_Sales_ByCategory" xml:space="preserve"><value>Ventas por categoría</value></data>
+  <data name="Nav_Cash" xml:space="preserve"><value>Caja</value></data>
+  <data name="Nav_CashReadout" xml:space="preserve"><value>Corte X</value></data>
+  <data name="Nav_CashClosing" xml:space="preserve"><value>Corte Z</value></data>
+  <data name="Nav_CashCuts" xml:space="preserve"><value>Histórico de cortes</value></data>
+  <data name="Cut_NoShiftReadout" xml:space="preserve"><value>No hay un turno abierto. El Corte X se genera sobre el turno abierto de la caja.</value></data>
+  <data name="Cut_NoShift" xml:space="preserve"><value>No hay un turno abierto.</value></data>
+  <data name="Cut_ShiftHeader" xml:space="preserve"><value>Turno {0} de {1} · desde {2}</value></data>
+  <data name="Cut_GenerateReadout" xml:space="preserve"><value>Generar Corte X</value></data>
+  <data name="Cut_MakeClosing" xml:space="preserve"><value>Hacer Corte Z</value></data>
+  <data name="Cut_ClosingOtherOwner" xml:space="preserve"><value>El turno abierto es de otro usuario; solo un administrador puede hacer su Corte Z.</value></data>
+  <data name="Cut_ReadoutLegend" xml:space="preserve"><value>Lectura parcial: no es un cierre de caja</value></data>
+  <data name="Cut_AuthorizationRequired" xml:space="preserve"><value>Se requiere autorización de un administrador</value></data>
+  <data name="Cut_ReadoutContext" xml:space="preserve"><value>Corte X del turno {0}</value></data>
+  <data name="Cut_ReadoutHint" xml:space="preserve"><value>Cada Corte X genera un folio nuevo con las cifras del turno en este momento. No modifica el turno.</value></data>
+  <data name="Cut_ClosingHint" xml:space="preserve"><value>El Corte Z cierra el turno con el arqueo de caja y le asigna un folio Z consecutivo.</value></data>
+  <data name="Cut_ClosingDone" xml:space="preserve"><value>Corte Z {0} · Turno {1} cerrado</value></data>
+  <data name="Cut_Empty" xml:space="preserve"><value>No hay cortes con estos filtros.</value></data>
+  <data name="Cut_TitleReadout" xml:space="preserve"><value>Corte X {0}</value></data>
+  <data name="Cut_TitleClosing" xml:space="preserve"><value>Corte Z {0}</value></data>
+  <data name="Cut_Shift" xml:space="preserve"><value>Turno</value></data>
+  <data name="Cut_Register" xml:space="preserve"><value>Caja</value></data>
+  <data name="Cut_Owner" xml:space="preserve"><value>Usuario del turno</value></data>
+  <data name="Cut_GeneratedBy" xml:space="preserve"><value>Generado por</value></data>
+  <data name="Cut_AuthorizedBy" xml:space="preserve"><value>Autorizó: {0}</value></data>
+  <data name="Cut_OpenedAt" xml:space="preserve"><value>Apertura</value></data>
+  <data name="Cut_GeneratedAt" xml:space="preserve"><value>Fecha del corte</value></data>
+  <data name="Cut_TotalSold" xml:space="preserve"><value>Total vendido</value></data>
+  <data name="Cut_Print" xml:space="preserve"><value>Imprimir</value></data>
+  <data name="Cut_Reprint" xml:space="preserve"><value>Reimprimir</value></data>
+  <data name="Cut_Close" xml:space="preserve"><value>Cerrar</value></data>
+  <data name="Cut_View" xml:space="preserve"><value>Ver</value></data>
+  <data name="Cut_Type" xml:space="preserve"><value>Tipo</value></data>
+  <data name="Cut_TypeAll" xml:space="preserve"><value>Todos</value></data>
+  <data name="Cut_TypeReadout" xml:space="preserve"><value>Corte X</value></data>
+  <data name="Cut_TypeClosing" xml:space="preserve"><value>Corte Z</value></data>
+  <data name="Cut_Search" xml:space="preserve"><value>Buscar</value></data>
+  <data name="Cut_ColType" xml:space="preserve"><value>Tipo</value></data>
+  <data name="Cut_ColFolio" xml:space="preserve"><value>Folio</value></data>
+  <data name="Cut_ColDate" xml:space="preserve"><value>Fecha y hora</value></data>
+  <data name="Cut_ColUser" xml:space="preserve"><value>Usuario</value></data>
+  <data name="Cut_ColShift" xml:space="preserve"><value>Turno</value></data>
+  <data name="Cut_ColSold" xml:space="preserve"><value>Total vendido</value></data>
+  <data name="Cut_ColDifference" xml:space="preserve"><value>Diferencia</value></data>
+  <data name="Cut_NotFound" xml:space="preserve"><value>El corte no existe.</value></data>
+  <data name="Cut_FolioLabel" xml:space="preserve"><value>Corte Z: {0}</value></data>
 </root>

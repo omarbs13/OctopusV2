@@ -25,14 +25,24 @@ using Pos.Application.Products.UpdateProduct;
 using Pos.Application.CashShifts;
 using Pos.Application.CashShifts.CloseShift;
 using Pos.Application.CashShifts.CountShiftCash;
+using Pos.Application.CashShifts.GenerateShiftReadout;
 using Pos.Application.CashShifts.GetCurrentShift;
+using Pos.Application.CashShifts.GetShiftCut;
 using Pos.Application.CashShifts.GetShiftDetail;
 using Pos.Application.CashShifts.OpenShift;
 using Pos.Application.CashShifts.RegisterCashMovement;
+using Pos.Application.CashShifts.SearchShiftCuts;
 using Pos.Application.CashShifts.SearchShifts;
 using Pos.Application.CreditNotes.GetCreditNoteBalance;
 using Pos.Application.CreditNotes.GetCreditNoteDetail;
 using Pos.Application.CreditNotes.SearchCreditNotes;
+using Pos.Application.Categories.CreateCategory;
+using Pos.Application.Categories.DeleteCategory;
+using Pos.Application.Categories.GetCategory;
+using Pos.Application.Categories.ListCategoryOptions;
+using Pos.Application.Categories.SearchCategories;
+using Pos.Application.Categories.SetCategoryActive;
+using Pos.Application.Categories.UpdateCategory;
 using Pos.Application.Customers.CreateCustomer;
 using Pos.Application.Customers.FindCustomersForSale;
 using Pos.Application.Customers.GetCustomerCreditStatus;
@@ -207,6 +217,16 @@ public static class DependencyInjection
 
         // Clientes y crédito (014)
         services.AddScoped<CreditAging>();
+        services.AddScoped<SearchCategoriesHandler>();
+        services.AddScoped<GetCategoryHandler>();
+        services.AddSingleton<IValidator<CreateCategoryCommand>, CreateCategoryValidator>();
+        services.AddScoped<CreateCategoryHandler>();
+        services.AddSingleton<IValidator<UpdateCategoryCommand>, UpdateCategoryValidator>();
+        services.AddScoped<UpdateCategoryHandler>();
+        services.AddScoped<SetCategoryActiveHandler>();
+        services.AddScoped<DeleteCategoryHandler>();
+        services.AddScoped<ListCategoryOptionsHandler>();
+
         services.AddSingleton<IValidator<CreateCustomerCommand>, CreateCustomerValidator>();
         services.AddScoped<CreateCustomerHandler>();
         services.AddSingleton<IValidator<UpdateCustomerCommand>, UpdateCustomerValidator>();
@@ -240,6 +260,9 @@ public static class DependencyInjection
         services.AddScoped<CloseShiftHandler>();
         services.AddScoped<SearchShiftsHandler>();
         services.AddScoped<GetShiftDetailHandler>();
+        services.AddScoped<GenerateShiftReadoutHandler>();
+        services.AddScoped<GetShiftCutHandler>();
+        services.AddScoped<SearchShiftCutsHandler>();
 
         // Reportes y análisis (009)
         services.AddSingleton(_ => ReportPeriodResolver.ForLocalZone());

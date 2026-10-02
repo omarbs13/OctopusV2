@@ -3,9 +3,13 @@ using Pos.Application.Abstractions;
 using Pos.Application.CashShifts;
 using Pos.Application.CashShifts.CloseShift;
 using Pos.Application.CashShifts.CountShiftCash;
+using Pos.Application.CashShifts.GenerateShiftReadout;
+using Pos.Application.CashShifts.GetShiftCut;
 using Pos.Application.CashShifts.OpenShift;
 using Pos.Application.CashShifts.RegisterCashMovement;
+using Pos.Application.CashShifts.SearchShiftCuts;
 using Pos.Application.Licensing;
+using Pos.Application.Reports;
 using Pos.Application.Sales;
 using Pos.Application.Sales.CancelSale;
 using Pos.Application.Sales.SaveSaleDraft;
@@ -146,6 +150,35 @@ public sealed class ShiftTestSupport
             .HandleAsync(new CloseShiftCommand(shiftId, expectedVersion, countedCents, shownExpectedCents, comment, discard), Ct);
     }
 
+    /// <summary>Corte X del turno abierto (017); <paramref name="grant"/> es la autorización del Cajero.</summary>
+    public async Task<Result<GeneratedShiftCut>> ReadoutAsync(Guid? grant = null)
+    {
+        await using var context = _db.CreateDbContext();
+        return await new GenerateShiftReadoutHandler(
+            Access(context),
+            _db.User,
+            new CashShiftRepository(context),
+            new SaleRepository(context),
+            new AuditLog(context),
+            new WriteTransactions(context),
+            _db.Clock,
+            NullLogger<GenerateShiftReadoutHandler>.Instance).HandleAsync(new GenerateShiftReadoutCommand(grant), Ct);
+    }
+
+    public async Task<Result<ShiftCutReportDto>> GetCutAsync(Guid cutId)
+    {
+        await using var context = _db.CreateDbContext();
+        return await new GetShiftCutHandler(Access(context), _db.User, new CashShiftRepository(context))
+            .HandleAsync(new GetShiftCutQuery(cutId), Ct);
+    }
+
+    /// <summary>Histórico de cortes con las fechas interpretadas en UTC.</summary>
+    public async Task<Result<ShiftCutPage>> SearchCutsAsync(SearchShiftCutsQuery query)
+    {
+        await using var context = _db.CreateDbContext();
+        return await new SearchShiftCutsHandler(Access(context), new CashShiftRepository(context), new ReportPeriodResolver(TimeZoneInfo.Utc))
+            .HandleAsync(query, Ct);
+    }
 
     public async Task<Result> CancelAsync(Guid saleId, Guid? grant = null)
     {

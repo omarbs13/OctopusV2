@@ -23,7 +23,7 @@ public class RolePermissionsTests
     }
 
     [Fact]
-    public void SoloCancelarVentaCajonRetiroAprobarDevolucionesExcederLimiteAnularAbonosYAprobarDescuentosSeAutorizan()
+    public void SoloCancelarVentaCajonRetiroAprobarDevolucionesExcederLimiteAnularAbonosAprobarDescuentosYCorteXSeAutorizan()
     {
         var authorizable = Enum.GetValues<Permission>().Where(RolePermissions.IsAuthorizable);
 
@@ -31,6 +31,7 @@ public class RolePermissionsTests
             [
                 Permission.CancelSales, Permission.OpenDrawerWithoutSale, Permission.WithdrawCash, Permission.ApproveReturns,
                 Permission.ApproveCreditOverLimit, Permission.VoidCustomerPayments, Permission.ApproveDiscounts,
+                Permission.GenerateShiftReadout,
             ],
             authorizable.Order());
     }
