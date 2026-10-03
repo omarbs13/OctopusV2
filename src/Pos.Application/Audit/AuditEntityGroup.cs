@@ -84,7 +84,7 @@ public static class AuditEntityGroups
         AuditEntityGroup.Purchases => Types(AuditActions.SupplierEntity, AuditActions.PurchaseEntity),
         AuditEntityGroup.CashShift => Types(AuditActions.CashShiftEntity, AuditActions.ShiftCutEntity, AuditActions.CashDrawerEntity),
         AuditEntityGroup.Settings => new(
-            [AuditActions.ReturnSettingsEntity, AuditActions.ReceivablesSettingsEntity, AuditActions.DiscountSettingsEntity, AuditActions.LicenseEntity],
+            [AuditActions.ReturnSettingsEntity, AuditActions.ReceivablesSettingsEntity, AuditActions.DiscountSettingsEntity, AuditActions.LicenseEntity, AuditActions.BackupEntity],
             [AuditActions.ReportSettingsChanged],
             []),
         AuditEntityGroup.Reports => new([AuditActions.ReportEntity, AuditActions.AuditLogEntity], [], [AuditActions.ReportSettingsChanged]),

@@ -16,8 +16,6 @@ public static class DiscountMessages
     public const string LimitRange = "El límite debe estar entre 0 y 100 %.";
     public const string ModeInvalid = "La modalidad del descuento no es válida.";
     public const string ApprovalNotNeeded = "El descuento no supera el límite; no requiere autorización.";
-    public const string DiscountsDropped =
-        "Los descuentos de la venta conservada se quitaron porque el módulo Descuentos y promociones no está activo.";
 
     public static string CouponNotFound(string code) => $"El código {code} no corresponde a ningún producto ni cupón.";
 

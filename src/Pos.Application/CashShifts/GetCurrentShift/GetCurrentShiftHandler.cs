@@ -35,7 +35,9 @@ public sealed class GetCurrentShiftHandler
 
     public async Task<Result<CurrentShiftSummary?>> HandleAsync(CancellationToken cancellationToken)
     {
-        var access = await _access.CheckAsync(Permission.OperateShift, cancellationToken);
+        // 025, FR-030a: el turno abierto se consulta, cuenta y cierra aunque Turnos y arqueo no esté activo o el
+        // sistema esté bloqueado (Principio I); solo se exigen sesión y rol.
+        var access = await _access.CheckToFinishAsync(Permission.OperateShift, cancellationToken);
         if (!access.Allowed)
         {
             return Result.Failure<CurrentShiftSummary?>(access.Error!);

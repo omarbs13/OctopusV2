@@ -93,6 +93,28 @@ public sealed class PrintTicketHandlerTests
         Assert.IsType<NotFound>(missing.Error);
     }
 
+    [Fact]
+    public async Task EnBloqueo_SeImprimeElTicketOriginalDeLaVentaEnCurso_PeroNoSeReimprime()
+    {
+        // 025, FR-030a: imprimir el ticket de la venta que se acaba de cobrar es parte de terminarla.
+        var clock = new FakeClock();
+        var blocked = new Pos.Application.Licensing.LicenseState(clock);
+        blocked.Set(Licensing.Licenses.Trial(clock.UtcNow.AddDays(-60), clock.UtcNow), null, false);
+        var handler = new PrintTicketHandler(
+            new AllowAllAccessControl(), new FakeCurrentUser(), _sales, null!, new FakeProfiles(), _settings, _printer,
+            NullLogger<PrintTicketHandler>.Instance, license: blocked);
+        var saleId = Guid.NewGuid();
+        _sales.Detail = new SaleDetailDto(
+            saleId, "V-000001", DateTime.UtcNow, "Ana", 100, SaleStatus.Completed, 1, null, null, null,
+            [new SaleLineDto(1, Guid.NewGuid(), "Producto", "P", "H87", 0, 100, 1000, 100)],
+            [new SalePaymentDto(PaymentMethod.Card, 100, null, null, null)],
+            Guid.NewGuid());
+
+        Assert.True((await handler.HandleAsync(new PrintTicketCommand(PrintSource.Sale(saleId)), Ct)).IsSuccess);
+        Assert.IsType<SystemNotActivated>((await handler.HandleAsync(new PrintTicketCommand(PrintSource.Sale(saleId), IsReprint: true), Ct)).Error);
+        Assert.IsType<SystemNotActivated>((await handler.HandleAsync(new PrintTicketCommand(PrintSource.Sample), Ct)).Error);
+    }
+
     private sealed class FakeSettings(PrintingSettings current) : IPrintingSettingsStore
     {
         public PrintingSettings Current { get; set; } = current;

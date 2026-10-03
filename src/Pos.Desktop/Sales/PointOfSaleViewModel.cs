@@ -308,6 +308,12 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
     {
         OnPropertyChanged(nameof(CanUseDiscounts));
         await RefreshShiftAsync();
+        if (_license?.Current.IsBlocked == true)
+        {
+            // 025, FR-030a: la venta en curso se termina y se cobra; no se inician ventas nuevas.
+            ShowStatus(Strings.License_SaleInProgressBlocked, warning: true);
+        }
+
         FocusCaptureRequested?.Invoke(this, EventArgs.Empty);
     }
 
@@ -884,6 +890,11 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
 
             case ModuleNotLicensed:
                 checkout.ErrorMessage = Strings.License_ModuleNotLicensed;
+                break;
+
+            case SystemNotActivated:
+                // 025: en bloqueo solo se cobra la venta en curso; una venta nueva se rechaza.
+                checkout.ErrorMessage = Strings.License_SystemNotActivated;
                 break;
 
             case CreditNoteNotFound:
@@ -1507,10 +1518,6 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
             }
 
             RefreshCart();
-            if (draft.DiscountsDropped)
-            {
-                ShowStatus(DiscountMessages.DiscountsDropped, warning: true);
-            }
         }
         else
         {

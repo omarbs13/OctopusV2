@@ -3,6 +3,7 @@ using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Pos.Application.Abstractions;
+using Pos.Application.Licensing;
 using Pos.Application.Reports;
 using Pos.Application.Reports.Export;
 using Pos.Application.Reports.GetSalesReport;
@@ -37,7 +38,7 @@ public sealed partial class SalesReportViewModel : ReportPageViewModel
     private readonly UseCases _useCases;
     private bool _suppress;
 
-    public SalesReportViewModel(UseCases useCases, OperationRunner runner, IChartRenderer renderer, ReportExportCoordinator exporter)
+    public SalesReportViewModel(UseCases useCases, OperationRunner runner, IChartRenderer renderer, ReportExportCoordinator exporter, ILicenseState? license = null)
         : base(runner, renderer, exporter, ReportPreset.Today)
     {
         _useCases = useCases;
@@ -45,7 +46,7 @@ public sealed partial class SalesReportViewModel : ReportPageViewModel
         _suppress = true;
         SelectedCashier = CashierOptions[0];
         _suppress = false;
-        CategoryFilter = new CategoryPickerViewModel(useCases, runner, CategoryPickerMode.Filter);
+        CategoryFilter = new CategoryPickerViewModel(useCases, runner, CategoryPickerMode.Filter, license);
         CategoryFilter.SelectionChanged += (_, _) => RestartFromFirstPage();
     }
 

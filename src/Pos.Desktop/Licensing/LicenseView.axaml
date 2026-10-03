@@ -1,0 +1,71 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Pos.Desktop.Licensing"
+             xmlns:res="using:Pos.Desktop.Resources"
+             x:Class="Pos.Desktop.Licensing.LicenseView"
+             x:DataType="vm:LicenseViewModel">
+
+  <StackPanel Spacing="16" MaxWidth="900" HorizontalAlignment="Left">
+    <TextBlock Text="{x:Static res:Strings.Nav_License}" FontSize="22" FontWeight="SemiBold" />
+
+    <!-- Encabezado: ID de máquina, estado general y cliente -->
+    <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto" RowSpacing="10" ColumnSpacing="16">
+      <TextBlock Grid.Row="0" Grid.Column="0" FontWeight="SemiBold" Text="{x:Static res:Strings.License_MachineId}" VerticalAlignment="Center" />
+      <SelectableTextBlock Grid.Row="0" Grid.Column="1" Text="{Binding MachineId}" TextWrapping="Wrap" VerticalAlignment="Center" />
+      <Button Grid.Row="0" Grid.Column="2" Content="{x:Static res:Strings.License_Copy}" Command="{Binding CopyMachineIdCommand}" />
+
+      <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Text="{Binding OverallText}" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap" />
+      <TextBlock Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Text="{Binding CustomerText}" IsVisible="{Binding HasCustomer}" TextWrapping="Wrap" />
+    </Grid>
+
+    <!-- Bloqueo: mensaje de activación con los pasos -->
+    <Border Background="{DynamicResource SystemFillColorCautionBackgroundBrush}" Padding="12" CornerRadius="6" IsVisible="{Binding IsBlocked}">
+      <TextBlock Text="{Binding BlockedText}" TextWrapping="Wrap" />
+    </Border>
+
+    <!-- Avisos: reloj atrasado, prueba por vencer, módulos por vencer -->
+    <ItemsControl ItemsSource="{Binding Warnings}">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate x:DataType="x:String">
+          <TextBlock Text="{Binding}" TextWrapping="Wrap" Margin="0,2" />
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+
+    <StackPanel Orientation="Horizontal" Spacing="12">
+      <Button Content="{x:Static res:Strings.License_GenerateRequest}" Command="{Binding GenerateRequestCommand}" />
+      <Button Classes="accent" Content="{x:Static res:Strings.License_Import}" Command="{Binding ImportCommand}" IsVisible="{Binding CanImport}" />
+      <Button Content="{x:Static res:Strings.License_ExportBackup}" Command="{Binding ExportBackupCommand}" IsVisible="{Binding CanExportBackup}" />
+    </StackPanel>
+
+    <Separator />
+
+    <!-- Tabla de los 9 módulos en el orden del catálogo -->
+    <TextBlock Text="{x:Static res:Strings.License_ModulesTitle}" FontSize="16" FontWeight="SemiBold" />
+    <StackPanel Spacing="4">
+      <Grid ColumnDefinitions="260,200,130,130" Margin="12,0">
+        <Grid.Styles>
+          <Style Selector="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold" />
+          </Style>
+        </Grid.Styles>
+        <TextBlock Grid.Column="0" Text="{x:Static res:Strings.License_ColumnModule}" />
+        <TextBlock Grid.Column="1" Text="{x:Static res:Strings.License_ColumnState}" />
+        <TextBlock Grid.Column="2" Text="{x:Static res:Strings.License_ColumnActivates}" />
+        <TextBlock Grid.Column="3" Text="{x:Static res:Strings.License_ColumnExpires}" />
+      </Grid>
+      <ItemsControl ItemsSource="{Binding Modules}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:LicenseModuleRow">
+            <Grid ColumnDefinitions="260,200,130,130" Margin="12,2">
+              <TextBlock Grid.Column="0" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+              <TextBlock Grid.Column="1" Text="{Binding State}" />
+              <TextBlock Grid.Column="2" Text="{Binding ActivatesOn}" />
+              <TextBlock Grid.Column="3" Text="{Binding ExpiresOn}" />
+            </Grid>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </StackPanel>
+  </StackPanel>
+</UserControl>

@@ -2021,6 +2021,23 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Pos.Infrastructure.Licensing.InstalledLicenseEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("ImportedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("InstalledLicenses", (string)null);
+                });
+
             modelBuilder.Entity("Pos.Infrastructure.Licensing.LicenseSealEntity", b =>
                 {
                     b.Property<Guid>("Id")

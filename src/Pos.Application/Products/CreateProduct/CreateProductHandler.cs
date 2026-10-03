@@ -3,8 +3,10 @@ using Microsoft.Extensions.Logging;
 using Pos.Application.Abstractions;
 using Pos.Application.Audit;
 using Pos.Application.Categories;
+using Pos.Application.Licensing;
 using Pos.Domain.Categories;
 using Pos.Domain.Common;
+using Pos.Domain.Licensing;
 using Pos.Domain.Products;
 using Pos.Application.Users.Access;
 using Pos.Domain.Users;
@@ -25,6 +27,7 @@ public sealed partial class CreateProductHandler
     private readonly IWriteTransactions _transactions;
     private readonly IAuditLog _audit;
     private readonly ILogger<CreateProductHandler> _logger;
+    private readonly ILicenseState? _license;
 
     public CreateProductHandler(
         IAccessControl access,
@@ -33,8 +36,10 @@ public sealed partial class CreateProductHandler
         ICategoryRepository categories,
         IWriteTransactions transactions,
         IAuditLog audit,
-        ILogger<CreateProductHandler> logger)
+        ILogger<CreateProductHandler> logger,
+        ILicenseState? license = null)
     {
+        _license = license;
         _access = access;
         _products = products;
         _validator = validator;
@@ -60,10 +65,12 @@ public sealed partial class CreateProductHandler
             return Result.Failure<ProductDto>(ProductRules.ToError(validation));
         }
 
-        await using var transaction = command.CategoryId is null ? null : await _transactions.BeginAsync(cancellationToken);
+        // 025, FR-007: sin el módulo Categorías el producto se crea sin categoría.
+        var selected = _license?.IsModuleActive(LicensedModule.Categories) == false ? null : command.CategoryId;
+        await using var transaction = selected is null ? null : await _transactions.BeginAsync(cancellationToken);
 
         Category? category = null;
-        if (command.CategoryId is { } categoryId)
+        if (selected is { } categoryId)
         {
             category = await _categories.GetAsync(categoryId, cancellationToken);
             if (category is not { IsActive: true })
@@ -90,7 +97,7 @@ public sealed partial class CreateProductHandler
         var minimum = ProductRules.ParseMinimum(command.TracksInventory, command.MinimumStockText, command.UnitCode)?.Value;
         var reorderPoint = ProductRules.ParseReorderPoint(command.TracksInventory, command.ReorderPointText, command.UnitCode)?.Value;
         var product = Product.Create(
-            command.Name, sku, barcode, price, command.UnitCode, command.TracksInventory, minimum, command.CategoryId, reorderPoint);
+            command.Name, sku, barcode, price, command.UnitCode, command.TracksInventory, minimum, selected, reorderPoint);
         ProductImages.Apply(product, command.Image);
         _products.Add(product);
         _audit.Add(new AuditRecord(

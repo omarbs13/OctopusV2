@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.Extensions.Logging;
 using Pos.Application.Abstractions;
 using Pos.Application.Audit;
+using Pos.Application.Licensing;
 using Pos.Application.Printing.Ticket;
 using Pos.Application.Products;
 using Pos.Application.Sales;
@@ -19,6 +20,7 @@ namespace Pos.Application.CashShifts.RegisterCashMovement;
 public sealed partial class RegisterCashMovementHandler
 {
     private readonly IAccessControl _access;
+    private readonly ILicenseState? _license;
     private readonly ICashShiftRepository _shifts;
     private readonly ISaleRepository _sales;
     private readonly ICurrentUser _currentUser;
@@ -35,8 +37,10 @@ public sealed partial class RegisterCashMovementHandler
         IAuditLog audit,
         IWriteTransactions transactions,
         IValidator<RegisterCashMovementCommand> validator,
-        ILogger<RegisterCashMovementHandler> logger)
+        ILogger<RegisterCashMovementHandler> logger,
+        ILicenseState? license = null)
     {
+        _license = license;
         _access = access;
         _shifts = shifts;
         _sales = sales;
@@ -52,6 +56,12 @@ public sealed partial class RegisterCashMovementHandler
         ArgumentNullException.ThrowIfNull(command);
 
         var isWithdrawal = command.Type == CashMovementType.Out;
+        // 025, FR-028: en bloqueo no hay entradas ni retiros de efectivo (blocked-mode §1).
+        if (LicenseGate.WhenBlocked(_license) is { } blocked)
+        {
+            return Result.Failure<RegisteredMovement>(blocked);
+        }
+
         var access = await _access.CheckAsync(
             isWithdrawal ? Permission.WithdrawCash : Permission.OperateShift,
             isWithdrawal ? command.AuthorizationGrantId : null,

@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.Extensions.Logging;
 using Pos.Application.Abstractions;
 using Pos.Application.Audit;
+using Pos.Application.Licensing;
 using Pos.Application.Printing.Ticket;
 using Pos.Application.Products;
 using Pos.Application.Users.Access;
@@ -18,6 +19,7 @@ namespace Pos.Application.CashShifts.OpenShift;
 public sealed partial class OpenShiftHandler
 {
     private readonly IAccessControl _access;
+    private readonly ILicenseState? _license;
     private readonly ICashShiftRepository _shifts;
     private readonly IAuditLog _audit;
     private readonly IWriteTransactions _transactions;
@@ -36,8 +38,10 @@ public sealed partial class OpenShiftHandler
         ICurrentUser currentUser,
         IValidator<OpenShiftCommand> validator,
         ShiftGuard guard,
-        ILogger<OpenShiftHandler> logger)
+        ILogger<OpenShiftHandler> logger,
+        ILicenseState? license = null)
     {
+        _license = license;
         _access = access;
         _shifts = shifts;
         _audit = audit;
@@ -52,6 +56,12 @@ public sealed partial class OpenShiftHandler
     public async Task<Result<CurrentShiftSummary>> HandleAsync(OpenShiftCommand command, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(command);
+
+        // 025, FR-028: en bloqueo no se abren turnos (blocked-mode §1).
+        if (LicenseGate.WhenBlocked(_license) is { } blocked)
+        {
+            return Result.Failure<CurrentShiftSummary>(blocked);
+        }
 
         var access = await _access.CheckAsync(Permission.OperateShift, cancellationToken);
         if (!access.Allowed)

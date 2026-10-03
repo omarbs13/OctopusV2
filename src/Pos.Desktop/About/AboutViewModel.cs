@@ -4,11 +4,10 @@ using CommunityToolkit.Mvvm.Input;
 using Pos.Application.Abstractions;
 using Pos.Application.Diagnostics.ExportDiagnostics;
 using Pos.Application.Diagnostics.GetAppInfo;
-using Pos.Application.Licensing.ExportLicenseRequest;
 using Pos.Application.Licensing.GetLicenseStatus;
-using Pos.Application.Licensing.ImportLicense;
 using Pos.Desktop.Common;
 using Pos.Desktop.Licensing;
+using Pos.Desktop.Navigation;
 using Pos.Desktop.Resources;
 using Pos.Domain.Users;
 
@@ -16,7 +15,7 @@ namespace Pos.Desktop.About;
 
 /// <summary>
 /// Pantalla "Acerca de": producto, desarrollador y contacto, versión, ID de máquina, carpeta de datos,
-/// exportación de diagnóstico y licencia (023, FR-030).
+/// exportación de diagnóstico y de respaldo (023, FR-030; 025). La licencia se administra en "Ayuda > Licencia".
 /// </summary>
 public sealed partial class AboutViewModel : PageViewModel
 {
@@ -25,6 +24,7 @@ public sealed partial class AboutViewModel : PageViewModel
     private readonly IDialogService _dialogs;
     private readonly IClock _clock;
     private readonly IClipboardService _clipboard;
+    private readonly Navigator? _navigator;
 
     public AboutViewModel(
         UseCases useCases,
@@ -32,10 +32,12 @@ public sealed partial class AboutViewModel : PageViewModel
         IDialogService dialogs,
         IClock clock,
         IClipboardService clipboard,
-        ICurrentPermissions? permissions = null)
+        ICurrentPermissions? permissions = null,
+        Navigator? navigator = null)
     {
         CanExport = permissions?.Has(Permission.ExportDiagnostics) ?? true;
-        CanManageLicense = permissions?.Has(Permission.ManageLicense) ?? false;
+        CanExportBackup = permissions?.Has(Permission.ExportBackup) ?? false;
+        _navigator = navigator;
         _useCases = useCases;
         _runner = runner;
         _dialogs = dialogs;
@@ -48,11 +50,8 @@ public sealed partial class AboutViewModel : PageViewModel
     /// <summary>Puede exportar el diagnóstico (incluye una copia de la base); solo el Administrador.</summary>
     public bool CanExport { get; }
 
-    /// <summary>Puede importar licencias y exportar la solicitud (011); solo el Administrador.</summary>
-    public bool CanManageLicense { get; }
-
-    [ObservableProperty]
-    public partial string LicenseSummary { get; private set; } = string.Empty;
+    /// <summary>Puede exportar un respaldo de la base (025); solo el Administrador.</summary>
+    public bool CanExportBackup { get; }
 
     [ObservableProperty]
     public partial string Version { get; private set; } = string.Empty;
@@ -128,80 +127,18 @@ public sealed partial class AboutViewModel : PageViewModel
     {
         var status = await _useCases.RunAsync<GetLicenseStatusHandler, LicenseStatusDto>(h => Task.FromResult(h.Handle()));
         MachineId = status.MachineId;
-        if (CanManageLicense)
+    }
+
+    /// <summary>Importar la licencia y generar la solicitud viven en "Ayuda > Licencia" (025).</summary>
+    [RelayCommand]
+    private async Task OpenLicenseAsync()
+    {
+        if (_navigator is not null)
         {
-            LicenseSummary = LicenseMessages.Summary(status);
+            await _navigator.NavigateAsync(LicenseModule.PageId);
         }
     }
 
     [RelayCommand]
-    private async Task ImportLicenseAsync()
-    {
-        var file = await _dialogs.PickOpenFileAsync(
-            Strings.License_ImportTitle,
-            [new FileTypeFilter(Strings.License_FileType, ["*.poslic"])]);
-        if (file is null)
-        {
-            return;
-        }
-
-        var (completed, result) = await _runner.RunAsync("ImportarLicencia", async () =>
-        {
-            // El selector entrega un flujo: se copia a un temporal para que el verificador lo lea por ruta.
-            var temp = Path.Combine(Path.GetTempPath(), $"pos-lic-{Guid.NewGuid():N}.poslic");
-            try
-            {
-                await using (var source = await file.OpenAsync())
-                await using (var target = File.Create(temp))
-                {
-                    await source.CopyToAsync(target);
-                }
-
-                return await _useCases.RunAsync<ImportLicenseHandler, Result<LicenseStatusDto>>(
-                    h => h.HandleAsync(new ImportLicenseCommand(temp), CancellationToken.None));
-            }
-            finally
-            {
-                File.Delete(temp);
-            }
-        });
-        if (!completed || result is null)
-        {
-            return;
-        }
-
-        var message = result.Error switch
-        {
-            null => Strings.License_Imported,
-            InvalidLicense invalid => LicenseMessages.Rejection(invalid.Reason),
-            Forbidden => Strings.Common_Forbidden,
-            _ => Strings.Common_UnexpectedError,
-        };
-        await _dialogs.ShowMessageAsync(Strings.License_AdminTitle, message);
-        await RefreshLicenseAsync();
-    }
-
-    [RelayCommand]
-    private async Task ExportLicenseRequestAsync()
-    {
-        var destination = await _dialogs.PickSaveFileAsync(Strings.License_ExportRequestTitle, "solicitud-licencia.posreq", "posreq");
-        if (destination is null)
-        {
-            return;
-        }
-
-        var (completed, result) = await _runner.RunAsync(
-            "ExportarSolicitudLicencia",
-            () => _useCases.RunAsync<ExportLicenseRequestHandler, Result<string>>(
-                h => h.HandleAsync(new ExportLicenseRequestCommand(destination), CancellationToken.None)));
-        if (!completed || result is null)
-        {
-            return;
-        }
-
-        var message = result.IsSuccess
-            ? string.Format(CultureInfo.CurrentCulture, Strings.License_RequestSaved, result.Value)
-            : result.Error is ExportFailed failed ? failed.Message : Strings.Common_UnexpectedError;
-        await _dialogs.ShowMessageAsync(Strings.License_AdminTitle, message);
-    }
+    private Task ExportBackupAsync() => LicenseActions.ExportBackupAsync(_dialogs, _runner, _useCases, _clock, Strings.Shell_NavAbout);
 }

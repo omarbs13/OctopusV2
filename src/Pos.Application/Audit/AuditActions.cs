@@ -34,6 +34,9 @@ public static class AuditActions
     public const string ReportSettingsChanged = "REPORT_SETTINGS_CHANGED";
     public const string LicenseImported = "LICENSE_IMPORTED";
     public const string LicenseRecovered = "LICENSE_RECOVERED";
+    public const string LicenseRejectedOnImport = "LICENSE_REJECTED";
+    public const string LicenseStoredRejected = "LICENSE_STORED_REJECTED";
+    public const string BackupExported = "BACKUP_EXPORTED";
     public const string CustomerCreated = "CUSTOMER_CREATED";
     public const string CustomerUpdated = "CUSTOMER_UPDATED";
     public const string CustomerCreditChanged = "CUSTOMER_CREDIT_CHANGED";
@@ -74,6 +77,7 @@ public static class AuditActions
     public const string CashShiftEntity = "CashShift";
     public const string ReportEntity = "Report";
     public const string LicenseEntity = "License";
+    public const string BackupEntity = "Backup";
     public const string SaleEntity = "Sale";
     public const string SaleReturnEntity = "SaleReturn";
     public const string CreditNoteEntity = "CreditNote";
@@ -126,6 +130,9 @@ public static class AuditActions
         [ReportSettingsChanged] = "Configuración de reportes modificada",
         [LicenseImported] = "Licencia importada",
         [LicenseRecovered] = "Licencia regenerada",
+        [LicenseRejectedOnImport] = "Importación de licencia rechazada",
+        [LicenseStoredRejected] = "Licencia guardada rechazada al arrancar",
+        [BackupExported] = "Respaldo exportado",
         [CustomerCreated] = "Cliente creado",
         [CustomerUpdated] = "Cliente modificado",
         [CustomerCreditChanged] = "Límite o modalidad de crédito modificados",

@@ -129,6 +129,8 @@ public static class DependencyInjection
         services.AddSingleton<ILicenseSealStore, LicenseSealStore>();
         services.AddSingleton<IInstallationAgeReader, InstallationAgeReader>();
         services.AddSingleton<ILicenseVerifier, EcdsaLicenseVerifier>();
+        services.AddSingleton<IInstalledLicenseStore, InstalledLicenseStore>();
+        services.AddSingleton<IModuleCatalogInfo, EmbeddedModuleCatalogInfo>();
         services.AddSingleton<IDiagnosticsExporter>(sp => new ZipDiagnosticsExporter(
             sp.GetRequiredService<IAppPaths>(),
             sp.GetRequiredService<IAppInfo>(),

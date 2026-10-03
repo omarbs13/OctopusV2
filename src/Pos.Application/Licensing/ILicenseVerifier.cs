@@ -3,19 +3,23 @@ using Pos.Domain.Licensing;
 
 namespace Pos.Application.Licensing;
 
-/// <summary>Módulos firmados por el proveedor (solo los conocidos).</summary>
-public sealed record ExtendedGrant(IReadOnlySet<LicensedModule> Modules, DateTime IssuedUtc);
-
-/// <summary>Resultado de verificar un archivo de licencia importable.</summary>
+/// <summary>Resultado de verificar el texto de una licencia formato 3.</summary>
 public abstract record LicenseVerification
 {
-    public sealed record Valid(ExtendedGrant Grant) : LicenseVerification;
+    public sealed record Valid(SignedLicense License) : LicenseVerification;
 
     public sealed record Rejected(LicenseImportRejection Reason) : LicenseVerification;
 }
 
-/// <summary>Verifica sin conexión la firma del proveedor y que la licencia sea de esta máquina (012, research §5).</summary>
+/// <summary>
+/// Verifica sin conexión una licencia formato 3 (025, contracts/license-format.md §5, pasos 1 a 6): sobre,
+/// formato, firma del proveedor, contenido e ID de máquina. Trabaja sobre el texto para poder
+/// reverificar la licencia guardada en cada arranque. El paso 7 (antigüedad) lo aplica quien importa.
+/// </summary>
 public interface ILicenseVerifier
 {
-    LicenseVerification Verify(string filePath, string machineId);
+    /// <summary>Tamaño máximo del archivo <c>.lic</c> (contrato §2).</summary>
+    public const int MaxBytes = 64 * 1024;
+
+    LicenseVerification Verify(string content, string machineId);
 }

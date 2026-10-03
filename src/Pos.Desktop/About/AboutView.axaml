@@ -45,15 +45,11 @@
       <TextBlock Text="{x:Static res:Strings.About_Exporting}" IsVisible="{Binding IsExporting}" VerticalAlignment="Center" />
     </StackPanel>
 
-    <Separator IsVisible="{Binding CanManageLicense}" />
+    <Separator />
 
-    <StackPanel Spacing="8" IsVisible="{Binding CanManageLicense}">
-      <TextBlock Text="{x:Static res:Strings.License_AdminTitle}" FontSize="16" FontWeight="SemiBold" />
-      <TextBlock Text="{Binding LicenseSummary}" TextWrapping="Wrap" />
-      <StackPanel Orientation="Horizontal" Spacing="12">
-        <Button Classes="accent" Content="{x:Static res:Strings.License_Import}" Command="{Binding ImportLicenseCommand}" />
-        <Button Content="{x:Static res:Strings.License_ExportRequest}" Command="{Binding ExportLicenseRequestCommand}" />
-      </StackPanel>
+    <StackPanel Orientation="Horizontal" Spacing="12">
+      <Button Content="{x:Static res:Strings.License_OpenLicensePage}" Command="{Binding OpenLicenseCommand}" />
+      <Button Content="{x:Static res:Strings.License_ExportBackup}" Command="{Binding ExportBackupCommand}" IsVisible="{Binding CanExportBackup}" />
     </StackPanel>
   </StackPanel>
 </UserControl>

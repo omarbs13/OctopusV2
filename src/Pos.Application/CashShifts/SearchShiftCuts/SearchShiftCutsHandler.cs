@@ -1,4 +1,5 @@
 using Pos.Application.Abstractions;
+using Pos.Application.Licensing;
 using Pos.Application.Reports;
 using Pos.Application.Users.Access;
 using Pos.Domain.Users;
@@ -9,11 +10,13 @@ namespace Pos.Application.CashShifts.SearchShiftCuts;
 public sealed class SearchShiftCutsHandler
 {
     private readonly IAccessControl _access;
+    private readonly ILicenseState? _license;
     private readonly ICashShiftRepository _shifts;
     private readonly ReportPeriodResolver _periods;
 
-    public SearchShiftCutsHandler(IAccessControl access, ICashShiftRepository shifts, ReportPeriodResolver periods)
+    public SearchShiftCutsHandler(IAccessControl access, ICashShiftRepository shifts, ReportPeriodResolver periods, ILicenseState? license = null)
     {
+        _license = license;
         _access = access;
         _shifts = shifts;
         _periods = periods;
@@ -22,6 +25,12 @@ public sealed class SearchShiftCutsHandler
     public async Task<Result<ShiftCutPage>> HandleAsync(SearchShiftCutsQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query);
+
+        // 025, SC-005: en bloqueo no se consultan cortes anteriores.
+        if (LicenseGate.WhenBlocked(_license) is { } blocked)
+        {
+            return Result.Failure<ShiftCutPage>(blocked);
+        }
 
         var access = await _access.CheckAsync(Permission.ManageShifts, cancellationToken);
         if (!access.Allowed)

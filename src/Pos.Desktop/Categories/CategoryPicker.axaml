@@ -3,7 +3,8 @@
              xmlns:vm="using:Pos.Desktop.Categories"
              xmlns:res="using:Pos.Desktop.Resources"
              x:Class="Pos.Desktop.Categories.CategoryPicker"
-             x:DataType="vm:CategoryPickerViewModel">
+             x:DataType="vm:CategoryPickerViewModel"
+             IsVisible="{Binding IsAvailable}">
   <!-- Con más de 15 opciones se puede escribir para buscar; el texto de cada opción es su ToString(). -->
   <ComboBox x:Name="Selector" HorizontalAlignment="Stretch" MinWidth="180"
             ItemsSource="{Binding Options}"

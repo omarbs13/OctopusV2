@@ -18,7 +18,8 @@ public static class NavigationServiceCollectionExtensions
             sp.GetServices<NavigationGroup>(),
             sp.GetServices<NavigationEntry>(),
             sp.GetService<ICurrentPermissions>() is { } permissions ? permissions.Has : null,
-            sp.GetService<ILicenseState>() is { } license ? license.IsModuleActive : null));
+            sp.GetRequiredService<LicenseMenuPolicy>().Evaluate));
+        services.AddScoped(sp => new LicenseMenuPolicy(sp.GetService<ILicenseState>(), sp.GetService<UseCases>()));
         services.AddScoped<Navigator>();
         services.AddSingleton<RegisteredViewLocator>();
         services.AddScoped<MenuViewModel>();

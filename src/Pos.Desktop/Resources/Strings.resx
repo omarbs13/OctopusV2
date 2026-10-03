@@ -710,39 +710,65 @@
   <data name="Session_Theme" xml:space="preserve"><value>Tema</value></data>
   <data name="Session_ThemeLight" xml:space="preserve"><value>Claro</value></data>
   <data name="Session_ThemeDark" xml:space="preserve"><value>Oscuro</value></data>
-  <data name="License_CardTitle" xml:space="preserve"><value>Período de evaluación</value></data>
-  <data name="License_Contact" xml:space="preserve"><value>Contacto: {0} / {1}</value></data>
-  <data name="License_Active" xml:space="preserve"><value>Modo modular</value></data>
-  <data name="License_CardTitleModular" xml:space="preserve"><value>Licencia</value></data>
+  <data name="Nav_License" xml:space="preserve"><value>Licencia</value></data>
+  <data name="License_CardTitle" xml:space="preserve"><value>Licencia</value></data>
+  <data name="License_Contact" xml:space="preserve"><value>Contacto del proveedor: {0} / {1}</value></data>
   <data name="License_DaysRemaining" xml:space="preserve"><value>{0} días restantes</value></data>
   <data name="License_OneDayRemaining" xml:space="preserve"><value>1 día restante</value></data>
-  <data name="License_ModulesActive" xml:space="preserve"><value>Módulos activos: {0}</value></data>
-  <data name="License_NoModules" xml:space="preserve"><value>ninguno</value></data>
-  <data name="License_AllModules" xml:space="preserve"><value>Todos los módulos activos durante la evaluación</value></data>
+  <data name="License_AllModules" xml:space="preserve"><value>Todos los módulos activos durante la prueba.</value></data>
   <data name="License_ModuleNotLicensed" xml:space="preserve"><value>Este módulo no está activo en tu licencia.</value></data>
   <data name="License_NearExpiry" xml:space="preserve"><value>Te quedan 5 días de acceso a todos los módulos.</value></data>
-  <data name="License_NearExpiryOne" xml:space="preserve"><value>Mañana vence el período de evaluación.</value></data>
-  <data name="License_Regenerated" xml:space="preserve"><value>El archivo de licencia no era válido o faltaba y se regeneró. La evaluación continúa; si ya había comprado módulos, se reactivan al importar de nuevo su licencia extendida.</value></data>
-  <data name="License_SummaryTrial" xml:space="preserve"><value>Período de evaluación: {0} restantes, con todos los módulos.</value></data>
-  <data name="License_SummaryModular" xml:space="preserve"><value>Licencia modular. {0}</value></data>
-  <data name="Module_Inventory" xml:space="preserve"><value>Inventario</value></data>
-  <data name="Module_AdvancedReports" xml:space="preserve"><value>Reportes avanzados</value></data>
-  <data name="Module_CreditAndCustomers" xml:space="preserve"><value>Crédito y clientes</value></data>
-  <data name="Module_CashShifts" xml:space="preserve"><value>Turnos y arqueo</value></data>
-  <data name="Module_Returns" xml:space="preserve"><value>Devoluciones</value></data>
-  <data name="Module_Discounts" xml:space="preserve"><value>Descuentos y promociones</value></data>
-  <data name="License_AdminTitle" xml:space="preserve"><value>Administración de licencia</value></data>
-  <data name="License_Import" xml:space="preserve"><value>Importar licencia…</value></data>
+  <data name="License_NearExpiryOne" xml:space="preserve"><value>Mañana vence el período de prueba.</value></data>
+  <data name="License_Regenerated" xml:space="preserve"><value>El archivo de la prueba no era válido o faltaba y se regeneró a partir de la copia protegida.</value></data>
+  <data name="License_OverallTrial" xml:space="preserve"><value>En prueba: {0}</value></data>
+  <data name="License_OverallLicensed" xml:space="preserve"><value>Licenciado</value></data>
+  <data name="License_OverallBlocked" xml:space="preserve"><value>Bloqueado: {0}</value></data>
+  <data name="License_Customer" xml:space="preserve"><value>Cliente: {0}</value></data>
+  <data name="License_CauseTrialExpired" xml:space="preserve"><value>la prueba terminó</value></data>
+  <data name="License_CauseLicenseInvalid" xml:space="preserve"><value>la licencia guardada no es válida</value></data>
+  <data name="License_CauseBaseNotLicensed" xml:space="preserve"><value>la licencia no incluye Punto de venta</value></data>
+  <data name="License_CauseBasePending" xml:space="preserve"><value>Punto de venta aún no se activa</value></data>
+  <data name="License_CauseBaseExpired" xml:space="preserve"><value>Punto de venta venció</value></data>
+  <data name="License_BlockedTrialExpired" xml:space="preserve"><value>El periodo de prueba terminó. Para seguir vendiendo, genera una solicitud en Ayuda &gt; Licencia, envíala a tu proveedor e importa la licencia que te entregue.</value></data>
+  <data name="License_BlockedLicenseInvalid" xml:space="preserve"><value>La licencia guardada no es válida. Para seguir vendiendo, importa de nuevo la licencia que te entregó tu proveedor en Ayuda &gt; Licencia o genera una solicitud nueva.</value></data>
+  <data name="License_BlockedBaseNotLicensed" xml:space="preserve"><value>Tu licencia no incluye el módulo Punto de venta. Para seguir vendiendo, genera una solicitud en Ayuda &gt; Licencia, envíala a tu proveedor e importa la licencia que te entregue.</value></data>
+  <data name="License_BlockedBaseExpired" xml:space="preserve"><value>El módulo Punto de venta venció el {0}. Para seguir vendiendo, genera una solicitud en Ayuda &gt; Licencia, envíala a tu proveedor e importa la licencia que te entregue.</value></data>
+  <data name="License_BlockedBasePending" xml:space="preserve"><value>El módulo Punto de venta se activa el {0}. Si necesitas vender antes, pide a tu proveedor una licencia nueva y impórtala en Ayuda &gt; Licencia.</value></data>
+  <data name="License_SystemNotActivated" xml:space="preserve"><value>El sistema no está activado. Abre Ayuda &gt; Licencia para activarlo.</value></data>
+  <data name="License_SaleInProgressBlocked" xml:space="preserve"><value>La licencia venció. Puedes terminar y cobrar esta venta y cerrar el turno; no se pueden iniciar ventas nuevas.</value></data>
+  <data name="License_ClockBehind" xml:space="preserve"><value>La fecha del equipo es anterior a la última fecha registrada ({0}). Corrige la fecha y la hora del equipo.</value></data>
+  <data name="License_ModuleExpiring" xml:space="preserve"><value>{0} vence el {1}.</value></data>
+  <data name="License_ModulesTitle" xml:space="preserve"><value>Módulos</value></data>
+  <data name="License_ColumnModule" xml:space="preserve"><value>Módulo</value></data>
+  <data name="License_ColumnState" xml:space="preserve"><value>Estado</value></data>
+  <data name="License_ColumnActivates" xml:space="preserve"><value>Activación</value></data>
+  <data name="License_ColumnExpires" xml:space="preserve"><value>Vencimiento</value></data>
+  <data name="License_Indefinite" xml:space="preserve"><value>Indefinido</value></data>
+  <data name="License_StateActive" xml:space="preserve"><value>Activo</value></data>
+  <data name="License_StatePending" xml:space="preserve"><value>Pendiente de activación</value></data>
+  <data name="License_StateExpired" xml:space="preserve"><value>Vencido</value></data>
+  <data name="License_StateNotLicensed" xml:space="preserve"><value>No contratado</value></data>
+  <data name="License_MachineId" xml:space="preserve"><value>ID de máquina</value></data>
+  <data name="License_Copy" xml:space="preserve"><value>Copiar</value></data>
+  <data name="License_Copied" xml:space="preserve"><value>ID de máquina copiado al portapapeles.</value></data>
+  <data name="License_GenerateRequest" xml:space="preserve"><value>Generar solicitud</value></data>
+  <data name="License_GenerateRequestTitle" xml:space="preserve"><value>Guardar solicitud de licencia</value></data>
+  <data name="License_RequestSaved" xml:space="preserve"><value>Solicitud guardada en {0}. Envíala a tu proveedor por correo, mensajería o USB.</value></data>
+  <data name="License_Import" xml:space="preserve"><value>Importar licencia</value></data>
   <data name="License_ImportTitle" xml:space="preserve"><value>Seleccionar archivo de licencia</value></data>
-  <data name="License_ExportRequest" xml:space="preserve"><value>Exportar solicitud…</value></data>
-  <data name="License_ExportRequestTitle" xml:space="preserve"><value>Guardar solicitud de licencia</value></data>
   <data name="License_FileType" xml:space="preserve"><value>Licencia</value></data>
-  <data name="License_RequestType" xml:space="preserve"><value>Solicitud de licencia</value></data>
-  <data name="License_Imported" xml:space="preserve"><value>Licencia importada. El sistema ya está actualizado.</value></data>
-  <data name="License_RequestSaved" xml:space="preserve"><value>Solicitud guardada en {0}. Envíela al proveedor para obtener su licencia.</value></data>
-  <data name="License_Reject_Unreadable" xml:space="preserve"><value>El archivo de licencia no es válido.</value></data>
-  <data name="License_Reject_BadSignature" xml:space="preserve"><value>El archivo de licencia no es auténtico o fue modificado.</value></data>
-  <data name="License_Reject_OtherMachine" xml:space="preserve"><value>Esa licencia pertenece a otra máquina. La licencia actual no cambió.</value></data>
+  <data name="License_Imported" xml:space="preserve"><value>Licencia importada. Los módulos se aplicaron.</value></data>
+  <data name="License_ImportedBlocked" xml:space="preserve"><value>Licencia importada, pero el sistema sigue bloqueado: {0}.</value></data>
+  <data name="License_Kept" xml:space="preserve"><value>Se conserva la licencia actual.</value></data>
+  <data name="License_Reject_Unreadable" xml:space="preserve"><value>El archivo no es una licencia válida o está dañado.</value></data>
+  <data name="License_Reject_UnsupportedFormat" xml:space="preserve"><value>El formato de esta licencia ya no es compatible. Pide a tu proveedor una licencia nueva.</value></data>
+  <data name="License_Reject_BadSignature" xml:space="preserve"><value>La licencia no es auténtica: no fue emitida por tu proveedor o fue modificada.</value></data>
+  <data name="License_Reject_OtherMachine" xml:space="preserve"><value>Esta licencia pertenece a otro equipo.</value></data>
+  <data name="License_Reject_NotNewer" xml:space="preserve"><value>Esta licencia es más antigua que la vigente.</value></data>
+  <data name="License_ExportBackup" xml:space="preserve"><value>Exportar respaldo</value></data>
+  <data name="License_ExportBackupTitle" xml:space="preserve"><value>Guardar respaldo de la base de datos</value></data>
+  <data name="License_BackupSaved" xml:space="preserve"><value>Respaldo guardado en {0}.</value></data>
+  <data name="License_OpenLicensePage" xml:space="preserve"><value>Abrir Ayuda &gt; Licencia</value></data>
   <data name="MovementType_SaleReturn" xml:space="preserve"><value>Devolución de venta</value></data>
   <data name="Payment_CreditNote" xml:space="preserve"><value>Nota de crédito</value></data>
   <data name="Auth_OperationReturns" xml:space="preserve"><value>Cancelar o devolver venta</value></data>

@@ -1,7 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Pos.Application.Licensing;
 using Pos.Domain.Discounts;
-using Pos.Domain.Licensing;
 using Pos.Application.Sales;
 using Pos.Application.Sales.GetSaleDraft;
 using Pos.Application.Sales.SaveSaleDraft;
@@ -71,7 +69,7 @@ public sealed class SaleDraftTests : IAsyncLifetime
             await context.SaveChangesAsync(Ct);
         }
 
-        var recovered = await RecoverAsync(license: null);
+        var recovered = await RecoverAsync();
 
         Assert.NotNull(recovered);
         Assert.Equal(draftId, recovered.DraftId);
@@ -79,13 +77,13 @@ public sealed class SaleDraftTests : IAsyncLifetime
         Assert.Equal(2000, line.QuantityThousandths);
         Assert.Null(line.Discount);
         Assert.Null(recovered.OrderDiscount);
-        Assert.False(recovered.DiscountsDropped);
     }
 
     [Fact]
-    public async Task A_draft_with_discounts_keeps_them_and_drops_them_when_the_module_is_not_licensed()
+    public async Task A_draft_with_discounts_keeps_them_even_when_the_module_expired()
     {
-        // 015, research §11: la venta conservada guarda descuentos y aprobaciones; sin licencia se quitan con aviso.
+        // 015, research §11: la venta conservada guarda descuentos y aprobaciones. 025, FR-030a: son partes ya
+        // capturadas de la venta en curso, así que se conservan aunque el módulo Descuentos ya no esté activo.
         var product = await SalesTestSupport.SeedProductAsync(_db, "DRF-DSC", priceCents: 1500);
         var approval = Guid.CreateVersion7();
         await using (var context = _db.CreateDbContext())
@@ -98,38 +96,24 @@ public sealed class SaleDraftTests : IAsyncLifetime
                 Ct)).IsSuccess);
         }
 
-        var licensed = await RecoverAsync(license: null);
-        Assert.NotNull(licensed);
-        Assert.Equal(new DraftDiscountDto(DiscountMode.Percent, 1500, approval), Assert.Single(licensed.Lines).Discount);
-        Assert.Equal("VERANO10", licensed.OrderDiscount?.Code);
-        Assert.False(licensed.DiscountsDropped);
-
-        var unlicensed = await RecoverAsync(Modular(LicensedModule.CashShifts));
-        Assert.NotNull(unlicensed);
-        Assert.Null(Assert.Single(unlicensed.Lines).Discount);
-        Assert.Null(unlicensed.OrderDiscount);
-        Assert.True(unlicensed.DiscountsDropped);
+        var recovered = await RecoverAsync();
+        Assert.NotNull(recovered);
+        Assert.Equal(new DraftDiscountDto(DiscountMode.Percent, 1500, approval), Assert.Single(recovered.Lines).Discount);
+        Assert.Equal("VERANO10", recovered.OrderDiscount?.Code);
     }
 
-    private async Task<RecoveredDraft?> RecoverAsync(ILicenseState? license)
+    private async Task<RecoveredDraft?> RecoverAsync()
     {
         await using var context = _db.CreateDbContext();
         return (await new GetSaleDraftHandler(
                 new AllowAllAccessControl(),
                 new SqliteSaleDraftStore(context, _db.Clock, _db.User),
                 new ProductRepository(context),
-                NullLogger<GetSaleDraftHandler>.Instance,
-                license)
+                NullLogger<GetSaleDraftHandler>.Instance)
             .HandleAsync(Ct)).Value;
     }
 
-    private LicenseState Modular(params LicensedModule[] purchased)
-    {
-        var state = new LicenseState(_db.Clock);
-        var firstRun = _db.Clock.UtcNow.AddDays(-60);
-        state.Set(new Pos.Domain.Licensing.LicenseRecord(2, "m", firstRun, firstRun, 30, purchased.ToHashSet()));
-        return state;
-    }
+
 
     [Fact]
     public async Task Saving_without_lines_discards_the_draft()

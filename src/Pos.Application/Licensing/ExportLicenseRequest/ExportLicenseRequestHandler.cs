@@ -1,8 +1,8 @@
 using System.Globalization;
 using System.Text.Json;
 using Pos.Application.Abstractions;
+using Pos.Application.Business;
 using Pos.Application.Users.Access;
-using Pos.Domain.Users;
 
 namespace Pos.Application.Licensing.ExportLicenseRequest;
 
@@ -10,8 +10,9 @@ namespace Pos.Application.Licensing.ExportLicenseRequest;
 public sealed record ExportLicenseRequestCommand(string DestinationFilePath);
 
 /// <summary>
-/// Escribe el archivo de solicitud con el ID de máquina para enviarlo al proveedor (011, FR-011a). No
-/// incluye datos del negocio ni de usuarios.
+/// Escribe la solicitud <c>.octoreq</c> para el proveedor (025, FR-013 a FR-016, contracts/license-request.md).
+/// No es secreta ni va cifrada ni firmada (FR-014), así que basta con una sesión: cualquier usuario la genera,
+/// también en bloqueo. No incluye datos de usuarios.
 /// </summary>
 public sealed class ExportLicenseRequestHandler
 {
@@ -23,20 +24,30 @@ public sealed class ExportLicenseRequestHandler
     private readonly IMachineIdProvider _machine;
     private readonly IAppInfo _appInfo;
     private readonly IClock _clock;
+    private readonly IBusinessProfileRepository _business;
+    private readonly IModuleCatalogInfo _catalog;
 
-    public ExportLicenseRequestHandler(IAccessControl access, IMachineIdProvider machine, IAppInfo appInfo, IClock clock)
+    public ExportLicenseRequestHandler(
+        IAccessControl access,
+        IMachineIdProvider machine,
+        IAppInfo appInfo,
+        IClock clock,
+        IBusinessProfileRepository business,
+        IModuleCatalogInfo catalog)
     {
         _access = access;
         _machine = machine;
         _appInfo = appInfo;
         _clock = clock;
+        _business = business;
+        _catalog = catalog;
     }
 
     public async Task<Result<string>> HandleAsync(ExportLicenseRequestCommand command, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(command);
 
-        var access = await _access.CheckAsync(Permission.ManageLicense, cancellationToken);
+        var access = await _access.CheckSessionAsync(cancellationToken);
         if (!access.Allowed)
         {
             return Result.Failure<string>(access.Error!);
@@ -47,12 +58,15 @@ public sealed class ExportLicenseRequestHandler
             return Result.Failure<string>(new ValidationFailed([new FieldError(DestinationField, "Elija dónde guardar el archivo de solicitud.")]));
         }
 
+        var profile = await _business.GetAsync(cancellationToken);
         var request = new
         {
-            format = 1,
+            requestFormat = 2,
             machineId = _machine.GetMachineId(),
+            businessName = profile?.TradeName ?? string.Empty,
             appVersion = _appInfo.Version,
-            createdUtc = _clock.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture),
+            catalogVersion = _catalog.CatalogVersion,
+            createdAtUtc = _clock.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture),
         };
 
         var temp = command.DestinationFilePath + ".tmp";

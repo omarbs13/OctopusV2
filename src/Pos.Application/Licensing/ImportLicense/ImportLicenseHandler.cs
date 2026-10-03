@@ -8,22 +8,22 @@ using Pos.Domain.Users;
 
 namespace Pos.Application.Licensing.ImportLicense;
 
-/// <param name="FilePath">Archivo de licencia emitido por el proveedor.</param>
+/// <param name="FilePath">Archivo <c>.lic</c> emitido por el proveedor.</param>
 public sealed record ImportLicenseCommand(string FilePath);
 
 /// <summary>
-/// Importa una licencia extendida y suma sus módulos de inmediato, sin reiniciar (012, FR-010, FR-011, FR-017). Un
-/// rechazo conserva la licencia vigente; importar queda en la bitácora sin el contenido del archivo.
+/// Importa una licencia formato 3 (025, FR-017 a FR-022): verifica en orden firma, máquina y antigüedad,
+/// la guarda tal como llegó y la aplica al instante, sin reiniciar. Reemplaza a la anterior, no se suma
+/// (FR-012). Un rechazo conserva la licencia vigente; importar y rechazar quedan en la bitácora.
 /// </summary>
 public sealed partial class ImportLicenseHandler
 {
     private readonly IAccessControl _access;
     private readonly ILicenseVerifier _verifier;
-    private readonly ILicenseStore _store;
-    private readonly ILicenseSealStore _seals;
+    private readonly IInstalledLicenseStore _installed;
     private readonly ILicenseState _state;
+    private readonly LicenseBootstrapper _bootstrapper;
     private readonly IMachineIdProvider _machine;
-    private readonly IInstallationAgeReader _age;
     private readonly IAuditLog _audit;
     private readonly IClock _clock;
     private readonly GetLicenseStatusHandler _status;
@@ -32,11 +32,10 @@ public sealed partial class ImportLicenseHandler
     public ImportLicenseHandler(
         IAccessControl access,
         ILicenseVerifier verifier,
-        ILicenseStore store,
-        ILicenseSealStore seals,
+        IInstalledLicenseStore installed,
         ILicenseState state,
+        LicenseBootstrapper bootstrapper,
         IMachineIdProvider machine,
-        IInstallationAgeReader age,
         IAuditLog audit,
         IClock clock,
         GetLicenseStatusHandler status,
@@ -44,11 +43,10 @@ public sealed partial class ImportLicenseHandler
     {
         _access = access;
         _verifier = verifier;
-        _store = store;
-        _seals = seals;
+        _installed = installed;
         _state = state;
+        _bootstrapper = bootstrapper;
         _machine = machine;
-        _age = age;
         _audit = audit;
         _clock = clock;
         _status = status;
@@ -65,63 +63,71 @@ public sealed partial class ImportLicenseHandler
             return Result.Failure<LicenseStatusDto>(access.Error!);
         }
 
-        var verification = _verifier.Verify(command.FilePath, _machine.GetMachineId());
+        var content = await ReadAsync(command.FilePath, cancellationToken);
+        var verification = content is null
+            ? new LicenseVerification.Rejected(LicenseImportRejection.Unreadable)
+            : _verifier.Verify(content, _machine.GetMachineId());
+
+        // Paso 7 del contrato: misma licencia (reimportación) o emitida después que la vigente.
+        if (verification is LicenseVerification.Valid candidate && !candidate.License.IsAcceptableReplacementFor(_state.License))
+        {
+            verification = new LicenseVerification.Rejected(LicenseImportRejection.NotNewer);
+        }
+
         if (verification is LicenseVerification.Rejected rejected)
         {
             LogRejected(rejected.Reason);
+            _audit.Add(AuditActions.LicenseRejectedOnImport, AuditActions.LicenseEntity, Guid.CreateVersion7(), rejected.Reason.ToString());
+            await _audit.SaveAsync(cancellationToken);
             return Result.Failure<LicenseStatusDto>(new InvalidLicense(rejected.Reason));
         }
 
-        var grant = ((LicenseVerification.Valid)verification).Grant;
-        var current = _state.Record;
+        var license = ((LicenseVerification.Valid)verification).License;
         var now = _clock.UtcNow;
-        var firstRun = current?.FirstRunUtc ?? await EarliestEvidenceAsync(now, cancellationToken);
-        var lastSeen = current is not null && current.LastSeenUtc > now ? current.LastSeenUtc : now;
-        var modules = new HashSet<LicensedModule>(current?.Modules ?? new HashSet<LicensedModule>());
-        modules.UnionWith(grant.Modules);
-        var record = new LicenseRecord(
-            LicenseRecord.CurrentVersion,
-            _machine.GetMachineId(),
-            firstRun,
-            lastSeen,
-            current?.TrialDays ?? LicenseRecord.DefaultTrialDays,
-            modules);
+        await _installed.ReplaceAsync(content!, now, cancellationToken);
 
-        try
+        // Al aceptar la primera licencia, la prueba termina definitivamente (FR-026a).
+        var trial = _state.Trial ?? new TrialRecord(_machine.GetMachineId(), now, now, TrialRecord.DefaultTrialDays, null);
+        if (trial.LicenseImportedUtc is null)
         {
-            _store.Save(record);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            LogNotSaved(ex);
-            return Result.Failure<LicenseStatusDto>(new InvalidLicense(LicenseImportRejection.Unreadable));
+            trial = trial with { LicenseImportedUtc = now };
+            await _bootstrapper.PersistAsync(trial, cancellationToken);
         }
 
-        await _seals.WriteAsync(new LicenseSeal(record.FirstRunUtc, record.LastSeenUtc), cancellationToken);
-        _state.Set(record);
+        _state.Set(trial, license, false);
         _audit.Add(
             AuditActions.LicenseImported,
             AuditActions.LicenseEntity,
-            Guid.CreateVersion7(),
-            $"{grant.Modules.Count} módulos activados");
+            license.LicenseId,
+            $"{license.Grants.Count} entradas de módulo; emitida {license.IssuedAtUtc:yyyy-MM-dd HH:mm} UTC");
         await _audit.SaveAsync(cancellationToken);
-        LogImported(grant.Modules.Count);
+        LogImported(license.LicenseId, license.Grants.Count);
 
         return Result.Success(_status.Handle());
     }
 
-    private async Task<DateTime> EarliestEvidenceAsync(DateTime now, CancellationToken cancellationToken)
+    /// <summary>Texto del archivo; nulo si no existe, excede 64 KiB o no se puede leer.</summary>
+    private static async Task<string?> ReadAsync(string path, CancellationToken cancellationToken)
     {
-        var firstUser = await _age.GetFirstUserCreatedUtcAsync(cancellationToken);
-        return firstUser is { } created && created < now ? created : now;
+        try
+        {
+            var info = new FileInfo(path);
+            if (!info.Exists || info.Length > ILicenseVerifier.MaxBytes)
+            {
+                return null;
+            }
+
+            return await File.ReadAllTextAsync(path, cancellationToken);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {
+            return null;
+        }
     }
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Importación de licencia rechazada: {Reason}")]
     private partial void LogRejected(LicenseImportRejection reason);
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "No se pudo guardar el archivo de licencia importado")]
-    private partial void LogNotSaved(Exception ex);
-
-    [LoggerMessage(Level = LogLevel.Information, Message = "Licencia importada. Módulos activados: {Count}")]
-    private partial void LogImported(int count);
+    [LoggerMessage(Level = LogLevel.Information, Message = "Licencia importada. LicenseId={LicenseId} Entradas={Count}")]
+    private partial void LogImported(Guid licenseId, int count);
 }

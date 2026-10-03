@@ -205,12 +205,6 @@ public sealed class ReturnsTestSupport
             Ct);
     }
 
-    /// <summary>Estado de licencia con solo los módulos comprados activos (la evaluación ya venció).</summary>
-    public LicenseState Modular(params LicensedModule[] purchased)
-    {
-        var state = new LicenseState(_db.Clock);
-        var firstRun = _db.Clock.UtcNow.AddDays(-60);
-        state.Set(new LicenseRecord(2, "m", firstRun, firstRun, 30, purchased.ToHashSet()));
-        return state;
-    }
+    /// <summary>Licencia vigente con POS y solo los módulos comprados activos (la prueba ya terminó).</summary>
+    public LicenseState Modular(params LicensedModule[] purchased) => TestLicenses.Licensed(_db.Clock, purchased);
 }

@@ -1,6 +1,4 @@
 using Microsoft.Extensions.DependencyInjection;
-using Pos.Application.Licensing;
-using Pos.Domain.Licensing;
 using Pos.Desktop.Common;
 using Pos.Desktop.Diagnostics;
 using Pos.Desktop.Resources;
@@ -18,7 +16,7 @@ public sealed class Navigator
     private readonly IServiceProvider _services;
     private readonly ILogger _logger;
     private readonly DiagnosticContext? _diagnostics;
-    private readonly ILicenseState? _license;
+    private readonly LicenseMenuPolicy? _license;
     private readonly IDialogService? _dialogs;
     private readonly Dictionary<string, PageViewModel> _resolved = [];
 
@@ -27,7 +25,7 @@ public sealed class Navigator
         IServiceProvider services,
         ILogger logger,
         DiagnosticContext? diagnostics = null,
-        ILicenseState? license = null,
+        LicenseMenuPolicy? license = null,
         IDialogService? dialogs = null)
     {
         _license = license;
@@ -75,12 +73,20 @@ public sealed class Navigator
             return false;
         }
 
-        // 012: el acceso directo o el atajo a un módulo sin licencia se rechaza sin modificar nada.
-        if (entry.Permission is { } required && ModuleAccess.Required(required) is { } module
-            && _license?.IsModuleActive(module) == false)
+        // 012/025: el acceso directo o el atajo a un módulo sin licencia, o a cualquier opción no permitida en
+        // bloqueo, se rechaza sin modificar nada. Se reconsulta la venta en curso y el turno abierto antes de rechazar.
+        if (_license is not null && _license.Evaluate(entry) != LicenseMenuAccess.Allowed)
         {
-            await ShowModuleNotLicensedAsync();
-            return false;
+            await _license.RefreshAsync();
+            switch (_license.Evaluate(entry))
+            {
+                case LicenseMenuAccess.ModuleInactive:
+                    await ShowMessageAsync(Strings.License_ModuleNotLicensed);
+                    return false;
+                case LicenseMenuAccess.SystemBlocked:
+                    await ShowMessageAsync(Strings.License_SystemNotActivated);
+                    return false;
+            }
         }
 
         if (!await CanLeaveCurrentAsync())
@@ -110,6 +116,6 @@ public sealed class Navigator
     public Task<bool> CanLeaveCurrentAsync() =>
         CurrentPage is ILeaveGuard guard ? guard.CanLeaveAsync() : Task.FromResult(true);
 
-    private Task ShowModuleNotLicensedAsync() =>
-        _dialogs?.ShowMessageAsync(Strings.Common_InfoTitle, Strings.License_ModuleNotLicensed) ?? Task.CompletedTask;
+    private Task ShowMessageAsync(string message) =>
+        _dialogs?.ShowMessageAsync(Strings.Common_InfoTitle, message) ?? Task.CompletedTask;
 }

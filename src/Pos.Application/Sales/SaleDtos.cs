@@ -78,12 +78,14 @@ public sealed record RecoveredLineDto(
     NotSellableReason? NotSellableReason,
     DraftDiscountDto? Discount = null);
 
-/// <summary><c>DiscountsDropped</c>: el módulo Descuentos no está activo y se quitaron los descuentos (015, casos límite).</summary>
+/// <summary>
+/// Venta conservada. Sus descuentos se conservan aunque el módulo Descuentos ya no esté activo: son partes
+/// ya capturadas de la venta en curso y se respetan al cobrar (025, FR-030a).
+/// </summary>
 public sealed record RecoveredDraft(
     Guid DraftId,
     IReadOnlyList<RecoveredLineDto> Lines,
-    DraftOrderDiscountDto? OrderDiscount = null,
-    bool DiscountsDropped = false);
+    DraftOrderDiscountDto? OrderDiscount = null);
 
 public sealed record SaleReview(IReadOnlyList<SaleLineReview> Lines);
 

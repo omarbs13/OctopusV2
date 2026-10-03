@@ -1,29 +1,24 @@
 <!--
 Sync Impact Report
-- Version change: 1.1.0 -> 1.2.0 (MINOR, según lo pidió el responsable del proyecto). Nota: la
-	enmienda reduce obligaciones del Principio VI; por la regla de versionado de esta
-	constitución ("redefinir principios" es MAJOR) podría considerarse 2.0.0. Confirmar antes
-	del commit.
-- Principios modificados: VI. Calidad verificable (mismo título). Se reemplaza la obligación de
-	probar cada caso de uso y cada regla de dominio con todos sus casos límite por una política
-	de pruebas mínimas: solo reglas de negocio con cálculos, validaciones que protegen la
-	integridad de datos y el defecto corregido; una prueba por regla (caso válido y caso límite
-	más importante); sin pruebas de interfaz, ViewModels ni código sin lógica. Siempre
-	obligatorias: arranque y migraciones, consistencia de inventario y reglas de arquitectura.
-	Al implementar se ejecutan solo las pruebas del proyecto modificado; la integración continua
-	sigue ejecutando la suite completa. Se mantienen la compilación sin errores ni advertencias
-	y la persistencia probada con SQLite real.
-- Motivo (inferido): reducir el costo de escribir y mantener pruebas de bajo valor sin perder
-	la protección de dinero, integridad de datos, arranque y migraciones.
-- Impacto en el código existente: las pruebas actuales que exceden la política (ViewModels,
-	mapeos, formularios, navegación) pueden conservarse; no es obligatorio borrarlas. Las
-	funcionalidades nuevas aplican la política desde esta versión.
+- Version change: 1.2.0 -> 1.3.0 (MINOR, según lo pidió el responsable del proyecto). Nota: la
+	regla de versionado de esta constitución reserva MINOR para agregar principios o secciones;
+	esta enmienda acota el alcance del Principio I (podría leerse como redefinición, MAJOR, o
+	como aclaración, PATCH). Se respeta MINOR por ser guía materialmente ampliada.
+- Principios modificados: I. La venta nunca se detiene (mismo título). Se aclara que protege
+	contra fallos técnicos, no contra la falta de licencia; sin módulo POS activo el sistema
+	puede bloquearse con dos garantías: (1) el vencimiento no interrumpe una venta en curso
+	(se permite terminarla, cobrarla y cerrar el turno abierto) y (2) siempre quedan disponibles
+	inicio de sesión, pantalla de licencia y exportación de respaldo. Se amplía la justificación.
+- Motivo: la funcionalidad 025 (licenciamiento coordinado con OctopusAdmin) exige el bloqueo
+	total sin módulo POS, que contradecía la lectura literal del Principio I.
+- Impacto en el código existente: ninguno inmediato. La spec 025 debe incorporar la garantía de
+	venta en curso y turno abierto (hoy no la contempla explícitamente).
 - Plan de migración: no aplica (no afecta datos ni esquema).
-- Secciones añadidas: ninguna. Secciones eliminadas: ninguna. Flujo de desarrollo: se agrega la
-	regla de ejecutar solo las pruebas del proyecto modificado al implementar.
+- Secciones añadidas: ninguna. Secciones eliminadas: ninguna.
 - Plantillas: plan-template, spec-template y tasks-template leen la constitución al ejecutarse;
-	no requieren cambios. La nota "Tests are OPTIONAL" de tasks-template es compatible.
-- Pendientes: confirmar MINOR frente a MAJOR.
+	no requieren cambios.
+- Pendientes: ninguno. specs/025-coordinated-licensing/spec.md ya incorpora la garantía de venta
+	en curso y cierre de turno (FR-028, FR-030a y casos límite).
 Este informe es temporal y debe retirarse antes de confirmar la constitución en un commit.
 -->
 # Constitución de POS
@@ -46,9 +41,18 @@ del proyecto.
 	siempre respalda antes de aplicar migraciones.
 - La estabilidad tiene prioridad sobre funcionalidades nuevas: un defecto que afecte ventas,
 	cobros o cortes se corrige antes de continuar con otra funcionalidad.
+- Este principio protege contra fallos técnicos, no contra la falta de licencia. Sin el módulo
+	POS activo, el sistema puede bloquearse según las reglas de licenciamiento, siempre con dos
+	garantías:
+	- El vencimiento nunca interrumpe una venta en curso: se permite terminarla, cobrarla y
+		cerrar el turno abierto antes de aplicar el bloqueo.
+	- Siempre quedan disponibles el inicio de sesión, la pantalla de licencia y la exportación
+		de respaldo, porque los datos pertenecen al cliente.
 
 **Justificación**: el POS está en producción con clientes reales; una venta perdida o una caja
-detenida tiene un costo directo para el negocio del cliente.
+detenida tiene un costo directo para el negocio del cliente. El bloqueo por licencia es una
+decisión comercial y no un fallo, pero nunca debe dejar una venta a medias, un turno sin cerrar
+ni al cliente sin acceso a sus datos.
 
 ### II. Arquitectura por capas con dependencias hacia el centro
 - La solución se organiza en `Pos.Domain`, `Pos.Application`, `Pos.Infrastructure` y
@@ -222,4 +226,4 @@ sensible y protección de las credenciales de los operadores.
 - El cumplimiento se verifica en la revisión de cada plan, según la verificación exigida en
 	"Flujo de desarrollo".
 
-**Version**: 1.2.0 | **Ratified**: 2026-09-29 | **Last Amended**: 2026-09-29
+**Version**: 1.3.0 | **Ratified**: 2026-09-29 | **Last Amended**: 2026-10-03

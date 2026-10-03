@@ -1,5 +1,6 @@
 using Pos.Application.Abstractions;
 using Pos.Application.CashShifts;
+using Pos.Application.Licensing;
 using Pos.Application.Sales;
 using Pos.Application.Users.Access;
 using Pos.Domain.CashShifts;
@@ -14,12 +15,14 @@ namespace Pos.Application.Reports.GetMyShiftSummary;
 public sealed class GetMyShiftSummaryHandler
 {
     private readonly IAccessControl _access;
+    private readonly ILicenseState? _license;
     private readonly ICurrentUser _currentUser;
     private readonly ICashShiftRepository _shifts;
     private readonly ISaleRepository _sales;
 
-    public GetMyShiftSummaryHandler(IAccessControl access, ICurrentUser currentUser, ICashShiftRepository shifts, ISaleRepository sales)
+    public GetMyShiftSummaryHandler(IAccessControl access, ICurrentUser currentUser, ICashShiftRepository shifts, ISaleRepository sales, ILicenseState? license = null)
     {
+        _license = license;
         _access = access;
         _currentUser = currentUser;
         _shifts = shifts;
@@ -29,6 +32,12 @@ public sealed class GetMyShiftSummaryHandler
     /// <summary>Con <paramref name="shiftId"/> nulo devuelve el turno abierto propio, si lo hay.</summary>
     public async Task<Result<MyShiftSummary>> HandleAsync(Guid? shiftId, CancellationToken cancellationToken)
     {
+        // 025, SC-005: en bloqueo no se consultan turnos anteriores.
+        if (LicenseGate.WhenBlocked(_license) is { } blocked)
+        {
+            return Result.Failure<MyShiftSummary>(blocked);
+        }
+
         var access = await _access.CheckAsync(Permission.OperateShift, cancellationToken);
         if (!access.Allowed)
         {

@@ -4,9 +4,11 @@ using Pos.Application.Audit;
 using Pos.Application.Business;
 using Pos.Application.CashShifts;
 using Pos.Application.CreditNotes;
+using Pos.Application.Licensing;
 using Pos.Application.Printing.Ticket;
 using Pos.Application.Receivables;
 using Pos.Application.Sales;
+using Pos.Application.Users;
 using Pos.Application.Users.Access;
 using Pos.Domain.CashShifts;
 using Pos.Domain.Users;
@@ -31,6 +33,7 @@ public sealed partial class PrintTicketHandler
     private readonly IPrintingSettingsStore _settings;
     private readonly ITicketPrinter _printer;
     private readonly ILogger<PrintTicketHandler> _logger;
+    private readonly ILicenseState? _license;
 
     public PrintTicketHandler(
         IAccessControl access,
@@ -43,8 +46,10 @@ public sealed partial class PrintTicketHandler
         ILogger<PrintTicketHandler> logger,
         ICreditNoteRepository? creditNotes = null,
         ICustomerPaymentRepository? customerPayments = null,
-        IAuditLog? audit = null)
+        IAuditLog? audit = null,
+        ILicenseState? license = null)
     {
+        _license = license;
         _audit = audit;
         _creditNotes = creditNotes;
         _customerPayments = customerPayments;
@@ -62,9 +67,19 @@ public sealed partial class PrintTicketHandler
     {
         ArgumentNullException.ThrowIfNull(command);
 
+        // 025, FR-030a: la impresión original del ticket de la venta y del corte del turno es parte de terminar el
+        // trabajo ya iniciado; no depende de la licencia. En bloqueo se rechaza todo lo demás (reimpresiones incluidas).
+        var finishing = !command.IsReprint
+            && command.Source is PrintSource.SaleSource or PrintSource.ShiftReportSource or PrintSource.ShiftCutSource;
+        if (!finishing && LicenseGate.WhenBlocked(_license) is { } blocked)
+        {
+            return Result.Failure<PrintedTicket>(blocked);
+        }
+
         // El ticket de una venta es de quien la hizo (o de quien ve todas); el de prueba es de configuración;
         // el corte y los comprobantes de efectivo son del turno (008).
-        var access = await _access.CheckAsync(
+        var access = await CheckAsync(
+            finishing,
             command.Source switch
             {
                 PrintSource.SaleSource => Permission.ViewOwnSales,
@@ -116,7 +131,7 @@ public sealed partial class PrintTicketHandler
 
                 // El corte es del administrador o de quien cerró el turno, que lo imprime al cerrar (research §12).
                 if (report.ClosedById != _currentUser.UserId
-                    && await _access.CheckAsync(Permission.ManageShifts, cancellationToken) is { Allowed: false } denied)
+                    && await CheckAsync(finishing, Permission.ManageShifts, cancellationToken) is { Allowed: false } denied)
                 {
                     return Result.Failure<PrintedTicket>(denied.Error!);
                 }
@@ -134,7 +149,7 @@ public sealed partial class PrintTicketHandler
 
                 // El corte es de quien lo generó (el Cajero autorizado imprime su Corte X) o del administrador (research §10).
                 if (cut.GeneratedById != _currentUser.UserId
-                    && await _access.CheckAsync(Permission.ManageShifts, cancellationToken) is { Allowed: false } denied)
+                    && await CheckAsync(finishing, Permission.ManageShifts, cancellationToken) is { Allowed: false } denied)
                 {
                     return Result.Failure<PrintedTicket>(denied.Error!);
                 }
@@ -229,6 +244,9 @@ public sealed partial class PrintTicketHandler
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "No se pudo imprimir el ticket. Folio={Folio} Impresora={Printer} Motivo={Failure}")]
     private partial void LogFailed(string folio, string? printer, DeviceFailure? failure);
+
+    private Task<AccessDecision> CheckAsync(bool finishing, Permission permission, CancellationToken cancellationToken) =>
+        finishing ? _access.CheckToFinishAsync(permission, cancellationToken) : _access.CheckAsync(permission, cancellationToken);
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Falla inesperada al imprimir el ticket. Folio={Folio} Impresora={Printer}")]
     private partial void LogException(Exception exception, string folio, string? printer);

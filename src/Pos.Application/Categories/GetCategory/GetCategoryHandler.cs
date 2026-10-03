@@ -20,7 +20,7 @@ public sealed class GetCategoryHandler
     {
         ArgumentNullException.ThrowIfNull(query);
 
-        var access = await _access.CheckAsync(Permission.ManageProducts, cancellationToken);
+        var access = await _access.CheckAsync(Permission.ManageCategories, cancellationToken);
         if (!access.Allowed)
         {
             return Result.Failure<CategoryDto>(access.Error!);

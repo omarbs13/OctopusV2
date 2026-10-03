@@ -200,12 +200,17 @@ quién pidió la operación y quién la autorizó.</p>
 </figure>
 
 <h2 id="intro-modulos">Módulos y licencia</h2>
-<p>Algunas funciones se activan por módulos de la licencia. Durante los primeros <b>30 días</b>
-(período de evaluación) todos los módulos están activos. Después, solo quedan activos los módulos
-contratados (ver <a href="#cap-ayuda">Ayuda, licencia y respaldos</a>).</p>
+<p>Las funciones se activan por módulos de la licencia. Durante los primeros <b>30 días</b>
+(período de prueba) todos los módulos están activos. Después, solo quedan activos los módulos
+contratados, cada uno con su fecha de activación y, si la tiene, de vencimiento (ver
+<a href="#cap-ayuda">Ayuda, licencia y respaldos</a>).</p>
 <table class="tabla">
   <tr><th>Módulo</th><th>Incluye</th></tr>
-  <tr><td>Inventario</td><td>Existencias, movimientos, alertas de existencia, proveedores, entrada de mercancía y reporte de compras.</td></tr>
+  <tr><td>Punto de venta (base)</td><td>Ventas, cobro, tickets, productos y usuarios. <b>Sin él el sistema se bloquea</b>, aunque otros módulos estén vigentes.</td></tr>
+  <tr><td>Inventario</td><td>Existencias, movimientos de inventario y alertas de existencia baja.</td></tr>
+  <tr><td>Reportes avanzados</td><td>Reportes de ventas, productos y utilidad por periodo.</td></tr>
+  <tr><td>Proveedores</td><td>Proveedores, entrada de mercancía por compra (exige también Inventario) y reporte de compras.</td></tr>
+  <tr><td>Categorías de productos</td><td>Alta y administración de categorías y su asignación a productos.</td></tr>
   <tr><td>Turnos y arqueo</td><td>Turnos de caja, ingresos y retiros, Corte X, Corte Z e histórico de cortes.</td></tr>
   <tr><td>Devoluciones</td><td>Devoluciones parciales, reintegros, notas de crédito y la pantalla «Devoluciones y vales».</td></tr>
   <tr><td>Crédito y clientes</td><td>Catálogo de clientes, venta a crédito, abonos y reporte de créditos.</td></tr>
@@ -213,8 +218,8 @@ contratados (ver <a href="#cap-ayuda">Ayuda, licencia y respaldos</a>).</p>
 </table>
 <div class="caja nota"><b class="t">Lo que nunca se pierde</b>
 Si un módulo deja de estar activo, su opción desaparece del menú, pero la información ya registrada se
-conserva y vuelve a mostrarse al reactivarlo. La venta básica y la cancelación de ventas siempre están
-disponibles.</div>
+conserva y vuelve a mostrarse al reactivarlo. Mientras el módulo Punto de venta esté activo, la venta básica y la
+cancelación de ventas siempre están disponibles.</div>
 
 <!-- ============================================================ 2. PRIMEROS PASOS -->
 <h1 class="num" id="cap-primeros-pasos">Primeros pasos</h1>
@@ -295,7 +300,7 @@ reinicia la aplicación. Para desbloquearlo antes, un Administrador puede restab
   <tr><td>Productos activos / Sin existencia</td><td>Tamaño del catálogo y productos agotados.</td></tr>
   <tr><td>Alertas de existencia</td><td><b>Urgentes</b> (rojo) y <b>En alerta</b> (naranja). Cada cifra abre el reporte de inventario filtrado.</td></tr>
   <tr><td>Alertas <span class="etq admin">Solo Administrador</span></td><td>Turnos con diferencias de arqueo mayores al umbral en los últimos 7 días y productos críticos con existencia baja.</td></tr>
-  <tr><td>Licencia</td><td>Días restantes del período de evaluación o módulos activos.</td></tr>
+  <tr><td>Licencia</td><td>Estado de la licencia: días restantes de prueba, «Licenciado» o «Bloqueado» con los pasos para activar; avisos de módulos que vencen en 7 días o menos y de reloj atrasado.</td></tr>
 </table>
 
 <h2 id="pp-bloqueo">Bloqueo por inactividad</h2>
@@ -1069,14 +1074,17 @@ exportaciones. Es de solo lectura: nadie puede modificarla ni borrarla.</p>
 <h2 id="ayu-acerca">Acerca de</h2>
 <p><span class="ruta">Ayuda → Acerca de</span> muestra el producto (<b>Octopus punto de venta</b>), el
 desarrollador y su email de contacto, la <b>versión</b>, el <b>ID de máquina</b> (puede seleccionarlo y copiarlo si
-soporte lo pide por teléfono) y la <b>carpeta de datos</b>, con <b>Copiar ruta</b>. Todos los roles ven estos datos.</p>
+soporte lo pide por teléfono) y la <b>carpeta de datos</b>, con <b>Copiar ruta</b>. Todos los roles ven estos datos.
+La licencia se administra en <span class="ruta">Ayuda → Licencia</span> (botón <b>Abrir Ayuda &gt; Licencia</b>).</p>
+<p><b>Exportar respaldo</b> <span class="etq admin">Solo Administrador</span> guarda una copia completa de la base
+de datos donde usted elija. Está disponible siempre, también con el sistema bloqueado.</p>
 <p><b>Exportar diagnóstico…</b> <span class="etq admin">Solo Administrador</span> genera un archivo
 <code>.zip</code> con los registros de los últimos 30 días para soporte técnico. La casilla <b>Incluir respaldo de
 la base de datos</b> agrega una copia de la información (sin imágenes de productos); márquela solo si soporte lo
 pide.</p>
 <figure class="captura" id="IMG-13-01" data-titulo="Ayuda → Acerca de">
   Capture la pantalla con el producto y el desarrollador, la versión, el ID de máquina, la carpeta de datos,
-  «Exportar diagnóstico…» y la administración de licencia.
+  «Exportar diagnóstico…», «Abrir Ayuda &gt; Licencia» y «Exportar respaldo».
 </figure>
 
 <h2 id="ayu-escaner">Probar el escáner</h2>
@@ -1100,23 +1108,59 @@ configurado con otra distribución de teclado. Prográmelo con la misma distribu
 configuración del fabricante).</div>
 
 <h2 id="ayu-licencia">Licencia</h2>
-<p>El sistema se puede evaluar <b>30 días</b> con todos los módulos. Faltando 5 días aparece un aviso. Al terminar
-sin licencia, el sistema pasa a <b>modo lectura</b>: se bloquean el Punto de venta, la apertura de turnos, los
-reportes y la administración de usuarios; los productos, el inventario y las ventas registradas siguen
-disponibles, y un turno ya abierto se puede cerrar.</p>
-<p>Para activar o extender la licencia <span class="etq admin">Solo Administrador</span>:</p>
-<ol class="pasos">
-  <li>Abra <span class="ruta">Ayuda → Acerca de</span> → <b>Administración de licencia</b>.</li>
-  <li>Pulse <b>Exportar solicitud…</b> y guarde el archivo <code>.posreq</code>. Envíelo al proveedor.</li>
-  <li>El proveedor devuelve un archivo <code>.poslic</code>.</li>
-  <li>Pulse <b>Importar licencia…</b> y elija ese archivo. Se aplica de inmediato, sin reiniciar.</li>
-</ol>
-<figure class="captura" id="IMG-13-03" data-titulo="Administración de licencia">
-  Capture el diálogo con los botones «Exportar solicitud…» e «Importar licencia…» y el estado actual.
+<p><span class="ruta">Ayuda → Licencia</span> muestra el <b>ID de máquina</b> con el botón <b>Copiar</b>, el estado
+general («En prueba: N días restantes», «Licenciado» o «Bloqueado» con su causa), el cliente de la licencia y una tabla
+con los 9 módulos: estado (Activo, Pendiente de activación, Vencido o No contratado), fecha de activación y fecha de
+vencimiento («Indefinido» si no vence). Todos los usuarios pueden abrirla, también con el sistema bloqueado.</p>
+<figure class="captura" id="IMG-13-03" data-titulo="Ayuda → Licencia">
+  Capture la pantalla con el ID de máquina, el estado general, la tabla de módulos y los botones «Generar solicitud»,
+  «Importar licencia» y «Exportar respaldo».
 </figure>
+
+<h3>Periodo de prueba</h3>
+<p>Una instalación nueva funciona <b>30 días</b> con todos los módulos. Aparece un aviso cuando quedan 5 días y
+cuando queda 1 día. Al importar la primera licencia la prueba termina para siempre.</p>
+
+<h3>Activar o renovar la licencia</h3>
+<ol class="pasos">
+  <li>En <span class="ruta">Ayuda → Licencia</span> pulse <b>Generar solicitud</b> y guarde el archivo
+    <code>.octoreq</code> (cualquier usuario puede generarla). Envíelo a su proveedor por correo, mensajería o USB. Si
+    prefiere, pulse <b>Copiar</b> y dicte o pegue el ID de máquina.</li>
+  <li>El proveedor le devuelve un archivo de licencia <code>.lic</code>.</li>
+  <li><span class="etq admin">Solo Administrador</span> Pulse <b>Importar licencia</b> y elija ese archivo. Se aplica
+    de inmediato, sin reiniciar: el menú muestra exactamente los módulos de la licencia.</li>
+</ol>
+<p>Cada licencia nueva <b>reemplaza</b> a la anterior: contiene todos los módulos contratados, no se suma. Si la
+licencia no es auténtica, es de otro equipo, es más antigua que la vigente o tiene un formato que ya no se usa, se
+rechaza con un mensaje y <b>se conserva la licencia actual</b>. Puede importar otra vez la misma licencia sin
+problema.</p>
+
+<h3>Vencimiento de módulos</h3>
+<p>Cada módulo tiene su fecha de activación y, si la tiene, de vencimiento; funciona <b>todo el día</b> de su
+vencimiento. Un módulo vencido desaparece del menú, pero sus datos se conservan y vuelven al renovarlo. En Inicio se
+avisa de los módulos que vencen en los próximos 7 días. El cambio de día se aplica sin reiniciar.</p>
+
+<h3>Sistema bloqueado</h3>
+<p>Si el módulo <b>Punto de venta</b> no está activo (prueba terminada, licencia sin Punto de venta, Punto de venta
+vencido o aún no activado, o licencia guardada no válida), el sistema se <b>bloquea</b>. Inicio explica la causa y
+los pasos para activarlo. En bloqueo solo están disponibles:</p>
+<ul>
+  <li>Iniciar y cerrar sesión, y <span class="ruta">Ayuda → Licencia</span> (generar solicitud e importar licencia).</li>
+  <li><b>Exportar respaldo</b> <span class="etq admin">Solo Administrador</span>: los datos son suyos.</li>
+  <li><b>Terminar la venta en curso</b>: si la licencia vence con una venta abierta, puede terminarla, cobrarla
+    (con los descuentos o el cliente que ya tenía) e imprimir su ticket, o cancelarla. No se pueden iniciar ventas
+    nuevas.</li>
+  <li><b>Cerrar el turno abierto</b>: contar el efectivo y hacer el Corte Z, aunque el módulo Turnos y arqueo también
+    haya vencido.</li>
+</ul>
+<p>Al importar una licencia válida con Punto de venta, el bloqueo se levanta de inmediato y toda la información
+anterior sigue disponible.</p>
+<div class="caja aviso"><b class="t">Reloj del equipo</b>
+Atrasar la fecha del equipo no reactiva módulos vencidos ni devuelve días de prueba. Si la fecha del equipo es
+anterior a la última registrada, aparece un aviso: corrija la fecha y la hora.</div>
 <div class="caja aviso"><b class="t">No copie la licencia</b>
-La licencia está ligada a la computadora. No copie el archivo de licencia a otro equipo: se invalida y el sistema
-queda en modo lectura.</div>
+La licencia está ligada a la computadora. Si cambia el equipo o su hardware, la licencia guardada deja de ser válida:
+genere una solicitud nueva y envíela a su proveedor.</div>
 
 <h2 id="ayu-respaldos">Respaldos automáticos</h2>
 <p>El sistema crea un respaldo de la información al abrir o cerrar la aplicación, una vez al día, y conserva los 7

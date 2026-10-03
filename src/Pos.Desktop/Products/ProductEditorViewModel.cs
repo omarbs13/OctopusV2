@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Pos.Application.Abstractions;
 using Pos.Application.Categories;
+using Pos.Application.Licensing;
 using Pos.Application.Products;
 using Pos.Application.Products.CreateProduct;
 using Pos.Application.Products.GetProduct;
@@ -40,12 +41,12 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
     /// <summary>Cambio de imagen pendiente; se aplica solo al guardar (003, FR-025).</summary>
     private ProductImageChange _imageChange = ProductImageChange.KeepCurrent;
 
-    public ProductEditorViewModel(UseCases useCases, OperationRunner runner, IDialogService dialogs)
+    public ProductEditorViewModel(UseCases useCases, OperationRunner runner, IDialogService dialogs, ILicenseState? license = null)
         : base(dialogs)
     {
         _useCases = useCases;
         _runner = runner;
-        Category = new CategoryPickerViewModel(useCases, runner, CategoryPickerMode.Assignment);
+        Category = new CategoryPickerViewModel(useCases, runner, CategoryPickerMode.Assignment, license);
         ResetOriginalState();
     }
 

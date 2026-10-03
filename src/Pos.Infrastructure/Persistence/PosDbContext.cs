@@ -84,6 +84,8 @@ public class PosDbContext : DbContext
 
     public DbSet<LicenseSealEntity> LicenseSeals => Set<LicenseSealEntity>();
 
+    public DbSet<InstalledLicenseEntity> InstalledLicenses => Set<InstalledLicenseEntity>();
+
     public DbSet<SaleReturn> SaleReturns => Set<SaleReturn>();
 
     public DbSet<SaleReturnLine> SaleReturnLines => Set<SaleReturnLine>();
@@ -160,6 +162,7 @@ public class PosDbContext : DbContext
         modelBuilder.ApplyConfiguration(new CashShiftConfiguration());
         modelBuilder.ApplyConfiguration(new CashMovementConfiguration());
         modelBuilder.ApplyConfiguration(new LicenseSealConfiguration());
+        modelBuilder.ApplyConfiguration(new InstalledLicenseConfiguration());
         modelBuilder.ApplyConfiguration(new SaleReturnConfiguration());
         modelBuilder.ApplyConfiguration(new SaleReturnLineConfiguration());
         modelBuilder.ApplyConfiguration(new SaleReturnRefundConfiguration());

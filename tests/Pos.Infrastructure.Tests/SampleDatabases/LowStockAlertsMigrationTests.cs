@@ -36,14 +36,4 @@ public sealed class LowStockAlertsMigrationTests
         Assert.DoesNotContain("DROP TABLE \"Products\"", script, StringComparison.Ordinal);
         Assert.DoesNotContain("UPDATE ", script, StringComparison.Ordinal);
     }
-
-    [Fact]
-    public async Task LowStockAlerts_EsLaUltimaMigracion()
-    {
-        using var db = await TestDb.CreateAsync();
-        await using var context = db.CreateDbContext();
-
-        Assert.EndsWith("_LowStockAlerts", context.Database.GetMigrations().Last(), StringComparison.Ordinal);
-        Assert.Empty(await context.Database.GetPendingMigrationsAsync(TestContext.Current.CancellationToken));
-    }
 }

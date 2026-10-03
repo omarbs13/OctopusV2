@@ -54,6 +54,9 @@ public sealed record ExportFailed(string Message) : Error;
 /// <summary>El usuario conectado no tiene el permiso; <c>CanBeAuthorized</c> indica si un administrador puede autorizarlo (007, FR-013).</summary>
 public sealed record Forbidden(Pos.Domain.Users.Permission Permission, bool CanBeAuthorized) : Error;
 
+/// <summary>La operación exige una sesión con un usuario activo y no la hay (025).</summary>
+public sealed record SessionRequired : Error;
+
 /// <summary>Mensaje genérico "Usuario o contraseña incorrectos": no indica cuál dato falló (007, FR-004).</summary>
 public sealed record InvalidCredentials : Error;
 
@@ -92,6 +95,12 @@ public sealed record ShiftChanged : Error;
 
 /// <summary>El módulo no está activo en la licencia (012, FR-013).</summary>
 public sealed record ModuleNotLicensed(LicensedModule Module) : Error;
+
+/// <summary>
+/// El sistema está bloqueado porque el módulo base no está activo; la operación no está entre las
+/// permitidas en bloqueo y no se modificó nada (025, FR-030).
+/// </summary>
+public sealed record SystemNotActivated(LicenseBlockReason Reason) : Error;
 
 /// <summary>La venta excede el plazo máximo de devoluciones (013, FR-006a).</summary>
 public sealed record ReturnWindowExpired(int Days) : Error;
@@ -214,9 +223,15 @@ public enum LicenseImportRejection
     /// <summary>El archivo no se pudo leer o no tiene el formato esperado.</summary>
     Unreadable,
 
+    /// <summary>La versión de formato no es la 3 (incluye las licencias formato 2 retiradas, 025 FR-021).</summary>
+    UnsupportedFormat,
+
     /// <summary>La firma del proveedor no es válida.</summary>
     BadSignature,
 
     /// <summary>La licencia corresponde a otra máquina.</summary>
     OtherMachine,
+
+    /// <summary>No es la misma licencia vigente ni se emitió después que ella (025, FR-018).</summary>
+    NotNewer,
 }

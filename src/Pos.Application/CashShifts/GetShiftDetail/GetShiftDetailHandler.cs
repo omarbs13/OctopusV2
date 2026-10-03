@@ -1,6 +1,8 @@
 using Pos.Application.Abstractions;
+using Pos.Application.Licensing;
 using Pos.Application.Sales;
 using Pos.Application.Users.Access;
+using Pos.Domain.CashShifts;
 using Pos.Domain.Users;
 
 namespace Pos.Application.CashShifts.GetShiftDetail;
@@ -14,9 +16,11 @@ public sealed class GetShiftDetailHandler
     private readonly IAccessControl _access;
     private readonly ICashShiftRepository _shifts;
     private readonly ISaleRepository _sales;
+    private readonly ILicenseState? _license;
 
-    public GetShiftDetailHandler(IAccessControl access, ICashShiftRepository shifts, ISaleRepository sales)
+    public GetShiftDetailHandler(IAccessControl access, ICashShiftRepository shifts, ISaleRepository sales, ILicenseState? license = null)
     {
+        _license = license;
         _access = access;
         _shifts = shifts;
         _sales = sales;
@@ -26,7 +30,9 @@ public sealed class GetShiftDetailHandler
     {
         ArgumentNullException.ThrowIfNull(query);
 
-        var access = await _access.CheckAsync(Permission.ManageShifts, cancellationToken);
+        // 025, FR-030a: el turno abierto se consulta aunque Turnos y arqueo no esté activo o el sistema esté
+        // bloqueado; los turnos cerrados siguen las reglas de licencia completas (blocked-mode §1).
+        var access = await _access.CheckToFinishAsync(Permission.ManageShifts, cancellationToken);
         if (!access.Allowed)
         {
             return Result.Failure<ShiftDetailDto>(access.Error!);
@@ -37,6 +43,20 @@ public sealed class GetShiftDetailHandler
         if (detail is null)
         {
             return Result.Failure<ShiftDetailDto>(new NotFound());
+        }
+
+        if (detail.Status != CashShiftStatus.Open)
+        {
+            if (LicenseGate.WhenBlocked(_license) is { } blocked)
+            {
+                return Result.Failure<ShiftDetailDto>(blocked);
+            }
+
+            var closed = await _access.CheckAsync(Permission.ManageShifts, cancellationToken);
+            if (!closed.Allowed)
+            {
+                return Result.Failure<ShiftDetailDto>(closed.Error!);
+            }
         }
 
         var sales = await _sales.ListByShiftAsync(query.ShiftId, cancellationToken);

@@ -50,13 +50,19 @@ public sealed partial class HomeViewModel : PageViewModel
         return Task.WhenAll(Metrics.Concat(Charts).Select(c => c.LoadAsync()));
     }
 
+    /// <summary>
+    /// Sin las tarjetas de módulos inactivos (012). En bloqueo, Inicio es la página de entrada y solo muestra la
+    /// tarjeta de licencia, con el mensaje de activación (025, blocked-mode §2).
+    /// </summary>
     private void ApplyLicense()
     {
-        var visible = Cards
-            .Where(c => c.RequiredPermission is not { } required
-                || ModuleAccess.Required(required) is not { } module
-                || _license?.IsModuleActive(module) != false)
-            .ToList();
+        var visible = _license?.Current.IsBlocked == true
+            ? [.. Cards.OfType<Licensing.LicenseCard>()]
+            : Cards
+                .Where(c => c.RequiredPermission is not { } required
+                    || _license is null
+                    || ModuleAccess.FirstInactive(required, _license.IsModuleActive) is null)
+                .ToList();
         Metrics = [.. visible.Where(c => c.Kind == DashboardCardKind.Metric)];
         Charts = [.. visible.Where(c => c.Kind == DashboardCardKind.Chart)];
     }

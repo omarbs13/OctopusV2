@@ -1,4 +1,3 @@
-using Pos.Domain.Licensing;
 using Pos.Domain.Users;
 
 namespace Pos.Desktop.Navigation;
@@ -11,7 +10,7 @@ public sealed class NavigationRegistry
 {
     private readonly Dictionary<string, NavigationEntry> _entries;
     private readonly Dictionary<string, NavigationGroup> _groups;
-    private readonly Func<LicensedModule, bool>? _isModuleActive;
+    private readonly Func<NavigationEntry, LicenseMenuAccess>? _licenseAccess;
 
     /// <param name="groups">Grupos registrados.</param>
     /// <param name="entries">Opciones registradas.</param>
@@ -19,17 +18,18 @@ public sealed class NavigationRegistry
     /// Decide si el usuario conectado tiene un permiso; las opciones sin permiso permitido y los grupos
     /// que se quedan vacíos no aparecen (FR-008). Nulo permite todo.
     /// </param>
-    /// <param name="isModuleActive">
-    /// Decide si un módulo licenciado está activo; las opciones de módulos inactivos se ocultan del
-    /// menú (012, FR-012) pero siguen resolviéndose para rechazar el acceso directo. Nulo permite todo.
+    /// <param name="licenseAccess">
+    /// Regla de licencia de cada opción (025, <see cref="LicenseMenuPolicy"/>): las opciones de módulos inactivos
+    /// y, en bloqueo, las no permitidas se ocultan del menú (012, FR-012; blocked-mode §2) pero siguen
+    /// resolviéndose para rechazar el acceso directo. Nulo permite todo.
     /// </param>
     public NavigationRegistry(
         IEnumerable<NavigationGroup> groups,
         IEnumerable<NavigationEntry> entries,
         Func<Permission, bool>? isAllowed = null,
-        Func<LicensedModule, bool>? isModuleActive = null)
+        Func<NavigationEntry, LicenseMenuAccess>? licenseAccess = null)
     {
-        _isModuleActive = isModuleActive;
+        _licenseAccess = licenseAccess;
         ArgumentNullException.ThrowIfNull(groups);
         ArgumentNullException.ThrowIfNull(entries);
 
@@ -71,7 +71,7 @@ public sealed class NavigationRegistry
 
     public IReadOnlyList<NavigationEntry> Entries { get; private set; } = [];
 
-    /// <summary>Recalcula el árbol visible con el estado actual de la licencia (012, FR-017).</summary>
+    /// <summary>Recalcula el árbol visible con el estado actual de la licencia (012, FR-017; 025).</summary>
     public void Rebuild()
     {
         Entries = [.. _entries.Values
@@ -88,10 +88,7 @@ public sealed class NavigationRegistry
     }
 
     private bool IsVisible(NavigationEntry entry) =>
-        entry.Permission is not { } required
-        || _isModuleActive is null
-        || ModuleAccess.Required(required) is not { } module
-        || _isModuleActive(module);
+        _licenseAccess is null || _licenseAccess(entry) == LicenseMenuAccess.Allowed;
 
     public NavigationEntry? FindEntry(string id) => _entries.GetValueOrDefault(id);
 

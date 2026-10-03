@@ -50,7 +50,9 @@ public sealed partial class CountShiftCashHandler
     {
         ArgumentNullException.ThrowIfNull(command);
 
-        var access = await _access.CheckAsync(Permission.OperateShift, cancellationToken);
+        // 025, FR-030a: el turno abierto se consulta, cuenta y cierra aunque Turnos y arqueo no esté activo o el
+        // sistema esté bloqueado (Principio I); solo se exigen sesión y rol.
+        var access = await _access.CheckToFinishAsync(Permission.OperateShift, cancellationToken);
         if (!access.Allowed)
         {
             return Result.Failure<ShiftCountResult>(access.Error!);
@@ -77,7 +79,7 @@ public sealed partial class CountShiftCashHandler
 
         if (shift.OpenedBy != _currentUser.UserId)
         {
-            var manage = await _access.CheckAsync(Permission.ManageShifts, cancellationToken);
+            var manage = await _access.CheckToFinishAsync(Permission.ManageShifts, cancellationToken);
             if (!manage.Allowed)
             {
                 return Result.Failure<ShiftCountResult>(manage.Error!);

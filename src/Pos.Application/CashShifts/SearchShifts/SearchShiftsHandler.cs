@@ -1,4 +1,5 @@
 using Pos.Application.Abstractions;
+using Pos.Application.Licensing;
 using Pos.Application.Users.Access;
 using Pos.Domain.Users;
 
@@ -8,10 +9,12 @@ namespace Pos.Application.CashShifts.SearchShifts;
 public sealed class SearchShiftsHandler
 {
     private readonly IAccessControl _access;
+    private readonly ILicenseState? _license;
     private readonly ICashShiftRepository _shifts;
 
-    public SearchShiftsHandler(IAccessControl access, ICashShiftRepository shifts)
+    public SearchShiftsHandler(IAccessControl access, ICashShiftRepository shifts, ILicenseState? license = null)
     {
+        _license = license;
         _access = access;
         _shifts = shifts;
     }
@@ -19,6 +22,12 @@ public sealed class SearchShiftsHandler
     public async Task<Result<ShiftPage>> HandleAsync(SearchShiftsQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query);
+
+        // 025, SC-005: en bloqueo no se consultan turnos anteriores.
+        if (LicenseGate.WhenBlocked(_license) is { } blocked)
+        {
+            return Result.Failure<ShiftPage>(blocked);
+        }
 
         var access = await _access.CheckAsync(Permission.ManageShifts, cancellationToken);
         if (!access.Allowed)

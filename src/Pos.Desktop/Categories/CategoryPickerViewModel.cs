@@ -3,8 +3,10 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Pos.Application.Abstractions;
 using Pos.Application.Categories;
 using Pos.Application.Categories.ListCategoryOptions;
+using Pos.Application.Licensing;
 using Pos.Desktop.Common;
 using Pos.Desktop.Resources;
+using Pos.Domain.Licensing;
 
 namespace Pos.Desktop.Categories;
 
@@ -30,7 +32,8 @@ public sealed record CategoryPickerOption(CategoryFilter Filter, string Label)
 
 /// <summary>
 /// Selector de categoría (016, research §15) que comparten el formulario de producto y los filtros de
-/// Productos y Reportes. Solo carga opciones con <c>ListCategoryOptions</c>; no aplica reglas.
+/// Productos y Reportes. Solo carga opciones con <c>ListCategoryOptions</c>; no aplica reglas. Con el módulo
+/// Categorías inactivo se oculta (025, FR-007).
 /// </summary>
 public sealed partial class CategoryPickerViewModel : ViewModelBase
 {
@@ -39,10 +42,12 @@ public sealed partial class CategoryPickerViewModel : ViewModelBase
 
     private readonly UseCases _useCases;
     private readonly OperationRunner _runner;
+    private readonly ILicenseState? _license;
     private bool _suppress;
 
-    public CategoryPickerViewModel(UseCases useCases, OperationRunner runner, CategoryPickerMode mode)
+    public CategoryPickerViewModel(UseCases useCases, OperationRunner runner, CategoryPickerMode mode, ILicenseState? license = null)
     {
+        _license = license;
         _useCases = useCases;
         _runner = runner;
         Mode = mode;
@@ -56,6 +61,9 @@ public sealed partial class CategoryPickerViewModel : ViewModelBase
     }
 
     public CategoryPickerMode Mode { get; }
+
+    /// <summary>El módulo Categorías está activo; sin él no se muestra el selector.</summary>
+    public bool IsAvailable => _license?.IsModuleActive(LicensedModule.Categories) != false;
 
     public ObservableCollection<CategoryPickerOption> Options { get; } = [];
 

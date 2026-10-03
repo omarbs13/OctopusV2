@@ -4,10 +4,12 @@ using Pos.Application.CashShifts;
 using Pos.Application.CashShifts.CloseShift;
 using Pos.Application.CashShifts.CountShiftCash;
 using Pos.Application.CashShifts.GenerateShiftReadout;
+using Pos.Application.CashShifts.GetCurrentShift;
 using Pos.Application.CashShifts.GetShiftCut;
 using Pos.Application.CashShifts.OpenShift;
 using Pos.Application.CashShifts.RegisterCashMovement;
 using Pos.Application.CashShifts.SearchShiftCuts;
+using Pos.Application.CashShifts.SearchShifts;
 using Pos.Application.Licensing;
 using Pos.Application.Reports;
 using Pos.Application.Sales;
@@ -90,7 +92,8 @@ public sealed class ShiftTestSupport
             _db.User,
             new OpenShiftValidator(),
             Guard(context),
-            NullLogger<OpenShiftHandler>.Instance).HandleAsync(new OpenShiftCommand(floatCents, confirmZero), Ct);
+            NullLogger<OpenShiftHandler>.Instance,
+            License).HandleAsync(new OpenShiftCommand(floatCents, confirmZero), Ct);
     }
 
     public async Task<Result<RegisteredMovement>> MoveAsync(
@@ -109,7 +112,8 @@ public sealed class ShiftTestSupport
             new AuditLog(context),
             new WriteTransactions(context),
             new RegisterCashMovementValidator(),
-            NullLogger<RegisterCashMovementHandler>.Instance)
+            NullLogger<RegisterCashMovementHandler>.Instance,
+            License)
             .HandleAsync(new RegisterCashMovementCommand(shiftId, type, amountCents, reason, grant), Ct);
     }
 
@@ -168,7 +172,7 @@ public sealed class ShiftTestSupport
     public async Task<Result<ShiftCutReportDto>> GetCutAsync(Guid cutId)
     {
         await using var context = _db.CreateDbContext();
-        return await new GetShiftCutHandler(Access(context), _db.User, new CashShiftRepository(context))
+        return await new GetShiftCutHandler(Access(context), _db.User, new CashShiftRepository(context), License)
             .HandleAsync(new GetShiftCutQuery(cutId), Ct);
     }
 
@@ -176,8 +180,23 @@ public sealed class ShiftTestSupport
     public async Task<Result<ShiftCutPage>> SearchCutsAsync(SearchShiftCutsQuery query)
     {
         await using var context = _db.CreateDbContext();
-        return await new SearchShiftCutsHandler(Access(context), new CashShiftRepository(context), new ReportPeriodResolver(TimeZoneInfo.Utc))
+        return await new SearchShiftCutsHandler(Access(context), new CashShiftRepository(context), new ReportPeriodResolver(TimeZoneInfo.Utc), License)
             .HandleAsync(query, Ct);
+    }
+
+    /// <summary>Turno abierto (025: se consulta aunque Turnos y arqueo no esté activo).</summary>
+    public async Task<Result<CurrentShiftSummary?>> CurrentAsync()
+    {
+        await using var context = _db.CreateDbContext();
+        return await new GetCurrentShiftHandler(Access(context), _db.User, new CashShiftRepository(context), new SaleRepository(context), Guard(context))
+            .HandleAsync(Ct);
+    }
+
+    public async Task<Result<ShiftPage>> SearchShiftsAsync()
+    {
+        await using var context = _db.CreateDbContext();
+        return await new SearchShiftsHandler(Access(context), new CashShiftRepository(context), License)
+            .HandleAsync(new SearchShiftsQuery(null, null, null, null, 1), Ct);
     }
 
     public async Task<Result> CancelAsync(Guid saleId, Guid? grant = null)

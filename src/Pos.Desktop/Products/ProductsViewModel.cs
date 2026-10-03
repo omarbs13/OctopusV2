@@ -3,6 +3,7 @@ using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Pos.Application.Abstractions;
+using Pos.Application.Licensing;
 using Pos.Application.Products;
 using Pos.Application.Products.DeleteProduct;
 using Pos.Application.Products.SearchProducts;
@@ -38,7 +39,8 @@ public sealed partial class ProductsViewModel : PageViewModel, IDisposable
         IDialogService dialogs,
         Func<ProductEditorViewModel> editorFactory,
         Navigator? navigator = null,
-        ICurrentPermissions? permissions = null)
+        ICurrentPermissions? permissions = null,
+        ILicenseState? license = null)
     {
         _navigator = navigator;
         CanManage = permissions?.Has(Permission.ManageProducts) ?? true;
@@ -46,7 +48,7 @@ public sealed partial class ProductsViewModel : PageViewModel, IDisposable
         _runner = runner;
         _dialogs = dialogs;
         _editorFactory = editorFactory;
-        CategoryFilter = new CategoryPickerViewModel(useCases, runner, CategoryPickerMode.Filter);
+        CategoryFilter = new CategoryPickerViewModel(useCases, runner, CategoryPickerMode.Filter, license);
         CategoryFilter.SelectionChanged += (_, _) =>
         {
             CurrentPage = 1;

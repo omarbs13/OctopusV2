@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using Pos.Application.Abstractions;
 using Pos.Application.Categories;
 using Pos.Application.Inventory;
+using Pos.Application.Licensing;
 using Pos.Application.Reports;
 using Pos.Application.Reports.Export;
 using Pos.Application.Reports.GetInventoryReport;
@@ -63,11 +64,11 @@ public sealed partial class InventoryReportViewModel : ReportPageViewModel, INav
     private int _searchVersion;
     private bool _suppressReload;
 
-    public InventoryReportViewModel(UseCases useCases, OperationRunner runner, IChartRenderer renderer, ReportExportCoordinator exporter)
+    public InventoryReportViewModel(UseCases useCases, OperationRunner runner, IChartRenderer renderer, ReportExportCoordinator exporter, ILicenseState? license = null)
         : base(runner, renderer, exporter, ReportPreset.Today)
     {
         _useCases = useCases;
-        CategoryFilter = new CategoryPickerViewModel(useCases, runner, CategoryPickerMode.Filter);
+        CategoryFilter = new CategoryPickerViewModel(useCases, runner, CategoryPickerMode.Filter, license);
         CategoryFilter.SelectionChanged += (_, _) => RestartFromFirstPage();
         StatusOptions =
         [

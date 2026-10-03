@@ -83,4 +83,10 @@ public enum Permission
 
     /// <summary>Ver "Reportes > Compras" y el detalle de una compra (020); solo el Administrador.</summary>
     ViewPurchaseReport,
+
+    /// <summary>Alta, edición y consulta de categorías de productos (025); los mismos roles que <see cref="ManageProducts"/>.</summary>
+    ManageCategories,
+
+    /// <summary>Exportar un respaldo de la base (025); solo el Administrador, disponible también en bloqueo.</summary>
+    ExportBackup,
 }

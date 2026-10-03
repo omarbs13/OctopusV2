@@ -4,8 +4,10 @@ using Pos.Application.Abstractions;
 using Pos.Application.Audit;
 using Pos.Application.Categories;
 using Pos.Application.Inventory;
+using Pos.Application.Licensing;
 using Pos.Domain.Audit;
 using Pos.Domain.Common;
+using Pos.Domain.Licensing;
 using Pos.Domain.Products;
 using Pos.Application.Users.Access;
 using Pos.Domain.Users;
@@ -14,7 +16,8 @@ namespace Pos.Application.Products.UpdateProduct;
 
 /// <summary>
 /// Edición de producto. Los campos que cambian quedan en la bitácora con su valor anterior y nuevo, en
-/// el mismo guardado; sin cambios no se registra nada (018, FR-002).
+/// el mismo guardado; sin cambios no se registra nada (018, FR-002). Con el módulo Categorías inactivo se
+/// conserva la categoría actual del producto y se ignora la enviada (025, FR-007).
 /// </summary>
 public sealed partial class UpdateProductHandler
 {
@@ -26,6 +29,7 @@ public sealed partial class UpdateProductHandler
     private readonly ICategoryRepository _categories;
     private readonly IAuditLog _audit;
     private readonly ILogger<UpdateProductHandler> _logger;
+    private readonly ILicenseState? _license;
 
     public UpdateProductHandler(
         IAccessControl access,
@@ -35,8 +39,10 @@ public sealed partial class UpdateProductHandler
         IWriteTransactions transactions,
         ICategoryRepository categories,
         IAuditLog audit,
-        ILogger<UpdateProductHandler> logger)
+        ILogger<UpdateProductHandler> logger,
+        ILicenseState? license = null)
     {
+        _license = license;
         _access = access;
         _products = products;
         _validator = validator;
@@ -101,9 +107,12 @@ public sealed partial class UpdateProductHandler
             return Result.Failure<ProductDto>(new ValidationFailed(inventoryErrors));
         }
 
+        // 025, FR-007: sin el módulo Categorías no se cambia la categoría del producto.
+        var categoryId = _license?.IsModuleActive(LicensedModule.Categories) == false ? product.CategoryId : command.CategoryId;
+
         // FR-011: una categoría nueva debe estar activa; la que ya tenía se conserva aunque esté inactiva.
-        var category = command.CategoryId is { } categoryId ? await _categories.GetAsync(categoryId, cancellationToken) : null;
-        if (command.CategoryId is { } chosen && chosen != product.CategoryId && category is not { IsActive: true })
+        var category = categoryId is { } selectedId ? await _categories.GetAsync(selectedId, cancellationToken) : null;
+        if (categoryId is { } chosen && chosen != product.CategoryId && category is not { IsActive: true })
         {
             LogNotAssignable(product.Id, chosen);
             return Result.Failure<ProductDto>(new CategoryNotAssignable());
@@ -123,7 +132,7 @@ public sealed partial class UpdateProductHandler
         }
 
         // Instantánea anterior con la categoría y la imagen vigentes antes del cambio (018, research §5).
-        var previousCategory = product.CategoryId == command.CategoryId
+        var previousCategory = product.CategoryId == categoryId
             ? category
             : product.CategoryId is { } previousId ? await _categories.GetAsync(previousId, cancellationToken) : null;
         var hadImage = imageChanges ? product.Image is not null : await _products.HasImageAsync(product.Id, cancellationToken);
@@ -133,7 +142,7 @@ public sealed partial class UpdateProductHandler
         var minimum = ProductRules.ParseMinimum(command.TracksInventory, command.MinimumStockText, command.UnitCode)?.Value;
         var reorderPoint = ProductRules.ParseReorderPoint(command.TracksInventory, command.ReorderPointText, command.UnitCode)?.Value;
         product.Update(
-            command.Name, sku, barcode, price, command.UnitCode, command.IsActive, command.TracksInventory, minimum, hasMovements, command.CategoryId, reorderPoint);
+            command.Name, sku, barcode, price, command.UnitCode, command.IsActive, command.TracksInventory, minimum, hasMovements, categoryId, reorderPoint);
         ProductImages.Apply(product, command.Image);
 
         var hasImage = imageChanges ? product.Image is not null : hadImage;

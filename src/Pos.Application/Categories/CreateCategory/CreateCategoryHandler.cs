@@ -11,7 +11,7 @@ using Pos.Domain.Users;
 namespace Pos.Application.Categories.CreateCategory;
 
 /// <summary>
-/// Alta de categoría: permiso <c>ManageProducts</c> → validación → unicidad del nombre sin mayúsculas ni
+/// Alta de categoría: permiso <c>ManageCategories</c> (025) → validación → unicidad del nombre sin mayúsculas ni
 /// acentos (FR-003) → alta y bitácora en una transacción. El índice único cubre la carrera.
 /// </summary>
 public sealed partial class CreateCategoryHandler
@@ -43,7 +43,7 @@ public sealed partial class CreateCategoryHandler
     {
         ArgumentNullException.ThrowIfNull(command);
 
-        var access = await _access.CheckAsync(Permission.ManageProducts, cancellationToken);
+        var access = await _access.CheckAsync(Permission.ManageCategories, cancellationToken);
         if (!access.Allowed)
         {
             return Result.Failure<Guid>(access.Error!);

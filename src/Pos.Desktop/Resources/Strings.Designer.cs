@@ -4252,25 +4252,7 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Modo modular.
-        /// </summary>
-        public static string License_Active {
-            get {
-                return ResourceManager.GetString("License_Active", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Administración de licencia.
-        /// </summary>
-        public static string License_AdminTitle {
-            get {
-                return ResourceManager.GetString("License_AdminTitle", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Todos los módulos activos durante la evaluación.
+        ///   Looks up a localized string similar to Todos los módulos activos durante la prueba..
         /// </summary>
         public static string License_AllModules {
             get {
@@ -4279,7 +4261,61 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Período de evaluación.
+        ///   Looks up a localized string similar to Respaldo guardado en {0}..
+        /// </summary>
+        public static string License_BackupSaved {
+            get {
+                return ResourceManager.GetString("License_BackupSaved", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to El módulo Punto de venta venció el {0}. Para seguir vendiendo, genera una solicitud en Ayuda &gt; Licencia, envíala a tu proveedor e importa la licencia que te entregue..
+        /// </summary>
+        public static string License_BlockedBaseExpired {
+            get {
+                return ResourceManager.GetString("License_BlockedBaseExpired", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Tu licencia no incluye el módulo Punto de venta. Para seguir vendiendo, genera una solicitud en Ayuda &gt; Licencia, envíala a tu proveedor e importa la licencia que te entregue..
+        /// </summary>
+        public static string License_BlockedBaseNotLicensed {
+            get {
+                return ResourceManager.GetString("License_BlockedBaseNotLicensed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to El módulo Punto de venta se activa el {0}. Si necesitas vender antes, pide a tu proveedor una licencia nueva y impórtala en Ayuda &gt; Licencia..
+        /// </summary>
+        public static string License_BlockedBasePending {
+            get {
+                return ResourceManager.GetString("License_BlockedBasePending", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to La licencia guardada no es válida. Para seguir vendiendo, importa de nuevo la licencia que te entregó tu proveedor en Ayuda &gt; Licencia o genera una solicitud nueva..
+        /// </summary>
+        public static string License_BlockedLicenseInvalid {
+            get {
+                return ResourceManager.GetString("License_BlockedLicenseInvalid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to El periodo de prueba terminó. Para seguir vendiendo, genera una solicitud en Ayuda &gt; Licencia, envíala a tu proveedor e importa la licencia que te entregue..
+        /// </summary>
+        public static string License_BlockedTrialExpired {
+            get {
+                return ResourceManager.GetString("License_BlockedTrialExpired", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Licencia.
         /// </summary>
         public static string License_CardTitle {
             get {
@@ -4288,20 +4324,128 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Licencia.
+        ///   Looks up a localized string similar to Punto de venta venció.
         /// </summary>
-        public static string License_CardTitleModular {
+        public static string License_CauseBaseExpired {
             get {
-                return ResourceManager.GetString("License_CardTitleModular", resourceCulture);
+                return ResourceManager.GetString("License_CauseBaseExpired", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Contacto: {0} / {1}.
+        ///   Looks up a localized string similar to la licencia no incluye Punto de venta.
+        /// </summary>
+        public static string License_CauseBaseNotLicensed {
+            get {
+                return ResourceManager.GetString("License_CauseBaseNotLicensed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Punto de venta aún no se activa.
+        /// </summary>
+        public static string License_CauseBasePending {
+            get {
+                return ResourceManager.GetString("License_CauseBasePending", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to la licencia guardada no es válida.
+        /// </summary>
+        public static string License_CauseLicenseInvalid {
+            get {
+                return ResourceManager.GetString("License_CauseLicenseInvalid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to la prueba terminó.
+        /// </summary>
+        public static string License_CauseTrialExpired {
+            get {
+                return ResourceManager.GetString("License_CauseTrialExpired", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to La fecha del equipo es anterior a la última fecha registrada ({0}). Corrige la fecha y la hora del equipo..
+        /// </summary>
+        public static string License_ClockBehind {
+            get {
+                return ResourceManager.GetString("License_ClockBehind", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Activación.
+        /// </summary>
+        public static string License_ColumnActivates {
+            get {
+                return ResourceManager.GetString("License_ColumnActivates", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Vencimiento.
+        /// </summary>
+        public static string License_ColumnExpires {
+            get {
+                return ResourceManager.GetString("License_ColumnExpires", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Módulo.
+        /// </summary>
+        public static string License_ColumnModule {
+            get {
+                return ResourceManager.GetString("License_ColumnModule", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Estado.
+        /// </summary>
+        public static string License_ColumnState {
+            get {
+                return ResourceManager.GetString("License_ColumnState", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Contacto del proveedor: {0} / {1}.
         /// </summary>
         public static string License_Contact {
             get {
                 return ResourceManager.GetString("License_Contact", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ID de máquina copiado al portapapeles..
+        /// </summary>
+        public static string License_Copied {
+            get {
+                return ResourceManager.GetString("License_Copied", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Copiar.
+        /// </summary>
+        public static string License_Copy {
+            get {
+                return ResourceManager.GetString("License_Copy", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cliente: {0}.
+        /// </summary>
+        public static string License_Customer {
+            get {
+                return ResourceManager.GetString("License_Customer", resourceCulture);
             }
         }
         
@@ -4315,20 +4459,20 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Exportar solicitud….
+        ///   Looks up a localized string similar to Exportar respaldo.
         /// </summary>
-        public static string License_ExportRequest {
+        public static string License_ExportBackup {
             get {
-                return ResourceManager.GetString("License_ExportRequest", resourceCulture);
+                return ResourceManager.GetString("License_ExportBackup", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Guardar solicitud de licencia.
+        ///   Looks up a localized string similar to Guardar respaldo de la base de datos.
         /// </summary>
-        public static string License_ExportRequestTitle {
+        public static string License_ExportBackupTitle {
             get {
-                return ResourceManager.GetString("License_ExportRequestTitle", resourceCulture);
+                return ResourceManager.GetString("License_ExportBackupTitle", resourceCulture);
             }
         }
         
@@ -4342,7 +4486,25 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Importar licencia….
+        ///   Looks up a localized string similar to Generar solicitud.
+        /// </summary>
+        public static string License_GenerateRequest {
+            get {
+                return ResourceManager.GetString("License_GenerateRequest", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Guardar solicitud de licencia.
+        /// </summary>
+        public static string License_GenerateRequestTitle {
+            get {
+                return ResourceManager.GetString("License_GenerateRequestTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Importar licencia.
         /// </summary>
         public static string License_Import {
             get {
@@ -4351,11 +4513,20 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Licencia importada. El sistema ya está actualizado..
+        ///   Looks up a localized string similar to Licencia importada. Los módulos se aplicaron..
         /// </summary>
         public static string License_Imported {
             get {
                 return ResourceManager.GetString("License_Imported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Licencia importada, pero el sistema sigue bloqueado: {0}..
+        /// </summary>
+        public static string License_ImportedBlocked {
+            get {
+                return ResourceManager.GetString("License_ImportedBlocked", resourceCulture);
             }
         }
         
@@ -4369,6 +4540,42 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Indefinido.
+        /// </summary>
+        public static string License_Indefinite {
+            get {
+                return ResourceManager.GetString("License_Indefinite", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Se conserva la licencia actual..
+        /// </summary>
+        public static string License_Kept {
+            get {
+                return ResourceManager.GetString("License_Kept", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ID de máquina.
+        /// </summary>
+        public static string License_MachineId {
+            get {
+                return ResourceManager.GetString("License_MachineId", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} vence el {1}..
+        /// </summary>
+        public static string License_ModuleExpiring {
+            get {
+                return ResourceManager.GetString("License_ModuleExpiring", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Este módulo no está activo en tu licencia..
         /// </summary>
         public static string License_ModuleNotLicensed {
@@ -4378,11 +4585,11 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Módulos activos: {0}.
+        ///   Looks up a localized string similar to Módulos.
         /// </summary>
-        public static string License_ModulesActive {
+        public static string License_ModulesTitle {
             get {
-                return ResourceManager.GetString("License_ModulesActive", resourceCulture);
+                return ResourceManager.GetString("License_ModulesTitle", resourceCulture);
             }
         }
         
@@ -4396,20 +4603,11 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Mañana vence el período de evaluación..
+        ///   Looks up a localized string similar to Mañana vence el período de prueba..
         /// </summary>
         public static string License_NearExpiryOne {
             get {
                 return ResourceManager.GetString("License_NearExpiryOne", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to ninguno.
-        /// </summary>
-        public static string License_NoModules {
-            get {
-                return ResourceManager.GetString("License_NoModules", resourceCulture);
             }
         }
         
@@ -4423,7 +4621,43 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to El archivo de licencia no era válido o faltaba y se regeneró. La evaluación continúa; si ya había comprado módulos, se reactivan al importar de nuevo su licencia extendida..
+        ///   Looks up a localized string similar to Abrir Ayuda &gt; Licencia.
+        /// </summary>
+        public static string License_OpenLicensePage {
+            get {
+                return ResourceManager.GetString("License_OpenLicensePage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Bloqueado: {0}.
+        /// </summary>
+        public static string License_OverallBlocked {
+            get {
+                return ResourceManager.GetString("License_OverallBlocked", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Licenciado.
+        /// </summary>
+        public static string License_OverallLicensed {
+            get {
+                return ResourceManager.GetString("License_OverallLicensed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to En prueba: {0}.
+        /// </summary>
+        public static string License_OverallTrial {
+            get {
+                return ResourceManager.GetString("License_OverallTrial", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to El archivo de la prueba no era válido o faltaba y se regeneró a partir de la copia protegida..
         /// </summary>
         public static string License_Regenerated {
             get {
@@ -4432,7 +4666,7 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to El archivo de licencia no es auténtico o fue modificado..
+        ///   Looks up a localized string similar to La licencia no es auténtica: no fue emitida por tu proveedor o fue modificada..
         /// </summary>
         public static string License_Reject_BadSignature {
             get {
@@ -4441,7 +4675,16 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Esa licencia pertenece a otra máquina. La licencia actual no cambió..
+        ///   Looks up a localized string similar to Esta licencia es más antigua que la vigente..
+        /// </summary>
+        public static string License_Reject_NotNewer {
+            get {
+                return ResourceManager.GetString("License_Reject_NotNewer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Esta licencia pertenece a otro equipo..
         /// </summary>
         public static string License_Reject_OtherMachine {
             get {
@@ -4450,7 +4693,7 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to El archivo de licencia no es válido..
+        ///   Looks up a localized string similar to El archivo no es una licencia válida o está dañado..
         /// </summary>
         public static string License_Reject_Unreadable {
             get {
@@ -4459,7 +4702,16 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Solicitud guardada en {0}. Envíela al proveedor para obtener su licencia..
+        ///   Looks up a localized string similar to El formato de esta licencia ya no es compatible. Pide a tu proveedor una licencia nueva..
+        /// </summary>
+        public static string License_Reject_UnsupportedFormat {
+            get {
+                return ResourceManager.GetString("License_Reject_UnsupportedFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Solicitud guardada en {0}. Envíala a tu proveedor por correo, mensajería o USB..
         /// </summary>
         public static string License_RequestSaved {
             get {
@@ -4468,29 +4720,56 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Solicitud de licencia.
+        ///   Looks up a localized string similar to La licencia venció. Puedes terminar y cobrar esta venta y cerrar el turno; no se pueden iniciar ventas nuevas..
         /// </summary>
-        public static string License_RequestType {
+        public static string License_SaleInProgressBlocked {
             get {
-                return ResourceManager.GetString("License_RequestType", resourceCulture);
+                return ResourceManager.GetString("License_SaleInProgressBlocked", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Licencia modular. {0}.
+        ///   Looks up a localized string similar to Activo.
         /// </summary>
-        public static string License_SummaryModular {
+        public static string License_StateActive {
             get {
-                return ResourceManager.GetString("License_SummaryModular", resourceCulture);
+                return ResourceManager.GetString("License_StateActive", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Período de evaluación: {0} restantes, con todos los módulos..
+        ///   Looks up a localized string similar to Vencido.
         /// </summary>
-        public static string License_SummaryTrial {
+        public static string License_StateExpired {
             get {
-                return ResourceManager.GetString("License_SummaryTrial", resourceCulture);
+                return ResourceManager.GetString("License_StateExpired", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No contratado.
+        /// </summary>
+        public static string License_StateNotLicensed {
+            get {
+                return ResourceManager.GetString("License_StateNotLicensed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Pendiente de activación.
+        /// </summary>
+        public static string License_StatePending {
+            get {
+                return ResourceManager.GetString("License_StatePending", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to El sistema no está activado. Abre Ayuda &gt; Licencia para activarlo..
+        /// </summary>
+        public static string License_SystemNotActivated {
+            get {
+                return ResourceManager.GetString("License_SystemNotActivated", resourceCulture);
             }
         }
         
@@ -4536,60 +4815,6 @@ namespace Pos.Desktop.Resources {
         public static string Menu_Toggle {
             get {
                 return ResourceManager.GetString("Menu_Toggle", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Reportes avanzados.
-        /// </summary>
-        public static string Module_AdvancedReports {
-            get {
-                return ResourceManager.GetString("Module_AdvancedReports", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Turnos y arqueo.
-        /// </summary>
-        public static string Module_CashShifts {
-            get {
-                return ResourceManager.GetString("Module_CashShifts", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Crédito y clientes.
-        /// </summary>
-        public static string Module_CreditAndCustomers {
-            get {
-                return ResourceManager.GetString("Module_CreditAndCustomers", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Descuentos y promociones.
-        /// </summary>
-        public static string Module_Discounts {
-            get {
-                return ResourceManager.GetString("Module_Discounts", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Inventario.
-        /// </summary>
-        public static string Module_Inventory {
-            get {
-                return ResourceManager.GetString("Module_Inventory", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Devoluciones.
-        /// </summary>
-        public static string Module_Returns {
-            get {
-                return ResourceManager.GetString("Module_Returns", resourceCulture);
             }
         }
         
@@ -5121,6 +5346,15 @@ namespace Pos.Desktop.Resources {
         public static string Nav_Inventory {
             get {
                 return ResourceManager.GetString("Nav_Inventory", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Licencia.
+        /// </summary>
+        public static string Nav_License {
+            get {
+                return ResourceManager.GetString("Nav_License", resourceCulture);
             }
         }
         

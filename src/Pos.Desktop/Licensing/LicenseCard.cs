@@ -8,14 +8,13 @@ using Pos.Domain.Licensing;
 namespace Pos.Desktop.Licensing;
 
 /// <summary>
-/// Tarjeta de licencia de Inicio (012): días restantes de la evaluación con los avisos exactos de 5 y 1
-/// día (FR-015, FR-016) o, en modo modular, los módulos activos. Avisa si el archivo se regeneró.
+/// Tarjeta de licencia de Inicio (025): estado general; en bloqueo, el mensaje de activación con sus pasos
+/// (FR-029); los avisos de prueba de 5 y 1 día (FR-024), de módulos por vencer (FR-035) y de reloj atrasado
+/// (FR-038). La licencia guardada rechazada se comunica con el bloqueo <c>LicenseInvalid</c>, sin aviso aparte.
 /// </summary>
 public sealed class LicenseCard(OperationRunner runner, UseCases useCases, LicenseBootstrapper bootstrapper) : DashboardCard(runner)
 {
-    private bool _modular;
-
-    public override string Title => _modular ? Strings.License_CardTitleModular : Strings.License_CardTitle;
+    public override string Title => Strings.License_CardTitle;
 
     public override string Icon => "Icon.Info";
 
@@ -28,24 +27,26 @@ public sealed class LicenseCard(OperationRunner runner, UseCases useCases, Licen
     protected override async Task LoadCoreAsync()
     {
         var status = await useCases.RunAsync<GetLicenseStatusHandler, LicenseStatusDto>(h => Task.FromResult(h.Handle()));
-        _modular = status.Phase == LicensePhase.Modular;
-        OnPropertyChanged(nameof(Title));
 
         var notes = new List<string>();
+        if (status.IsBlocked)
+        {
+            notes.Add(LicenseMessages.Blocked(status));
+            notes.Add(LicenseMessages.Contact(status));
+        }
+
+        if (status.ClockBehind)
+        {
+            notes.Add(LicenseMessages.ClockBehind(status));
+        }
+
         if (bootstrapper.FileWasRegenerated)
         {
-            notes.Add($"{Strings.License_Regenerated} {LicenseMessages.Contact(status)}");
+            notes.Add(Strings.License_Regenerated);
         }
 
-        if (_modular)
-        {
-            notes.Add(string.Format(System.Globalization.CultureInfo.CurrentCulture, Strings.License_ModulesActive, LicenseMessages.ModulesText(status.ActiveModules)));
-            SetReady(Strings.License_Active, string.Join(" ", notes));
-            return;
-        }
-
-        // Solo con exactamente 5 y 1 día restantes (SC-006); con cualquier otro valor no hay aviso.
-        switch (status.Warning)
+        // Solo con exactamente 5 y 1 día restantes; con cualquier otro valor no hay aviso.
+        switch (status.TrialWarning)
         {
             case LicenseWarning.Near:
                 notes.Insert(0, Strings.License_NearExpiry);
@@ -55,7 +56,12 @@ public sealed class LicenseCard(OperationRunner runner, UseCases useCases, Licen
                 break;
         }
 
-        notes.Add(Strings.License_AllModules);
-        SetReady(LicenseMessages.DaysText(status.DaysRemaining), string.Join(" ", notes));
+        notes.AddRange(status.ExpiringSoon.Select(LicenseMessages.Expiring));
+        if (status.Overall == LicenseOverall.Trial)
+        {
+            notes.Add(Strings.License_AllModules);
+        }
+
+        SetReady(LicenseMessages.Overall(status), string.Join(" ", notes));
     }
 }

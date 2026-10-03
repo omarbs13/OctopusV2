@@ -1,4 +1,5 @@
 using Pos.Application.Abstractions;
+using Pos.Application.Licensing;
 using Pos.Application.Users.Access;
 using Pos.Domain.Users;
 
@@ -11,11 +12,13 @@ namespace Pos.Application.CashShifts.GetShiftCut;
 public sealed class GetShiftCutHandler
 {
     private readonly IAccessControl _access;
+    private readonly ILicenseState? _license;
     private readonly ICurrentUser _currentUser;
     private readonly ICashShiftRepository _shifts;
 
-    public GetShiftCutHandler(IAccessControl access, ICurrentUser currentUser, ICashShiftRepository shifts)
+    public GetShiftCutHandler(IAccessControl access, ICurrentUser currentUser, ICashShiftRepository shifts, ILicenseState? license = null)
     {
+        _license = license;
         _access = access;
         _currentUser = currentUser;
         _shifts = shifts;
@@ -24,6 +27,12 @@ public sealed class GetShiftCutHandler
     public async Task<Result<ShiftCutReportDto>> HandleAsync(GetShiftCutQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query);
+
+        // 025, SC-005: en bloqueo no se consultan ni reimprimen cortes.
+        if (LicenseGate.WhenBlocked(_license) is { } blocked)
+        {
+            return Result.Failure<ShiftCutReportDto>(blocked);
+        }
 
         var access = await _access.CheckAsync(Permission.OperateShift, cancellationToken);
         if (!access.Allowed)

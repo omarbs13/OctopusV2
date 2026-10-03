@@ -76,7 +76,7 @@ public sealed class ModuleRegistrationTests
         Assert.Equal(30, scanner.Order);
         Assert.Null(scanner.Permission);
         Assert.Equal("Icon.BarcodeScan", scanner.Icon);
-        Assert.DoesNotContain(entries, e => e.GroupId == AboutModule.GroupId && e.Id != AboutModule.PageId);
+        Assert.DoesNotContain(entries, e => e.GroupId == AboutModule.GroupId && e.Id is not (AboutModule.PageId or LicenseModule.PageId));
     }
 
     [Fact]
@@ -97,7 +97,7 @@ public sealed class ModuleRegistrationTests
             .SelectMany(r => r.Group is { } group ? [group.Icon, .. r.Children.Select(c => c.Icon)] : new[] { r.Entry!.Icon })
             .ToList();
 
-        Assert.Equal(41, icons.Count);
+        Assert.Equal(42, icons.Count);
         Assert.Empty(icons.GroupBy(i => i, StringComparer.Ordinal).Where(g => g.Count() > 1).Select(g => g.Key));
     }
 

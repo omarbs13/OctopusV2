@@ -97,6 +97,7 @@ using Pos.Application.Sales.ReviewSale;
 using Pos.Application.Sales.SaveSaleDraft;
 using Pos.Application.Sales.SearchSales;
 using Pos.Application.Scanner.InspectScan;
+using Pos.Application.Backup.ExportBackup;
 using Pos.Application.Licensing;
 using Pos.Application.Licensing.ExportLicenseRequest;
 using Pos.Application.Licensing.GetLicenseStatus;
@@ -348,13 +349,14 @@ public static class DependencyInjection
         services.AddSingleton<IValidator<OpenCashDrawerCommand>, OpenCashDrawerValidator>();
         services.AddScoped<OpenCashDrawerHandler>();
 
-        // Licencia local (011)
+        // Licencia coordinada con OctopusAdmin (025)
         services.AddSingleton<ILicenseState, LicenseState>();
         services.AddSingleton(VendorContact.Default);
         services.AddSingleton<LicenseBootstrapper>();
         services.AddSingleton<GetLicenseStatusHandler>();
         services.AddScoped<ImportLicenseHandler>();
         services.AddScoped<ExportLicenseRequestHandler>();
+        services.AddScoped<ExportBackupHandler>();
 
         // Diagnóstico
         services.AddScoped<GetAppInfoHandler>();

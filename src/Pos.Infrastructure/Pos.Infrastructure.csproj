@@ -15,4 +15,8 @@
   <ItemGroup>
     <InternalsVisibleTo Include="Pos.Infrastructure.Tests" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- Catálogo compartido con OctopusAdmin (025, FR-005): viaja dentro del ensamblado. -->
+    <EmbeddedResource Include="..\..\contracts\module-catalog.json" LogicalName="Pos.ModuleCatalog.json" />
+  </ItemGroup>
 </Project>

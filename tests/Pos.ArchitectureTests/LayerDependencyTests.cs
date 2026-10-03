@@ -95,6 +95,42 @@ public class LayerDependencyTests
         AssertSuccess(result);
     }
 
+    [Fact]
+    public void LicenciaDeDomain_NoLeeJsonNiUsaCriptografia()
+    {
+        // 025, Principio II: el evaluador es puro; el JSON del catálogo y la firma viven en Infrastructure.
+        var result = Types.InAssembly(DomainAssembly)
+            .That()
+            .ResideInNamespace("Pos.Domain.Licensing")
+            .ShouldNot()
+            .HaveDependencyOnAny("System.Text.Json", "System.Security.Cryptography")
+            .GetResult();
+
+        AssertSuccess(result);
+    }
+
+    [Fact]
+    public void Licencia_FuncionaSinConexion()
+    {
+        // 025, FR-042: el control de licencias nunca abre conexiones de red. Leer la MAC
+        // (System.Net.NetworkInformation) para el ID de máquina es local y sí se permite.
+        foreach (var (assembly, ns) in new[]
+        {
+            (ApplicationAssembly, "Pos.Application.Licensing"),
+            (InfrastructureAssembly, "Pos.Infrastructure.Licensing"),
+        })
+        {
+            var result = Types.InAssembly(assembly)
+                .That()
+                .ResideInNamespace(ns)
+                .ShouldNot()
+                .HaveDependencyOnAny("System.Net.Http", "System.Net.Sockets")
+                .GetResult();
+
+            AssertSuccess(result);
+        }
+    }
+
     private static void AssertSuccess(NetArchTest.Rules.TestResult result)
     {
         var failing = result.FailingTypeNames is null

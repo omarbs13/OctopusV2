@@ -4,6 +4,7 @@ using Pos.Application.Abstractions;
 using Pos.Application.Categories;
 using Pos.Application.Categories.CreateCategory;
 using Pos.Application.Categories.DeleteCategory;
+using Pos.Application.Categories.ListCategoryOptions;
 using Pos.Application.Categories.SearchCategories;
 using Pos.Application.Categories.SetCategoryActive;
 using Pos.Application.Categories.UpdateCategory;
@@ -163,7 +164,8 @@ public sealed class CategoryTestSupport
                 new CategoryRepository(context),
                 new WriteTransactions(context),
                 new AuditLog(context),
-                NullLogger<CreateProductHandler>.Instance)
+                NullLogger<CreateProductHandler>.Instance,
+                Users.License)
             .HandleAsync(new CreateProductCommand($"Producto {sku}", sku, null, "10.00", "H87", CategoryId: categoryId), Ct);
     }
 
@@ -180,10 +182,19 @@ public sealed class CategoryTestSupport
                 new WriteTransactions(context),
                 new CategoryRepository(context),
                 new AuditLog(context),
-                NullLogger<UpdateProductHandler>.Instance)
+                NullLogger<UpdateProductHandler>.Instance,
+                Users.License)
             .HandleAsync(
                 new UpdateProductCommand(productId, current.Version, name, current.Sku, current.Barcode, "10.00", current.UnitCode, current.IsActive, CategoryId: categoryId),
                 Ct);
+    }
+
+    /// <summary>Opciones del selector de categorías (respeta la licencia de <see cref="ShiftTestSupport.License"/>).</summary>
+    public async Task<Result<IReadOnlyList<CategoryOptionDto>>> ListOptionsAsync()
+    {
+        await using var context = _db.CreateDbContext();
+        return await new ListCategoryOptionsHandler(Users.Access(context), new CategoryRepository(context), Users.License)
+            .HandleAsync(new ListCategoryOptionsQuery(IncludeInactive: false), Ct);
     }
 
     public async Task<ProductPage> SearchProductsAsync(string? text, CategoryFilter category)

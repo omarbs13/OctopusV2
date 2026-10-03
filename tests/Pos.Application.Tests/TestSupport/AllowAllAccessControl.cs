@@ -14,4 +14,9 @@ public sealed class AllowAllAccessControl : IAccessControl
         Task.FromResult(AccessDecision.Allow());
 
     public Task<bool> HasAsync(Permission permission, CancellationToken cancellationToken) => Task.FromResult(true);
+
+    public Task<AccessDecision> CheckSessionAsync(CancellationToken cancellationToken) => Task.FromResult(AccessDecision.Allow());
+
+    public Task<AccessDecision> CheckToFinishAsync(Permission permission, CancellationToken cancellationToken) =>
+        Task.FromResult(AccessDecision.Allow());
 }

@@ -3,7 +3,7 @@ using Pos.Domain.Users;
 
 namespace Pos.Domain.Tests.Licensing;
 
-/// <summary>012, FR-021: qué permisos pertenecen a un módulo y cuáles nunca se bloquean.</summary>
+/// <summary>012, FR-021; 025, data-model: qué módulos exige cada permiso y cuáles nunca se bloquean por módulo.</summary>
 public sealed class ModuleAccessTests
 {
     [Theory]
@@ -13,6 +13,7 @@ public sealed class ModuleAccessTests
     [InlineData(Permission.OperateShift, LicensedModule.CashShifts)]
     [InlineData(Permission.WithdrawCash, LicensedModule.CashShifts)]
     [InlineData(Permission.ManageShifts, LicensedModule.CashShifts)]
+    [InlineData(Permission.GenerateShiftReadout, LicensedModule.CashShifts)]
     [InlineData(Permission.ProcessReturns, LicensedModule.Returns)]
     [InlineData(Permission.ApproveReturns, LicensedModule.Returns)]
     [InlineData(Permission.ManageCreditNotes, LicensedModule.Returns)]
@@ -27,18 +28,33 @@ public sealed class ModuleAccessTests
     [InlineData(Permission.ApproveDiscounts, LicensedModule.Discounts)]
     [InlineData(Permission.ManageDiscounts, LicensedModule.Discounts)]
     [InlineData(Permission.ViewDiscountReport, LicensedModule.Discounts)]
-    [InlineData(Permission.ManageSuppliers, LicensedModule.Inventory)]
-    [InlineData(Permission.RegisterPurchases, LicensedModule.Inventory)]
-    [InlineData(Permission.VoidPurchases, LicensedModule.Inventory)]
-    [InlineData(Permission.ViewPurchaseReport, LicensedModule.Inventory)]
-    public void PermisosDeModulo_MapeanASuModulo(Permission permission, LicensedModule expected) =>
-        Assert.Equal(expected, ModuleAccess.Required(permission));
+    [InlineData(Permission.ManageSuppliers, LicensedModule.Suppliers)]
+    [InlineData(Permission.ViewPurchaseReport, LicensedModule.Suppliers)]
+    [InlineData(Permission.ManageCategories, LicensedModule.Categories)]
+    public void PermisosDeUnModulo_MapeanASuModulo(Permission permission, LicensedModule expected) =>
+        Assert.Equal([expected], ModuleAccess.RequiredModules(permission));
+
+    [Theory]
+    [InlineData(Permission.RegisterPurchases)]
+    [InlineData(Permission.VoidPurchases)]
+    public void ComprasAProveedores_ExigenProveedoresEInventario(Permission permission) =>
+        Assert.Equal([LicensedModule.Suppliers, LicensedModule.Inventory], ModuleAccess.RequiredModules(permission));
 
     [Theory]
     [InlineData(Permission.Sell)]
     [InlineData(Permission.ManageUsers)]
     [InlineData(Permission.ManageLicense)]
+    [InlineData(Permission.ExportBackup)]
     [InlineData(Permission.CancelSales)]
-    public void FuncionesBasicas_NuncaSeBloquean(Permission permission) =>
-        Assert.Null(ModuleAccess.Required(permission));
+    [InlineData(Permission.ManageProducts)]
+    public void FuncionesBasicas_NoExigenModulo(Permission permission) =>
+        Assert.Empty(ModuleAccess.RequiredModules(permission));
+
+    [Fact]
+    public void PrimerModuloInactivo_SigueElOrdenDeLaTabla()
+    {
+        Assert.Equal(LicensedModule.Suppliers, ModuleAccess.FirstInactive(Permission.RegisterPurchases, _ => false));
+        Assert.Equal(LicensedModule.Inventory, ModuleAccess.FirstInactive(Permission.RegisterPurchases, m => m == LicensedModule.Suppliers));
+        Assert.Null(ModuleAccess.FirstInactive(Permission.RegisterPurchases, _ => true));
+    }
 }

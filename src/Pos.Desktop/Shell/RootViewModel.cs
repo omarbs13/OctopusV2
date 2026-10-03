@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Pos.Application.Abstractions;
+using Pos.Application.Licensing;
 using Pos.Application.Security;
 using Pos.Application.Security.GetSecuritySettings;
 using Pos.Application.Users;
@@ -203,6 +204,12 @@ public sealed partial class RootViewModel : ViewModelBase, ISessionActions, ISes
         {
             ShowLogin(null);
             return;
+        }
+
+        // 025, FR-034: el estado de la licencia se recalcula al iniciar sesión (y la última fecha vista avanza).
+        if (_root.GetService(typeof(LicenseBootstrapper)) is LicenseBootstrapper license)
+        {
+            await license.TouchAsync();
         }
 
         var scope = new SessionScope(_root);

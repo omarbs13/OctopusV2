@@ -95,6 +95,7 @@ public sealed partial class MenuViewModel : ViewModelBase, IDisposable
     private readonly Navigator _navigator;
     private readonly IPreferencesStore _preferences;
     private readonly ILicenseState? _license;
+    private readonly LicenseMenuPolicy? _policy;
     private readonly SynchronizationContext? _context = SynchronizationContext.Current;
     private readonly string _preferencesKey;
 
@@ -104,8 +105,10 @@ public sealed partial class MenuViewModel : ViewModelBase, IDisposable
         IPreferencesStore preferences,
         UserSectionViewModel? userSection = null,
         ILicenseState? license = null,
-        IUserSession? session = null)
+        IUserSession? session = null,
+        LicenseMenuPolicy? policy = null)
     {
+        _policy = policy;
         ArgumentNullException.ThrowIfNull(registry);
         ArgumentNullException.ThrowIfNull(navigator);
         _registry = registry;
@@ -128,7 +131,7 @@ public sealed partial class MenuViewModel : ViewModelBase, IDisposable
             }
         }
 
-        _navigator.CurrentChanged += (_, _) => SyncCurrent();
+        _navigator.CurrentChanged += (_, _) => OnCurrentChanged();
         SyncCurrent();
         SyncCollapsed();
 
@@ -136,6 +139,9 @@ public sealed partial class MenuViewModel : ViewModelBase, IDisposable
         {
             _license.Changed += OnLicenseChanged;
         }
+
+        // La venta en curso y el turno abierto deciden el menú en bloqueo (025, blocked-mode §2).
+        _ = RefreshPolicyAsync(rebuildAlways: false);
     }
 
     /// <summary>Opciones visibles; se reconstruye al cambiar la licencia, sin reiniciar (012, FR-017).</summary>
@@ -207,11 +213,27 @@ public sealed partial class MenuViewModel : ViewModelBase, IDisposable
     {
         if (_context is null)
         {
-            RebuildItems();
+            _ = RefreshPolicyAsync(rebuildAlways: true);
         }
         else
         {
-            _context.Post(_ => RebuildItems(), null);
+            _context.Post(_ => _ = RefreshPolicyAsync(rebuildAlways: true), null);
+        }
+    }
+
+    /// <summary>Al salir de una pantalla pudo terminar la venta o cerrarse el turno: el menú en bloqueo cambia.</summary>
+    private void OnCurrentChanged()
+    {
+        SyncCurrent();
+        _ = RefreshPolicyAsync(rebuildAlways: false);
+    }
+
+    private async Task RefreshPolicyAsync(bool rebuildAlways)
+    {
+        var changed = _policy is not null && await _policy.RefreshAsync();
+        if (changed || rebuildAlways)
+        {
+            RebuildItems();
         }
     }
 

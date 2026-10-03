@@ -38,16 +38,15 @@ public sealed class AboutViewModelTests : IDisposable
     }
 
     [Fact]
-    public async Task SinPermisoDeLicencia_TambienMuestraElIdDeMaquina()
+    public async Task SinPermisos_TambienMuestraElIdDeMaquina_PeroNoExportaRespaldo()
     {
         var about = new AboutViewModel(
             _host.UseCases, _host.Runner, _host.Dialogs, _host.Get<IClock>(), _host.Clipboard, new NoPermissions());
 
         await about.OnActivatedAsync();
 
-        Assert.False(about.CanManageLicense);
+        Assert.False(about.CanExportBackup);
         Assert.Equal(FakeMachineId.Id, about.MachineId);
-        Assert.Empty(about.LicenseSummary);
     }
 
     [Fact]

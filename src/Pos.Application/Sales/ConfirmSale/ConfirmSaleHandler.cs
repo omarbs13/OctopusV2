@@ -109,6 +109,14 @@ public sealed partial class ConfirmSaleHandler
 
         ArgumentNullException.ThrowIfNull(command);
 
+        // 025, FR-030a: en bloqueo solo se cobra la venta en curso (el borrador guardado con líneas).
+        var stored = await _drafts.LoadAsync(cancellationToken);
+        if (DraftInProgress.RejectNewSaleWhenBlocked(_license, stored, command.DraftId) is { } blocked)
+        {
+            LogBlocked(command.DraftId);
+            return Result.Failure<ConfirmedSale>(blocked);
+        }
+
         var validation = await _validator.ValidateAsync(command, cancellationToken);
         if (!validation.IsValid)
         {
@@ -131,15 +139,20 @@ public sealed partial class ConfirmSaleHandler
         }
 
         // 015: aplicar descuentos exige el módulo Descuentos y el permiso ApplyDiscounts (FR-021, FR-022).
+        // 025, FR-030a: los descuentos ya capturados en la venta en curso se respetan aunque el módulo venza;
+        // uno nuevo o distinto sigue la regla de módulo.
         if (command.HasDiscounts)
         {
-            var discounts = await _access.CheckAsync(Permission.ApplyDiscounts, cancellationToken);
+            var captured = DraftInProgress.HasOnlyCapturedDiscounts(stored, command);
+            var discounts = captured
+                ? await _access.CheckToFinishAsync(Permission.ApplyDiscounts, cancellationToken)
+                : await _access.CheckAsync(Permission.ApplyDiscounts, cancellationToken);
             if (!discounts.Allowed)
             {
                 return Result.Failure<ConfirmedSale>(discounts.Error!);
             }
 
-            if (_license?.IsModuleActive(LicensedModule.Discounts) == false
+            if ((!captured && _license?.IsModuleActive(LicensedModule.Discounts) == false)
                 || _discountSettings is null || _approvals is null || _coupons is null || _currentUser is null)
             {
                 return Result.Failure<ConfirmedSale>(new ModuleNotLicensed(LicensedModule.Discounts));
@@ -738,6 +751,9 @@ public sealed partial class ConfirmSaleHandler
     [LoggerMessage(Level = LogLevel.Warning,
         Message = "Venta rechazada por reglas de dominio. DraftId={DraftId} Lines={Lines}")]
     private partial void LogRejected(Exception exception, Guid draftId, int lines);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Venta nueva rechazada: el sistema está bloqueado por licencia. DraftId={DraftId}")]
+    private partial void LogBlocked(Guid draftId);
 
     [LoggerMessage(Level = LogLevel.Warning,
         Message = "Venta no registrada por conflicto. DraftId={DraftId} Lines={Lines}")]

@@ -41,6 +41,7 @@ public sealed class DesktopTestHost : IDisposable
         services.AddSingleton<IClock>(Clock);
         services.AddSingleton<IAppInfo, FakeAppInfo>();
         services.AddSingleton<Pos.Application.Licensing.IMachineIdProvider, FakeMachineId>();
+        services.AddSingleton<Pos.Application.Licensing.IModuleCatalogInfo, Pos.Infrastructure.Licensing.EmbeddedModuleCatalogInfo>();
         services.AddSingleton<IAppPaths, FakeAppPaths>();
         services.AddSingleton<IDiagnosticsExporter>(Exporter);
         services.AddSingleton<IClipboardService>(Clipboard);

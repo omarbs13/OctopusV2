@@ -1,0 +1,77 @@
+{
+  "catalogVersion": 1,
+  "modules": [
+    {
+      "id": "4c2517f5-096a-460e-8ee7-b09e46572952",
+      "key": "pos",
+      "name": "Punto de venta",
+      "description": "Módulo base: ventas, cobro, tickets, productos y usuarios. Sin él, el sistema se bloquea.",
+      "order": 1,
+      "isBase": true
+    },
+    {
+      "id": "7a99f06e-6c58-43fb-bc34-20bec30f8060",
+      "key": "inventory",
+      "name": "Inventario",
+      "description": "Existencias, movimientos de inventario y alertas de existencia baja.",
+      "order": 2,
+      "isBase": false
+    },
+    {
+      "id": "d6c0dca2-2400-481b-94fc-2d90688eedfc",
+      "key": "advanced_reports",
+      "name": "Reportes avanzados",
+      "description": "Reportes de ventas, productos y utilidad por periodo.",
+      "order": 3,
+      "isBase": false
+    },
+    {
+      "id": "be39a38f-0371-4b15-9bb6-fcb9c1bb1b7a",
+      "key": "credit_customers",
+      "name": "Crédito y clientes",
+      "description": "Clientes, ventas a crédito, abonos y cuentas por cobrar.",
+      "order": 4,
+      "isBase": false
+    },
+    {
+      "id": "b2145dea-fd36-48bc-85ba-773875b4a298",
+      "key": "cash_shifts",
+      "name": "Turnos y arqueo",
+      "description": "Apertura y cierre de turnos, movimientos de efectivo, arqueo y cortes X y Z.",
+      "order": 5,
+      "isBase": false
+    },
+    {
+      "id": "2b1ab797-3339-43ef-a135-022f998177ca",
+      "key": "returns",
+      "name": "Devoluciones",
+      "description": "Cancelaciones, devoluciones y notas de crédito.",
+      "order": 6,
+      "isBase": false
+    },
+    {
+      "id": "1e6111ca-514b-497e-b553-154960c946f3",
+      "key": "suppliers",
+      "name": "Proveedores",
+      "description": "Proveedores, entrada de mercancía por compra y reporte de compras.",
+      "order": 7,
+      "isBase": false
+    },
+    {
+      "id": "01a0f957-082e-72cb-9c5a-9cc8fbee6772",
+      "key": "discounts",
+      "name": "Descuentos y promociones",
+      "description": "Descuentos por línea y globales, cupones y reporte de descuentos.",
+      "order": 8,
+      "isBase": false
+    },
+    {
+      "id": "7b4ae9e2-6e3f-4006-b259-b7d4dcd06933",
+      "key": "categories",
+      "name": "Categorías de productos",
+      "description": "Alta y administración de categorías y su asignación a productos.",
+      "order": 9,
+      "isBase": false
+    }
+  ]
+}

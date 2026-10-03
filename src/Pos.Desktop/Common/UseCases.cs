@@ -36,9 +36,9 @@ public sealed class UseCases
     /// casos de uso ya los registran como WARNING o INFO.
     /// </summary>
     private static bool IsExpected(Error error) =>
-        error is Forbidden or InvalidCredentials or LockedOut or AlreadyRegistered or SaleChanged
+        error is Forbidden or SessionRequired or InvalidCredentials or LockedOut or AlreadyRegistered or SaleChanged
             or ShiftRequired or ShiftOwnedByOther or ShiftAlreadyOpen or ShiftClosed or ShiftChanged
-            or InsufficientCash or SaleInProgress or HeldSaleWillBeDiscarded or ModuleNotLicensed
+            or InsufficientCash or SaleInProgress or HeldSaleWillBeDiscarded or ModuleNotLicensed or SystemNotActivated
             or ReturnWindowExpired or NothingToReturn or CreditNoteNotFound or InsufficientCreditNote
             or CreditLimitExceeded or CustomerNotEligibleForCredit or CustomerHasBalance or PaymentExceedsBalance;
 

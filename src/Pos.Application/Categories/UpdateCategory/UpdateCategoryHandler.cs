@@ -40,7 +40,7 @@ public sealed partial class UpdateCategoryHandler
     {
         ArgumentNullException.ThrowIfNull(command);
 
-        var access = await _access.CheckAsync(Permission.ManageProducts, cancellationToken);
+        var access = await _access.CheckAsync(Permission.ManageCategories, cancellationToken);
         if (!access.Allowed)
         {
             return Result.Failure(access.Error!);

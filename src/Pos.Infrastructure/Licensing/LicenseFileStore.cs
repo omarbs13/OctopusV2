@@ -9,20 +9,25 @@ using Pos.Domain.Licensing;
 namespace Pos.Infrastructure.Licensing;
 
 /// <summary>
-/// <c>license.lic</c> (012, contracts §2; la versión 1 de 011 solo se lee para migrar): encabezado (marca, versión, huella del ID de máquina), nonce,
-/// etiqueta y contenido cifrado con AES-256-GCM. La clave sale de HKDF con el ID de máquina, así que
-/// copiarlo a otra máquina o editarlo lo invalida.
+/// Archivo de prueba <c>license.lic</c> (025, research §4; no es una licencia del proveedor aunque comparta la
+/// extensión): encabezado (marca, versión, huella del ID de máquina), nonce, etiqueta y contenido cifrado con
+/// AES-256-GCM. Se escribe el archivo de prueba v3; el v2 de 012 se lee y se migra; el v1 de 011 ya no se lee.
 /// </summary>
 public sealed partial class LicenseFileStore : ILicenseStore
 {
-    private const int CurrentVersion = 2;
-    private const int LegacyVersion = 1;
+    private const int CurrentVersion = 3;
+    private const int PreviousVersion = 2;
     private const int FingerprintLength = 8;
     private const int NonceLength = 12;
     private const int TagLength = 16;
 
     private static readonly byte[] Magic = "POSL"u8.ToArray();
-    private static readonly byte[] AppSecret = "Pos.License.Secret.v1/7c1f9a52-3e0b-4d6f-8b21-5a94d0e8c3b7"u8.ToArray();
+
+    /// <summary>
+    /// Contexto fijo de la derivación de la clave. No es un secreto (está en el código): solo detecta ediciones
+    /// casuales del archivo; la licencia comercial depende únicamente de la firma del proveedor (research §4).
+    /// </summary>
+    private static readonly byte[] KeyContext = "Pos.License.Secret.v1/7c1f9a52-3e0b-4d6f-8b21-5a94d0e8c3b7"u8.ToArray();
     private static readonly int HeaderLength = Magic.Length + 1 + FingerprintLength;
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -50,7 +55,7 @@ public sealed partial class LicenseFileStore : ILicenseStore
             var bytes = File.ReadAllBytes(file);
             var machineId = _machine.GetMachineId();
             if (bytes.Length < HeaderLength + NonceLength + TagLength || !bytes.AsSpan(0, Magic.Length).SequenceEqual(Magic)
-                || bytes[Magic.Length] is not (CurrentVersion or LegacyVersion))
+                || bytes[Magic.Length] is not (CurrentVersion or PreviousVersion))
             {
                 return Unusable("formato");
             }
@@ -60,23 +65,16 @@ public sealed partial class LicenseFileStore : ILicenseStore
                 return Unusable("otra máquina");
             }
 
-            var version = bytes[Magic.Length];
             var content = Decrypt(bytes, machineId);
-            if (version == LegacyVersion)
-            {
-                var legacy = JsonSerializer.Deserialize<LegacyContent>(content, JsonOptions);
-                return legacy is null || !string.Equals(legacy.MachineId, machineId, StringComparison.Ordinal)
-                    ? Unusable("contenido")
-                    : new LicenseLoadResult.LegacyV1(legacy.ToLegacy());
-            }
-
             var data = JsonSerializer.Deserialize<FileContent>(content, JsonOptions);
             if (data is null || !string.Equals(data.MachineId, machineId, StringComparison.Ordinal))
             {
                 return Unusable("contenido");
             }
 
-            return new LicenseLoadResult.Loaded(data.ToRecord());
+            // El archivo de prueba v2 traía los módulos de una licencia de 011/012: se descartan (FR-021).
+            var hadModules = bytes[Magic.Length] == PreviousVersion && data.Modules is { Count: > 0 };
+            return new LicenseLoadResult.Loaded(data.ToRecord(), hadModules);
         }
         catch (Exception ex) when (ex is CryptographicException or JsonException or FormatException or IOException
             or UnauthorizedAccessException or ArgumentException)
@@ -85,7 +83,7 @@ public sealed partial class LicenseFileStore : ILicenseStore
         }
     }
 
-    public void Save(LicenseRecord record)
+    public void Save(TrialRecord record)
     {
         ArgumentNullException.ThrowIfNull(record);
 
@@ -130,7 +128,7 @@ public sealed partial class LicenseFileStore : ILicenseStore
     }
 
     private static byte[] DeriveKey(string machineId) =>
-        HKDF.DeriveKey(HashAlgorithmName.SHA256, Encoding.UTF8.GetBytes(machineId), 32, AppSecret, "pos-license-v1"u8.ToArray());
+        HKDF.DeriveKey(HashAlgorithmName.SHA256, Encoding.UTF8.GetBytes(machineId), 32, KeyContext, "pos-license-v1"u8.ToArray());
 
     private static byte[] Fingerprint(string machineId) =>
         SHA256.HashData(Encoding.UTF8.GetBytes("fp:" + machineId))[..FingerprintLength];
@@ -141,50 +139,30 @@ public sealed partial class LicenseFileStore : ILicenseStore
         return new LicenseLoadResult.Unusable();
     }
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "El archivo de licencia es inutilizable: {Reason}")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "El archivo de prueba es inutilizable: {Reason}")]
     private partial void LogUnusable(string reason);
 
-    private sealed record FileContent(string MachineId, DateTime FirstRunUtc, DateTime LastSeenUtc, int TrialDays, List<Guid> Modules)
+    /// <summary>Contenido de los archivos de prueba v2 y v3; <c>Modules</c> solo existe en el v2.</summary>
+    private sealed record FileContent(
+        string MachineId,
+        DateTime FirstRunUtc,
+        DateTime LastSeenUtc,
+        int TrialDays,
+        DateTime? LicenseImportedUtc = null,
+        List<Guid>? Modules = null)
     {
-        public static FileContent From(LicenseRecord record) => new(
+        public static FileContent From(TrialRecord record) => new(
             record.MachineId,
             record.FirstRunUtc,
             record.LastSeenUtc,
             record.TrialDays,
-            [.. record.Modules.Select(ModuleCatalog.IdOf)]);
+            record.LicenseImportedUtc);
 
-        public LicenseRecord ToRecord()
-        {
-            // Los identificadores desconocidos se ignoran (FR-008).
-            var modules = new HashSet<LicensedModule>();
-            foreach (var id in Modules ?? [])
-            {
-                if (ModuleCatalog.TryGetModule(id, out var module))
-                {
-                    modules.Add(module);
-                }
-            }
-
-            return new LicenseRecord(
-                CurrentVersion,
-                MachineId,
-                DateTime.SpecifyKind(FirstRunUtc, DateTimeKind.Utc),
-                DateTime.SpecifyKind(LastSeenUtc, DateTimeKind.Utc),
-                TrialDays,
-                modules);
-        }
-    }
-
-    private sealed record LegacyContent(string MachineId, DateTime FirstRunUtc, DateTime LastSeenUtc, LegacyGrant? Grant)
-    {
-        public LegacyLicense ToLegacy() => new(
+        public TrialRecord ToRecord() => new(
+            MachineId,
             DateTime.SpecifyKind(FirstRunUtc, DateTimeKind.Utc),
             DateTime.SpecifyKind(LastSeenUtc, DateTimeKind.Utc),
-            Grant is not null,
-            Grant?.ValidUntil is { } text
-                ? DateOnly.ParseExact(text, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)
-                : null);
+            TrialDays,
+            LicenseImportedUtc is { } imported ? DateTime.SpecifyKind(imported, DateTimeKind.Utc) : null);
     }
-
-    private sealed record LegacyGrant(string? ValidUntil);
 }
