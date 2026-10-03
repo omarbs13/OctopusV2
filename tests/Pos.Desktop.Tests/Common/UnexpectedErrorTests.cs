@@ -111,7 +111,7 @@ public sealed class UnexpectedErrorTests : IDisposable
     [Fact]
     public async Task Exportacion_ErrorNoPrevistoSeRegistraYSeInforma()
     {
-        var about = new AboutViewModel(_host.UseCases, _host.Runner, _host.Dialogs, _host.Get<IClock>());
+        var about = new AboutViewModel(_host.UseCases, _host.Runner, _host.Dialogs, _host.Get<IClock>(), _host.Clipboard);
         _host.Dialogs.SaveFilePath = "/destino/diag.zip";
         _host.Exporter.FailWith = Failure;
 

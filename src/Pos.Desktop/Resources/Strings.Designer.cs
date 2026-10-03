@@ -58,11 +58,65 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Copiar ruta.
+        /// </summary>
+        public static string About_CopyPath {
+            get {
+                return ResourceManager.GetString("About_CopyPath", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Carpeta de datos.
+        /// </summary>
+        public static string About_DataDirectory {
+            get {
+                return ResourceManager.GetString("About_DataDirectory", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Para soporte técnico: la exportación genera un archivo con los registros de los últimos 30 días y los datos de la versión; el respaldo de la base de datos es opcional..
         /// </summary>
         public static string About_Description {
             get {
                 return ResourceManager.GetString("About_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Desarrollador.
+        /// </summary>
+        public static string About_Developer {
+            get {
+                return ResourceManager.GetString("About_Developer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Omar Ceron Ochoa.
+        /// </summary>
+        public static string About_DeveloperName {
+            get {
+                return ResourceManager.GetString("About_DeveloperName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Email.
+        /// </summary>
+        public static string About_Email {
+            get {
+                return ResourceManager.GetString("About_Email", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to omarbs13@gmail.com.
+        /// </summary>
+        public static string About_EmailAddress {
+            get {
+                return ResourceManager.GetString("About_EmailAddress", resourceCulture);
             }
         }
         
@@ -126,6 +180,24 @@ namespace Pos.Desktop.Resources {
         public static string About_MachineId {
             get {
                 return ResourceManager.GetString("About_MachineId", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Producto.
+        /// </summary>
+        public static string About_Product {
+            get {
+                return ResourceManager.GetString("About_Product", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Octopus punto de venta.
+        /// </summary>
+        public static string About_ProductName {
+            get {
+                return ResourceManager.GetString("About_ProductName", resourceCulture);
             }
         }
         

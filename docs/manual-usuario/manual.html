@@ -73,8 +73,9 @@
   .portada .titulo { font-size: 38pt; font-weight: bold; line-height: 1.1; margin: 6mm 0; }
   .portada .sub { font-size: 13pt; opacity: 0.9; }
   .portada .pie { position: absolute; left: 22mm; bottom: 22mm; font-size: 10pt; opacity: 0.9; }
-  .portada .logo { position: absolute; right: 22mm; top: 24mm; width: 40mm; height: 40mm; border: 2px dashed rgba(255,255,255,0.6);
-                   border-radius: 8px; font-size: 8pt; text-align: center; padding-top: 15mm; box-sizing: border-box; opacity: 0.85; }
+  .portada .logo { position: absolute; right: 22mm; top: 24mm; width: 40mm; height: 40mm; background: #fff;
+                   border-radius: 6mm; padding: 4mm; box-sizing: border-box; }
+  .portada .logo img, .portada .logo svg { display: block; width: 100%; height: 100%; object-fit: contain; }
   /* Índice */
   .toc { list-style: none; padding: 0; }
   .toc li { margin: 0; }
@@ -98,7 +99,7 @@
 
 <!-- ============================================================ PORTADA -->
 <section class="portada">
-  <div class="logo">Logotipo<br/>(opcional)</div>
+  <div class="logo">{{LOGO}}</div>
   <div class="bloque">
     <div class="marca">PUNTO DE VENTA</div>
     <div class="titulo">Manual de usuario</div>
@@ -228,11 +229,11 @@ pantalla.</p>
 </figure>
 <div class="caja consejo"><b class="t">Logotipo propio en la pantalla de carga</b>
 Copie un archivo PNG llamado <code>logo.png</code> (de preferencia cuadrado, 320 × 320 px, con fondo
-transparente) en la carpeta de datos del sistema y reinicie. Si no conoce la ubicación de la carpeta, pídala a
-soporte: viene en el archivo de <b>Exportar diagnóstico…</b>.</div>
+transparente) en la carpeta de datos del sistema y reinicie. La ubicación de la carpeta se ve en
+<span class="ruta">Ayuda → Acerca de</span>.</div>
 <p>El sistema solo permite <b>una ventana abierta a la vez</b>: si lo abre de nuevo, se muestra la ventana
 existente.</p>
-<p>La pantalla de carga se ve unos 2 segundos. La primera vez, la ventana principal abre <b>maximizada</b>;
+<p>La pantalla de carga se ve unos 3 segundos. La primera vez, la ventana principal abre <b>maximizada</b>;
 después abre como la dejó la última vez (maximizada, o con el mismo tamaño y posición). Si la posición guardada
 quedó fuera de la pantalla (por ejemplo, al desconectar un segundo monitor), la ventana aparece centrada.</p>
 
@@ -1066,14 +1067,16 @@ exportaciones. Es de solo lectura: nadie puede modificarla ni borrarla.</p>
 <h1 class="num" id="cap-ayuda">Ayuda, licencia y respaldos</h1>
 
 <h2 id="ayu-acerca">Acerca de</h2>
-<p><span class="ruta">Ayuda → Acerca de</span> muestra la <b>versión</b> y el <b>ID de máquina</b> (para todos
-los roles; puede seleccionarlo y copiarlo si soporte lo pide por teléfono).</p>
+<p><span class="ruta">Ayuda → Acerca de</span> muestra el producto (<b>Octopus punto de venta</b>), el
+desarrollador y su email de contacto, la <b>versión</b>, el <b>ID de máquina</b> (puede seleccionarlo y copiarlo si
+soporte lo pide por teléfono) y la <b>carpeta de datos</b>, con <b>Copiar ruta</b>. Todos los roles ven estos datos.</p>
 <p><b>Exportar diagnóstico…</b> <span class="etq admin">Solo Administrador</span> genera un archivo
 <code>.zip</code> con los registros de los últimos 30 días para soporte técnico. La casilla <b>Incluir respaldo de
 la base de datos</b> agrega una copia de la información (sin imágenes de productos); márquela solo si soporte lo
 pide.</p>
 <figure class="captura" id="IMG-13-01" data-titulo="Ayuda → Acerca de">
-  Capture la pantalla con la versión, el ID de máquina, «Exportar diagnóstico…» y la administración de licencia.
+  Capture la pantalla con el producto y el desarrollador, la versión, el ID de máquina, la carpeta de datos,
+  «Exportar diagnóstico…» y la administración de licencia.
 </figure>
 
 <h2 id="ayu-escaner">Probar el escáner</h2>

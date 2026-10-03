@@ -8,6 +8,7 @@ Fuente y generador de `manual-de-usuario.pdf`.
 | `wireframes.py` | Wireframes SVG de ejemplo de las pantallas principales |
 | `construir.py` | Genera el PDF (índice, versión, capturas y lista de capturas) |
 | `imagenes/` | Capturas reales: `IMG-07-01.png`, etc. Los wireframes se exportan a `imagenes/wireframes/` |
+| `imagenes/logo.png` | Logotipo de la portada (opcional; también `.jpg`, `.webp` o `.svg`). Sin él se usa el logotipo de la aplicación |
 
 ## Generar el PDF
 

@@ -10,8 +10,8 @@ Guía para desarrolladores y soporte técnico.
 | Linux | `~/.local/share/Pos` |
 
 La variable de entorno `POS_DATA_DIR` reemplaza esa ruta; es útil para pruebas y para soporte.
-La ruta real viene en el diagnóstico (**Acerca de → Exportar diagnóstico…**). Desde 0.17.0 la pantalla
-**Acerca de** ya no la muestra; solo la versión, el ID de máquina, el diagnóstico y la licencia.
+La ruta real siempre se ve en la pantalla **Acerca de**, con un botón para copiarla; también viene en el
+diagnóstico (`info.json` del archivo de **Acerca de → Exportar diagnóstico…**).
 
 ## Estructura
 

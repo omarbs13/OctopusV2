@@ -151,12 +151,15 @@ Un usuario sin `ManageSettings` ve el grupo con solo "Probar escáner" (FR-031).
 
 **Pantalla "Acerca de"** (FR-030), de arriba abajo:
 
-1. Versión (texto seleccionable).
-2. ID de máquina (texto seleccionable), para todos los roles.
-3. Exportar diagnóstico (con "Incluir base de datos"), solo con `ExportDiagnostics`.
-4. Administración de licencia (resumen, Importar y Exportar solicitud), solo con `ManageLicense`.
+1. Producto ("Octopus punto de venta"), desarrollador ("Omar Ceron Ochoa") y email
+   (omarbs13@gmail.com), en texto seleccionable, para todos los roles.
+2. Versión (texto seleccionable).
+3. ID de máquina (texto seleccionable), para todos los roles.
+4. Carpeta de datos (texto seleccionable) con "Copiar ruta", para todos los roles.
+5. Exportar diagnóstico (con "Incluir base de datos"), solo con `ExportDiagnostics`.
+6. Administración de licencia (resumen, Importar y Exportar solicitud), solo con `ManageLicense`.
 
-Ya no aparecen: carpeta de datos, "Copiar ruta", sistema operativo ni "Probar escáner".
+Ya no aparecen: sistema operativo ni "Probar escáner".
 
 ## Encabezado del negocio (US8)
 

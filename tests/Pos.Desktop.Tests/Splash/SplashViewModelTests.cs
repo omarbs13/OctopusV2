@@ -46,25 +46,25 @@ public class SplashViewModelTests
     }
 
     [Fact]
-    public void EsperaMinima_EsDeDosSegundos()
+    public void EsperaMinima_EsDeTresSegundos()
     {
-        Assert.Equal(TimeSpan.FromSeconds(2), SplashViewModel.MinimumVisible);
+        Assert.Equal(TimeSpan.FromSeconds(3), SplashViewModel.MinimumVisible);
     }
 
     [Fact]
-    public async Task EsperaMinima_CompletaLosDosSegundosEnArranqueRapido()
+    public async Task EsperaMinima_CompletaLosTresSegundosEnArranqueRapido()
     {
         var splash = Create();
         _elapsed = TimeSpan.FromMilliseconds(300);
 
         await splash.WaitMinimumAsync();
 
-        Assert.Equal([TimeSpan.FromMilliseconds(1700)], _delays);
+        Assert.Equal([TimeSpan.FromMilliseconds(2700)], _delays);
     }
 
     [Theory]
-    [InlineData(2000)]
-    [InlineData(3500)]
+    [InlineData(3000)]
+    [InlineData(4500)]
     public async Task EsperaMinima_NoAgregaEsperaSiElArranqueYaTardoMas(int elapsedMilliseconds)
     {
         var splash = Create();

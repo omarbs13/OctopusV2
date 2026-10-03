@@ -383,8 +383,9 @@ no en Ayuda, y que "Acerca de" muestra solo lo indicado.
 
 - **FR-029**: "Probar escáner" MUST aparecer en el grupo Configuración, junto a "Datos del
   negocio", y MUST NOT aparecer en el grupo Ayuda.
-- **FR-030**: La pantalla "Acerca de" MUST mostrar únicamente: versión, ID de máquina (licencia),
-  exportar diagnóstico y administración de licencia.
+- **FR-030**: La pantalla "Acerca de" MUST mostrar únicamente: producto ("Octopus punto de venta"),
+  desarrollador ("Omar Ceron Ochoa") y email de contacto, versión, ID de máquina (licencia), carpeta
+  de datos con "Copiar ruta", exportar diagnóstico y administración de licencia.
 - **FR-031**: "Probar escáner" MUST seguir visible para todos los roles. El grupo Configuración
   MUST mostrarse a cualquier usuario con al menos una opción visible, y cada usuario MUST ver
   solo las opciones de configuración a las que tiene acceso.

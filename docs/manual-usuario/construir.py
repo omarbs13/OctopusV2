@@ -14,6 +14,9 @@ Cada captura se declara en manual.html así:
 Si existe imagenes/IMG-07-02.png (o .jpg, .jpeg, .webp) se inserta la imagen real. Si no, se dibuja
 un recuadro con las instrucciones y, si se indicó data-wireframe, el wireframe SVG de ejemplo.
 El apéndice "Lista de capturas" se genera solo y marca cuáles faltan.
+
+El logotipo de la portada es imagenes/logo.png (o .jpg, .jpeg, .webp, .svg) si existe; si no, el
+logotipo predeterminado de la aplicación (src/Pos.Desktop/Resources/Logo.axaml).
 """
 
 import html
@@ -28,6 +31,8 @@ AQUI = Path(__file__).resolve().parent
 RAIZ = AQUI.parent.parent
 IMAGENES = AQUI / "imagenes"
 EXTENSIONES = (".png", ".jpg", ".jpeg", ".webp")
+LOGO_AXAML = RAIZ / "src" / "Pos.Desktop" / "Resources" / "Logo.axaml"
+DIBUJO = re.compile(r'<GeometryDrawing Brush="(?P<color>[^"]+)" Geometry="(?P<ruta>[^"]+)"')
 
 FIGURA = re.compile(r'<figure class="captura"(?P<attrs>[^>]*)>(?P<cuerpo>.*?)</figure>', re.S)
 ATRIBUTO = re.compile(r'([\w-]+)="([^"]*)"')
@@ -46,6 +51,19 @@ def buscar_imagen(ident):
         if ruta.exists():
             return ruta
     return None
+
+
+def logotipo():
+    """Logotipo de la portada: imagenes/logo.* o, si no existe, el de la aplicación en SVG."""
+    for ext in (*EXTENSIONES, ".svg"):
+        ruta = IMAGENES / f"logo{ext}"
+        if ruta.exists():
+            return f'<img src="{ruta.as_uri()}" alt="Logotipo"/>'
+    # Mismo dibujo que la pantalla de carga (cuadrícula de 160 x 160).
+    trazos = "".join(
+        f'<path fill="{m.group("color")}" d="{m.group("ruta")}"/>'
+        for m in DIBUJO.finditer(LOGO_AXAML.read_text(encoding="utf-8")))
+    return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="Logotipo">{trazos}</svg>'
 
 
 def exportar_wireframes():
@@ -154,6 +172,7 @@ def main():
     contenido = (AQUI / "manual.html").read_text(encoding="utf-8")
     contenido = contenido.replace("{{VERSION}}", version())
     contenido = contenido.replace("{{FECHA}}", date.today().strftime("%d/%m/%Y"))
+    contenido = contenido.replace("{{LOGO}}", logotipo())
     contenido, capturas = procesar_figuras(contenido)
     contenido = contenido.replace("{{INDICE}}", indice(contenido))
     contenido = contenido.replace("{{LISTA_CAPTURAS}}", lista_capturas(capturas))

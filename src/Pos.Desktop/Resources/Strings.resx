@@ -79,6 +79,14 @@
   <data name="Products_DeleteConflict" xml:space="preserve"><value>Otro proceso modificó este producto. Revise los datos actuales antes de borrarlo.</value></data>
   <data name="About_Version" xml:space="preserve"><value>Versión</value></data>
   <data name="About_MachineId" xml:space="preserve"><value>ID de máquina</value></data>
+  <data name="About_DataDirectory" xml:space="preserve"><value>Carpeta de datos</value></data>
+  <data name="About_CopyPath" xml:space="preserve"><value>Copiar ruta</value></data>
+  <data name="About_Product" xml:space="preserve"><value>Producto</value></data>
+  <data name="About_ProductName" xml:space="preserve"><value>Octopus punto de venta</value></data>
+  <data name="About_Developer" xml:space="preserve"><value>Desarrollador</value></data>
+  <data name="About_DeveloperName" xml:space="preserve"><value>Omar Ceron Ochoa</value></data>
+  <data name="About_Email" xml:space="preserve"><value>Email</value></data>
+  <data name="About_EmailAddress" xml:space="preserve"><value>omarbs13@gmail.com</value></data>
   <data name="About_Export" xml:space="preserve"><value>Exportar diagnóstico…</value></data>
   <data name="About_ExportTitle" xml:space="preserve"><value>Guardar diagnóstico</value></data>
   <data name="About_Exporting" xml:space="preserve"><value>Exportando diagnóstico…</value></data>

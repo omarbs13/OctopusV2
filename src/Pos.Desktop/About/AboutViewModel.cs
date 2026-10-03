@@ -15,8 +15,8 @@ using Pos.Domain.Users;
 namespace Pos.Desktop.About;
 
 /// <summary>
-/// Pantalla "Acerca de": versión, ID de máquina, exportación de diagnóstico y licencia (023, FR-030).
-/// La carpeta de datos y el sistema operativo siguen en el diagnóstico.
+/// Pantalla "Acerca de": producto, desarrollador y contacto, versión, ID de máquina, carpeta de datos,
+/// exportación de diagnóstico y licencia (023, FR-030).
 /// </summary>
 public sealed partial class AboutViewModel : PageViewModel
 {
@@ -24,12 +24,14 @@ public sealed partial class AboutViewModel : PageViewModel
     private readonly OperationRunner _runner;
     private readonly IDialogService _dialogs;
     private readonly IClock _clock;
+    private readonly IClipboardService _clipboard;
 
     public AboutViewModel(
         UseCases useCases,
         OperationRunner runner,
         IDialogService dialogs,
         IClock clock,
+        IClipboardService clipboard,
         ICurrentPermissions? permissions = null)
     {
         CanExport = permissions?.Has(Permission.ExportDiagnostics) ?? true;
@@ -38,6 +40,7 @@ public sealed partial class AboutViewModel : PageViewModel
         _runner = runner;
         _dialogs = dialogs;
         _clock = clock;
+        _clipboard = clipboard;
     }
 
     public override string Title => Strings.Shell_NavAbout;
@@ -53,6 +56,9 @@ public sealed partial class AboutViewModel : PageViewModel
 
     [ObservableProperty]
     public partial string Version { get; private set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string DataDirectory { get; private set; } = string.Empty;
 
     /// <summary>ID de máquina para soporte; visible para todos los roles.</summary>
     [ObservableProperty]
@@ -72,11 +78,15 @@ public sealed partial class AboutViewModel : PageViewModel
             () => _useCases.RunAsync<GetAppInfoHandler, AppInfoDto>(h => Task.FromResult(h.Handle())));
         if (completed && info is not null)
         {
-            Version = info.Version;
+            (Version, DataDirectory) = (info.Version, info.DataDirectory);
         }
 
         await RefreshLicenseAsync();
     }
+
+    [RelayCommand]
+    private async Task CopyDataDirectoryAsync() =>
+        await _runner.RunAsync("CopiarRutaDeDatos", () => _clipboard.SetTextAsync(DataDirectory));
 
     [RelayCommand]
     private async Task ExportAsync()

@@ -13,24 +13,35 @@ public sealed class AboutViewModelTests : IDisposable
     public void Dispose() => _host.Dispose();
 
     private AboutViewModel Create() =>
-        new(_host.UseCases, _host.Runner, _host.Dialogs, _host.Get<IClock>());
+        new(_host.UseCases, _host.Runner, _host.Dialogs, _host.Get<IClock>(), _host.Clipboard);
 
     [Fact]
-    public async Task AlActivarse_MuestraVersionEIdDeMaquina()
+    public async Task AlActivarse_MuestraVersionIdDeMaquinaYCarpetaDeDatos()
     {
         var about = Create();
 
         await about.OnActivatedAsync();
 
-        Assert.Equal(("0.1.0", FakeMachineId.Id), (about.Version, about.MachineId));
+        Assert.Equal(("0.1.0", FakeMachineId.Id, "/datos/Pos"), (about.Version, about.MachineId, about.DataDirectory));
         Assert.Equal(Strings.Shell_NavAbout, about.Title);
+    }
+
+    [Fact]
+    public async Task CopiarRuta_LlevaLaCarpetaDeDatosAlPortapapeles()
+    {
+        var about = Create();
+        await about.OnActivatedAsync();
+
+        await about.CopyDataDirectoryCommand.ExecuteAsync(null);
+
+        Assert.Equal("/datos/Pos", _host.Clipboard.Text);
     }
 
     [Fact]
     public async Task SinPermisoDeLicencia_TambienMuestraElIdDeMaquina()
     {
         var about = new AboutViewModel(
-            _host.UseCases, _host.Runner, _host.Dialogs, _host.Get<IClock>(), new NoPermissions());
+            _host.UseCases, _host.Runner, _host.Dialogs, _host.Get<IClock>(), _host.Clipboard, new NoPermissions());
 
         await about.OnActivatedAsync();
 

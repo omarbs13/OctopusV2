@@ -8,12 +8,31 @@
   <StackPanel Spacing="16" MaxWidth="720" HorizontalAlignment="Left">
     <TextBlock Text="{x:Static res:Strings.Shell_NavAbout}" FontSize="22" FontWeight="SemiBold" />
 
-    <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto" RowSpacing="10" ColumnSpacing="16">
+    <!-- Producto y desarrollador -->
+    <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="10" ColumnSpacing="16">
+      <TextBlock Grid.Row="0" Grid.Column="0" FontWeight="SemiBold" Text="{x:Static res:Strings.About_Product}" />
+      <SelectableTextBlock Grid.Row="0" Grid.Column="1" Text="{x:Static res:Strings.About_ProductName}" />
+
+      <TextBlock Grid.Row="1" Grid.Column="0" FontWeight="SemiBold" Text="{x:Static res:Strings.About_Developer}" />
+      <SelectableTextBlock Grid.Row="1" Grid.Column="1" Text="{x:Static res:Strings.About_DeveloperName}" />
+
+      <TextBlock Grid.Row="2" Grid.Column="0" FontWeight="SemiBold" Text="{x:Static res:Strings.About_Email}" />
+      <SelectableTextBlock Grid.Row="2" Grid.Column="1" Text="{x:Static res:Strings.About_EmailAddress}" />
+    </Grid>
+
+    <Separator />
+
+    <!-- Datos de esta instalación, para soporte -->
+    <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto" RowSpacing="10" ColumnSpacing="16">
       <TextBlock Grid.Row="0" Grid.Column="0" FontWeight="SemiBold" Text="{x:Static res:Strings.About_Version}" />
       <SelectableTextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Version}" />
 
       <TextBlock Grid.Row="1" Grid.Column="0" FontWeight="SemiBold" Text="{x:Static res:Strings.About_MachineId}" />
       <SelectableTextBlock Grid.Row="1" Grid.Column="1" Text="{Binding MachineId}" TextWrapping="Wrap" />
+
+      <TextBlock Grid.Row="2" Grid.Column="0" FontWeight="SemiBold" Text="{x:Static res:Strings.About_DataDirectory}" VerticalAlignment="Center" />
+      <SelectableTextBlock Grid.Row="2" Grid.Column="1" Text="{Binding DataDirectory}" TextWrapping="Wrap" VerticalAlignment="Center" />
+      <Button Grid.Row="2" Grid.Column="2" Content="{x:Static res:Strings.About_CopyPath}" Command="{Binding CopyDataDirectoryCommand}" />
     </Grid>
 
     <Separator />
