@@ -14,7 +14,7 @@ public sealed class GetLicenseStatusHandlerTests
         var state = new LicenseState(clock);
         var firstRun = clock.UtcNow.AddDays(-daysSinceStart);
         state.Set(new LicenseRecord(2, "m", firstRun, firstRun, 30, new HashSet<LicensedModule> { LicensedModule.Returns }));
-        return new GetLicenseStatusHandler(state, VendorContact.Default).Handle();
+        return new GetLicenseStatusHandler(state, VendorContact.Default, new FakeMachine()).Handle();
     }
 
     [Theory]

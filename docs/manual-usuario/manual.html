@@ -172,7 +172,7 @@ computadora, con respaldos automáticos diarios.</p>
 <table class="tabla">
   <tr><th>Elemento</th><th>Requisito</th></tr>
   <tr><td>Sistema operativo</td><td>Windows 10 o posterior, o Linux con entorno gráfico.</td></tr>
-  <tr><td>Pantalla</td><td>Se recomienda 1280 × 720 o mayor. En ventanas de menos de 1000 px de ancho el menú lateral se contrae solo.</td></tr>
+  <tr><td>Pantalla</td><td>Se recomienda 1280 × 720 o mayor. La ventana no se reduce por debajo de 1024 × 768; en pantallas más pequeñas aparecen barras de desplazamiento.</td></tr>
   <tr><td>Impresora de tickets (opcional)</td><td>Impresora térmica compatible con ESC/POS de 58 u 80 mm, instalada en el sistema operativo.</td></tr>
   <tr><td>Cajón de dinero (opcional)</td><td>Conectado a la impresora de tickets (puerto RJ11).</td></tr>
   <tr><td>Lector de códigos (opcional)</td><td>USB o inalámbrico en <b>modo teclado</b> (HID) que envíe <kbd>Enter</kbd> al final de cada lectura.</td></tr>
@@ -228,10 +228,13 @@ pantalla.</p>
 </figure>
 <div class="caja consejo"><b class="t">Logotipo propio en la pantalla de carga</b>
 Copie un archivo PNG llamado <code>logo.png</code> (de preferencia cuadrado, 320 × 320 px, con fondo
-transparente) en la carpeta de datos del sistema y reinicie. La ubicación de la carpeta se ve en
-<span class="ruta">Ayuda → Acerca de</span>.</div>
+transparente) en la carpeta de datos del sistema y reinicie. Si no conoce la ubicación de la carpeta, pídala a
+soporte: viene en el archivo de <b>Exportar diagnóstico…</b>.</div>
 <p>El sistema solo permite <b>una ventana abierta a la vez</b>: si lo abre de nuevo, se muestra la ventana
 existente.</p>
+<p>La pantalla de carga se ve unos 2 segundos. La primera vez, la ventana principal abre <b>maximizada</b>;
+después abre como la dejó la última vez (maximizada, o con el mismo tamaño y posición). Si la posición guardada
+quedó fuera de la pantalla (por ejemplo, al desconectar un segundo monitor), la ventana aparece centrada.</p>
 
 <h2 id="pp-primer-admin">Primera vez: crear el administrador</h2>
 <p>La primera vez que se usa el sistema aparece el asistente <b>Crear administrador</b>. No existe ningún
@@ -273,7 +276,7 @@ reinicia la aplicación. Para desbloquearlo antes, un Administrador puede restab
 <p>Después de iniciar sesión se muestra la pantalla <b>Inicio</b>:</p>
 <ul class="leyenda">
   <li><span class="numero">1</span><b>Área de trabajo</b>: muestra la pantalla elegida en el menú.</li>
-  <li><span class="numero">2</span><b>Menú lateral</b>: agrupa las opciones (Ventas, Caja, Clientes, Reportes, Catálogos…). Pulse un grupo para abrirlo o cerrarlo. El botón <b>☰</b> (o <kbd>Ctrl</kbd>+<kbd>B</kbd>) contrae el menú para ganar espacio. Solo aparecen las opciones que su rol y la licencia permiten.</li>
+  <li><span class="numero">2</span><b>Menú lateral</b>: agrupa las opciones (Ventas, Caja, Clientes, Reportes, Catálogos…). Pulse un grupo para abrirlo o cerrarlo; la primera vez que entra, todos los grupos aparecen cerrados y después el sistema recuerda, para cada usuario, cuáles dejó abiertos. Cada opción tiene su propio ícono. El botón <b>☰</b> (o <kbd>Ctrl</kbd>+<kbd>B</kbd>), en la esquina superior izquierda, contrae el menú a solo íconos para ganar espacio; al pasar el ratón sobre un ícono se ve el nombre de la opción. Solo aparecen las opciones que su rol y la licencia permiten.</li>
   <li><span class="numero">3</span><b>Tarjetas de indicadores</b>: ventas del día, turno actual, productos activos, alertas de existencia, etc.</li>
   <li><span class="numero">4</span><b>Menú de usuario</b> (al pie del menú lateral): nombre y rol de quien está conectado, con <b>Cambiar contraseña</b>, <b>Cambiar de usuario</b> y <b>Cerrar sesión</b>.</li>
 </ul>
@@ -321,7 +324,7 @@ vez que entre.</p>
   <tr><td class="c">☐</td><td>Crear las categorías de productos</td><td><span class="ruta">Catálogos → Categorías</span></td></tr>
   <tr><td class="c">☐</td><td>Dar de alta los productos</td><td><span class="ruta">Catálogos → Productos</span></td></tr>
   <tr><td class="c">☐</td><td>Registrar el inventario inicial</td><td><span class="ruta">Inventario → Existencias</span></td></tr>
-  <tr><td class="c">☐</td><td>Probar el lector de códigos de barras</td><td><span class="ruta">Ayuda → Probar escáner</span></td></tr>
+  <tr><td class="c">☐</td><td>Probar el lector de códigos de barras</td><td><span class="ruta">Configuración → Probar escáner</span></td></tr>
   <tr><td class="c">☐</td><td>(Opcional) Proveedores, clientes con crédito, cupones y límite de descuento</td><td>Capítulos 5, 9 y 10</td></tr>
 </table>
 
@@ -703,7 +706,7 @@ Todas las acciones tienen tecla rápida y también un botón grande para pantall
 <table class="tabla">
   <tr><th style="width:34%">Aviso</th><th>Qué hacer</th></tr>
   <tr><td>Código no encontrado: …</td><td>El código es válido pero ningún producto lo tiene. Busque con <kbd>F2</kbd> por nombre o registre el código en el producto.</td></tr>
-  <tr><td>Código no válido: …</td><td>La lectura trae caracteres no admitidos o está dañada. Vuelva a escanear o revise el lector en <span class="ruta">Ayuda → Probar escáner</span>.</td></tr>
+  <tr><td>Código no válido: …</td><td>La lectura trae caracteres no admitidos o está dañada. Vuelva a escanear o revise el lector en <span class="ruta">Configuración → Probar escáner</span>.</td></tr>
   <tr><td>Lectura ignorada: cierre la ventana para escanear</td><td>Escaneó con un diálogo abierto. Ciérrelo y vuelva a escanear.</td></tr>
 </table>
 
@@ -1063,18 +1066,19 @@ exportaciones. Es de solo lectura: nadie puede modificarla ni borrarla.</p>
 <h1 class="num" id="cap-ayuda">Ayuda, licencia y respaldos</h1>
 
 <h2 id="ayu-acerca">Acerca de</h2>
-<p><span class="ruta">Ayuda → Acerca de</span> muestra la versión, el sistema operativo y la <b>carpeta de
-datos</b> (con <b>Copiar ruta</b>).</p>
+<p><span class="ruta">Ayuda → Acerca de</span> muestra la <b>versión</b> y el <b>ID de máquina</b> (para todos
+los roles; puede seleccionarlo y copiarlo si soporte lo pide por teléfono).</p>
 <p><b>Exportar diagnóstico…</b> <span class="etq admin">Solo Administrador</span> genera un archivo
 <code>.zip</code> con los registros de los últimos 30 días para soporte técnico. La casilla <b>Incluir respaldo de
 la base de datos</b> agrega una copia de la información (sin imágenes de productos); márquela solo si soporte lo
 pide.</p>
 <figure class="captura" id="IMG-13-01" data-titulo="Ayuda → Acerca de">
-  Capture la pantalla con la versión, la carpeta de datos, «Exportar diagnóstico…» y la tarjeta de licencia.
+  Capture la pantalla con la versión, el ID de máquina, «Exportar diagnóstico…» y la administración de licencia.
 </figure>
 
 <h2 id="ayu-escaner">Probar el escáner</h2>
-<p><span class="ruta">Ayuda → Probar escáner</span> (todos los roles). Escanee un código; la pantalla muestra:</p>
+<p><span class="ruta">Configuración → Probar escáner</span> (todos los roles: un Cajero ve el grupo Configuración solo
+con esta opción). Escanee un código; la pantalla muestra:</p>
 <table class="tabla">
   <tr><th style="width:24%">Dato</th><th>Qué revisar</th></tr>
   <tr><td>Texto leído</td><td>Debe coincidir con lo impreso en la etiqueta.</td></tr>
@@ -1084,7 +1088,7 @@ pide.</p>
   <tr><td>Producto</td><td>El producto que tiene ese código, o «Sin producto con este código».</td></tr>
 </table>
 <p>Esta pantalla no modifica la venta en curso. Guarda las últimas 10 lecturas (botón <b>Borrar</b>).</p>
-<figure class="captura" id="IMG-13-02" data-titulo="Ayuda → Probar escáner">
+<figure class="captura" id="IMG-13-02" data-titulo="Configuración → Probar escáner">
   Escanee dos o tres códigos (uno registrado y uno no) y capture la pantalla con el historial de lecturas.
 </figure>
 <div class="caja consejo"><b class="t">Si los códigos con letras o guiones fallan</b>
@@ -1131,7 +1135,7 @@ Los respaldos automáticos están en la misma computadora y no protegen contra r
   <tr><td>No imprime el ticket</td><td>Revise que la impresora esté encendida, con papel y conectada. Pulse <b>Reintentar</b>. Pruebe con <b>Impresión de prueba</b>. La venta ya quedó registrada.</td></tr>
   <tr><td>Los acentos salen mal en el ticket</td><td>Verifique que la impresora sea compatible con ESC/POS. Pruebe con la impresora virtual para descartar el ticket.</td></tr>
   <tr><td>El cajón no abre</td><td>Debe estar conectado a la impresora y la opción automática activada; solo abre si hubo pago en efectivo.</td></tr>
-  <tr><td>El escáner no agrega productos</td><td>Use <span class="ruta">Ayuda → Probar escáner</span>: el lector debe terminar con Enter y leer el mismo texto impreso.</td></tr>
+  <tr><td>El escáner no agrega productos</td><td>Use <span class="ruta">Configuración → Probar escáner</span>: el lector debe terminar con Enter y leer el mismo texto impreso.</td></tr>
   <tr><td>«Código no encontrado»</td><td>Registre el código de barras en el producto o búsquelo con <kbd>F2</kbd>.</td></tr>
   <tr><td>«Venta a crédito» no aparece en el cobro</td><td>Primero elija un cliente con <b>Cliente…</b>; el cliente debe tener crédito y estar activo.</td></tr>
   <tr><td>No puedo devolver una venta</td><td>Puede haber vencido el plazo de devoluciones, o un Cajero intenta devolver una venta de otro cajero.</td></tr>

@@ -15,9 +15,9 @@ public static class SalesModule
     public static IServiceCollection AddSalesModule(this IServiceCollection services)
     {
         services.AddNavigationGroup(GroupId, Strings.Nav_Sales, "Icon.Sales", 5);
-        services.AddPage<PointOfSaleViewModel, PointOfSaleView>(PointOfSalePageId, Strings.Nav_PointOfSale, "Icon.Sales", 0, GroupId, shortcut: "F9", permission: Permission.Sell);
+        services.AddPage<PointOfSaleViewModel, PointOfSaleView>(PointOfSalePageId, Strings.Nav_PointOfSale, "Icon.CashRegister", 0, GroupId, shortcut: "F9", permission: Permission.Sell);
 
-        services.AddPage<SalesHistoryViewModel, SalesHistoryView>(HistoryPageId, Strings.Nav_SalesHistory, "Icon.Movements", 10, GroupId, permission: Permission.ViewOwnSales);
+        services.AddPage<SalesHistoryViewModel, SalesHistoryView>(HistoryPageId, Strings.Nav_SalesHistory, "Icon.ReceiptHistory", 10, GroupId, permission: Permission.ViewOwnSales);
 
         services.AddComponentView<ProductChooserViewModel, ProductChooserView>();
         services.AddTransient<SaleDetailViewModel>();

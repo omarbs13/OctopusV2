@@ -25,20 +25,20 @@ public static class ReportsModule
         services.AddScoped<ReportExportCoordinator>();
         services.AddNavigationGroup(GroupId, Strings.Nav_Reports, "Icon.Chart", 7);
 
-        services.AddPage<SalesReportViewModel, SalesReportView>(SalesPageId, Strings.Nav_ReportSales, "Icon.Chart", 0, GroupId, permission: Permission.ViewReports);
+        services.AddPage<SalesReportViewModel, SalesReportView>(SalesPageId, Strings.Nav_ReportSales, "Icon.ChartLine", 0, GroupId, permission: Permission.ViewReports);
 
-        services.AddPage<CashCountReportViewModel, CashCountReportView>(CashCountPageId, Strings.Nav_ReportCashCount, "Icon.Movements", 10, GroupId, permission: Permission.ViewReports);
+        services.AddPage<CashCountReportViewModel, CashCountReportView>(CashCountPageId, Strings.Nav_ReportCashCount, "Icon.CashCheck", 10, GroupId, permission: Permission.ViewReports);
 
-        services.AddPage<InventoryReportViewModel, InventoryReportView>(InventoryPageId, Strings.Nav_ReportInventory, "Icon.Stock", 20, GroupId, permission: Permission.ViewInventory);
+        services.AddPage<InventoryReportViewModel, InventoryReportView>(InventoryPageId, Strings.Nav_ReportInventory, "Icon.ClipboardList", 20, GroupId, permission: Permission.ViewInventory);
 
         // "Compras" (020): depende de la licencia Inventario (vía ViewPurchaseReport), entre Inventario y Créditos.
-        services.AddPage<PurchaseReportViewModel, PurchaseReportView>(PurchasesPageId, Strings.Nav_ReportPurchases, "Icon.Movements", 25, GroupId, permission: Permission.ViewPurchaseReport);
+        services.AddPage<PurchaseReportViewModel, PurchaseReportView>(PurchasesPageId, Strings.Nav_ReportPurchases, "Icon.TruckCheck", 25, GroupId, permission: Permission.ViewPurchaseReport);
 
         // "Créditos" (014): depende de la licencia Crédito y clientes (vía ViewReceivables), no de Reportes avanzados.
-        services.AddPage<ReceivablesReportViewModel, ReceivablesReportView>(ReceivablesPageId, Strings.Nav_ReportReceivables, "Icon.Users", 30, GroupId, permission: Permission.ViewReceivables);
+        services.AddPage<ReceivablesReportViewModel, ReceivablesReportView>(ReceivablesPageId, Strings.Nav_ReportReceivables, "Icon.AccountCash", 30, GroupId, permission: Permission.ViewReceivables);
 
         // "Mi turno": dentro del grupo Ventas, junto a "Turnos" (contracts/ui.md).
-        services.AddPage<MyShiftViewModel, MyShiftView>(MyShiftPageId, Strings.Nav_MyShift, "Icon.Movements", 15, SalesModule.GroupId, permission: Permission.OperateShift);
+        services.AddPage<MyShiftViewModel, MyShiftView>(MyShiftPageId, Strings.Nav_MyShift, "Icon.AccountClock", 15, SalesModule.GroupId, permission: Permission.OperateShift);
 
         services.AddComponentView<PeriodPickerViewModel, PeriodPickerView>();
         services.AddComponentView<ChartViewModel, ChartImageView>();

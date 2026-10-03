@@ -13,28 +13,30 @@ public sealed class AboutViewModelTests : IDisposable
     public void Dispose() => _host.Dispose();
 
     private AboutViewModel Create() =>
-        new(_host.UseCases, _host.Runner, _host.Dialogs, _host.Get<IClock>(), _host.Clipboard);
+        new(_host.UseCases, _host.Runner, _host.Dialogs, _host.Get<IClock>());
 
     [Fact]
-    public async Task AlActivarse_MuestraVersionCarpetaDeDatosYSistemaOperativo()
+    public async Task AlActivarse_MuestraVersionEIdDeMaquina()
     {
         var about = Create();
 
         await about.OnActivatedAsync();
 
-        Assert.Equal(("0.1.0", "/datos/Pos", "Linux de prueba"), (about.Version, about.DataDirectory, about.OperatingSystem));
+        Assert.Equal(("0.1.0", FakeMachineId.Id), (about.Version, about.MachineId));
         Assert.Equal(Strings.Shell_NavAbout, about.Title);
     }
 
     [Fact]
-    public async Task CopiarRuta_LlevaLaCarpetaDeDatosAlPortapapeles()
+    public async Task SinPermisoDeLicencia_TambienMuestraElIdDeMaquina()
     {
-        var about = Create();
+        var about = new AboutViewModel(
+            _host.UseCases, _host.Runner, _host.Dialogs, _host.Get<IClock>(), new NoPermissions());
+
         await about.OnActivatedAsync();
 
-        await about.CopyDataDirectoryCommand.ExecuteAsync(null);
-
-        Assert.Equal("/datos/Pos", _host.Clipboard.Text);
+        Assert.False(about.CanManageLicense);
+        Assert.Equal(FakeMachineId.Id, about.MachineId);
+        Assert.Empty(about.LicenseSummary);
     }
 
     [Fact]
@@ -92,5 +94,10 @@ public sealed class AboutViewModelTests : IDisposable
 
         Assert.Null(_host.Exporter.Destination);
         Assert.Empty(_host.Dialogs.Messages);
+    }
+
+    private sealed class NoPermissions : Pos.Desktop.Common.ICurrentPermissions
+    {
+        public bool Has(Pos.Domain.Users.Permission permission) => false;
     }
 }

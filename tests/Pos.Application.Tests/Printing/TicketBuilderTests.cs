@@ -1,6 +1,10 @@
 using Pos.Application.Business;
+using Pos.Application.CashShifts;
+using Pos.Application.CreditNotes;
 using Pos.Application.Printing.Ticket;
+using Pos.Application.Receivables;
 using Pos.Application.Sales;
+using Pos.Domain.CashShifts;
 using Pos.Domain.Sales;
 
 namespace Pos.Application.Tests.Printing;
@@ -195,6 +199,37 @@ public sealed class TicketBuilderTests
         var longName = Simple() with { CreatedByName = new string('M', 60) };
         var narrow = Text(TicketBuilder.Build(Profile, longName, 32, timeZone: TimeZoneInfo.Utc));
         Assert.Contains(narrow, l => l.StartsWith("Cajero: MMM", StringComparison.Ordinal) && l.Length == 32);
+    }
+
+    [Theory]
+    [InlineData(32)]
+    [InlineData(48)]
+    public void TodosLosTickets_InicianConElMismoEncabezadoDelNegocio(int columns)
+    {
+        var sale = TicketBuilder.Build(Profile, Simple(), columns, timeZone: TimeZoneInfo.Utc).Lines;
+        var header = sale.Take(4).ToList();
+        Assert.Equal(["Mi Tienda", "Calle 1 #23, Col. Centro", "Tel. 555 123 4567", "RFC: XAXX010101000"], header.Select(l => l.Text.Trim()));
+        Assert.True(header[0].Bold);
+
+        TicketDocument[] others =
+        [
+            CreditNoteTicketBuilder.Build(Profile, new CreditNoteTicketData("NC-000001", 5000, Created, "V-000123"), columns, timeZone: TimeZoneInfo.Utc),
+            CustomerPaymentReceiptBuilder.Build(
+                Profile,
+                new CustomerPaymentReceiptData("AB-000001", Created, "Juan", 1000, PaymentMethod.Cash, null, 3000, 2000, false),
+                columns,
+                timeZone: TimeZoneInfo.Utc),
+            ShiftTicketBuilder.BuildMovementReceipt(
+                Profile,
+                new CashMovementReceiptDto(Guid.NewGuid(), "M-000001", CashMovementType.In, 1000, "Cambio", Created, "Ana", Guid.NewGuid(), Guid.NewGuid(), null),
+                columns,
+                timeZone: TimeZoneInfo.Utc),
+        ];
+
+        foreach (var other in others)
+        {
+            Assert.Equal(header, other.Lines.Take(header.Count));
+        }
     }
 
     [Fact]

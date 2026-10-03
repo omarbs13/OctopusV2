@@ -36,8 +36,8 @@ public sealed class MenuViewModelTests : IDisposable
         Assert.Equal(["catalogs.products"], Group(menu, "catalogs").Children.Select(c => c.Id));
         Assert.Equal(["inventory.stock", "inventory.movements"], Group(menu, "inventory").Children.Select(c => c.Id));
         Assert.Equal(["administration.users", "administration.audit"], Group(menu, "administration").Children.Select(c => c.Id));
-        Assert.Equal(["settings.business", "settings.printer", "settings.security"], Group(menu, "settings").Children.Select(c => c.Id));
-        Assert.Equal(["help.about", "help.scanner-test"], Group(menu, "help").Children.Select(c => c.Id));
+        Assert.Equal(["settings.business", "settings.printer", "settings.security", "settings.scanner-test"], Group(menu, "settings").Children.Select(c => c.Id));
+        Assert.Equal(["help.about"], Group(menu, "help").Children.Select(c => c.Id));
     }
 
     [Fact]
@@ -84,16 +84,61 @@ public sealed class MenuViewModelTests : IDisposable
     }
 
     [Fact]
-    public async Task SinPreferencia_ExpandidoConSoloElGrupoActualAbierto()
+    public async Task SinPreferencia_ExpandidoConTodosLosGruposColapsados()
     {
         var menu = CreateMenu();
 
         await menu.SelectEntryCommand.ExecuteAsync(Group(menu, "catalogs").Children[0]);
 
         Assert.False(menu.IsCollapsed);
-        Assert.True(Group(menu, "catalogs").IsExpanded);
-        Assert.False(Group(menu, "inventory").IsExpanded);
+        Assert.All(menu.Items.Where(i => i.IsGroup), g => Assert.False(g.IsExpanded));
+        Assert.True(Group(menu, "catalogs").IsCurrentGroup);
         Assert.Null(Saved);
+    }
+
+    [Fact]
+    public void ConSesion_LeeYGuardaConLaClaveDelUsuario()
+    {
+        var session = new FakeUserSession();
+        var key = $"navigation.{session.User!.Id:N}";
+        _preferences.Save(key, new NavigationPreferences(false, ["inventory"]));
+        _preferences.Save(MenuViewModel.PreferencesKey, new NavigationPreferences(false, ["catalogs"]));
+
+        var menu = new MenuViewModel(_host.Get<NavigationRegistry>(), _host.Get<Navigator>(), _preferences, session: session);
+
+        Assert.True(Group(menu, "inventory").IsExpanded);
+        Assert.False(Group(menu, "catalogs").IsExpanded);
+        Assert.Equal(key, MenuViewModel.KeyFor(session.User.Id));
+
+        menu.ToggleGroupCommand.Execute(Group(menu, "sales"));
+
+        Assert.Equal(["inventory", "sales"], _preferences.Load<NavigationPreferences>(key)!.ExpandedGroups.Order());
+        Assert.Equal(["catalogs"], Saved!.ExpandedGroups);
+    }
+
+    [Fact]
+    public void SinSesion_UsaLaClaveGlobal()
+    {
+        Assert.Equal("navigation", MenuViewModel.KeyFor(null));
+
+        var menu = CreateMenu();
+        menu.ToggleGroupCommand.Execute(Group(menu, "sales"));
+
+        Assert.Equal(["sales"], Saved!.ExpandedGroups);
+    }
+
+    [Fact]
+    public void ContraerYExpandirElMenu_NoAlteraLosGrupos()
+    {
+        _preferences.Save(MenuViewModel.PreferencesKey, new NavigationPreferences(false, ["inventory"]));
+        var menu = CreateMenu();
+
+        menu.ToggleCommand.Execute(null);
+        menu.ToggleCommand.Execute(null);
+
+        Assert.True(Group(menu, "inventory").IsExpanded);
+        Assert.False(Group(menu, "sales").IsExpanded);
+        Assert.Equal(["inventory"], Saved!.ExpandedGroups);
     }
 
     [Fact]

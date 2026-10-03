@@ -33,7 +33,7 @@ public sealed class AuditLogDocumentBuilder
         ArgumentNullException.ThrowIfNull(rows);
 
         var profile = await _business.GetAsync(cancellationToken);
-        var business = profile is null ? null : new ReportBusiness(profile.TradeName, profile.Address, profile.Phone);
+        var business = BusinessHeader.From(profile is null ? null : BusinessProfileDto.From(profile));
         var table = format == ExportFormat.Pdf ? EntryTable(rows) : ChangeTable(rows);
         return new ReportDocument(
             Title,

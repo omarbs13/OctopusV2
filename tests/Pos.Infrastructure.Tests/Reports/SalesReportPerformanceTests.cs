@@ -1,3 +1,4 @@
+using Pos.Application.Business;
 using System.Diagnostics;
 using Pos.Application.Categories;
 using Pos.Application.Reports;
@@ -81,7 +82,7 @@ public sealed class SalesReportPerformanceTests
                     [.. all.Rows.Select(r => (IReadOnlyList<ReportCell>)[new TextCell(r.FolioText), new DateCell(r.CreatedAtUtc), new TextCell(r.CashierName), new MoneyCell(r.TotalCents)])]),
             ],
             [new ChartSpec(ChartKind.Line, "Ventas por día", [.. all.Days.Select(d => new ChartPoint(d.LocalDate.ToString("dd/MM", System.Globalization.CultureInfo.InvariantCulture), d.TotalCents))], ChartValueFormat.Money)],
-            new ReportBusiness("Tienda", "Calle 1", "555"),
+            new BusinessHeader("Tienda", "Calle 1", "555", null, null),
             DateTime.UtcNow,
             "Administrador");
         var pdf = new PdfReportWriter().Write(document);

@@ -5,9 +5,7 @@
         x:DataType="shell:RootViewModel"
         Icon="/Assets/pos.ico"
         Title="{Binding WindowTitle}"
-        Width="1200" Height="720"
-        MinWidth="640" MinHeight="480"
-        WindowStartupLocation="CenterScreen">
+        MinWidth="1024" MinHeight="768">
 
   <!-- Los atajos no hacen nada sin sesión o con la sesión bloqueada (SC-001). -->
   <Window.KeyBindings>
@@ -15,9 +13,15 @@
     <KeyBinding Gesture="F9" Command="{Binding OpenPointOfSaleCommand}" />
   </Window.KeyBindings>
 
-  <Grid>
-    <!-- Con la sesión bloqueada el contenido se deshabilita: nada del teclado o del lector llega a él. -->
-    <ContentControl Content="{Binding Content}" IsEnabled="{Binding !IsLocked}" />
-    <ContentControl Content="{Binding LockOverlay}" IsVisible="{Binding IsLocked}" />
-  </Grid>
+  <!-- Desplazamiento global solo si el área cliente es menor que el mínimo (FR-006). El tamaño del
+       contenido lo fija MainWindow para que los desplazamientos de cada pantalla sigan funcionando. -->
+  <ScrollViewer x:Name="RootScroll"
+                HorizontalScrollBarVisibility="Auto"
+                VerticalScrollBarVisibility="Auto">
+    <Grid x:Name="RootContent">
+      <!-- Con la sesión bloqueada el contenido se deshabilita: nada del teclado o del lector llega a él. -->
+      <ContentControl Content="{Binding Content}" IsEnabled="{Binding !IsLocked}" />
+      <ContentControl Content="{Binding LockOverlay}" IsVisible="{Binding IsLocked}" />
+    </Grid>
+  </ScrollViewer>
 </Window>

@@ -58,24 +58,6 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Copiar ruta.
-        /// </summary>
-        public static string About_CopyPath {
-            get {
-                return ResourceManager.GetString("About_CopyPath", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Carpeta de datos.
-        /// </summary>
-        public static string About_DataDirectory {
-            get {
-                return ResourceManager.GetString("About_DataDirectory", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Para soporte técnico: la exportación genera un archivo con los registros de los últimos 30 días y los datos de la versión; el respaldo de la base de datos es opcional..
         /// </summary>
         public static string About_Description {
@@ -139,11 +121,11 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Sistema operativo.
+        ///   Looks up a localized string similar to ID de máquina.
         /// </summary>
-        public static string About_OperatingSystem {
+        public static string About_MachineId {
             get {
-                return ResourceManager.GetString("About_OperatingSystem", resourceCulture);
+                return ResourceManager.GetString("About_MachineId", resourceCulture);
             }
         }
         

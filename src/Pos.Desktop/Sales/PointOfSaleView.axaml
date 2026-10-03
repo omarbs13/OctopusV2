@@ -41,9 +41,9 @@
         <TextBlock Grid.Column="0" Text="{Binding ShiftBarText}" FontWeight="SemiBold" VerticalAlignment="Center"
                    TextTrimming="CharacterEllipsis" />
         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-          <Button MinHeight="40" Content="{x:Static res:Strings.Shift_Deposit}" Command="{Binding DepositCommand}" />
-          <Button MinHeight="40" Content="{x:Static res:Strings.Shift_Withdrawal}" Command="{Binding WithdrawalCommand}" />
-          <Button MinHeight="40" Content="{x:Static res:Strings.Shift_Close}" Command="{Binding CloseShiftCommand}" />
+          <Button Classes="action" MinHeight="40" Content="{x:Static res:Strings.Shift_Deposit}" Command="{Binding DepositCommand}" />
+          <Button Classes="action" MinHeight="40" Content="{x:Static res:Strings.Shift_Withdrawal}" Command="{Binding WithdrawalCommand}" />
+          <Button Classes="action" MinHeight="40" Content="{x:Static res:Strings.Shift_Close}" Command="{Binding CloseShiftCommand}" />
         </StackPanel>
       </Grid>
     </Border>

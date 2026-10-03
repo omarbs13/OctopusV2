@@ -16,7 +16,7 @@ public static class CategoriesModule
     /// </summary>
     public static IServiceCollection AddCategoriesModule(this IServiceCollection services)
     {
-        services.AddPage<CategoriesViewModel, CategoriesView>(PageId, Strings.Nav_Categories, "Icon.Catalog", 1, ProductsModule.GroupId, permission: Permission.ManageProducts);
+        services.AddPage<CategoriesViewModel, CategoriesView>(PageId, Strings.Nav_Categories, "Icon.Shape", 1, ProductsModule.GroupId, permission: Permission.ManageProducts);
 
         services.AddTransient<CategoryFormViewModel>();
         services.AddScoped<Func<CategoryFormViewModel>>(sp => sp.GetRequiredService<CategoryFormViewModel>);

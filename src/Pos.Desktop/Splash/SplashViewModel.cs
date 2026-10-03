@@ -10,8 +10,8 @@ namespace Pos.Desktop.Splash;
 /// <summary>Pantalla de carga: logotipo, nombre, versión y paso en curso del arranque (FR-001, FR-002).</summary>
 public sealed partial class SplashViewModel : ViewModelBase, IProgress<StartupStep>
 {
-    /// <summary>Tiempo mínimo visible para evitar un parpadeo.</summary>
-    public static readonly TimeSpan MinimumVisible = TimeSpan.FromMilliseconds(800);
+    /// <summary>Tiempo mínimo visible, contado desde que aparece la pantalla de carga (FR-007).</summary>
+    public static readonly TimeSpan MinimumVisible = TimeSpan.FromSeconds(3);
 
     private readonly Func<TimeSpan> _elapsed;
     private readonly Func<TimeSpan, Task> _delay;

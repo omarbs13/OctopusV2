@@ -17,8 +17,8 @@ public static class PurchasesModule
     /// </summary>
     public static IServiceCollection AddPurchasesModule(this IServiceCollection services)
     {
-        services.AddPage<PurchaseEntryViewModel, PurchaseEntryView>(PurchaseEntryPageId, Strings.Nav_PurchaseEntry, "Icon.Movements", 20, InventoryModule.GroupId, permission: Permission.RegisterPurchases);
-        services.AddPage<SupplierListViewModel, SupplierListView>(SuppliersPageId, Strings.Nav_Suppliers, "Icon.Users", 30, InventoryModule.GroupId, permission: Permission.ManageSuppliers);
+        services.AddPage<PurchaseEntryViewModel, PurchaseEntryView>(PurchaseEntryPageId, Strings.Nav_PurchaseEntry, "Icon.TruckDelivery", 20, InventoryModule.GroupId, permission: Permission.RegisterPurchases);
+        services.AddPage<SupplierListViewModel, SupplierListView>(SuppliersPageId, Strings.Nav_Suppliers, "Icon.Factory", 30, InventoryModule.GroupId, permission: Permission.ManageSuppliers);
 
         services.AddTransient<SupplierFormViewModel>();
         services.AddScoped<Func<SupplierFormViewModel>>(sp => sp.GetRequiredService<SupplierFormViewModel>);

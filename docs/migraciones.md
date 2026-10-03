@@ -342,3 +342,11 @@ TABLE`, el índice único y ningún `ef_temp_Products`, `DROP TABLE "Products"` 
 `v0.16.0.db` agrega un punto de reorden de 2 kg al producto por kilo (mínimo 5 kg) y una notificación "en
 alerta" del administrador; `SampleDatabaseUpgradeTests` verifica que las bases anteriores queden sin punto de
 reorden ni registros y que `v0.16.0.db` conserve ambos. Ver [alertas-de-existencia.md](alertas-de-existencia.md).
+
+## 0.17.0: mejoras de UX/UI (sin migración)
+
+Esta versión **no agrega migraciones ni cambia el esquema**: el esquema es idéntico al de 0.16.0. Los
+cambios son de interfaz y de preferencias locales en `<datos>/preferences/` (`window.json` por equipo y
+`navigation.{userId}.json` por usuario; ver [carpeta-de-datos.md](carpeta-de-datos.md)), que no son datos
+de negocio. Se conserva la base de ejemplo `v0.17.0.db`, generada con el procedimiento habitual, para que
+`SampleDatabaseUpgradeTests` siga verificando la actualización desde cada versión publicada.

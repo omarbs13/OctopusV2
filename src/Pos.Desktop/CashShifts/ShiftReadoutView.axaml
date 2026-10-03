@@ -14,7 +14,7 @@
         <TextBlock Text="{Binding ShiftText}" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap"
                    IsVisible="{Binding HasShift}" />
         <TextBlock Text="{x:Static res:Strings.Cut_ReadoutHint}" TextWrapping="Wrap" />
-        <Button Classes="accent" MinHeight="44" HorizontalAlignment="Left"
+        <Button Classes="action accent" MinHeight="44" HorizontalAlignment="Left"
                 Content="{x:Static res:Strings.Cut_GenerateReadout}"
                 Command="{Binding GenerateCommand}" />
         <TextBlock Text="{Binding ErrorMessage}" TextWrapping="Wrap"

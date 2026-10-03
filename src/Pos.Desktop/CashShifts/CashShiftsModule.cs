@@ -16,7 +16,7 @@ public static class CashShiftsModule
     /// </summary>
     public static IServiceCollection AddCashShiftsModule(this IServiceCollection services)
     {
-        services.AddPage<ShiftsViewModel, ShiftsView>(ShiftsPageId, Strings.Nav_Shifts, "Icon.Movements", 20, SalesModule.GroupId, permission: Permission.ManageShifts);
+        services.AddPage<ShiftsViewModel, ShiftsView>(ShiftsPageId, Strings.Nav_Shifts, "Icon.CalendarClock", 20, SalesModule.GroupId, permission: Permission.ManageShifts);
 
         services.AddScoped<CashShiftDialogs>();
         services.AddTransient<ShiftDetailViewModel>();

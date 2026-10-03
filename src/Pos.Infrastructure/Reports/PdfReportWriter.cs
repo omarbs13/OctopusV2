@@ -1,11 +1,12 @@
+using Pos.Application.Business;
 using Pos.Application.Reports.Export;
 using SkiaSharp;
 
 namespace Pos.Infrastructure.Reports;
 
 /// <summary>
-/// PDF A4 horizontal con SkiaSharp (research §6): encabezado del negocio y pie con fecha y usuario en cada
-/// página, métricas, gráficas en vectores y tablas paginadas que repiten su encabezado de columnas.
+/// PDF A4 horizontal con SkiaSharp (research §6): encabezado del negocio solo en la primera página (023,
+/// FR-020), pie con fecha y usuario en cada página, métricas, gráficas en vectores y tablas paginadas que repiten su encabezado de columnas.
 /// Cada página se registra primero como imagen para conocer el total ("Página n de N") y luego se escribe.
 /// </summary>
 public sealed class PdfReportWriter : IPdfReportWriter
@@ -13,14 +14,18 @@ public sealed class PdfReportWriter : IPdfReportWriter
     private const float PageWidth = 842;
     private const float PageHeight = 595;
     private const float Margin = 28;
-    private const float HeaderHeight = 44;
     private const float FooterHeight = 22;
     private const float RowHeight = 16;
 
     /// <summary>Alto de cada línea adicional de una celda de texto con varias líneas (018, bitácora).</summary>
     private const float LineHeight = 11;
     private const float ChartHeight = 210;
-    private const string MissingBusinessText = "Datos del negocio no capturados";
+
+    /// <summary>Caja del logo del encabezado, en puntos; el logo se escala sin deformarse.</summary>
+    private const float LogoWidth = 120;
+    private const float LogoHeight = 48;
+    private const float TitleLineHeight = 16;
+    private const float HeaderLineHeight = 12;
 
     private static readonly SKColor Ink = new(0x21, 0x25, 0x29);
     private static readonly SKColor Muted = new(0x6C, 0x75, 0x7D);
@@ -32,7 +37,12 @@ public sealed class PdfReportWriter : IPdfReportWriter
     {
         ArgumentNullException.ThrowIfNull(document);
 
-        using var layout = new Layout(document);
+        // El logo se decodifica una vez por documento; si no se puede leer, se omite (Principio I).
+        using var logo = DecodeLogo(document.Business?.Logo);
+        var header = HeaderLines(document.Business, logo is not null);
+        var headerHeight = HeaderHeight(document.Business, logo, header);
+
+        using var layout = new Layout(document, Margin + headerHeight);
         var pages = layout.Build();
         try
         {
@@ -44,7 +54,11 @@ public sealed class PdfReportWriter : IPdfReportWriter
                 {
                     var canvas = pdf.BeginPage(PageWidth, PageHeight);
                     canvas.DrawPicture(pages[i]);
-                    DrawHeader(canvas, document);
+                    if (i == 0)
+                    {
+                        DrawHeader(canvas, document.Business, logo, header, headerHeight);
+                    }
+
                     DrawFooter(canvas, document, i + 1, pages.Count);
                     pdf.EndPage();
                 }
@@ -63,26 +77,104 @@ public sealed class PdfReportWriter : IPdfReportWriter
         }
     }
 
-    private static void DrawHeader(SKCanvas canvas, ReportDocument document)
+    private static SKBitmap? DecodeLogo(byte[]? bytes)
+    {
+        if (bytes is not { Length: > 0 })
+        {
+            return null;
+        }
+
+        using var data = SKData.CreateCopy(bytes);
+        using var codec = SKCodec.Create(data);
+        return codec is null ? null : SKBitmap.Decode(codec);
+    }
+
+    /// <summary>Líneas del encabezado ajustadas al ancho disponible a la derecha del logo (o desde el margen).</summary>
+    private static List<(string Text, bool IsTitle)> HeaderLines(BusinessHeader? business, bool hasLogo)
+    {
+        if (business is null)
+        {
+            return [(BusinessHeader.MissingText, false)];
+        }
+
+        var width = PageWidth - Margin - TextLeft(hasLogo);
+        using var bold = ReportFonts.Font(12, bold: true);
+        using var small = ReportFonts.Font(9);
+        var lines = new List<(string Text, bool IsTitle)>();
+        foreach (var line in business.Lines)
+        {
+            lines.AddRange(Wrap(line.Text, line.IsTitle ? bold : small, width).Select(text => (text, line.IsTitle)));
+        }
+
+        return lines;
+    }
+
+    /// <summary>Alto del encabezado, incluida la línea separadora; las páginas siguientes empiezan en el margen.</summary>
+    private static float HeaderHeight(BusinessHeader? business, SKBitmap? logo, List<(string Text, bool IsTitle)> lines)
+    {
+        var text = lines.Sum(l => l.IsTitle ? TitleLineHeight : HeaderLineHeight);
+        var content = business is not null && logo is not null ? Math.Max(text, LogoHeight) : text;
+        return content + 14;
+    }
+
+    private static float TextLeft(bool hasLogo) => hasLogo ? Margin + LogoWidth + 12 : Margin;
+
+    private static void DrawHeader(
+        SKCanvas canvas, BusinessHeader? business, SKBitmap? logo, List<(string Text, bool IsTitle)> lines, float height)
     {
         using var paint = new SKPaint { IsAntialias = true, Color = Ink };
         using var bold = ReportFonts.Font(12, bold: true);
         using var small = ReportFonts.Font(9);
-        if (document.Business is { } business)
+
+        var hasLogo = business is not null && logo is not null;
+        if (hasLogo)
         {
-            canvas.DrawText(business.Name, Margin, Margin + 12, SKTextAlign.Left, bold, paint);
-            paint.Color = Muted;
-            canvas.DrawText($"{business.Address} · Tel. {business.Phone}", Margin, Margin + 26, SKTextAlign.Left, small, paint);
+            var scale = Math.Min(LogoWidth / logo!.Width, LogoHeight / logo.Height);
+            var width = logo.Width * scale;
+            var logoHeight = logo.Height * scale;
+            using var image = SKImage.FromBitmap(logo);
+            canvas.DrawImage(
+                image,
+                new SKRect(Margin, Margin, Margin + width, Margin + logoHeight),
+                new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.None));
         }
-        else
+
+        var x = TextLeft(hasLogo);
+        var y = Margin;
+        foreach (var (text, isTitle) in lines)
         {
-            paint.Color = Muted;
-            canvas.DrawText(MissingBusinessText, Margin, Margin + 12, SKTextAlign.Left, small, paint);
+            y += isTitle ? TitleLineHeight : HeaderLineHeight;
+            paint.Color = isTitle ? Ink : Muted;
+            canvas.DrawText(text, x, y - 3, SKTextAlign.Left, isTitle ? bold : small, paint);
         }
 
         paint.Color = Line;
         paint.StrokeWidth = 0.8f;
-        canvas.DrawLine(Margin, Margin + HeaderHeight - 8, PageWidth - Margin, Margin + HeaderHeight - 8, paint);
+        canvas.DrawLine(Margin, Margin + height - 8, PageWidth - Margin, Margin + height - 8, paint);
+    }
+
+    /// <summary>Ajusta el texto por palabras al ancho dado; una palabra que no cabe sola se recorta.</summary>
+    private static IEnumerable<string> Wrap(string text, SKFont font, float maxWidth)
+    {
+        var current = string.Empty;
+        foreach (var word in text.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var candidate = current.Length == 0 ? word : $"{current} {word}";
+            if (font.MeasureText(candidate) <= maxWidth || current.Length == 0)
+            {
+                current = candidate;
+            }
+            else
+            {
+                yield return current;
+                current = word;
+            }
+        }
+
+        if (current.Length > 0)
+        {
+            yield return current;
+        }
     }
 
     private static void DrawFooter(SKCanvas canvas, ReportDocument document, int page, int total)
@@ -103,17 +195,27 @@ public sealed class PdfReportWriter : IPdfReportWriter
     {
         private const float ContentLeft = Margin;
         private const float ContentWidth = PageWidth - (2 * Margin);
-        private const float Top = Margin + HeaderHeight;
+        private const float Top = Margin;
         private const float Bottom = PageHeight - Margin - FooterHeight;
-        private const int MaxLinesPerRow = (int)((Bottom - Top - (2 * RowHeight)) / LineHeight);
 
         private readonly ReportDocument _document;
+        private readonly float _firstPageTop;
+        private readonly int _maxLinesPerRow;
         private readonly List<SKPicture> _pages = [];
         private SKPictureRecorder? _recorder;
         private SKCanvas _canvas = null!;
         private float _y;
 
-        public Layout(ReportDocument document) => _document = document;
+        /// <param name="document">Documento a distribuir.</param>
+        /// <param name="firstPageTop">Inicio del contenido en la primera página, debajo del encabezado del negocio.</param>
+        public Layout(ReportDocument document, float firstPageTop)
+        {
+            _document = document;
+            _firstPageTop = firstPageTop;
+
+            // Una fila debe caber en cualquier página, incluida la primera.
+            _maxLinesPerRow = Math.Max(1, (int)((Bottom - firstPageTop - (2 * RowHeight)) / LineHeight));
+        }
 
         public void Dispose() => _recorder?.Dispose();
 
@@ -136,7 +238,7 @@ public sealed class PdfReportWriter : IPdfReportWriter
         {
             _recorder = new SKPictureRecorder();
             _canvas = _recorder.BeginRecording(new SKRect(0, 0, PageWidth, PageHeight));
-            _y = Top;
+            _y = _pages.Count == 0 ? _firstPageTop : Top;
         }
 
         private void EndPage()
@@ -261,7 +363,7 @@ public sealed class PdfReportWriter : IPdfReportWriter
                 // Una celda de texto puede traer varias líneas: la fila crece hasta lo que quepa en una página.
                 var row = table.Rows[r];
                 var texts = row.Select(ReportCellFormatter.Format).ToList();
-                var lines = Math.Min(texts.Max(t => t.Split('\n').Length), MaxLinesPerRow);
+                var lines = Math.Min(texts.Max(t => t.Split('\n').Length), _maxLinesPerRow);
                 var height = RowHeight + ((lines - 1) * LineHeight);
                 if (_y + height > Bottom)
                 {

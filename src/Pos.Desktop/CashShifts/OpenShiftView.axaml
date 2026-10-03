@@ -34,9 +34,9 @@
                  IsVisible="{Binding ErrorMessage, Converter={x:Static ObjectConverters.IsNotNull}}" />
 
       <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-        <Button Classes="accent" MinHeight="48" MinWidth="140"
+        <Button Classes="action accent" MinHeight="48" MinWidth="140"
                 Content="{x:Static res:Strings.Shift_Open}" Command="{Binding ConfirmCommand}" />
-        <Button MinHeight="48" MinWidth="110"
+        <Button Classes="action" MinHeight="48" MinWidth="110"
                 Content="{x:Static res:Strings.Common_Cancel}" Command="{Binding CancelCommand}" />
       </StackPanel>
     </StackPanel>

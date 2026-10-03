@@ -9,39 +9,35 @@ using Pos.Application.Licensing.GetLicenseStatus;
 using Pos.Application.Licensing.ImportLicense;
 using Pos.Desktop.Common;
 using Pos.Desktop.Licensing;
-using Pos.Desktop.Navigation;
 using Pos.Desktop.Resources;
 using Pos.Domain.Users;
 
 namespace Pos.Desktop.About;
 
-/// <summary>Pantalla "Acerca de": versión, carpeta de datos y exportación de diagnóstico (H6).</summary>
+/// <summary>
+/// Pantalla "Acerca de": versión, ID de máquina, exportación de diagnóstico y licencia (023, FR-030).
+/// La carpeta de datos y el sistema operativo siguen en el diagnóstico.
+/// </summary>
 public sealed partial class AboutViewModel : PageViewModel
 {
     private readonly UseCases _useCases;
     private readonly OperationRunner _runner;
     private readonly IDialogService _dialogs;
     private readonly IClock _clock;
-    private readonly IClipboardService _clipboard;
-    private readonly Navigator? _navigator;
 
     public AboutViewModel(
         UseCases useCases,
         OperationRunner runner,
         IDialogService dialogs,
         IClock clock,
-        IClipboardService clipboard,
-        ICurrentPermissions? permissions = null,
-        Navigator? navigator = null)
+        ICurrentPermissions? permissions = null)
     {
-        _navigator = navigator;
         CanExport = permissions?.Has(Permission.ExportDiagnostics) ?? true;
         CanManageLicense = permissions?.Has(Permission.ManageLicense) ?? false;
         _useCases = useCases;
         _runner = runner;
         _dialogs = dialogs;
         _clock = clock;
-        _clipboard = clipboard;
     }
 
     public override string Title => Strings.Shell_NavAbout;
@@ -58,11 +54,9 @@ public sealed partial class AboutViewModel : PageViewModel
     [ObservableProperty]
     public partial string Version { get; private set; } = string.Empty;
 
+    /// <summary>ID de máquina para soporte; visible para todos los roles.</summary>
     [ObservableProperty]
-    public partial string DataDirectory { get; private set; } = string.Empty;
-
-    [ObservableProperty]
-    public partial string OperatingSystem { get; private set; } = string.Empty;
+    public partial string MachineId { get; private set; } = string.Empty;
 
     [ObservableProperty]
     public partial bool IsExporting { get; private set; }
@@ -78,25 +72,11 @@ public sealed partial class AboutViewModel : PageViewModel
             () => _useCases.RunAsync<GetAppInfoHandler, AppInfoDto>(h => Task.FromResult(h.Handle())));
         if (completed && info is not null)
         {
-            (Version, DataDirectory, OperatingSystem) = (info.Version, info.DataDirectory, info.OperatingSystem);
+            Version = info.Version;
         }
 
         await RefreshLicenseAsync();
     }
-
-    /// <summary>Abre "Probar escáner" (021, FR-015).</summary>
-    [RelayCommand]
-    private async Task OpenScannerTestAsync()
-    {
-        if (_navigator is not null)
-        {
-            await _navigator.NavigateAsync(AboutModule.ScannerTestPageId);
-        }
-    }
-
-    [RelayCommand]
-    private async Task CopyDataDirectoryAsync() =>
-        await _runner.RunAsync("CopiarRutaDeDatos", () => _clipboard.SetTextAsync(DataDirectory));
 
     [RelayCommand]
     private async Task ExportAsync()
@@ -136,13 +116,12 @@ public sealed partial class AboutViewModel : PageViewModel
 
     private async Task RefreshLicenseAsync()
     {
-        if (!CanManageLicense)
-        {
-            return;
-        }
-
         var status = await _useCases.RunAsync<GetLicenseStatusHandler, LicenseStatusDto>(h => Task.FromResult(h.Handle()));
-        LicenseSummary = LicenseMessages.Summary(status);
+        MachineId = status.MachineId;
+        if (CanManageLicense)
+        {
+            LicenseSummary = LicenseMessages.Summary(status);
+        }
     }
 
     [RelayCommand]

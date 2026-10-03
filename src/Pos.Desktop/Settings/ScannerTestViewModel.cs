@@ -9,7 +9,7 @@ using Pos.Desktop.Common.Scanner;
 using Pos.Desktop.Resources;
 using Pos.Domain.Products;
 
-namespace Pos.Desktop.About;
+namespace Pos.Desktop.Settings;
 
 /// <summary>Una lectura en la pantalla "Probar escáner", ya con sus textos para mostrar.</summary>
 public sealed record ScanTestItem(

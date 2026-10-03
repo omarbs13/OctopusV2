@@ -78,9 +78,7 @@
   <data name="Products_DeleteConfirm" xml:space="preserve"><value>¿Borrar el producto «{0}» ({1})? Dejará de aparecer en el catálogo.</value></data>
   <data name="Products_DeleteConflict" xml:space="preserve"><value>Otro proceso modificó este producto. Revise los datos actuales antes de borrarlo.</value></data>
   <data name="About_Version" xml:space="preserve"><value>Versión</value></data>
-  <data name="About_DataDirectory" xml:space="preserve"><value>Carpeta de datos</value></data>
-  <data name="About_OperatingSystem" xml:space="preserve"><value>Sistema operativo</value></data>
-  <data name="About_CopyPath" xml:space="preserve"><value>Copiar ruta</value></data>
+  <data name="About_MachineId" xml:space="preserve"><value>ID de máquina</value></data>
   <data name="About_Export" xml:space="preserve"><value>Exportar diagnóstico…</value></data>
   <data name="About_ExportTitle" xml:space="preserve"><value>Guardar diagnóstico</value></data>
   <data name="About_Exporting" xml:space="preserve"><value>Exportando diagnóstico…</value></data>

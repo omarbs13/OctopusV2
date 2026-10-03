@@ -23,6 +23,8 @@ public sealed class LicenseCard(OperationRunner runner, UseCases useCases, Licen
 
     public override DashboardCardKind Kind => DashboardCardKind.Metric;
 
+    public override bool IsTextValue => true;
+
     protected override async Task LoadCoreAsync()
     {
         var status = await useCases.RunAsync<GetLicenseStatusHandler, LicenseStatusDto>(h => Task.FromResult(h.Handle()));

@@ -2,12 +2,13 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Pos.Application.Abstractions;
 using Pos.Application.Licensing;
+using Pos.Application.Users.Session;
 using Pos.Desktop.Auth;
 using Pos.Desktop.Common;
 
 namespace Pos.Desktop.Navigation;
 
-/// <summary>Preferencias del menú que se recuerdan entre sesiones (FR-017).</summary>
+/// <summary>Preferencias del menú que se recuerdan entre sesiones, por usuario (FR-013).</summary>
 public sealed record NavigationPreferences(bool Collapsed, string[] ExpandedGroups);
 
 /// <summary>Opción o grupo del menú lateral.</summary>
@@ -80,9 +81,10 @@ public sealed partial class MenuItemViewModel : ViewModelBase
 }
 
 /// <summary>
-/// Menú lateral de dos niveles, colapsable, con preferencias persistentes y contracción automática
-/// en ventanas angostas (FR-012 a FR-018). La elección del operador se guarda; la contracción
-/// automática nunca se guarda.
+/// Menú lateral de dos niveles, colapsable, con preferencias persistentes por usuario y contracción
+/// automática en ventanas angostas (FR-012 a FR-018). La elección del operador se guarda; la
+/// contracción automática nunca se guarda. Sin preferencia guardada, todos los grupos quedan
+/// colapsados (023, FR-011).
 /// </summary>
 public sealed partial class MenuViewModel : ViewModelBase, IDisposable
 {
@@ -94,14 +96,15 @@ public sealed partial class MenuViewModel : ViewModelBase, IDisposable
     private readonly IPreferencesStore _preferences;
     private readonly ILicenseState? _license;
     private readonly SynchronizationContext? _context = SynchronizationContext.Current;
-    private readonly bool _hasSavedPreferences;
+    private readonly string _preferencesKey;
 
     public MenuViewModel(
         NavigationRegistry registry,
         Navigator navigator,
         IPreferencesStore preferences,
         UserSectionViewModel? userSection = null,
-        ILicenseState? license = null)
+        ILicenseState? license = null,
+        IUserSession? session = null)
     {
         ArgumentNullException.ThrowIfNull(registry);
         ArgumentNullException.ThrowIfNull(navigator);
@@ -110,13 +113,14 @@ public sealed partial class MenuViewModel : ViewModelBase, IDisposable
         _preferences = preferences;
         _license = license;
         UserSection = userSection;
+        _preferencesKey = KeyFor(session?.User?.Id);
 
         Items = BuildItems();
 
-        var saved = preferences.Load<NavigationPreferences>(PreferencesKey);
+        // Los grupos que no están guardados (incluidos los nuevos) quedan colapsados.
+        var saved = preferences.Load<NavigationPreferences>(_preferencesKey);
         if (saved is not null)
         {
-            _hasSavedPreferences = true;
             IsUserCollapsed = saved.Collapsed;
             foreach (var group in Groups.Where(g => saved.ExpandedGroups.Contains(g.Id)))
             {
@@ -158,6 +162,9 @@ public sealed partial class MenuViewModel : ViewModelBase, IDisposable
     public partial bool IsAutoCollapsed { get; private set; }
 
     public bool IsCollapsed => IsUserCollapsed || IsAutoCollapsed;
+
+    /// <summary>Clave de las preferencias: <c>navigation.{userId:N}</c>; sin sesión (pruebas), <c>navigation</c>.</summary>
+    public static string KeyFor(Guid? userId) => userId is { } id ? $"{PreferencesKey}.{id:N}" : PreferencesKey;
 
     private IEnumerable<MenuItemViewModel> Groups => Items.Where(i => i.IsGroup);
 
@@ -251,7 +258,7 @@ public sealed partial class MenuViewModel : ViewModelBase, IDisposable
 
     private void SavePreferences() =>
         _preferences.Save(
-            PreferencesKey,
+            _preferencesKey,
             new NavigationPreferences(IsUserCollapsed, [.. Groups.Where(g => g.IsExpanded).Select(g => g.Id)]));
 
     private void SyncCurrent()
@@ -265,13 +272,8 @@ public sealed partial class MenuViewModel : ViewModelBase, IDisposable
                 child.IsCurrent = child.Id == current;
             }
 
+            // La opción actual no abre su grupo: el grupo solo conserva su marca lateral.
             item.IsCurrentGroup = item.IsGroup && item.Children.Any(c => c.IsCurrent);
-
-            // Sin preferencias guardadas, se abre el grupo de la opción actual (sin guardarlo).
-            if (!_hasSavedPreferences && item.IsCurrentGroup)
-            {
-                item.IsExpanded = true;
-            }
         }
     }
 }

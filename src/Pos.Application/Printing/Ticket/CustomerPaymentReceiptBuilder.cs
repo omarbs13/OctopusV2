@@ -29,10 +29,7 @@ public static class CustomerPaymentReceiptBuilder
         options ??= new TicketOptions();
 
         var lines = new List<TicketLine>();
-        if (profile is not null)
-        {
-            lines.AddRange(TextWrap.Wrap(profile.TradeName, columns).Select(t => new TicketLine(t, TicketAlignment.Center, Bold: true)));
-        }
+        TicketHeader.Add(lines, profile, columns);
 
         lines.Add(new TicketLine(Title, TicketAlignment.Center, Bold: true));
         if (receipt.IsVoided)

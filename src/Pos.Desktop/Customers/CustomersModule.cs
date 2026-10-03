@@ -17,7 +17,7 @@ public static class CustomersModule
     public static IServiceCollection AddCustomersModule(this IServiceCollection services)
     {
         services.AddNavigationGroup(GroupId, Strings.Nav_Customers, "Icon.Users", 6);
-        services.AddPage<CustomerListViewModel, CustomerListView>(ListPageId, Strings.Customer_ListTitle, "Icon.Users", 0, GroupId, permission: Permission.ManageCustomers);
+        services.AddPage<CustomerListViewModel, CustomerListView>(ListPageId, Strings.Customer_ListTitle, "Icon.CardAccount", 0, GroupId, permission: Permission.ManageCustomers);
 
         services.AddTransient<CustomerFormViewModel>();
         services.AddScoped<Func<CustomerFormViewModel>>(sp => sp.GetRequiredService<CustomerFormViewModel>);

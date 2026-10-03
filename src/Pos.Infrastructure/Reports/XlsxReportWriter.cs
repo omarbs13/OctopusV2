@@ -1,12 +1,14 @@
 using ClosedXML.Excel;
 using ClosedXML.Excel.Drawings;
+using Pos.Application.Business;
 using Pos.Application.Reports;
 using Pos.Application.Reports.Export;
 
 namespace Pos.Infrastructure.Reports;
 
 /// <summary>
-/// XLSX editable con ClosedXML (research §7): hoja "Resumen" (título, período, filtros y métricas),
+/// XLSX editable con ClosedXML (research §7): hoja "Resumen" (encabezado del negocio, título, período,
+/// filtros y métricas),
 /// "Detalle" (tablas con importes y fechas como valores, sin fórmulas ni protección) y "Gráficas"
 /// (imágenes PNG del mismo renderizador que la pantalla), que se omite si el documento no tiene gráficas (018).
 /// </summary>
@@ -42,14 +44,23 @@ public sealed class XlsxReportWriter : IXlsxReportWriter
 
     private static void WriteSummary(IXLWorksheet sheet, ReportDocument document)
     {
+        // Encabezado del negocio en las primeras filas, sin logo; sin datos, el aviso (023, FR-021, FR-025).
         var row = 1;
         if (document.Business is { } business)
         {
-            sheet.Cell(row, 1).Value = business.Name;
-            sheet.Cell(row, 1).Style.Font.Bold = true;
-            row++;
-            sheet.Cell(row++, 1).Value = $"{business.Address} · Tel. {business.Phone}";
+            foreach (var line in business.Lines)
+            {
+                sheet.Cell(row, 1).Value = line.Text;
+                sheet.Cell(row, 1).Style.Font.Bold = line.IsTitle;
+                row++;
+            }
         }
+        else
+        {
+            sheet.Cell(row++, 1).Value = BusinessHeader.MissingText;
+        }
+
+        row++;
 
         sheet.Cell(row, 1).Value = document.Title;
         sheet.Cell(row, 1).Style.Font.Bold = true;

@@ -77,7 +77,7 @@ public sealed class ReportDocumentBuilder
     public async Task<ReportDocument> CompleteAsync(PartialDocument partial, CancellationToken cancellationToken)
     {
         var profile = await _business.GetAsync(cancellationToken);
-        var business = profile is null ? null : new ReportBusiness(profile.TradeName, profile.Address, profile.Phone);
+        var business = BusinessHeader.From(profile is null ? null : BusinessProfileDto.From(profile));
         return new ReportDocument(
             partial.Title,
             partial.PeriodText,

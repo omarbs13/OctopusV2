@@ -1,8 +1,8 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="using:Pos.Desktop.About"
+             xmlns:vm="using:Pos.Desktop.Settings"
              xmlns:res="using:Pos.Desktop.Resources"
-             x:Class="Pos.Desktop.About.ScannerTestView"
+             x:Class="Pos.Desktop.Settings.ScannerTestView"
              x:DataType="vm:ScannerTestViewModel"
              Focusable="True">
 

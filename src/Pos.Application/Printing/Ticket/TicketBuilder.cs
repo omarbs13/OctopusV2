@@ -32,7 +32,7 @@ public static class TicketBuilder
         options ??= new TicketOptions();
 
         var lines = new List<TicketLine>();
-        AddHeader(lines, profile, columns);
+        TicketHeader.Add(lines, profile, columns);
 
         if (sale.Status == SaleStatus.Cancelled)
         {
@@ -136,30 +136,6 @@ public static class TicketBuilder
         (thousandths / 1000m).ToString("F" + Math.Clamp(decimalPlaces, 0, 3), CultureInfo.InvariantCulture);
 
     private static TicketLine Separator(int columns) => new(new string('-', columns));
-
-    private static void AddHeader(List<TicketLine> lines, BusinessProfileDto? profile, int columns)
-    {
-        if (profile is null)
-        {
-            return;
-        }
-
-        foreach (var text in TextWrap.Wrap(profile.TradeName, columns))
-        {
-            lines.Add(new TicketLine(text, TicketAlignment.Center, Bold: true));
-        }
-
-        AddCentered(lines, profile.Address, columns);
-        if (!string.IsNullOrWhiteSpace(profile.Phone))
-        {
-            AddCentered(lines, $"Tel. {profile.Phone}", columns);
-        }
-
-        if (!string.IsNullOrWhiteSpace(profile.TaxId))
-        {
-            AddCentered(lines, $"RFC: {profile.TaxId}", columns);
-        }
-    }
 
     private static void AddCentered(List<TicketLine> lines, string? text, int columns)
     {

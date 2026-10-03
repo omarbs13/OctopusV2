@@ -19,7 +19,7 @@ public static class ReturnsModule
         services.AddPage<ReturnsAdminViewModel, ReturnsAdminView>(
             PageId,
             Strings.Nav_Returns,
-            "Icon.Movements",
+            "Icon.CashRefund",
             30,
             SalesModule.GroupId,
             permission: Permission.ManageCreditNotes);

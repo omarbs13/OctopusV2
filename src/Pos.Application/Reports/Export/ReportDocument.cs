@@ -1,3 +1,5 @@
+using Pos.Application.Business;
+
 namespace Pos.Application.Reports.Export;
 
 /// <summary>Celda de una tabla exportada; cada tipo conserva su valor numérico o de fecha para el XLSX (FR-019).</summary>
@@ -41,9 +43,6 @@ public sealed record ReportTable(string Title, IReadOnlyList<ReportColumn> Colum
 
 public sealed record ReportMetric(string Label, ReportCell Value);
 
-/// <summary>Datos del negocio del encabezado.</summary>
-public sealed record ReportBusiness(string Name, string Address, string Phone);
-
 /// <summary>
 /// Documento neutral que los escritores de PDF y XLSX convierten a archivo. Se arma en Application, así
 /// que la omisión de datos de turnos abiertos se aplica aquí y no en los escritores (research §11).
@@ -55,6 +54,6 @@ public sealed record ReportDocument(
     IReadOnlyList<ReportMetric> Metrics,
     IReadOnlyList<ReportTable> Tables,
     IReadOnlyList<ChartSpec> Charts,
-    ReportBusiness? Business,
+    BusinessHeader? Business,
     DateTime GeneratedAtUtc,
     string GeneratedBy);

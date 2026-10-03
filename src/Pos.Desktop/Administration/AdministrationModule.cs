@@ -15,8 +15,8 @@ public static class AdministrationModule
     public static IServiceCollection AddAdministrationModule(this IServiceCollection services)
     {
         services.AddNavigationGroup(GroupId, Strings.Nav_Administration, "Icon.Shield", 70);
-        services.AddPage<UsersViewModel, UsersView>(UsersPageId, Strings.Nav_Users, "Icon.Users", 0, GroupId, permission: Permission.ManageUsers);
-        services.AddPage<AuditLogViewModel, AuditLogView>(AuditLogPageId, Strings.Nav_AuditLog, "Icon.Movements", 10, GroupId, permission: Permission.ViewAuditLog);
+        services.AddPage<UsersViewModel, UsersView>(UsersPageId, Strings.Nav_Users, "Icon.AccountKey", 0, GroupId, permission: Permission.ManageUsers);
+        services.AddPage<AuditLogViewModel, AuditLogView>(AuditLogPageId, Strings.Nav_AuditLog, "Icon.TextSearch", 10, GroupId, permission: Permission.ViewAuditLog);
 
         services.AddTransient<UserEditorViewModel>();
         services.AddScoped<Func<UserEditorViewModel>>(sp => sp.GetRequiredService<UserEditorViewModel>);

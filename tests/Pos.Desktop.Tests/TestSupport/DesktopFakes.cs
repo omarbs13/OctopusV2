@@ -1,5 +1,6 @@
 using Pos.Application.Abstractions;
 using Pos.Application.Diagnostics;
+using Pos.Application.Licensing;
 using Pos.Desktop.Common;
 
 namespace Pos.Desktop.Tests.TestSupport;
@@ -9,6 +10,13 @@ public sealed class FakeAppInfo : IAppInfo
     public string Version => "0.1.0";
 
     public string OperatingSystem => "Linux de prueba";
+}
+
+public sealed class FakeMachineId : IMachineIdProvider
+{
+    public const string Id = "abc123maquina";
+
+    public string GetMachineId() => Id;
 }
 
 public sealed class FakeDiagnosticsExporter : IDiagnosticsExporter

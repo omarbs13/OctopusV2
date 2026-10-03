@@ -46,8 +46,9 @@ Los códigos de versiones anteriores (8 a 14 dígitos) cumplen esta regla y no c
 
 ## Probar el escáner
 
-Menú **Ayuda → Probar escáner**, o el botón "Probar escáner" en **Acerca de**. Está disponible para todos
-los roles y **no modifica la venta en curso** ni el borrador.
+Menú **Configuración → Probar escáner** (desde 0.17.0; antes estaba en Ayuda y en **Acerca de**). Está
+disponible para todos los roles: un Cajero ve el grupo Configuración solo con esta opción. **No modifica la
+venta en curso** ni el borrador.
 
 Escanee un código y la pantalla muestra:
 

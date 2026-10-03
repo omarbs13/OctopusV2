@@ -32,9 +32,19 @@
       <Setter Property="FontSize" Value="34" />
       <Setter Property="FontWeight" Value="Bold" />
     </Style>
+    <!-- Valor de texto: más pequeño, en una línea y recortado (FR-027). -->
+    <Style Selector="TextBlock.cardValue.text">
+      <Setter Property="FontSize" Value="22" />
+      <Setter Property="MaxLines" Value="1" />
+      <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    </Style>
     <Style Selector="TextBlock.cardMessage">
       <Setter Property="TextWrapping" Value="Wrap" />
       <Setter Property="Opacity" Value="0.8" />
+    </Style>
+    <Style Selector="TextBlock.cardMessage.metric">
+      <Setter Property="MaxLines" Value="2" />
+      <Setter Property="TextTrimming" Value="CharacterEllipsis" />
     </Style>
   </UserControl.Styles>
 
@@ -55,16 +65,25 @@
                     Classes.navigable="{Binding IsNavigable}"
                     Classes.empty="{Binding IsEmpty}"
                     Classes.error="{Binding IsError}"
-                    Width="240" MinHeight="130"
+                    Width="240" Height="150"
                     Command="{Binding $parent[ItemsControl].((vm:HomeViewModel)DataContext).ActivateCardCommand}"
                     CommandParameter="{Binding}"
                     AutomationProperties.Name="{Binding Title}">
+              <!-- Tamaño fijo para toda la fila (FR-026); el tooltip muestra el texto completo (FR-028). -->
+              <ToolTip.Tip>
+                <StackPanel MaxWidth="320" Spacing="4">
+                  <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                  <TextBlock Text="{Binding Value}" TextWrapping="Wrap" IsVisible="{Binding ShowValue}" />
+                  <TextBlock Text="{Binding Message}" TextWrapping="Wrap"
+                             IsVisible="{Binding Message, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                </StackPanel>
+              </ToolTip.Tip>
               <Grid RowDefinitions="Auto,*" ColumnDefinitions="*,Auto">
                 <TextBlock Classes="cardTitle" Text="{Binding Title}" />
                 <PathIcon Grid.Column="1" Width="22" Height="22"
                           Data="{Binding Icon, Converter={x:Static common:IconConverter.Instance}}" />
                 <StackPanel Grid.Row="1" Grid.ColumnSpan="2" VerticalAlignment="Bottom" Margin="0,12,0,0">
-                  <TextBlock Classes="cardValue" Text="{Binding Value}" IsVisible="{Binding ShowValue}" />
+                  <TextBlock Classes="cardValue" Classes.text="{Binding IsTextValue}" Text="{Binding Value}" IsVisible="{Binding ShowValue}" />
                   <!-- Varias cifras navegables (022); la tarjeta exterior no navega -->
                   <ItemsControl ItemsSource="{Binding Segments}" IsVisible="{Binding ShowSegments}">
                     <ItemsControl.ItemsPanel>
@@ -88,7 +107,7 @@
                       </DataTemplate>
                     </ItemsControl.ItemTemplate>
                   </ItemsControl>
-                  <TextBlock Classes="cardMessage" Text="{Binding Message}"
+                  <TextBlock Classes="cardMessage metric" Text="{Binding Message}"
                              IsVisible="{Binding Message, Converter={x:Static ObjectConverters.IsNotNull}}" />
                   <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsLoading}" />
                 </StackPanel>

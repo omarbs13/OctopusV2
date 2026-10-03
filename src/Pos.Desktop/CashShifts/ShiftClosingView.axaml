@@ -12,7 +12,7 @@
     <TextBlock Text="{x:Static res:Strings.Cut_ClosingHint}" TextWrapping="Wrap" />
     <TextBlock Text="{x:Static res:Strings.Cut_ClosingOtherOwner}" TextWrapping="Wrap"
                IsVisible="{Binding IsOtherOwnerBlocked}" />
-    <Button Classes="accent" MinHeight="44" HorizontalAlignment="Left"
+    <Button Classes="action accent" MinHeight="44" HorizontalAlignment="Left"
             Content="{x:Static res:Strings.Cut_MakeClosing}"
             Command="{Binding CloseCommand}"
             IsVisible="{Binding CanClose}" />

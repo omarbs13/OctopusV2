@@ -1,0 +1,18 @@
+<!--
+  Estilos globales de la aplicación (023, US7). Se incluyen después de FluentTheme; una vista que
+  declara otra alineación localmente (menú, tarjetas de Inicio, segmentos, notificaciones) la conserva.
+-->
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <!-- Contenido de los botones centrado en ambos ejes (FR-018). -->
+  <Style Selector="Button">
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+
+  <!-- Botones grandes: el texto se ajusta en varias líneas centradas sin salir del botón (FR-019). -->
+  <Style Selector="Button.action /template/ ContentPresenter#PART_ContentPresenter, Button.touch /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="TextWrapping" Value="Wrap" />
+    <Setter Property="TextAlignment" Value="Center" />
+  </Style>
+</Styles>

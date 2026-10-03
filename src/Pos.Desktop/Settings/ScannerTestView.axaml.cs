@@ -6,7 +6,7 @@ using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Pos.Desktop.Common.Scanner;
 
-namespace Pos.Desktop.About;
+namespace Pos.Desktop.Settings;
 
 /// <summary>
 /// Teclado de la pantalla "Probar escáner" (021, research §10): no hay campo de texto; la vista toma el foco

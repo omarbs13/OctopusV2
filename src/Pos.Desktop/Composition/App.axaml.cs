@@ -4,6 +4,7 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Pos.Application.Abstractions;
 using Pos.Application.Licensing;
 using Pos.Application.Startup;
 using Pos.Desktop.Common;
@@ -85,6 +86,10 @@ public partial class App : Avalonia.Application
         desktop.MainWindow = splash;
         splash.Show();
 
+        // El tiempo mínimo visible corre en paralelo con todo el arranque (FR-009); si el arranque
+        // falla, la espera se descarta y el error se muestra de inmediato (FR-010).
+        var minimum = splashViewModel.WaitMinimumAsync();
+
         var presenter = services.GetRequiredService<StartupPresenter>();
         if (!await presenter.RunAsync(CancellationToken.None, splashViewModel))
         {
@@ -94,12 +99,15 @@ public partial class App : Avalonia.Application
         }
 
         await services.GetRequiredService<LicenseBootstrapper>().RunAsync(CancellationToken.None);
-        await splashViewModel.WaitMinimumAsync();
 
         var root = services.GetRequiredService<RootViewModel>();
+        var preferences = services.GetRequiredService<IPreferencesStore>();
         var window = new MainWindow { DataContext = root };
+
+        // Una preferencia ilegible ya se registró en el log: se abre maximizada sin mensaje (FR-032).
+        window.ApplyPlacement(preferences.Load<WindowPlacement>(WindowPlacement.PreferenceKey));
         services.GetRequiredService<IdleMonitor>().Attach(window);
-        window.Closing += (_, e) => OnMainWindowClosing(window, root, e, services.GetRequiredService<IDatabaseStartup>());
+        window.Closing += (_, e) => OnMainWindowClosing(window, root, e, services.GetRequiredService<IDatabaseStartup>(), preferences);
 
         if (context.Guard is not null)
         {
@@ -107,6 +115,7 @@ public partial class App : Avalonia.Application
         }
 
         await root.StartAsync();
+        await minimum;
         desktop.MainWindow = window;
         window.Show();
         splash.Close();
@@ -118,7 +127,12 @@ public partial class App : Avalonia.Application
     /// el cierre, sin respaldo); después se audita el cierre de sesión, respaldo automático con
     /// límite de tiempo y cierre.
     /// </summary>
-    private void OnMainWindowClosing(Window window, RootViewModel root, WindowClosingEventArgs e, IDatabaseStartup startup)
+    private void OnMainWindowClosing(
+        MainWindow window,
+        RootViewModel root,
+        WindowClosingEventArgs e,
+        IDatabaseStartup startup,
+        IPreferencesStore preferences)
     {
         if (_closeBackupDone)
         {
@@ -140,11 +154,25 @@ public partial class App : Avalonia.Application
                 return;
             }
 
+            SavePlacement(window, preferences);
             window.IsEnabled = false;
             await root.EndSessionOnCloseAsync();
             await Task.Run(startup.BackupOnCloseAsync);
             _closeBackupDone = true;
             window.Close();
         });
+    }
+
+    /// <summary>Guarda la colocación antes del respaldo de cierre; un fallo solo se registra (Principio I).</summary>
+    private static void SavePlacement(MainWindow window, IPreferencesStore preferences)
+    {
+        try
+        {
+            preferences.Save(WindowPlacement.PreferenceKey, window.CapturePlacement());
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "No se pudo guardar la colocación de la ventana principal");
+        }
     }
 }

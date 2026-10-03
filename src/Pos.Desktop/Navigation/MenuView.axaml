@@ -43,9 +43,12 @@
     <Style Selector="PathIcon.expanded">
       <Setter Property="RenderTransform" Value="rotate(90deg)" />
     </Style>
+    <!-- A la izquierda: con el margen de 4 y el relleno de 12, el botón hamburguesa y los íconos de
+         primer nivel quedan en x = 16 con el menú expandido o contraído (FR-014). -->
     <Style Selector="PathIcon.menuIcon">
       <Setter Property="Width" Value="20" />
       <Setter Property="Height" Value="20" />
+      <Setter Property="HorizontalAlignment" Value="Left" />
     </Style>
   </UserControl.Styles>
 

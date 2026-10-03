@@ -19,10 +19,10 @@ public static class CashModule
     /// </summary>
     public static IServiceCollection AddCashModule(this IServiceCollection services)
     {
-        services.AddNavigationGroup(GroupId, Strings.Nav_Cash, "Icon.Sales", 6);
-        services.AddPage<ShiftReadoutViewModel, ShiftReadoutView>(ReadoutPageId, Strings.Nav_CashReadout, "Icon.Chart", 0, GroupId, permission: Permission.OperateShift);
-        services.AddPage<ShiftClosingViewModel, ShiftClosingView>(ClosingPageId, Strings.Nav_CashClosing, "Icon.Lock", 10, GroupId, permission: Permission.OperateShift);
-        services.AddPage<ShiftCutsViewModel, ShiftCutsView>(CutsPageId, Strings.Nav_CashCuts, "Icon.Movements", 20, GroupId, permission: Permission.ManageShifts);
+        services.AddNavigationGroup(GroupId, Strings.Nav_Cash, "Icon.CashMultiple", 6);
+        services.AddPage<ShiftReadoutViewModel, ShiftReadoutView>(ReadoutPageId, Strings.Nav_CashReadout, "Icon.ReceiptText", 0, GroupId, permission: Permission.OperateShift);
+        services.AddPage<ShiftClosingViewModel, ShiftClosingView>(ClosingPageId, Strings.Nav_CashClosing, "Icon.CashLock", 10, GroupId, permission: Permission.OperateShift);
+        services.AddPage<ShiftCutsViewModel, ShiftCutsView>(CutsPageId, Strings.Nav_CashCuts, "Icon.Archive", 20, GroupId, permission: Permission.ManageShifts);
 
         services.AddTransient<ShiftCutDetailViewModel>();
         services.AddScoped<Func<ShiftCutDetailViewModel>>(sp => sp.GetRequiredService<ShiftCutDetailViewModel>);

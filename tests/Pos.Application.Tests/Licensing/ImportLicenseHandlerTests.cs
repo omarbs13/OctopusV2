@@ -41,7 +41,7 @@ public sealed class ImportLicenseHandlerTests
         new FakeAge(),
         _auth.Audit,
         _auth.Clock,
-        new GetLicenseStatusHandler(_state, VendorContact.Default),
+        new GetLicenseStatusHandler(_state, VendorContact.Default, new FakeMachine()),
         NullLogger<ImportLicenseHandler>.Instance);
 
     private static LicenseVerification.Valid Grant(params LicensedModule[] modules) =>

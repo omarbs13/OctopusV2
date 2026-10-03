@@ -34,7 +34,7 @@ public static class ShiftTicketBuilder
         var zone = timeZone ?? TimeZoneInfo.Local;
 
         var lines = new List<TicketLine>();
-        AddHeader(lines, profile, columns);
+        TicketHeader.Add(lines, profile, columns);
         // 017: los turnos cerrados desde 0.12.0 tienen Corte Z; los anteriores conservan "CORTE DE CAJA".
         lines.Add(new TicketLine(
             report.CutFolio is { } cutFolio ? $"{ClosingTitle} {cutFolio}" : ReportTitle,
@@ -86,7 +86,7 @@ public static class ShiftTicketBuilder
         var isReadout = cut.Type == ShiftCutType.Readout;
 
         var lines = new List<TicketLine>();
-        AddHeader(lines, profile, columns);
+        TicketHeader.Add(lines, profile, columns);
         lines.Add(new TicketLine(isReadout ? ReadoutTitle : ClosingTitle, TicketAlignment.Center, Bold: true));
         if (isReadout)
         {
@@ -139,7 +139,7 @@ public static class ShiftTicketBuilder
         var zone = timeZone ?? TimeZoneInfo.Local;
 
         var lines = new List<TicketLine>();
-        AddHeader(lines, profile, columns);
+        TicketHeader.Add(lines, profile, columns);
         lines.Add(new TicketLine(
             receipt.Type == CashMovementType.In ? DepositTitle : WithdrawalTitle,
             TicketAlignment.Center,
@@ -232,19 +232,6 @@ public static class ShiftTicketBuilder
 
     private static void AddWrapped(List<TicketLine> lines, string text, int columns) =>
         lines.AddRange(TextWrap.Wrap(text, columns).Select(t => new TicketLine(t)));
-
-    private static void AddHeader(List<TicketLine> lines, BusinessProfileDto? profile, int columns)
-    {
-        if (profile is null)
-        {
-            return;
-        }
-
-        foreach (var text in TextWrap.Wrap(profile.TradeName, columns))
-        {
-            lines.Add(new TicketLine(text, TicketAlignment.Center, Bold: true));
-        }
-    }
 
     /// <summary>Cifras comunes del corte; <c>TotalSoldCents</c> nulo en el corte de 008, que no lo imprime.</summary>
     private sealed record Figures(

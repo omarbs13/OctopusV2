@@ -10,7 +10,8 @@ Guía para desarrolladores y soporte técnico.
 | Linux | `~/.local/share/Pos` |
 
 La variable de entorno `POS_DATA_DIR` reemplaza esa ruta; es útil para pruebas y para soporte.
-La ruta real siempre se ve en la pantalla **Acerca de**, con un botón para copiarla.
+La ruta real viene en el diagnóstico (**Acerca de → Exportar diagnóstico…**). Desde 0.17.0 la pantalla
+**Acerca de** ya no la muestra; solo la versión, el ID de máquina, el diagnóstico y la licencia.
 
 ## Estructura
 
@@ -20,7 +21,8 @@ Pos/
 ├── license.lic                  Licencia local (cifrada): ID de máquina, primer arranque y licencia vigente
 ├── logo.png                     Logotipo del cliente (opcional) para la pantalla de carga
 ├── preferences/
-│   ├── navigation.json          Estado del menú lateral (contraído y grupos abiertos)
+│   ├── navigation.{userId}.json Estado del menú lateral por usuario (contraído y grupos abiertos)
+│   ├── window.json              Estado, tamaño y posición de la ventana principal (por equipo)
 │   └── security.json            Tiempo de inactividad antes de bloquear la sesión (0 = desactivado)
 ├── data/
 │   ├── pos.db                   Base de datos SQLite (modo WAL)
@@ -51,16 +53,34 @@ No hace falta recompilar.
 
 ## Preferencias del menú
 
-`preferences/navigation.json` guarda si el menú lateral quedó contraído y qué grupos estaban
-abiertos. Es una preferencia de esta máquina, fuera de la base del negocio:
+`preferences/navigation.{userId}.json` (por ejemplo `navigation.0199a1b2c3d4….json`) guarda, **por
+usuario**, si el menú lateral quedó contraído y qué grupos estaban abiertos. Es una preferencia local,
+fuera de la base del negocio:
 
 ```json
 { "collapsed": false, "expandedGroups": ["catalogs", "inventory"] }
 ```
 
-Se puede borrar sin riesgo para restablecer el menú. Si está dañado, la aplicación lo ignora,
-muestra el menú expandido y registra una advertencia. La contracción automática en ventanas de
-menos de 1000 px de ancho no se guarda.
+Sin archivo para el usuario, el menú aparece expandido y con **todos los grupos colapsados**; un grupo
+que no está en la lista (por ejemplo, uno nuevo) también aparece colapsado. Se puede borrar sin riesgo
+para restablecer el menú. Si está dañado, la aplicación lo ignora, usa el estado predeterminado y
+registra una advertencia. La contracción automática en ventanas angostas no se guarda.
+
+Desde 0.17.0 el archivo global `navigation.json` de versiones anteriores se ignora y no se borra.
+
+## Preferencias de la ventana
+
+`preferences/window.json` guarda, **por equipo**, el último estado no minimizado de la ventana
+principal y, en estado normal, su tamaño y posición:
+
+```json
+{ "state": "Normal", "x": 120, "y": 80, "width": 1280, "height": 860 }
+```
+
+Se escribe al cerrar la aplicación. Sin archivo, o si está dañado, la ventana abre maximizada (con una
+advertencia en el log y sin mensaje al operador). Si la posición guardada queda fuera de todas las
+pantallas conectadas, la ventana se centra en la principal. El área cliente nunca baja de 1024×768,
+salvo en pantallas más pequeñas, donde el mínimo es el área de trabajo disponible.
 
 ## Imágenes de productos
 

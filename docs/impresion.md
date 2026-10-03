@@ -21,6 +21,22 @@ vuelve a imprimir la misma venta; no crea otra.
 | **Corte X / Corte Z** | **Caja → Corte X**, cierre de turno (**Caja → Corte Z**) e **Histórico de cortes** | El Corte X se imprime desde su vista ("Imprimir"); el Corte Z, automáticamente al cerrar el turno. Desde el histórico se reimprimen con la leyenda `REIMPRESIÓN`. Ver abajo. |
 | **Abrir cajón** | Punto de venta | Abre el cajón sin venta; pide un motivo obligatorio que queda en la bitácora. Un Cajero necesita la autorización de un administrador (solo Administrador puede abrirlo directamente). |
 
+## Encabezado del negocio
+
+Desde 0.17.0 **todos** los tickets (venta, nota de crédito, abono, movimiento de caja, Corte X y Corte Z)
+empiezan con el mismo encabezado, el mismo que usan los reportes PDF y XLSX:
+
+```text
+        [logotipo]                    (si existe y la impresora puede imprimirlo)
+        Nombre comercial              (negrita)
+        Dirección (ajustada al ancho)
+        Tel. 555 123 4567
+        RFC: XAXX010101000            (solo si existe)
+```
+
+Las líneas van centradas y ajustadas a 32 o 48 columnas. Un dato vacío se omite sin dejar línea en
+blanco. Sin datos del negocio capturados, el ticket empieza directamente en su título, como antes.
+
 ## Tickets de Corte X y Corte Z
 
 Los dos usan las cifras guardadas en el corte, sin recalcular: una reimpresión sale idéntica a la

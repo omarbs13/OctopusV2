@@ -111,11 +111,18 @@ umbral y hasta 10 productos críticos activos con existencia baja o agotada, má
 
 ## Exportación
 
-- **PDF**: A4 horizontal; título, período, filtros, métricas, gráficas y tabla; encabezado con nombre,
-  dirección y teléfono del negocio y pie con fecha, hora y usuario en cada página; las tablas largas
-  continúan en las páginas siguientes repitiendo el encabezado de columnas. Si los datos del negocio no están
-  capturados, el PDF se genera sin encabezado y la pantalla avisa y ofrece ir a "Datos del negocio".
-- **Excel (XLSX)**: hojas Resumen, Detalle y Gráficas (imágenes PNG). Importes y fechas son valores
+- **Encabezado del negocio** (desde 0.17.0, igual en PDF, XLSX y tickets): logotipo (solo PDF), nombre
+  comercial en negrita, dirección, `Tel. {teléfono}` y `RFC: {rfc}`, en ese orden. Un dato vacío se omite
+  sin dejar línea en blanco. Sin datos del negocio aparece el aviso "Datos del negocio no capturados".
+- **PDF**: A4 horizontal; título, período, filtros, métricas, gráficas y tabla. El encabezado del negocio
+  va **solo en la página 1**: logotipo a la izquierda (caja de 120×48 pt, sin deformarse; si no se puede
+  leer, se omite), texto a la derecha con la dirección ajustada en varias líneas y una línea separadora. Las
+  páginas siguientes empiezan en el margen superior. El pie con fecha, hora, usuario y "Página n de N" va en
+  todas las páginas; las tablas largas continúan repitiendo el encabezado de columnas. Si los datos del
+  negocio no están capturados, la pantalla avisa y ofrece ir a "Datos del negocio".
+- **Excel (XLSX)**: hojas Resumen, Detalle y Gráficas (imágenes PNG). "Resumen" empieza en la fila 1 con el
+  encabezado del negocio (sin logotipo), una fila vacía y el título; "Detalle" no lo lleva, para no estorbar
+  al filtrar y ordenar. Importes y fechas son valores
   numéricos y de fecha; sin fórmulas ni protección. "Mi turno" solo se exporta a PDF.
   - Desde 0.13.0 la hoja Gráficas solo se agrega si el documento tiene gráficas. El reporte de
     descuentos y el de arqueo sin turnos cerrados en el período ya no traen esa hoja vacía, y tampoco
