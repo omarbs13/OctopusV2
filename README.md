@@ -54,6 +54,71 @@ POS_DATA_DIR=/tmp/pos-prueba dotnet run --project src/Pos.Desktop
 $env:POS_DATA_DIR = "$env:TEMP\pos-prueba"; dotnet run --project src/Pos.Desktop
 ```
 
+## Generar los instaladores (Windows y Linux)
+
+Todos los paquetes son *self-contained* y de un solo archivo: el equipo del usuario no necesita
+tener .NET instalado. La versión sale de `<Version>` en `Directory.Build.props` y todo queda en
+`artifacts/installers/`.
+
+### Desde Linux
+
+Requisitos: SDK de .NET 10, `curl`, `ar` (binutils) y ImageMagick. `appimagetool` se descarga
+solo a `.tools/` la primera vez. Para el `setup.exe` de Windows hace falta además Inno Setup 6
+instalado bajo Wine (o `iscc` en el PATH); si no está, el script avisa y genera el resto.
+
+```bash
+scripts/make-icons.sh                 # solo si no existe src/Pos.Desktop/Assets/pos.png
+scripts/build-installers.sh           # all: Windows y Linux
+scripts/build-installers.sh linux     # solo AppImage y .deb
+scripts/build-installers.sh win       # solo el portable (y el setup.exe si hay Inno Setup)
+```
+
+### Desde Windows
+
+Requisitos: SDK de .NET 10 e [Inno Setup 6](https://jrsoftware.org/isdl.php). El script busca
+`ISCC.exe` en el PATH, en `Program Files (x86)`, en `Program Files` y en
+`%LOCALAPPDATA%\Programs\Inno Setup 6`.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\build-installers.ps1
+```
+
+### Qué se genera
+
+| Archivo | Sistema | Uso |
+|---|---|---|
+| `Pos-<versión>-win-x64-setup.exe` | Windows 10/11 x64 | Instalador con acceso directo en el menú Inicio y, opcional, en el escritorio. Por omisión instala solo para el usuario actual, sin permisos de administrador |
+| `Pos-<versión>-win-x64-portable.exe` | Windows 10/11 x64 | Ejecutable suelto, sin instalación |
+| `Pos-<versión>-x86_64.AppImage` | Cualquier Linux x86_64 | Se marca como ejecutable (`chmod +x`) y se abre; no se instala |
+| `pos_<versión>_amd64.deb` | Debian, Ubuntu, Linux Mint y derivadas | Instala en `/opt/pos/`, el comando `pos` y la entrada en el menú de aplicaciones |
+
+Para instalar el `.deb` (resuelve las dependencias, como `libicu`):
+
+```bash
+sudo apt install ./pos_<versión>_amd64.deb
+```
+
+### Datos del usuario
+
+La aplicación nunca escribe junto al ejecutable: sus datos (base de datos, respaldos, logs,
+licencia y preferencias) están en `%LOCALAPPDATA%\Pos` en Windows y en `~/.local/share/Pos` en
+Linux (ver [docs/carpeta-de-datos.md](docs/carpeta-de-datos.md)). Instalar una versión nueva,
+actualizar o desinstalar (con el desinstalador de Windows o `sudo apt remove pos`) no toca esa
+carpeta.
+
+### Cambiar el ícono
+
+El ícono es `src/Pos.Desktop/Assets/pos.ico` (ejecutable de Windows, ventanas e instalador).
+Linux usa `src/Pos.Desktop/Assets/pos.png`, que se obtiene del frame más grande del `.ico`. Si
+cambias `pos.ico`, regenera el PNG con `scripts/make-icons.sh`; conviene que el `.ico` incluya un
+frame de 256 px.
+
+### AppId del instalador de Windows
+
+`packaging/windows/Pos.iss` tiene un `AppId` fijo. **No lo cambies**: es lo que permite que una
+versión nueva reemplace a la instalada. Con otro `AppId`, Windows trataría la nueva versión como
+otra aplicación y quedarían las dos instaladas.
+
 ## Estructura
 
 ```text

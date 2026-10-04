@@ -3,6 +3,7 @@
         xmlns:vm="using:Pos.Desktop.Splash"
         x:Class="Pos.Desktop.Splash.SplashWindow"
         x:DataType="vm:SplashViewModel"
+        Icon="/Assets/pos.ico"
         Title="{Binding AppName}"
         Width="420" Height="320"
         CanResize="False"

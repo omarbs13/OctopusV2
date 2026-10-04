@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=POS
+GenericName=Punto de venta
+Comment=Punto de venta: ventas, inventario, caja y reportes
+Exec=pos
+Icon=pos
+Terminal=false
+Categories=Office;Finance;
+Keywords=punto de venta;ventas;inventario;caja;
+StartupWMClass=Pos
