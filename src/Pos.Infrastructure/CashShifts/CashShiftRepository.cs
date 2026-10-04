@@ -200,7 +200,7 @@ public sealed class CashShiftRepository : ICashShiftRepository
                 c.ShiftNumber,
                 c.TotalSoldCents,
                 c.DifferenceCents,
-                GeneratedByName = _context.Users.Where(u => u.Id == c.GeneratedBy).Select(u => u.FullName).FirstOrDefault(),
+                GeneratedByName = _context.Users.Where(u => u.Id == c.GeneratedBy).Select(u => u.UserName).FirstOrDefault(),
             })
             .ToListAsync(cancellationToken);
 
@@ -264,7 +264,7 @@ public sealed class CashShiftRepository : ICashShiftRepository
                 s.Status,
                 s.TotalSoldCents,
                 s.DifferenceCents,
-                OpenedByName = _context.Users.Where(u => u.Id == s.OpenedBy).Select(u => u.FullName).FirstOrDefault(),
+                OpenedByName = _context.Users.Where(u => u.Id == s.OpenedBy).Select(u => u.UserName).FirstOrDefault(),
             })
             .ToListAsync(cancellationToken);
 
@@ -423,7 +423,7 @@ public sealed class CashShiftRepository : ICashShiftRepository
         var list = ids.Distinct().ToList();
         return await _context.Users.AsNoTracking()
             .Where(u => list.Contains(u.Id))
-            .ToDictionaryAsync(u => u.Id, u => u.FullName, cancellationToken);
+            .ToDictionaryAsync(u => u.Id, u => u.UserName, cancellationToken);
     }
 
     private static string NameOf(Dictionary<Guid, string> names, Guid userId) =>

@@ -119,9 +119,9 @@ public sealed class AuditLogReader : IAuditLogReader
             e.EntityId,
             e.EntityName,
             e.CreatedBy,
-            author == null ? null : author.FullName,
+            author == null ? null : author.UserName,
             e.AuthorizedBy,
-            authorizer == null ? null : authorizer.FullName,
+            authorizer == null ? null : authorizer.UserName,
             e.Reason,
             e.Details,
             e.Changes);

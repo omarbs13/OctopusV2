@@ -44,7 +44,7 @@ public sealed class AuditLogDocumentBuilder
             [],
             business,
             _clock.UtcNow,
-            _session.User?.FullName ?? string.Empty);
+            _session.User?.UserName ?? string.Empty);
     }
 
     public async Task<string?> UserNameAsync(Guid? userId, CancellationToken cancellationToken)
@@ -56,7 +56,7 @@ public sealed class AuditLogDocumentBuilder
 
         return id == SystemUser.Id
             ? SystemUser.DisplayName
-            : (await _users.GetAsync(id, cancellationToken))?.FullName ?? SystemUser.NameOf(id);
+            : (await _users.GetAsync(id, cancellationToken))?.UserName ?? SystemUser.NameOf(id);
     }
 
     /// <summary>PDF: una fila por entrada, con los cambios como "Campo: antes → después" en varias líneas.</summary>

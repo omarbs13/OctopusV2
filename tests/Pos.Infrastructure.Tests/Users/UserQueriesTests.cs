@@ -69,7 +69,7 @@ public sealed class UserQueriesTests : IAsyncLifetime
         var cashiers = await new UserRepository(context).ListCashiersAsync(Ct);
 
         Assert.Equal([active.Id, sold.Id], cashiers.Select(c => c.Id).Order());
-        Assert.DoesNotContain(cashiers, c => c.FullName == "Sistema");
+        Assert.DoesNotContain(cashiers, c => c.UserName == "Sistema");
     }
 
     [Fact]

@@ -38,7 +38,7 @@ public sealed class PurchaseRepository : IPurchaseRepository
         Guid[] userIds = purchase.VoidedBy is { } voidedBy ? [purchase.CreatedBy, voidedBy] : [purchase.CreatedBy];
         var names = await _context.Users.AsNoTracking()
             .Where(u => userIds.Contains(u.Id))
-            .ToDictionaryAsync(u => u.Id, u => u.FullName, cancellationToken);
+            .ToDictionaryAsync(u => u.Id, u => u.UserName, cancellationToken);
         var units = await _context.UnitsOfMeasure.AsNoTracking().ToDictionaryAsync(u => u.Code, cancellationToken);
 
         return new PurchaseDetailDto(

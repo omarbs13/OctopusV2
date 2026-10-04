@@ -120,7 +120,7 @@ public sealed class CreditNoteRepository : ICreditNoteRepository
                 m.CreatedBy,
                 SaleNumber = _context.Sales.Where(s => s.Id == m.SaleId).Select(s => (long?)s.FolioNumber).FirstOrDefault(),
                 ReturnNumber = _context.SaleReturns.Where(r => r.Id == m.SaleReturnId).Select(r => (long?)r.Number).FirstOrDefault(),
-                UserName = _context.Users.Where(u => u.Id == m.CreatedBy).Select(u => u.FullName).FirstOrDefault(),
+                UserName = _context.Users.Where(u => u.Id == m.CreatedBy).Select(u => u.UserName).FirstOrDefault(),
             })
             .ToListAsync(cancellationToken);
 

@@ -68,11 +68,11 @@ public sealed class UserRepository : IUserRepository
     {
         var users = await _context.Users.AsNoTracking()
             .Where(u => !u.IsSystem && (u.IsActive || _context.Sales.Any(s => s.CreatedBy == u.Id)))
-            .Select(u => new { u.Id, u.FullName })
+            .Select(u => new { u.Id, u.UserName })
             .ToListAsync(cancellationToken);
         return [.. users
-            .OrderBy(u => TextNormalizer.ForSearch(u.FullName), StringComparer.Ordinal)
-            .Select(u => new UserOption(u.Id, u.FullName))];
+            .OrderBy(u => TextNormalizer.ForSearch(u.UserName), StringComparer.Ordinal)
+            .Select(u => new UserOption(u.Id, u.UserName))];
     }
 
     public void Add(User user) => _context.Users.Add(user);

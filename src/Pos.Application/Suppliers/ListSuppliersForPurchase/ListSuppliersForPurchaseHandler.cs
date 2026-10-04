@@ -5,7 +5,7 @@ using Pos.Domain.Users;
 
 namespace Pos.Application.Suppliers.ListSuppliersForPurchase;
 
-/// <summary>Selector de proveedor de la compra: solo activos, hasta 50, por nombre o RUC (FR-007).</summary>
+/// <summary>Selector de proveedor de la compra: solo activos, hasta 50, por nombre o RFC (FR-007).</summary>
 public sealed class ListSuppliersForPurchaseHandler
 {
     public const int Limit = 50;

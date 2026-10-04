@@ -9,7 +9,7 @@ public interface ISupplierRepository
     /// <summary>Proveedor con seguimiento de cambios, o nulo.</summary>
     Task<Supplier?> GetAsync(Guid id, CancellationToken cancellationToken);
 
-    /// <summary>Proveedor (activo o inactivo) con el RUC ya normalizado, sin seguimiento, o nulo.</summary>
+    /// <summary>Proveedor (activo o inactivo) con el RFC ya normalizado, sin seguimiento, o nulo.</summary>
     Task<Supplier?> FindByTaxIdAsync(string taxId, CancellationToken cancellationToken);
 
     void Add(Supplier supplier);
@@ -25,7 +25,7 @@ public interface ISupplierRepository
 
     /// <summary>
     /// Guarda la unidad de trabajo. <see cref="SaveStatus.Conflict"/> por concurrencia y
-    /// <see cref="SaveStatus.Duplicate"/> con <see cref="SupplierFields.TaxId"/> si el RUC ya existe.
+    /// <see cref="SaveStatus.Duplicate"/> con <see cref="SupplierFields.TaxId"/> si el RFC ya existe.
     /// </summary>
     Task<SaveOutcome> SaveChangesAsync(CancellationToken cancellationToken);
 }

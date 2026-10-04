@@ -18,7 +18,7 @@ public sealed record UserPage(IReadOnlyList<UserListItem> Items, long TotalCount
 }
 
 /// <summary>Usuario como opción de un filtro.</summary>
-public sealed record UserOption(Guid Id, string FullName);
+public sealed record UserOption(Guid Id, string UserName);
 
 public sealed record SignInOutcome(SessionUser User, bool MustChangePassword);
 

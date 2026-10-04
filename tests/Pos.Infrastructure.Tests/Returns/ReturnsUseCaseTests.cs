@@ -524,7 +524,7 @@ public sealed class ReturnsUseCaseTests : IAsyncLifetime
         Assert.Equal(1_000, detail.ReturnedCents);
         Assert.True(detail.IsPartiallyReturned);
         var history = Assert.Single(detail.ReturnHistory);
-        Assert.Equal(("D-000001", "Sobrante", "Admin Uno"), (history.Folio, history.Reason, history.AuthorizedByName));
+        Assert.Equal(("D-000001", "Sobrante", "admin"), (history.Folio, history.Reason, history.AuthorizedByName));
     }
 
     [Fact]

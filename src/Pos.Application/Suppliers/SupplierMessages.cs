@@ -10,7 +10,7 @@ public static class SupplierMessages
     public const string PaymentTermsInvalid = "Las condiciones de pago no son válidas.";
 
     public static readonly string NameTooLong = $"El nombre admite hasta {Supplier.NameMaxLength} caracteres.";
-    public static readonly string TaxIdTooLong = $"El RUC admite hasta {Supplier.TaxIdMaxLength} caracteres.";
+    public static readonly string TaxIdTooLong = $"El RFC admite hasta {Supplier.TaxIdMaxLength} caracteres.";
     public static readonly string PhoneTooLong = $"El teléfono admite hasta {Supplier.PhoneMaxLength} caracteres.";
     public static readonly string EmailTooLong = $"El email admite hasta {Supplier.EmailMaxLength} caracteres.";
     public static readonly string AddressTooLong = $"La dirección admite hasta {Supplier.AddressMaxLength} caracteres.";
@@ -18,5 +18,5 @@ public static class SupplierMessages
     public static readonly string CreditDaysInvalid =
         $"Los días de crédito son obligatorios con crédito, de {Supplier.MinCreditDays} a {Supplier.MaxCreditDays}.";
 
-    public static string TaxIdInUse(string supplierName) => $"El RUC ya está registrado para el proveedor {supplierName}";
+    public static string TaxIdInUse(string supplierName) => $"El RFC ya está registrado para el proveedor {supplierName}";
 }

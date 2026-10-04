@@ -173,7 +173,7 @@ public sealed class InventoryRepository : IInventoryRepository
                 Movement = m,
                 Product = p,
                 Unit = u,
-                AuthorName = author == null ? null : author.FullName,
+                AuthorName = author == null ? null : author.UserName,
                 PurchaseId = purchase != null ? (Guid?)purchase.Id : voidPurchase != null ? (Guid?)voidPurchase.Id : null,
                 SupplierName = purchase != null ? purchase.SupplierName : voidPurchase != null ? voidPurchase.SupplierName : null,
             };

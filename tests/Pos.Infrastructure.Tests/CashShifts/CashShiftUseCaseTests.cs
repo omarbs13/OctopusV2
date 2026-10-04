@@ -74,7 +74,7 @@ public sealed class CashShiftUseCaseTests : IAsyncLifetime
         _shifts.As(_shifts.Cashier);
 
         var other = Assert.IsType<ShiftOwnedByOther>((await ConfirmDirectAsync()).Error);
-        Assert.Equal(_shifts.Admin.FullName, other.OpenedByName);
+        Assert.Equal(_shifts.Admin.UserName, other.OpenedByName);
     }
 
     // --- Cancelación dentro del turno (FR-008) ---
@@ -250,7 +250,7 @@ public sealed class CashShiftUseCaseTests : IAsyncLifetime
         // Un cajero no puede cerrar el turno de otro, aunque el suyo no lo sea.
         _shifts.As(_shifts.Admin);
         var pending = await _shifts.CountAsync(shift.ShiftId, 10_000);
-        Assert.Equal(_shifts.Cashier.FullName, Assert.IsType<HeldSaleWillBeDiscarded>(pending.Error).OwnerName);
+        Assert.Equal(_shifts.Cashier.UserName, Assert.IsType<HeldSaleWillBeDiscarded>(pending.Error).OwnerName);
 
         var count = (await _shifts.CountAsync(shift.ShiftId, 10_000, discard: true)).Value;
         var closed = await _shifts.CloseAsync(shift.ShiftId, count.Version, 10_000, count.ExpectedCents, discard: true);
@@ -260,7 +260,7 @@ public sealed class CashShiftUseCaseTests : IAsyncLifetime
         Assert.Empty(await context.SaleDrafts.ToListAsync(Ct));
         Assert.Single(await context.AuditEntries.Where(a => a.Action == AuditActions.HeldSaleDiscarded).ToListAsync(Ct));
         var byAdmin = await context.AuditEntries.AsNoTracking().SingleAsync(a => a.Action == AuditActions.ShiftClosedByAdmin, Ct);
-        Assert.Contains("Dueño: " + _shifts.Cashier.FullName, byAdmin.Details, StringComparison.Ordinal);
+        Assert.Contains("Dueño: " + _shifts.Cashier.UserName, byAdmin.Details, StringComparison.Ordinal);
         Assert.Empty(await context.AuditEntries.Where(a => a.Action == AuditActions.ShiftClosed).ToListAsync(Ct));
         Assert.Equal(_shifts.Admin.Id, (await context.CashShifts.AsNoTracking().SingleAsync(Ct)).ClosedBy);
     }

@@ -257,7 +257,7 @@ public sealed partial class SalesHistoryViewModel : PageViewModel, INavigationAr
             CashierOptions.Add(new CashierOption(null, Strings.Sales_CashierAll));
             foreach (var cashier in result.Value)
             {
-                CashierOptions.Add(new CashierOption(cashier.Id, cashier.FullName));
+                CashierOptions.Add(new CashierOption(cashier.Id, cashier.UserName));
             }
 
             SelectedCashier = CashierOptions.FirstOrDefault(o => o.UserId == selected) ?? CashierOptions[0];

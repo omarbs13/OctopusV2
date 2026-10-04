@@ -317,7 +317,7 @@ public sealed partial class SalesReportViewModel : ReportPageViewModel
             CashierOptions.Add(new CashierOption(null, Strings.Reports_CashierAll));
             foreach (var cashier in result.Value)
             {
-                CashierOptions.Add(new CashierOption(cashier.Id, cashier.FullName));
+                CashierOptions.Add(new CashierOption(cashier.Id, cashier.UserName));
             }
 
             SelectedCashier = CashierOptions.FirstOrDefault(c => c.UserId == selected) ?? CashierOptions[0];

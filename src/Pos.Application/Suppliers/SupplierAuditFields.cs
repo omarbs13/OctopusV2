@@ -14,7 +14,7 @@ public static class SupplierAuditFields
         return
         [
             new("Nombre", supplier.Name),
-            new("RUC", supplier.TaxId),
+            new("RFC", supplier.TaxId),
             new("Teléfono", supplier.Phone),
             new("Email", supplier.Email),
             new("Dirección", supplier.Address),

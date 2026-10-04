@@ -51,5 +51,5 @@ internal static class CustomerRules
 
     /// <summary>Texto de la bitácora con los datos del cliente; sin datos sensibles.</summary>
     public static string Describe(Customer customer) =>
-        $"Cliente: {customer.Name}. RUC: {customer.TaxId ?? "—"}. Modalidad: {customer.CreditMode.ToCode()}. Límite: {Printing.Ticket.TicketBuilder.FormatMoney(customer.CreditLimitCents)}";
+        $"Cliente: {customer.Name}. RFC: {customer.TaxId ?? "—"}. Modalidad: {customer.CreditMode.ToCode()}. Límite: {Printing.Ticket.TicketBuilder.FormatMoney(customer.CreditLimitCents)}";
 }

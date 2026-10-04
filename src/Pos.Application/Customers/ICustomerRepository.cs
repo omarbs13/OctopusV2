@@ -28,7 +28,7 @@ public interface ICustomerRepository
 
     /// <summary>
     /// Guarda la unidad de trabajo. <see cref="SaveStatus.Conflict"/> por concurrencia y
-    /// <see cref="SaveStatus.Duplicate"/> con <see cref="CustomerFields.TaxId"/> si el RUC ya existe.
+    /// <see cref="SaveStatus.Duplicate"/> con <see cref="CustomerFields.TaxId"/> si el RFC ya existe.
     /// </summary>
     Task<SaveOutcome> SaveChangesAsync(CancellationToken cancellationToken);
 }

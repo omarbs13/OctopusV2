@@ -17,7 +17,7 @@ namespace Pos.Desktop.Customers;
 public sealed record CreditModeOption(CreditMode Mode, string Label);
 
 /// <summary>
-/// Alta y edición de cliente (formulario de 002): nombre*, teléfono*, email y RUC, más la sección
+/// Alta y edición de cliente (formulario de 002): nombre*, teléfono*, email y RFC, más la sección
 /// "Crédito". Sin <c>ManageCustomerCredit</c> la sección es de solo lectura y no se envía (FR-020).
 /// </summary>
 public sealed partial class CustomerFormViewModel : FormViewModel<Guid>

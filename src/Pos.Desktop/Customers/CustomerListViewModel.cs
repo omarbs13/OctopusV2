@@ -42,7 +42,7 @@ public static class CustomerTexts
 }
 
 /// <summary>
-/// Clientes (014, Historia 1): búsqueda mientras se escribe por nombre, teléfono o RUC, filtro de
+/// Clientes (014, Historia 1): búsqueda mientras se escribe por nombre, teléfono o RFC, filtro de
 /// inactivos, alta y ficha. Solo invoca <c>SearchCustomers</c>; el saldo viene del caso de uso.
 /// Acepta un id de cliente como argumento de navegación para abrir su ficha.
 /// </summary>

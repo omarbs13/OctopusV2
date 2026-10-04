@@ -859,13 +859,13 @@
   <data name="Shift_CreditNotesIssued" xml:space="preserve"><value>Notas de crédito emitidas</value></data>
   <data name="Nav_Customers" xml:space="preserve"><value>Clientes</value></data>
   <data name="Customer_ListTitle" xml:space="preserve"><value>Clientes</value></data>
-  <data name="Customer_SearchPlaceholder" xml:space="preserve"><value>Buscar por nombre, teléfono o RUC</value></data>
+  <data name="Customer_SearchPlaceholder" xml:space="preserve"><value>Buscar por nombre, teléfono o RFC</value></data>
   <data name="Customer_ShowInactive" xml:space="preserve"><value>Mostrar inactivos</value></data>
   <data name="Customer_New" xml:space="preserve"><value>Nuevo cliente</value></data>
   <data name="Customer_Open" xml:space="preserve"><value>Abrir ficha</value></data>
   <data name="Customer_ColName" xml:space="preserve"><value>Nombre</value></data>
   <data name="Customer_ColPhone" xml:space="preserve"><value>Teléfono</value></data>
-  <data name="Customer_ColTaxId" xml:space="preserve"><value>RUC</value></data>
+  <data name="Customer_ColTaxId" xml:space="preserve"><value>RFC</value></data>
   <data name="Customer_ColMode" xml:space="preserve"><value>Modalidad</value></data>
   <data name="Customer_ColLimit" xml:space="preserve"><value>Límite</value></data>
   <data name="Customer_ColBalance" xml:space="preserve"><value>Saldo</value></data>
@@ -881,20 +881,20 @@
   <data name="Customer_Name" xml:space="preserve"><value>Nombre</value></data>
   <data name="Customer_Phone" xml:space="preserve"><value>Teléfono</value></data>
   <data name="Customer_Email" xml:space="preserve"><value>Email</value></data>
-  <data name="Customer_TaxId" xml:space="preserve"><value>RUC</value></data>
+  <data name="Customer_TaxId" xml:space="preserve"><value>RFC</value></data>
   <data name="Customer_CreditSection" xml:space="preserve"><value>Crédito</value></data>
   <data name="Customer_CreditMode" xml:space="preserve"><value>Modalidad</value></data>
   <data name="Customer_CreditLimit" xml:space="preserve"><value>Límite de crédito</value></data>
   <data name="Customer_CreditReadOnly" xml:space="preserve"><value>{0}, límite {1}</value></data>
   <data name="Customer_CreditReadOnlyHint" xml:space="preserve"><value>Solo un Administrador puede asignar crédito.</value></data>
   <data name="Customer_LimitInvalid" xml:space="preserve"><value>Capture el límite como 1234.50; debe ser mayor o igual que 0 y no exceder $999,999.99.</value></data>
-  <data name="Customer_DuplicateTaxId" xml:space="preserve"><value>El RUC ya está registrado para otro cliente</value></data>
+  <data name="Customer_DuplicateTaxId" xml:space="preserve"><value>El RFC ya está registrado para otro cliente</value></data>
   <data name="Customer_HasBalance" xml:space="preserve"><value>El cliente tiene un saldo pendiente de {0}; no se puede desactivar</value></data>
   <data name="Customer_NotFound" xml:space="preserve"><value>El cliente ya no existe.</value></data>
   <data name="Customer_ConflictTitle" xml:space="preserve"><value>Cliente modificado</value></data>
   <data name="Customer_Conflict" xml:space="preserve"><value>Otro proceso modificó este cliente después de que lo abrió. ¿Recargar los datos actuales?</value></data>
   <data name="Customer_DetailTitle" xml:space="preserve"><value>Cliente: {0}</value></data>
-  <data name="Customer_Contact" xml:space="preserve"><value>Teléfono: {0} · Email: {1} · RUC: {2}</value></data>
+  <data name="Customer_Contact" xml:space="preserve"><value>Teléfono: {0} · Email: {1} · RFC: {2}</value></data>
   <data name="Customer_Limit" xml:space="preserve"><value>Límite</value></data>
   <data name="Customer_Balance" xml:space="preserve"><value>Saldo pendiente</value></data>
   <data name="Customer_Available" xml:space="preserve"><value>Disponible</value></data>
@@ -914,7 +914,7 @@
   <data name="Credit_CustomerLabel" xml:space="preserve"><value>Cliente: {0}</value></data>
   <data name="Credit_ClearCustomer" xml:space="preserve"><value>Quitar cliente</value></data>
   <data name="Credit_PickerTitle" xml:space="preserve"><value>Cliente de la venta a crédito</value></data>
-  <data name="Credit_PickerSearch" xml:space="preserve"><value>Buscar por nombre, teléfono o RUC</value></data>
+  <data name="Credit_PickerSearch" xml:space="preserve"><value>Buscar por nombre, teléfono o RFC</value></data>
   <data name="Credit_PickerEmpty" xml:space="preserve"><value>No hay clientes con crédito que coincidan.</value></data>
   <data name="Credit_PickerHint" xml:space="preserve"><value>↑/↓ para moverse, Enter para elegir, Esc para cerrar.</value></data>
   <data name="Credit_Choose" xml:space="preserve"><value>Elegir</value></data>
@@ -993,7 +993,7 @@
   <data name="Receivables_StatusCurrent" xml:space="preserve"><value>Al día</value></data>
   <data name="Receivables_StatusOverdue" xml:space="preserve"><value>Vencido</value></data>
   <data name="Receivables_StatusAtLimit" xml:space="preserve"><value>Al límite</value></data>
-  <data name="Receivables_Search" xml:space="preserve"><value>Buscar cliente por nombre, teléfono o RUC</value></data>
+  <data name="Receivables_Search" xml:space="preserve"><value>Buscar cliente por nombre, teléfono o RFC</value></data>
   <data name="Receivables_Refresh" xml:space="preserve"><value>Actualizar</value></data>
   <data name="Receivables_ColCustomer" xml:space="preserve"><value>Cliente</value></data>
   <data name="Receivables_ColBalance" xml:space="preserve"><value>Saldo pendiente</value></data>
@@ -1191,14 +1191,14 @@
   <data name="MovementType_PurchaseVoid" xml:space="preserve"><value>Anulación de compra</value></data>
   <data name="Nav_Suppliers" xml:space="preserve"><value>Proveedores</value></data>
   <data name="Supplier_ListTitle" xml:space="preserve"><value>Proveedores</value></data>
-  <data name="Supplier_SearchPlaceholder" xml:space="preserve"><value>Buscar por nombre o RUC</value></data>
+  <data name="Supplier_SearchPlaceholder" xml:space="preserve"><value>Buscar por nombre o RFC</value></data>
   <data name="Supplier_ShowInactive" xml:space="preserve"><value>Incluir inactivos</value></data>
   <data name="Supplier_New" xml:space="preserve"><value>Nuevo proveedor</value></data>
   <data name="Supplier_Edit" xml:space="preserve"><value>Editar</value></data>
   <data name="Supplier_Deactivate" xml:space="preserve"><value>Desactivar</value></data>
   <data name="Supplier_Activate" xml:space="preserve"><value>Activar</value></data>
   <data name="Supplier_ColName" xml:space="preserve"><value>Nombre</value></data>
-  <data name="Supplier_ColTaxId" xml:space="preserve"><value>RUC</value></data>
+  <data name="Supplier_ColTaxId" xml:space="preserve"><value>RFC</value></data>
   <data name="Supplier_ColPhone" xml:space="preserve"><value>Teléfono</value></data>
   <data name="Supplier_ColTerms" xml:space="preserve"><value>Condiciones de pago</value></data>
   <data name="Supplier_ColStatus" xml:space="preserve"><value>Estado</value></data>
@@ -1212,7 +1212,7 @@
   <data name="Supplier_NewTitle" xml:space="preserve"><value>Nuevo proveedor</value></data>
   <data name="Supplier_EditTitle" xml:space="preserve"><value>Editar proveedor</value></data>
   <data name="Supplier_Name" xml:space="preserve"><value>Nombre</value></data>
-  <data name="Supplier_TaxId" xml:space="preserve"><value>RUC</value></data>
+  <data name="Supplier_TaxId" xml:space="preserve"><value>RFC</value></data>
   <data name="Supplier_Phone" xml:space="preserve"><value>Teléfono</value></data>
   <data name="Supplier_Email" xml:space="preserve"><value>Email</value></data>
   <data name="Supplier_Address" xml:space="preserve"><value>Dirección</value></data>
@@ -1221,11 +1221,11 @@
   <data name="Supplier_NotFound" xml:space="preserve"><value>El proveedor ya no existe.</value></data>
   <data name="Supplier_ConflictTitle" xml:space="preserve"><value>Proveedor modificado</value></data>
   <data name="Supplier_Conflict" xml:space="preserve"><value>Otro proceso modificó este proveedor después de que lo abrió. ¿Recargar los datos actuales?</value></data>
-  <data name="Supplier_TaxIdInUse" xml:space="preserve"><value>El RUC ya está registrado para el proveedor {0}</value></data>
+  <data name="Supplier_TaxIdInUse" xml:space="preserve"><value>El RFC ya está registrado para el proveedor {0}</value></data>
   <data name="Nav_PurchaseEntry" xml:space="preserve"><value>Entrada de mercancía</value></data>
   <data name="Purchase_EntryTitle" xml:space="preserve"><value>Entrada de mercancía</value></data>
   <data name="Purchase_Supplier" xml:space="preserve"><value>Proveedor</value></data>
-  <data name="Purchase_SupplierSearch" xml:space="preserve"><value>Buscar proveedor por nombre o RUC</value></data>
+  <data name="Purchase_SupplierSearch" xml:space="preserve"><value>Buscar proveedor por nombre o RFC</value></data>
   <data name="Purchase_InvoiceNumber" xml:space="preserve"><value>Número de factura</value></data>
   <data name="Purchase_InvoiceDate" xml:space="preserve"><value>Fecha de factura</value></data>
   <data name="Purchase_AddProduct" xml:space="preserve"><value>Agregar producto</value></data>

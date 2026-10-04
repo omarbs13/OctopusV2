@@ -102,7 +102,7 @@ public sealed class SaleRepository : ISaleRepository
                 s.TotalCents,
                 s.Status,
                 s.CreatedBy,
-                CashierName = _context.Users.Where(u => u.Id == s.CreatedBy).Select(u => u.FullName).FirstOrDefault(),
+                CashierName = _context.Users.Where(u => u.Id == s.CreatedBy).Select(u => u.UserName).FirstOrDefault(),
                 CreditStatus = _context.Receivables.Where(r => r.SaleId == s.Id).Select(r => (ReceivableStatus?)r.Status).FirstOrDefault(),
             })
             .ToListAsync(cancellationToken);
@@ -174,7 +174,7 @@ public sealed class SaleRepository : ISaleRepository
             .ToList();
         var names = await _context.Users.AsNoTracking()
             .Where(u => userIds.Contains(u.Id))
-            .ToDictionaryAsync(u => u.Id, u => u.FullName, cancellationToken);
+            .ToDictionaryAsync(u => u.Id, u => u.UserName, cancellationToken);
         string NameOf(Guid userId) => names.GetValueOrDefault(userId) ?? SystemUser.NameOf(userId);
 
         return new SaleDetailDto(

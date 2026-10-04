@@ -81,7 +81,7 @@ public sealed class PurchaseReportReader : IPurchaseReportReader
                     p.TaxCents,
                     p.TotalCents,
                     p.CreatedBy,
-                    AuthorName = author == null ? null : author.FullName,
+                    AuthorName = author == null ? null : author.UserName,
                     p.Status,
                 })
             .Skip((page - 1) * PurchaseReportPage.PageSize)

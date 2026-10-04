@@ -87,7 +87,7 @@ public sealed class ReportDocumentBuilder
             partial.Charts,
             business,
             _clock.UtcNow,
-            _session.User?.FullName ?? string.Empty);
+            _session.User?.UserName ?? string.Empty);
     }
 
     private async Task<Result<BuiltReport>> BuildSalesAsync(ExportRequest request, CancellationToken cancellationToken)

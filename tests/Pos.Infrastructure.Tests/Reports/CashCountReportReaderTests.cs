@@ -22,7 +22,7 @@ public sealed class CashCountReportReaderTests
         var shortage = rows[0];
         Assert.Equal((100_000L, 94_000L, -6_000L), (shortage.ExpectedCashCents, shortage.CountedCashCents, shortage.DifferenceCents));
         Assert.False(shortage.IsOpen);
-        Assert.Equal(shifts.Cashier.FullName, shortage.CashierName);
+        Assert.Equal(shifts.Cashier.UserName, shortage.CashierName);
 
         var surplus = rows[1];
         Assert.Equal(2_000, surplus.DifferenceCents);

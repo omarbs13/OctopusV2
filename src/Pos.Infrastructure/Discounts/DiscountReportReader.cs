@@ -55,12 +55,12 @@ internal sealed class DiscountReportReader : IDiscountReportReader
                     x.Sale.FolioNumber,
                     x.Discount.CreatedAt,
                     x.Sale.CreatedBy,
-                    CashierName = cashier == null ? null : cashier.FullName,
+                    CashierName = cashier == null ? null : cashier.UserName,
                     x.Discount.Kind,
                     x.Discount.Mode,
                     x.Discount.Value,
                     x.Discount.AmountCents,
-                    AuthorizedByName = authorizer == null ? null : authorizer.FullName,
+                    AuthorizedByName = authorizer == null ? null : authorizer.UserName,
                     x.Discount.CouponCode,
                 })
             .Skip((page - 1) * query.PageSize)

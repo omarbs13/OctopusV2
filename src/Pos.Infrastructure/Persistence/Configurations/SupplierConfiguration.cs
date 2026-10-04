@@ -32,7 +32,7 @@ internal sealed class SupplierConfiguration : IEntityTypeConfiguration<Supplier>
         builder.Property(s => s.UpdatedBy).IsRequired();
         builder.Property(s => s.Version).IsConcurrencyToken().IsRequired();
 
-        // El RUC identifica al proveedor: único también entre inactivos (FR-003, research §9).
+        // El RFC identifica al proveedor: único también entre inactivos (FR-003, research §9).
         builder.HasIndex(s => s.TaxId)
             .HasDatabaseName(TaxIdIndexName)
             .IsUnique()

@@ -121,7 +121,7 @@ public sealed partial class ApproveDiscountHandler
 
         var authorizer = await _users.GetAsync(authorizedBy, cancellationToken);
         LogApproved(record.Id, command.DraftId, _currentUser.UserId, authorizedBy, command.Scope, amount, equivalent);
-        return Result.Success(new DiscountApprovalDto(record.Id, authorizedBy, authorizer?.FullName ?? string.Empty));
+        return Result.Success(new DiscountApprovalDto(record.Id, authorizedBy, authorizer?.UserName ?? string.Empty));
     }
 
     [LoggerMessage(Level = LogLevel.Information,

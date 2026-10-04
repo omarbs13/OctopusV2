@@ -16,7 +16,7 @@ namespace Pos.Desktop.Purchases;
 public sealed record PaymentTermsOption(PaymentTerms Terms, string Label);
 
 /// <summary>
-/// Alta y edición de proveedor (formulario de 002): nombre*, RUC, teléfono, email, dirección y condiciones de
+/// Alta y edición de proveedor (formulario de 002): nombre*, RFC, teléfono, email, dirección y condiciones de
 /// pago*. "Días de crédito" se habilita y es obligatorio solo con crédito (Historia 1, escenario 7).
 /// </summary>
 public sealed partial class SupplierFormViewModel : FormViewModel<Guid>

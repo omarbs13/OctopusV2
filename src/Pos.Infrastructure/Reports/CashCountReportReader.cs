@@ -37,7 +37,7 @@ internal sealed class CashCountReportReader : ICashCountReportReader
                 {
                     s.Id,
                     s.Number,
-                    CashierName = u.FullName,
+                    CashierName = u.UserName,
                     s.Status,
                     s.OpenedAt,
                     s.ClosedAt,

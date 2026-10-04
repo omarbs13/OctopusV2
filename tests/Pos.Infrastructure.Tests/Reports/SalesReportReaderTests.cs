@@ -39,7 +39,7 @@ public sealed class SalesReportReaderTests
 
         Assert.Equal(2, report.Totals.SalesCount);
         Assert.Equal(3_000, report.Totals.TotalCents);
-        Assert.All(report.Rows, r => Assert.Equal(ana.FullName, r.CashierName));
+        Assert.All(report.Rows, r => Assert.Equal(ana.UserName, r.CashierName));
     }
 
     [Fact]

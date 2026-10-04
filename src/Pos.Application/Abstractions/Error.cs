@@ -178,8 +178,8 @@ public sealed record CategoryInUse(int ProductCount) : Error;
 public sealed record CategoryNotAssignable : Error;
 
 /// <summary>
-/// Otro proveedor (activo o inactivo) ya tiene el RUC (020, FR-003).
-/// Mensaje: "El RUC ya está registrado para el proveedor {nombre}".
+/// Otro proveedor (activo o inactivo) ya tiene el RFC (020, FR-003).
+/// Mensaje: "El RFC ya está registrado para el proveedor {nombre}".
 /// </summary>
 public sealed record SupplierTaxIdInUse(Guid SupplierId, string Name) : Error;
 

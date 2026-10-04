@@ -29,7 +29,7 @@ public sealed class Customer
 
     public string? Email { get; private set; }
 
-    /// <summary>RUC, recortado y en mayúsculas; único entre todos los clientes si no es nulo.</summary>
+    /// <summary>RFC, recortado y en mayúsculas; único entre todos los clientes si no es nulo.</summary>
     public string? TaxId { get; private set; }
 
     public long CreditLimitCents { get; private set; }
@@ -38,7 +38,7 @@ public sealed class Customer
 
     public bool IsActive { get; private set; }
 
-    /// <summary>Nombre, teléfono y RUC sin acentos y en minúsculas, para la búsqueda (research §10).</summary>
+    /// <summary>Nombre, teléfono y RFC sin acentos y en minúsculas, para la búsqueda (research §10).</summary>
     public string SearchText { get; private set; }
 
     public DateTime CreatedAt { get; private set; }
@@ -101,7 +101,7 @@ public sealed class Customer
 
         if (normalizedTaxId is { Length: > TaxIdMaxLength })
         {
-            throw new DomainException($"El RUC admite hasta {TaxIdMaxLength} caracteres.");
+            throw new DomainException($"El RFC admite hasta {TaxIdMaxLength} caracteres.");
         }
 
         Name = normalizedName;

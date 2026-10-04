@@ -2362,7 +2362,7 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Buscar por nombre, teléfono o RUC.
+        ///   Looks up a localized string similar to Buscar por nombre, teléfono o RFC.
         /// </summary>
         public static string Credit_PickerSearch {
             get {
@@ -2650,7 +2650,7 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to RUC.
+        ///   Looks up a localized string similar to RFC.
         /// </summary>
         public static string Customer_ColTaxId {
             get {
@@ -2677,7 +2677,7 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Teléfono: {0} · Email: {1} · RUC: {2}.
+        ///   Looks up a localized string similar to Teléfono: {0} · Email: {1} · RFC: {2}.
         /// </summary>
         public static string Customer_Contact {
             get {
@@ -2776,7 +2776,7 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to El RUC ya está registrado para otro cliente.
+        ///   Looks up a localized string similar to El RFC ya está registrado para otro cliente.
         /// </summary>
         public static string Customer_DuplicateTaxId {
             get {
@@ -2974,7 +2974,7 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Buscar por nombre, teléfono o RUC.
+        ///   Looks up a localized string similar to Buscar por nombre, teléfono o RFC.
         /// </summary>
         public static string Customer_SearchPlaceholder {
             get {
@@ -3010,7 +3010,7 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to RUC.
+        ///   Looks up a localized string similar to RFC.
         /// </summary>
         public static string Customer_TaxId {
             get {
@@ -6682,7 +6682,7 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Buscar proveedor por nombre o RUC.
+        ///   Looks up a localized string similar to Buscar proveedor por nombre o RFC.
         /// </summary>
         public static string Purchase_SupplierSearch {
             get {
@@ -7123,7 +7123,7 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Buscar cliente por nombre, teléfono o RUC.
+        ///   Looks up a localized string similar to Buscar cliente por nombre, teléfono o RFC.
         /// </summary>
         public static string Receivables_Search {
             get {
@@ -11290,7 +11290,7 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to RUC.
+        ///   Looks up a localized string similar to RFC.
         /// </summary>
         public static string Supplier_ColTaxId {
             get {
@@ -11461,7 +11461,7 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Buscar por nombre o RUC.
+        ///   Looks up a localized string similar to Buscar por nombre o RFC.
         /// </summary>
         public static string Supplier_SearchPlaceholder {
             get {
@@ -11479,7 +11479,7 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to RUC.
+        ///   Looks up a localized string similar to RFC.
         /// </summary>
         public static string Supplier_TaxId {
             get {
@@ -11488,7 +11488,7 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to El RUC ya está registrado para el proveedor {0}.
+        ///   Looks up a localized string similar to El RFC ya está registrado para el proveedor {0}.
         /// </summary>
         public static string Supplier_TaxIdInUse {
             get {

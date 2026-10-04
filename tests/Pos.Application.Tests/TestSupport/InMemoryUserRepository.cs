@@ -54,7 +54,7 @@ public sealed class InMemoryUserRepository : IUserRepository
 
     public Task<IReadOnlyList<UserOption>> ListCashiersAsync(CancellationToken cancellationToken) =>
         Task.FromResult<IReadOnlyList<UserOption>>(
-            [.. _users.Values.Where(u => !u.IsSystem).Select(u => new UserOption(u.Id, u.FullName))]);
+            [.. _users.Values.Where(u => !u.IsSystem).Select(u => new UserOption(u.Id, u.UserName))]);
 
     public void Add(User user) => _users[user.Id] = user;
 

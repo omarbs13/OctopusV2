@@ -11,7 +11,7 @@ namespace Pos.Application.Customers.CreateCustomer;
 
 /// <summary>
 /// Alta de cliente: licencia y permiso <c>ManageCustomers</c> → validación → alta y bitácora en una
-/// transacción. El RUC repetido se traduce a <see cref="Duplicate"/> de <see cref="CustomerFields.TaxId"/>.
+/// transacción. El RFC repetido se traduce a <see cref="Duplicate"/> de <see cref="CustomerFields.TaxId"/>.
 /// </summary>
 public sealed partial class CreateCustomerHandler
 {

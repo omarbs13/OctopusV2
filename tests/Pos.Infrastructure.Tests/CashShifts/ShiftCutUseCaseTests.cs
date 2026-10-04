@@ -135,7 +135,7 @@ public sealed class ShiftCutUseCaseTests : IAsyncLifetime
         Assert.Equal("X-000001", cut.Folio);
         var report = (await _shifts.GetCutAsync(cut.CutId)).Value;
         Assert.Equal(_shifts.Cashier.Id, report.GeneratedById);
-        Assert.Equal(_shifts.Admin.FullName, report.AuthorizedByName);
+        Assert.Equal(_shifts.Admin.UserName, report.AuthorizedByName);
         await using var context = _db.CreateDbContext();
         var audit = await context.AuditEntries.AsNoTracking().SingleAsync(a => a.Action == AuditActions.ShiftReadoutGenerated, Ct);
         Assert.Equal(_shifts.Admin.Id, audit.AuthorizedBy);
@@ -239,7 +239,7 @@ public sealed class ShiftCutUseCaseTests : IAsyncLifetime
         var closing = (await _shifts.SearchCutsAsync(new SearchShiftCutsQuery(ShiftCutType.Closing, null, null, null))).Value;
         var z = Assert.Single(closing.Items);
         Assert.Equal(0, z.DifferenceCents);
-        Assert.Equal(_shifts.Admin.FullName, z.GeneratedByName);
+        Assert.Equal(_shifts.Admin.UserName, z.GeneratedByName);
 
         var day = new DateOnly(2026, 10, 1);
         var byDay = (await _shifts.SearchCutsAsync(new SearchShiftCutsQuery(ShiftCutType.Readout, day, day, _shifts.Admin.Id))).Value;

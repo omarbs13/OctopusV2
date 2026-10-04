@@ -110,7 +110,7 @@ public sealed partial class RegisterMovementHandler
             movement.Reason,
             movement.Reference,
             movement.CreatedBy,
-            _session.User?.FullName ?? SystemUser.NameOf(movement.CreatedBy)));
+            _session.User?.UserName ?? SystemUser.NameOf(movement.CreatedBy)));
     }
 
     private static List<FieldError> Validate(

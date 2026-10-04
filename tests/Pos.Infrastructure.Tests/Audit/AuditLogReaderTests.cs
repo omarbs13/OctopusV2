@@ -68,8 +68,8 @@ public sealed class AuditLogReaderTests : IAsyncLifetime
         var page = await SearchAsync(NoFilter);
 
         Assert.Equal([AuditActions.AdminAuthorizationGranted, AuditActions.LoginSucceeded], page.Items.Select(r => r.Action));
-        Assert.Equal("Caja Uno", page.Items[0].UserName);
-        Assert.Equal("Admin Uno", page.Items[0].AuthorizedByName);
+        Assert.Equal("caja", page.Items[0].UserName);
+        Assert.Equal("admin", page.Items[0].AuthorizedByName);
         Assert.Null(page.Items[1].AuthorizedByName);
     }
 

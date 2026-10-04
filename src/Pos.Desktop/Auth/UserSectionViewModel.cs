@@ -57,7 +57,7 @@ public sealed class UserSectionViewModel : ViewModelBase
         _runner = runner;
 
         var user = session.User;
-        DisplayName = user?.FullName ?? string.Empty;
+        DisplayName = user?.UserName ?? string.Empty;
         Initials = user?.Initials ?? "?";
         RoleText = user?.Role == UserRole.Admin ? Strings.Role_Admin : Strings.Role_Cashier;
         Tooltip = $"{DisplayName} · {RoleText}";

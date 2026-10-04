@@ -82,7 +82,7 @@ internal sealed class SalesReportReader : ISalesReportReader
                 from s in sales
                 where _context.SaleLines.Any(l => l.SaleId == s.Id && products.Any(p => p.Id == l.ProductId))
                 join u in _context.Users.AsNoTracking() on s.CreatedBy equals u.Id
-                select new { s.Id, s.FolioNumber, s.CreatedAt, CashierName = u.FullName })
+                select new { s.Id, s.FolioNumber, s.CreatedAt, CashierName = u.UserName })
             .ToListAsync(cancellationToken);
         var amounts = facts.GroupBy(f => f.SaleId).ToDictionary(g => g.Key, g => g.Sum(f => f.AmountCents));
         var rows = headers.Select(h => new { h.Id, h.FolioNumber, h.CreatedAt, h.CashierName, TotalCents = amounts.GetValueOrDefault(h.Id) });
@@ -339,7 +339,7 @@ internal sealed class SalesReportReader : ISalesReportReader
         var joined =
             from s in sales
             join u in _context.Users.AsNoTracking() on s.CreatedBy equals u.Id
-            select new { s.Id, s.FolioNumber, s.CreatedAt, s.TotalCents, CashierName = u.FullName };
+            select new { s.Id, s.FolioNumber, s.CreatedAt, s.TotalCents, CashierName = u.UserName };
 
         var ordered = (query.Sort, query.Descending) switch
         {

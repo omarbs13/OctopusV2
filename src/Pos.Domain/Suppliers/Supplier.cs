@@ -28,7 +28,7 @@ public sealed class Supplier
     /// <summary>Recortado; puede repetirse entre proveedores (FR-003).</summary>
     public string Name { get; private set; }
 
-    /// <summary>RUC, recortado y en mayúsculas; único entre todos los proveedores si no es nulo.</summary>
+    /// <summary>RFC, recortado y en mayúsculas; único entre todos los proveedores si no es nulo.</summary>
     public string? TaxId { get; private set; }
 
     public string? Phone { get; private set; }
@@ -44,7 +44,7 @@ public sealed class Supplier
 
     public bool IsActive { get; private set; }
 
-    /// <summary>Nombre y RUC sin acentos y en minúsculas, para la búsqueda (FR-004).</summary>
+    /// <summary>Nombre y RFC sin acentos y en minúsculas, para la búsqueda (FR-004).</summary>
     public string SearchText { get; private set; }
 
     public DateTime CreatedAt { get; private set; }
@@ -102,7 +102,7 @@ public sealed class Supplier
 
         if (normalizedTaxId is { Length: > TaxIdMaxLength })
         {
-            throw new DomainException($"El RUC admite hasta {TaxIdMaxLength} caracteres.");
+            throw new DomainException($"El RFC admite hasta {TaxIdMaxLength} caracteres.");
         }
 
         if (normalizedPhone is { Length: > PhoneMaxLength })

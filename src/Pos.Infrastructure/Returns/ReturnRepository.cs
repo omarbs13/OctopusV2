@@ -78,7 +78,7 @@ public sealed class ReturnRepository : IReturnRepository
                 x.CreatedAt,
                 x.f.Status,
                 x.f.ReversedBy,
-                ReversedByName = _context.Users.Where(u => u.Id == x.f.ReversedBy).Select(u => u.FullName).FirstOrDefault(),
+                ReversedByName = _context.Users.Where(u => u.Id == x.f.ReversedBy).Select(u => u.UserName).FirstOrDefault(),
             })
             .ToListAsync(cancellationToken);
 

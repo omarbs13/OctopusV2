@@ -32,7 +32,7 @@ internal sealed class CustomerConfiguration : IEntityTypeConfiguration<Customer>
         builder.Property(c => c.Version).IsConcurrencyToken().IsRequired();
         builder.Ignore(c => c.CanBuyOnCredit);
 
-        // El RUC identifica a la persona: único también entre clientes inactivos (research §10).
+        // El RFC identifica a la persona: único también entre clientes inactivos (research §10).
         builder.HasIndex(c => c.TaxId)
             .HasDatabaseName(TaxIdIndexName)
             .IsUnique()

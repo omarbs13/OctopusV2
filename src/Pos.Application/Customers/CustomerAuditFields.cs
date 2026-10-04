@@ -21,7 +21,7 @@ public static class CustomerAuditFields
             new("Nombre", customer.Name),
             new("Teléfono", customer.Phone),
             new("Email", customer.Email),
-            new("RUC", customer.TaxId),
+            new("RFC", customer.TaxId),
             new(CreditMode, customer.CreditMode == Domain.Customers.CreditMode.Credit ? "Crédito disponible" : "Solo efectivo"),
             new(CreditLimit, AuditFormat.Money(customer.CreditLimitCents)),
             new(State, AuditFormat.ActiveState(customer.IsActive)),

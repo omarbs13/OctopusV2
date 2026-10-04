@@ -5,7 +5,7 @@ using Pos.Domain.Users;
 
 namespace Pos.Application.Suppliers.SearchSuppliers;
 
-/// <summary>Lista de proveedores de 100 en 100, por nombre o RUC normalizados (FR-004).</summary>
+/// <summary>Lista de proveedores de 100 en 100, por nombre o RFC normalizados (FR-004).</summary>
 public sealed class SearchSuppliersHandler
 {
     private readonly IAccessControl _access;

@@ -31,7 +31,7 @@ public sealed record SupplierRow(SupplierListItemDto Item)
 }
 
 /// <summary>
-/// Proveedores (020, Historia 1): búsqueda mientras se escribe por nombre o RUC, filtro de inactivos, alta,
+/// Proveedores (020, Historia 1): búsqueda mientras se escribe por nombre o RFC, filtro de inactivos, alta,
 /// edición y activación. Solo invoca casos de uso.
 /// </summary>
 public sealed partial class SupplierListViewModel : PageViewModel, IDisposable

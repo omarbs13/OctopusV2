@@ -10,8 +10,8 @@ using Pos.Domain.Users;
 namespace Pos.Application.Suppliers.CreateSupplier;
 
 /// <summary>
-/// Alta de proveedor: licencia y permiso <c>ManageSuppliers</c> → validación → RUC libre → alta y bitácora en
-/// una transacción. El RUC repetido (también por el índice) es <see cref="SupplierTaxIdInUse"/>.
+/// Alta de proveedor: licencia y permiso <c>ManageSuppliers</c> → validación → RFC libre → alta y bitácora en
+/// una transacción. El RFC repetido (también por el índice) es <see cref="SupplierTaxIdInUse"/>.
 /// </summary>
 public sealed partial class CreateSupplierHandler
 {

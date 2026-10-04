@@ -313,7 +313,7 @@ public sealed partial class AuditLogViewModel : PageViewModel
             UserOptions.Add(new AuditUserOption(SystemUser.Id, SystemUser.DisplayName));
             foreach (var user in result.Value.Items)
             {
-                UserOptions.Add(new AuditUserOption(user.Id, user.FullName));
+                UserOptions.Add(new AuditUserOption(user.Id, user.UserName));
             }
 
             SelectedUser = UserOptions.FirstOrDefault(o => o.UserId == selected) ?? UserOptions[0];

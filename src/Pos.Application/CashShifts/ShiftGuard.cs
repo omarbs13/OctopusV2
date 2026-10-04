@@ -65,5 +65,5 @@ public sealed class ShiftGuard
     }
 
     public async Task<string> NameOfAsync(Guid userId, CancellationToken cancellationToken) =>
-        (await _users.GetAsync(userId, cancellationToken))?.FullName ?? SystemUser.NameOf(userId);
+        (await _users.GetAsync(userId, cancellationToken))?.UserName ?? SystemUser.NameOf(userId);
 }

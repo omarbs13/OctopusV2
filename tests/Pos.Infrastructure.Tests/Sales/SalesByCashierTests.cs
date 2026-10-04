@@ -46,9 +46,9 @@ public sealed class SalesByCashierTests : IAsyncLifetime
         var detail = await repository.GetDetailAsync(anaSale.SaleId, Ct);
 
         Assert.Equal(2, all.TotalCount);
-        Assert.Equal(["Ana Cajera"], onlyAna.Items.Select(i => i.CashierName));
-        Assert.Equal(["Ana Cajera", "Beto Cajero"], all.Items.Select(i => i.CashierName).Order());
-        Assert.Equal("Ana Cajera", detail!.CreatedByName);
+        Assert.Equal(["ana"], onlyAna.Items.Select(i => i.CashierName));
+        Assert.Equal(["ana", "beto"], all.Items.Select(i => i.CashierName).Order());
+        Assert.Equal("ana", detail!.CreatedByName);
         Assert.Equal(ana.Id, detail.CreatedById);
         Assert.Equal(1, await context2.Sales.CountAsync(s => s.CreatedBy == beto.Id, Ct));
     }

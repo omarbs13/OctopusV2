@@ -189,7 +189,7 @@ public sealed partial class ShiftCutsViewModel : PageViewModel
         UserOptions.Add(new ShiftUserOption(null, Strings.Shifts_UserAll));
         foreach (var user in result.Value)
         {
-            UserOptions.Add(new ShiftUserOption(user.Id, user.FullName));
+            UserOptions.Add(new ShiftUserOption(user.Id, user.UserName));
         }
 
         SelectedUser = UserOptions.FirstOrDefault(o => o.UserId == selected) ?? UserOptions[0];
