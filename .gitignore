@@ -488,3 +488,6 @@ $RECYCLE.BIN/
 TestResults/
 # Las bases de ejemplo por versión SÍ se versionan
 !tests/Pos.Infrastructure.Tests/SampleDatabases/*.db
+
+# Material de la clave de firma: la clave privada nunca entra al repositorio
+*.octokey

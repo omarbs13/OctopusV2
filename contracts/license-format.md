@@ -4,9 +4,12 @@
 ambos repositorios. Un cambio aquí es un cambio de contrato: se acuerda, se aplica en los dos
 repositorios a la vez y, si no es compatible, sube la versión de formato.
 
-- **Versión del documento**: 2 (2026-10-03). Cambio respecto a la 1: en §5, `format` se comprueba
-  antes de exigir `payload` y `signature`, para que un archivo de formato 2 se rechace como "formato
-  no compatible" y no como "ilegible". No cambia lo que firma OctopusAdmin.
+- **Versión del documento**: 3 (2026-10-03). Cambio respecto a la 2: §6 nombra
+  `contracts/octopus-admin-public-key.txt` como la clave pública que tienen los POS. Cambio de la 1 a la 2:
+  en §5, `format` se comprueba antes de exigir `payload` y `signature`, para que un archivo de
+  formato 2 se rechace como "formato no compatible" y no como "ilegible". Ninguno cambia lo que
+  firma OctopusAdmin.
+- **Clave pública de producción**: `contracts/octopus-admin-public-key.txt`
 - **Catálogo de módulos**: `contracts/module-catalog.json`
 - **Solicitud de licencia**: `contracts/license-request.md`
 
@@ -119,6 +122,15 @@ repite los pasos 1 a 6 sobre la licencia guardada (el paso 7 no aplica a sí mis
 - Curva: NIST P-256 (`secp256r1` / `prime256v1`). Hash: SHA-256.
 - El POS incluye la clave pública como `SubjectPublicKeyInfo` DER en Base64. La clave pública no es
   secreta y puede estar en el repositorio. La clave privada nunca entra en ningún repositorio.
+- `contracts/octopus-admin-public-key.txt` contiene esa clave pública (una línea, Base64). Es la referencia
+  compartida, no una configuración:
+  - El POS **compila** la clave como constante y nunca la lee de un archivo al ejecutarse (si la
+    leyera, cualquiera podría reemplazarla por la suya). Una prueba exige que la constante sea igual
+    a este archivo.
+  - OctopusAdmin la incluye como recurso solo para **advertir** cuando su clave de firma no es la que
+    tienen los POS (al generar, restaurar o emitir). No decide con ella qué licencia es válida.
+- La clave de producción se genera una sola vez y se respalda. Si se pierde sin respaldo, cambiar
+  este archivo exige entregar una versión nueva del POS a todas las instalaciones.
 
 ## 7. Vector de prueba
 

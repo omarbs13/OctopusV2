@@ -16,6 +16,11 @@
     <None Include="SampleDatabases\*.db" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
+    <!-- Contrato compartido con OctopusAdmin; solo lo leen las pruebas, la app compila la clave. -->
+    <None Include="..\..\contracts\octopus-admin-public-key.txt" Link="contracts\octopus-admin-public-key.txt"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
 </Project>

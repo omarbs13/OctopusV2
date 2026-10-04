@@ -16,11 +16,11 @@ namespace Pos.Infrastructure.Licensing;
 public sealed class EcdsaLicenseVerifier : ILicenseVerifier
 {
     /// <summary>
-    /// TODO(025, research §15): reemplazar con la clave pública de producción de OctopusAdmin
-    /// (SubjectPublicKeyInfo DER en Base64) cuando se entregue. Bloquea solo la liberación a producción.
+    /// Clave pública de producción de OctopusAdmin (SubjectPublicKeyInfo DER en Base64). Compilada a propósito:
+    /// nunca se lee de un archivo. Debe ser igual a <c>contracts/octopus-admin-public-key.txt</c> (lo exige una prueba).
     /// </summary>
     public const string ProductionPublicKey =
-        "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEPJtCVVYVLeYa60jlbbp8MasuCYsZT1FPqR8vfS2UHzE/v2fgA7K7Miy0/6v8t7an5CE9XiINzGuWuWMZoK2TwQ==";
+        "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEOzysiigbG53dednhMrSw6I0Su9i3ThHv3qbgTSUKbMZP9cwHJ7Ub4afYcgi1tCsaWKGkZv6wrUUq44kFEjx1Lg==";
 
     public const string DevelopmentKeyVariable = "POS_LICENSE_DEV_PUBLIC_KEY";
 
