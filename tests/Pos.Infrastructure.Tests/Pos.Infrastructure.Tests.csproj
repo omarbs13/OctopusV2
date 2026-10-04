@@ -17,7 +17,7 @@
   </ItemGroup>
   <ItemGroup>
     <!-- Contrato compartido con OctopusAdmin; solo lo leen las pruebas, la app compila la clave. -->
-    <None Include="..\..\contracts\octopus-admin-public-key.txt" Link="contracts\octopus-admin-public-key.txt"
+    <None Include="..\..\contracts\license-public-key.json" Link="contracts\license-public-key.json"
           CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>

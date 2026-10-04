@@ -4,12 +4,13 @@
 ambos repositorios. Un cambio aquí es un cambio de contrato: se acuerda, se aplica en los dos
 repositorios a la vez y, si no es compatible, sube la versión de formato.
 
-- **Versión del documento**: 3 (2026-10-03). Cambio respecto a la 2: §6 nombra
-  `contracts/octopus-admin-public-key.txt` como la clave pública que tienen los POS. Cambio de la 1 a la 2:
-  en §5, `format` se comprueba antes de exigir `payload` y `signature`, para que un archivo de
-  formato 2 se rechace como "formato no compatible" y no como "ilegible". Ninguno cambia lo que
-  firma OctopusAdmin.
-- **Clave pública de producción**: `contracts/octopus-admin-public-key.txt`
+- **Versión del documento**: 4 (2026-10-03). Cambio respecto a la 3: §6 sustituye
+  `contracts/octopus-admin-public-key.txt` por `contracts/license-public-key.json` (keyId,
+  algoritmo, clave pública y huella) y fija cómo se muestra la huella; §3 agrega el campo opcional
+  `keyId`. Cambio de la 2 a la 3: §6 nombra el archivo de la clave pública de producción. Cambio
+  de la 1 a la 2: en §5, `format` se comprueba antes de exigir `payload` y `signature`. Ninguno
+  cambia la forma de firmar.
+- **Clave pública de producción**: `contracts/license-public-key.json`
 - **Catálogo de módulos**: `contracts/module-catalog.json`
 - **Solicitud de licencia**: `contracts/license-request.md`
 
@@ -60,6 +61,7 @@ el POS nunca lo reconstruye, solo lo lee después de verificar la firma.
 {
   "formatVersion": 3,
   "licenseId": "0192f3a4-5b6c-7d8e-9f01-23456789abcd",
+  "keyId": "<16 hex>",
   "issuedAtUtc": "2026-10-03T15:04:05Z",
   "machineId": "3f5a0c1e9b7d2468ace013579bdf2468ace013579bdf2468ace013579bdf2468",
   "customerName": "Abarrotes La Esperanza",
@@ -74,6 +76,7 @@ el POS nunca lo reconstruye, solo lo lee después de verificar la firma.
 |-------|------|-------|
 | `formatVersion` | entero | Exactamente `3`; debe coincidir con `format` del sobre. |
 | `licenseId` | texto | GUID en formato `D` (36 caracteres con guiones). Único por licencia emitida. Se compara sin distinguir mayúsculas. |
+| `keyId` | texto, opcional | Identificador de la clave que firmó: los primeros 16 caracteres de `fingerprint` (§6), hexadecimales en minúscula. Informativo: el POS MAY mostrarlo y MUST NOT usarlo para elegir clave ni para aceptar o rechazar la licencia. Si falta, la licencia es igual de válida. |
 | `issuedAtUtc` | texto | Fecha y hora de emisión en UTC, formato exacto `yyyy-MM-ddTHH:mm:ssZ` (sin fracciones de segundo, con `Z`). |
 | `machineId` | texto | ID de máquina de la solicitud (`contracts/license-request.md`): 64 caracteres hexadecimales en minúscula. Se compara exacto (ordinal). |
 | `customerName` | texto | Nombre del cliente, 1 a 200 caracteres. Solo se muestra. |
@@ -120,17 +123,36 @@ repite los pasos 1 a 6 sobre la licencia guardada (el paso 7 no aplica a sí mis
 ## 6. Claves
 
 - Curva: NIST P-256 (`secp256r1` / `prime256v1`). Hash: SHA-256.
-- El POS incluye la clave pública como `SubjectPublicKeyInfo` DER en Base64. La clave pública no es
-  secreta y puede estar en el repositorio. La clave privada nunca entra en ningún repositorio.
-- `contracts/octopus-admin-public-key.txt` contiene esa clave pública (una línea, Base64). Es la referencia
-  compartida, no una configuración:
-  - El POS **compila** la clave como constante y nunca la lee de un archivo al ejecutarse (si la
-    leyera, cualquiera podría reemplazarla por la suya). Una prueba exige que la constante sea igual
-    a este archivo.
-  - OctopusAdmin la incluye como recurso solo para **advertir** cuando su clave de firma no es la que
-    tienen los POS (al generar, restaurar o emitir). No decide con ella qué licencia es válida.
-- La clave de producción se genera una sola vez y se respalda. Si se pierde sin respaldo, cambiar
-  este archivo exige entregar una versión nueva del POS a todas las instalaciones.
+- La clave privada nunca entra en ningún repositorio. La clave pública no es secreta.
+- `contracts/license-public-key.json` es la referencia compartida de la clave pública de
+  producción, no una configuración. UTF-8 sin BOM, fin de línea LF, sangría de 2 espacios, salto
+  de línea final; exactamente estos campos, en este orden:
+
+  ```json
+  {
+    "keyId": "<primeros 16 caracteres de fingerprint>",
+    "algorithm": "ECDSA-P256-SHA256",
+    "publicKey": "<SubjectPublicKeyInfo DER, Base64 estándar, una línea>",
+    "fingerprint": "<SHA-256 de los bytes DER de publicKey, 64 hex en minúscula>"
+  }
+  ```
+
+  - OctopusAdmin genera este archivo al exportar la clave pública; es idéntico byte a byte para la
+    misma clave.
+  - El POS **compila** `publicKey` como constante y nunca la lee de un archivo al ejecutarse. Una
+    prueba exige que la constante sea igual a `publicKey` de este archivo.
+  - OctopusAdmin lo incluye como recurso solo para **advertir** cuando su clave de firma no es la
+    que tienen los POS (al generar, restaurar o emitir). No decide con él qué licencia es válida.
+  - Ambas aplicaciones prueban que el archivo es coherente: `fingerprint` = SHA-256 de `publicKey`
+    y `keyId` = primeros 16 caracteres de `fingerprint`.
+- **Huella en pantalla**: ambas aplicaciones muestran `keyId` y la huella como 16 grupos de 4
+  caracteres hexadecimales en minúscula separados por un espacio (p. ej.
+  `1a2b 3c4d … 7e8f`), para que el operador las compare a simple vista. Copiar la huella copia los
+  64 caracteres sin espacios.
+- La clave de producción se genera una sola vez y se respalda. Generar otra invalida las
+  licencias ya emitidas en cuanto los POS reciban la nueva clave pública, y si se pierde sin
+  respaldo, cambiar este archivo exige entregar una versión nueva del POS a todas las
+  instalaciones.
 
 ## 7. Vector de prueba
 

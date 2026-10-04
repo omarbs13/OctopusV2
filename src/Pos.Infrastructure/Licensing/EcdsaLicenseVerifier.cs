@@ -17,10 +17,10 @@ public sealed class EcdsaLicenseVerifier : ILicenseVerifier
 {
     /// <summary>
     /// Clave pública de producción de OctopusAdmin (SubjectPublicKeyInfo DER en Base64). Compilada a propósito:
-    /// nunca se lee de un archivo. Debe ser igual a <c>contracts/octopus-admin-public-key.txt</c> (lo exige una prueba).
+    /// nunca se lee de un archivo. Debe ser igual a <c>publicKey</c> de <c>contracts/license-public-key.json</c> (lo exige una prueba).
     /// </summary>
     public const string ProductionPublicKey =
-        "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEOzysiigbG53dednhMrSw6I0Su9i3ThHv3qbgTSUKbMZP9cwHJ7Ub4afYcgi1tCsaWKGkZv6wrUUq44kFEjx1Lg==";
+        "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAErL/mKSOj1nTOnFSmD/04MMGhWdRZn2PFY5kdrCSXtXx7qQxuraVXotOJPKOKlltEjT/3ZdjVdLK0b0nFk+ompw==";
 
     public const string DevelopmentKeyVariable = "POS_LICENSE_DEV_PUBLIC_KEY";
 
