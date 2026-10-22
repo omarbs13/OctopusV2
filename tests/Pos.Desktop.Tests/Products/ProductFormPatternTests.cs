@@ -36,12 +36,12 @@ public sealed class ProductFormPatternTests : IDisposable
     }
 
     [Fact]
-    public void CamposObligatorios_ModeloYPrecio()
+    public void CamposObligatorios_NombreSkuYPrecio()
     {
         var editor = new ProductEditorViewModel(_host.UseCases, _host.Runner, _host.Dialogs);
 
-        Assert.True(editor.IsModelRequired);
-        Assert.False(editor.IsSkuRequired);
+        Assert.True(editor.IsNameRequired);
+        Assert.True(editor.IsSkuRequired);
         Assert.True(editor.IsPriceRequired);
         Assert.False(editor.IsBarcodeRequired);
     }
@@ -53,10 +53,10 @@ public sealed class ProductFormPatternTests : IDisposable
 
         await editor.SaveCommand.ExecuteAsync(null);
 
-        Assert.NotNull(editor.ModelError);
-        Assert.Null(editor.SkuError);
+        Assert.NotNull(editor.NameError);
+        Assert.NotNull(editor.SkuError);
         Assert.NotNull(editor.PriceError);
-        Assert.Equal(ProductFields.Model, editor.FocusField);
+        Assert.Equal(ProductFields.Name, editor.FocusField);
     }
 
     [Fact]
@@ -65,11 +65,11 @@ public sealed class ProductFormPatternTests : IDisposable
         var editor = new ProductEditorViewModel(_host.UseCases, _host.Runner, _host.Dialogs);
         Assert.False(editor.IsDirty);
 
-        editor.Model = "  ";
-        editor.PiecePriceText = " ";
+        editor.Name = "  ";
+        editor.PriceText = " ";
         Assert.False(editor.IsDirty);
 
-        editor.Model = "Café";
+        editor.Name = "Café";
         Assert.True(editor.IsDirty);
     }
 }

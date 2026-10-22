@@ -20,7 +20,6 @@ using Pos.Infrastructure.Categories;
 using Pos.Infrastructure.Inventory;
 using Pos.Infrastructure.Persistence;
 using Pos.Infrastructure.Products;
-using Pos.Infrastructure.Suppliers;
 
 namespace Pos.Infrastructure.Tests.TestSupport;
 
@@ -163,12 +162,11 @@ public sealed class CategoryTestSupport
                 new ProductRepository(context),
                 new CreateProductValidator(),
                 new CategoryRepository(context),
-                new SupplierRepository(context),
                 new WriteTransactions(context),
                 new AuditLog(context),
                 NullLogger<CreateProductHandler>.Instance,
                 Users.License)
-            .HandleAsync(new CreateProductCommand($"Producto {sku}", sku, null, "H87", "10.00", CategoryId: categoryId), Ct);
+            .HandleAsync(new CreateProductCommand($"Producto {sku}", sku, null, "10.00", "H87", CategoryId: categoryId), Ct);
     }
 
     /// <summary>Edición con el caso de uso real: cambia el nombre y asigna <paramref name="categoryId"/>.</summary>
@@ -183,12 +181,11 @@ public sealed class CategoryTestSupport
                 new InventoryRepository(context),
                 new WriteTransactions(context),
                 new CategoryRepository(context),
-                new SupplierRepository(context),
                 new AuditLog(context),
                 NullLogger<UpdateProductHandler>.Instance,
                 Users.License)
             .HandleAsync(
-                new UpdateProductCommand(productId, current.Version, name, current.Sku, current.Barcode, current.UnitCode, current.IsActive, "10.00", CategoryId: categoryId),
+                new UpdateProductCommand(productId, current.Version, name, current.Sku, current.Barcode, "10.00", current.UnitCode, current.IsActive, CategoryId: categoryId),
                 Ct);
     }
 

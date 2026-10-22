@@ -7,7 +7,7 @@ public class CreateProductValidatorTests
 {
     private static readonly CreateProductValidator Validator = new();
 
-    private static CreateProductCommand Valid() => new("Café Molido", "CAF-001", "7501234567890", "H87", "89.50");
+    private static CreateProductCommand Valid() => new("Café Molido", "CAF-001", "7501234567890", "89.50", "H87");
 
     private static IEnumerable<(string Field, string Message)> Errors(CreateProductCommand command) =>
         Validator.Validate(command).Errors.Select(e => (e.PropertyName, e.ErrorMessage));
@@ -25,22 +25,22 @@ public class CreateProductValidatorTests
     [InlineData("   ")]
     public void NombreVacio_EsObligatorio(string name)
     {
-        Assert.Equal([(ProductFields.Model, ProductMessages.ModelRequired)], Errors(Valid() with { Model = name }));
+        Assert.Equal([(ProductFields.Name, ProductMessages.NameRequired)], Errors(Valid() with { Name = name }));
     }
 
     [Fact]
-    public void Modelo151Caracteres_ExcedeElMaximoDeCaptura()
+    public void Nombre201Caracteres_ExcedeElMaximo()
     {
         Assert.Equal(
-            [(ProductFields.Model, ProductMessages.ModelTooLong)],
-            Errors(Valid() with { Model = new string('a', 151) }));
-        Assert.Empty(Errors(Valid() with { Model = "  " + new string('a', 150) + "  " }));
+            [(ProductFields.Name, ProductMessages.NameTooLong)],
+            Errors(Valid() with { Name = new string('a', 201) }));
+        Assert.Empty(Errors(Valid() with { Name = "  " + new string('a', 200) + "  " }));
     }
 
     [Fact]
-    public void SkuVacio_EsOpcional_SeGeneraUnoAutomatico()
+    public void SkuVacio_EsObligatorio()
     {
-        Assert.Empty(Errors(Valid() with { Sku = "" }));
+        Assert.Equal([(ProductFields.Sku, ProductMessages.SkuRequired)], Errors(Valid() with { Sku = "" }));
     }
 
     [Fact]
@@ -79,7 +79,7 @@ public class CreateProductValidatorTests
     [InlineData("0.00", ProductMessages.PriceNotPositive)]
     public void PrecioInvalido_MensajeEspecificoSinRedondear(string price, string message)
     {
-        Assert.Equal([(ProductFields.Price, message)], Errors(Valid() with { PiecePriceText = price }));
+        Assert.Equal([(ProductFields.Price, message)], Errors(Valid() with { PriceText = price }));
     }
 
     [Theory]
@@ -90,13 +90,13 @@ public class CreateProductValidatorTests
     [InlineData("1234.50")]
     public void PrecioEnLosLimites_EsValido(string price)
     {
-        Assert.Empty(Errors(Valid() with { PiecePriceText = price }));
+        Assert.Empty(Errors(Valid() with { PriceText = price }));
     }
 
     [Fact]
     public void PrecioVacio_EsObligatorio()
     {
-        Assert.Equal([(ProductFields.Price, ProductMessages.PriceRequired)], Errors(Valid() with { PiecePriceText = " " }));
+        Assert.Equal([(ProductFields.Price, ProductMessages.PriceRequired)], Errors(Valid() with { PriceText = " " }));
     }
 
     [Theory]
@@ -111,8 +111,8 @@ public class CreateProductValidatorTests
     [Fact]
     public void VariosCamposInvalidos_ReportaUnErrorPorCampo()
     {
-        var errors = Errors(new CreateProductCommand("", "A B", "AB_12", "", "abc")).Select(e => e.Field);
+        var errors = Errors(new CreateProductCommand("", "", "AB_12", "abc", "")).Select(e => e.Field);
 
-        Assert.Equal([ProductFields.Model, ProductFields.Sku, ProductFields.Barcode, ProductFields.Price, ProductFields.UnitCode], errors);
+        Assert.Equal([ProductFields.Name, ProductFields.Sku, ProductFields.Barcode, ProductFields.Price, ProductFields.UnitCode], errors);
     }
 }

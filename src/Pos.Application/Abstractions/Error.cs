@@ -9,11 +9,8 @@ public abstract record Error;
 /// <summary>Datos de entrada inválidos; un mensaje en español por campo.</summary>
 public sealed record ValidationFailed(IReadOnlyList<FieldError> Errors) : Error;
 
-/// <summary>
-/// Otro registro no borrado ya usa el valor del campo indicado. Para la identidad de un producto
-/// (proveedor + modelo + medidas) trae el producto existente (026).
-/// </summary>
-public sealed record Duplicate(string Field, Guid? ExistingId = null, string? ExistingName = null, string? ExistingSku = null) : Error;
+/// <summary>Otro producto no borrado ya usa el valor del campo indicado.</summary>
+public sealed record Duplicate(string Field) : Error;
 
 /// <summary>El registro no existe o está borrado.</summary>
 public sealed record NotFound : Error;

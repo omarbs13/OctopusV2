@@ -6,7 +6,6 @@ using Pos.Application.Diagnostics;
 using Pos.Application.Inventory;
 using Pos.Application.Products;
 using Pos.Application.Sales;
-using Pos.Application.Suppliers;
 using Pos.Application.Tests.TestSupport;
 using Pos.Application.Users.Access;
 using Pos.Application.Users.Session;
@@ -31,7 +30,6 @@ public sealed class DesktopTestHost : IDisposable
         services.AddSingleton<IProductRepository>(Repository);
         services.AddSingleton<IInventoryRepository>(Inventory);
         services.AddSingleton<ICategoryRepository>(Categories);
-        services.AddSingleton<ISupplierRepository>(Suppliers);
         services.AddSingleton<ISaleRepository>(Sales);
         services.AddSingleton<IWriteTransactions>(new FakeWriteTransactions());
         services.AddSingleton<IAuditLog>(new RecordingAuditLog());
@@ -66,8 +64,6 @@ public sealed class DesktopTestHost : IDisposable
     public InMemoryInventoryRepository Inventory { get; } = new();
 
     public InMemoryCategoryRepository Categories { get; } = new();
-
-    public InMemorySupplierRepository Suppliers { get; } = new();
 
     public FakeSaleRepository Sales { get; } = new();
 

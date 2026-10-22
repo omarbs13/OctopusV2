@@ -12,7 +12,6 @@ using Pos.Application.Sales;
 using Pos.Application.Users.Access;
 using Pos.Domain.Common;
 using Pos.Domain.CreditNotes;
-using Pos.Domain.Inventory;
 using Pos.Domain.Licensing;
 using Pos.Domain.Returns;
 using Pos.Domain.Sales;
@@ -376,18 +375,10 @@ public sealed partial class SaleReturnProcessor
 
         var stocks = (await _inventory.GetStocksAsync([.. withMovement.Select(x => x.Line.ProductId).Distinct()], cancellationToken))
             .ToDictionary(s => s.Key, s => s.Value);
-        // 026: se regresa lo que realmente salió, repartido en proporción a lo devuelto (sin residuos de redondeo).
-        var original = (await _inventory.GetMovementQuantitiesAsync([.. withMovement.Select(x => x.Line.SaleMovementId!.Value)], cancellationToken))
-            .ToDictionary(m => m.Key, m => m.Value);
         foreach (var (amount, line) in withMovement)
         {
             var stock = stocks[line.ProductId];
-            // La devolución parcial ya sumó esta cantidad a la línea (sale.ApplyReturn); la cancelación no.
-            var alreadyReturned = isCancellation ? line.ReturnedQuantity : line.ReturnedQuantity - amount.QuantityThousandths;
-            var restored = original.TryGetValue(line.SaleMovementId!.Value, out var sold)
-                ? SaleStockRestore.Quantity(sold, line.QuantityThousandths, alreadyReturned, amount.QuantityThousandths)
-                : amount.QuantityThousandths;
-            var quantity = Quantity.FromThousandths(restored);
+            var quantity = Quantity.FromThousandths(amount.QuantityThousandths);
             var movement = isCancellation
                 ? stock.RecordSaleCancellation(quantity, sale.Folio)
                 : stock.RecordSaleReturn(quantity, sale.Folio);

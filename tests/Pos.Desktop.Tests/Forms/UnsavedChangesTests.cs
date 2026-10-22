@@ -33,9 +33,9 @@ public sealed class UnsavedChangesTests : IDisposable
         var page = (ProductsViewModel)Navigator.CurrentPage!;
         await page.NewProductCommand.ExecuteAsync(null);
         var editor = page.Editor!;
-        editor.Model = "Café";
+        editor.Name = "Café";
         editor.Sku = "caf-1";
-        editor.PiecePriceText = "10";
+        editor.PriceText = "10";
         return (page, editor);
     }
 
@@ -51,7 +51,7 @@ public sealed class UnsavedChangesTests : IDisposable
 
         Assert.Equal(1, Dialogs.UnsavedQuestions);
         Assert.Same(editor, page.Editor);
-        Assert.Equal("Café", editor.Model);
+        Assert.Equal("Café", editor.Name);
     }
 
     [Fact]
@@ -82,7 +82,7 @@ public sealed class UnsavedChangesTests : IDisposable
     public async Task Cancelar_Guardar_ConErrores_SigueAbiertoConLosErrores()
     {
         var (page, editor) = await OpenNewProductWithChangesAsync();
-        editor.PiecePriceText = "12,50";
+        editor.PriceText = "12,50";
         Dialogs.UnsavedChoice = UnsavedChangesChoice.Save;
 
         await editor.CancelCommand.ExecuteAsync(null);
@@ -115,7 +115,7 @@ public sealed class UnsavedChangesTests : IDisposable
         await editor.CancelCommand.ExecuteAsync(null);
 
         Assert.Same(editor, page.Editor);
-        Assert.Equal("Café", editor.Model);
+        Assert.Equal("Café", editor.Name);
         Assert.Contains(Dialogs.Messages, m => m.Message == Strings.Common_UnexpectedError);
     }
 
@@ -218,10 +218,10 @@ public sealed class UnsavedChangesTests : IDisposable
         await page.EditCommand.ExecuteAsync(null);
         var editor = page.Editor!;
 
-        editor.Model = "Leche entera";
-        editor.Model = "Leche";
+        editor.Name = "Leche entera";
+        editor.Name = "Leche";
         editor.Sku = "lec-1";
-        editor.PiecePriceText = "10";
+        editor.PriceText = "10";
 
         Assert.False(editor.IsDirty);
         Assert.True(await Navigator.NavigateAsync("home"));

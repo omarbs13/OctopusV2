@@ -40,27 +40,9 @@ using Serilog;
 
 namespace Pos.Desktop.Sales;
 
-/// <summary>Botón de modalidad (Caja, m² o Pieza) de una partida de loseta (026).</summary>
-public sealed record SaleModeChoice(Guid ProductId, SaleMode Mode, string Label, bool IsSelected);
-
 /// <summary>Línea de la venta en curso con los textos ya formateados.</summary>
 public sealed record CartLineRow(CartLine Line)
 {
-    /// <summary>Modalidades de la partida; vacío si el producto no es de loseta o solo ofrece una.</summary>
-    public IReadOnlyList<SaleModeChoice> ModeChoices =>
-        Line.HasModes
-            ? [.. Line.Tile!.AvailableModes.Select(m => new SaleModeChoice(ProductId, m, ModeLabel(m), m == Line.Mode))]
-            : [];
-
-    public bool HasModes => Line.HasModes;
-
-    private static string ModeLabel(SaleMode mode) => mode switch
-    {
-        SaleMode.Box => Strings.Sale_ModeBox,
-        SaleMode.SquareMeter => Strings.Sale_ModeSquareMeter,
-        _ => Strings.Sale_ModePiece,
-    };
-
     public Guid ProductId => Line.ProductId;
 
     public string Name => Line.Name;
@@ -612,30 +594,6 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
         SelectedLine = Lines[Math.Clamp(index + delta, 0, Lines.Count - 1)];
     }
 
-    /// <summary>Cambia la modalidad (caja, m² o pieza) de una partida de loseta: precio y unidad cambian (026).</summary>
-    [RelayCommand]
-    private void SetLineMode(SaleModeChoice? choice)
-    {
-        if (choice is null || IsModalOpen)
-        {
-            return;
-        }
-
-        try
-        {
-            Cart.SetMode(choice.ProductId, choice.Mode);
-        }
-        catch (DomainException ex)
-        {
-            ShowStatus(ex.Message, warning: true);
-            return;
-        }
-
-        RefreshCart(choice.ProductId);
-        NotifyOrderDiscountRemoved();
-        SaveDraft();
-    }
-
     /// <summary>F4 o <c>*</c>: edita la cantidad de la línea seleccionada.</summary>
     [RelayCommand(CanExecute = nameof(HasSelectedLine))]
     private void ChangeQuantity()
@@ -800,7 +758,7 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
 
     private async Task<SaleReview?> ReviewAsync()
     {
-        var query = new ReviewSaleQuery([.. Cart.Lines.Select(l => new ReviewLineInput(l.ProductId, l.Quantity.Thousandths, l.Mode))]);
+        var query = new ReviewSaleQuery([.. Cart.Lines.Select(l => new ReviewLineInput(l.ProductId, l.Quantity.Thousandths))]);
         var (completed, result) = await _runner.RunAsync(
             "RevisarVenta",
             () => _useCases.RunAsync<ReviewSaleHandler, Result<SaleReview>>(h => h.HandleAsync(query, CancellationToken.None)),
@@ -873,8 +831,7 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
                 l.ProductId,
                 l.Quantity.Thousandths,
                 l.UnitPrice.Cents,
-                l.Discount is { } d ? new LineDiscountInput(d.Value.Mode, d.Value.Raw, d.ApprovalId) : null,
-                l.Mode))],
+                l.Discount is { } d ? new LineDiscountInput(d.Value.Mode, d.Value.Raw, d.ApprovalId) : null))],
             [.. checkout.ToPayments().Select(p => new PaymentInput(p.Method, p.Amount.Cents, p.Received?.Cents, p.Reference))],
             checkout.CustomerId,
             checkout.OverLimitGrantId,
@@ -1485,8 +1442,7 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
                 product.UnitCode,
                 product.DecimalPlaces,
                 product.TracksInventory,
-                Money.FromCents(product.PriceCents),
-                Tile: product.Tile));
+                Money.FromCents(product.PriceCents)));
         }
         catch (DomainException ex)
         {
@@ -1526,8 +1482,7 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
                 Money.FromCents(l.CurrentPriceCents),
                 Quantity.FromThousandths(l.QuantityThousandths),
                 ToUnavailable(l.NotSellableReason),
-                l.Discount is { } d ? new LineDiscount(DiscountValue.Create(d.Mode, d.Value), d.ApprovalId) : null,
-                l.Tile)),
+                l.Discount is { } d ? new LineDiscount(DiscountValue.Create(d.Mode, d.Value), d.ApprovalId) : null)),
                 draft.OrderDiscount is { IsCoupon: false, Mode: { } mode, Value: { } value } manual
                     ? new OrderDiscount.Manual(DiscountValue.Create(mode, value), manual.ApprovalId)
                     : null);
@@ -1587,8 +1542,7 @@ public sealed partial class PointOfSaleViewModel : PageViewModel, IDisposable
                 l.ProductId,
                 l.Quantity.Thousandths,
                 l.UnitPrice.Cents,
-                l.Discount is { } d ? new DraftDiscountDto(d.Value.Mode, d.Value.Raw, d.ApprovalId) : null,
-                l.Tile is null ? null : l.Mode))],
+                l.Discount is { } d ? new DraftDiscountDto(d.Value.Mode, d.Value.Raw, d.ApprovalId) : null))],
             Cart.OrderDiscount switch
             {
                 OrderDiscount.Manual m => DraftOrderDiscountDto.Manual(m.Value.Mode, m.Value.Raw, m.ApprovalId),

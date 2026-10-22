@@ -123,9 +123,9 @@ public sealed class ProductsViewModelSearchTests : IDisposable
 
         page.NewProductCommand.Execute(null);
         var editor = Assert.IsType<ProductEditorViewModel>(page.Editor);
-        editor.Model = "Café";
+        editor.Name = "Café";
         editor.Sku = "caf-1";
-        editor.PiecePriceText = "10";
+        editor.PriceText = "10";
         await editor.SaveCommand.ExecuteAsync(null);
         await WaitUntilAsync(() => page.SelectedItem is not null);
 
@@ -143,9 +143,9 @@ public sealed class ProductsViewModelSearchTests : IDisposable
         await page.SearchNowCommand.ExecuteAsync(null);
 
         page.NewProductCommand.Execute(null);
-        page.Editor!.Model = "Café";
+        page.Editor!.Name = "Café";
         page.Editor.Sku = "caf-1";
-        page.Editor.PiecePriceText = "10";
+        page.Editor.PriceText = "10";
         await page.Editor.SaveCommand.ExecuteAsync(null);
         await WaitUntilAsync(() => page.SelectedItem is not null);
 

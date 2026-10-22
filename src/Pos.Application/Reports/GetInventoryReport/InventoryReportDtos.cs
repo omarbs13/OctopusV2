@@ -56,12 +56,7 @@ public sealed record InventoryReportRow(
     StockStatus Status,
     StockAlertLevel Level,
     string? CategoryName = null,
-    bool CategoryIsActive = true,
-    string Model = "",
-    string? Measures = null,
-    long? PackagingThousandths = null,
-    long? PricePerSqmCents = null,
-    long? PricePerBoxCents = null);
+    bool CategoryIsActive = true);
 
 public sealed record InventoryReport(
     InventoryCounts Counts,

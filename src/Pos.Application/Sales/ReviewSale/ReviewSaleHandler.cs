@@ -50,7 +50,7 @@ public sealed class ReviewSaleHandler
             : (await _inventory.GetStocksAsync(tracked, cancellationToken)).ToDictionary(s => s.Key, s => s.Value);
 
         var lines = query.Lines
-            .Select(l => SaleReviewer.Review(l.ProductId, l.QuantityThousandths, products.GetValueOrDefault(l.ProductId), stocks, inventoryActive, l.Mode))
+            .Select(l => SaleReviewer.Review(l.ProductId, l.QuantityThousandths, products.GetValueOrDefault(l.ProductId), stocks, inventoryActive))
             .ToList();
         return Result.Success(new SaleReview(lines));
     }

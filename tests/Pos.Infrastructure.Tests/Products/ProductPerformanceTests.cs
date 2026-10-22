@@ -9,7 +9,6 @@ using Pos.Infrastructure.Audit;
 using Pos.Infrastructure.Categories;
 using Pos.Infrastructure.Persistence;
 using Pos.Infrastructure.Products;
-using Pos.Infrastructure.Suppliers;
 using Pos.Infrastructure.Tests.TestSupport;
 
 namespace Pos.Infrastructure.Tests.Products;
@@ -98,27 +97,6 @@ public sealed class ProductPerformanceTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task FiltrosDeMarcaMedidaYRevision_RespondenEnMenosDeUnSegundo()
-    {
-        foreach (var query in new[]
-        {
-            new SearchProductsQuery(null, true, Brand: "alfa"),
-            new SearchProductsQuery(null, true, Measures: "60X60"),
-            new SearchProductsQuery(null, true, NeedsReviewOnly: true),
-            new SearchProductsQuery("60 x 60", true),
-        })
-        {
-            await using var context = _db.CreateDbContext();
-            var watch = Stopwatch.StartNew();
-            var result = await new SearchProductsHandler(new AllowAllAccessControl(), new ProductRepository(context)).HandleAsync(query, Ct);
-            watch.Stop();
-
-            Assert.True(result.IsSuccess);
-            Assert.True(watch.Elapsed < Budget, $"{query} tardó {watch.Elapsed.TotalMilliseconds:0} ms");
-        }
-    }
-
-    [Fact]
     public async Task BusquedaParcialPorNombre_RespondeEnMenosDeUnSegundo()
     {
         var watch = Stopwatch.StartNew();
@@ -140,11 +118,10 @@ public sealed class ProductPerformanceTests : IAsyncLifetime
                 new ProductRepository(context),
                 new CreateProductValidator(),
                 new CategoryRepository(context),
-                new SupplierRepository(context),
                 new WriteTransactions(context),
                 new AuditLog(context),
                 NullLogger<CreateProductHandler>.Instance)
-                .HandleAsync(new CreateProductCommand("Nuevo producto", "NUEVO-1", null, "H87", "10.00"), Ct);
+                .HandleAsync(new CreateProductCommand("Nuevo producto", "NUEVO-1", null, "10.00", "H87"), Ct);
             Assert.True(created.IsSuccess);
         }
 

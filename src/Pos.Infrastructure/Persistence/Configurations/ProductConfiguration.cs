@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Pos.Domain.Common;
 using Pos.Domain.Products;
 
 namespace Pos.Infrastructure.Persistence.Configurations;
@@ -8,7 +9,6 @@ internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
 {
     public const string SkuIndexName = "IX_Products_Sku";
     public const string BarcodeIndexName = "IX_Products_Barcode";
-    public const string IdentityIndexName = "IX_Products_IdentityKey";
 
     public void Configure(EntityTypeBuilder<Product> builder)
     {
@@ -21,27 +21,10 @@ internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.Property(p => p.Sku).HasMaxLength(Product.SkuMaxLength).IsRequired();
         builder.Property(p => p.Barcode).HasMaxLength(Product.BarcodeMaxLength);
 
-        // 026: la columna PriceCents conserva su nombre y pasa a ser el precio por pieza (nulable).
-        builder.Property(p => p.PiecePriceCents).HasColumnName("PriceCents");
-        builder.Ignore(p => p.Price);
-        builder.Ignore(p => p.IsTile);
-        builder.Ignore(p => p.InitialMode);
-        builder.Ignore(p => p.AvailableModes);
-
-        // Campos del proveedor (026). Model se llena en la migración con el nombre anterior.
-        builder.Property(p => p.Model).HasMaxLength(Product.NameMaxLength).IsRequired().HasDefaultValue(string.Empty);
-        builder.Property(p => p.ModelKey).HasMaxLength(Product.NameMaxLength).IsRequired().HasDefaultValue(string.Empty);
-        builder.Property(p => p.Measures).HasMaxLength(Product.MeasuresMaxLength);
-        builder.Property(p => p.MeasuresKey).HasMaxLength(Product.MeasuresMaxLength);
-        builder.Property(p => p.Brand).HasMaxLength(Product.BrandMaxLength);
-        builder.Property(p => p.BrandSearch).HasMaxLength(Product.BrandMaxLength);
-        builder.Property(p => p.SupplierId);
-        builder.Property(p => p.PackagingThousandths);
-        builder.Property(p => p.PiecesPerBox);
-        builder.Property(p => p.PricePerSqmCents);
-        builder.Property(p => p.PricePerBoxCents);
-        builder.Property(p => p.IdentityKey).HasMaxLength(Product.NameMaxLength + Product.MeasuresMaxLength + 40);
-        builder.Property(p => p.NeedsReview).IsRequired().HasDefaultValue(false);
+        builder.Property(p => p.Price)
+            .HasColumnName("PriceCents")
+            .HasConversion(money => money.Cents, cents => Money.FromCents(cents))
+            .IsRequired();
 
         // El valor por defecto solo sirve para que la migración asigne "Pieza" a los productos
         // anteriores a 003 (clarificación 1); el dominio siempre asigna la unidad.
@@ -98,24 +81,6 @@ internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasDatabaseName(BarcodeIndexName)
             .IsUnique()
             .HasFilter("\"DeletedAt\" IS NULL AND \"Barcode\" IS NOT NULL");
-
-        // Unicidad de proveedor + modelo + medidas normalizados (026). Los duplicados migrados quedan sin clave.
-        builder.HasIndex(p => p.IdentityKey)
-            .HasDatabaseName(IdentityIndexName)
-            .IsUnique()
-            .HasFilter("\"DeletedAt\" IS NULL AND \"IdentityKey\" IS NOT NULL");
-
-        builder.HasIndex(p => p.BrandSearch)
-            .HasDatabaseName("IX_Products_BrandSearch")
-            .HasFilter("\"DeletedAt\" IS NULL");
-
-        builder.HasIndex(p => p.MeasuresKey)
-            .HasDatabaseName("IX_Products_MeasuresKey")
-            .HasFilter("\"DeletedAt\" IS NULL");
-
-        builder.HasIndex(p => p.NeedsReview)
-            .HasDatabaseName("IX_Products_NeedsReview")
-            .HasFilter("\"DeletedAt\" IS NULL AND \"NeedsReview\" = 1");
 
         builder.HasIndex(p => new { p.TracksInventory, p.IsActive })
             .HasDatabaseName("IX_Products_TracksInventory")

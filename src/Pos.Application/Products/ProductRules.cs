@@ -10,71 +10,71 @@ namespace Pos.Application.Products;
 /// <summary>Reglas de entrada de producto compartidas por el alta y la edición.</summary>
 internal static class ProductRules
 {
-    public static void Apply<T>(AbstractValidator<T> validator)
-        where T : IProductInput
+    public static void Apply<T>(
+        AbstractValidator<T> validator,
+        Func<T, string?> name,
+        Func<T, string?> sku,
+        Func<T, string?> barcode,
+        Func<T, string?> priceText,
+        Func<T, string?> unitCode,
+        Func<T, bool> tracksInventory,
+        Func<T, string?> minimumStockText,
+        Func<T, string?> reorderPointText)
     {
-        validator.RuleFor(x => Product.NormalizeName(x.Model))
+        validator.RuleFor(x => Product.NormalizeName(name(x)))
             .Cascade(CascadeMode.Stop)
-            .NotEmpty().WithMessage(ProductMessages.ModelRequired)
-            .MaximumLength(Product.ModelCaptureMaxLength).WithMessage(ProductMessages.ModelTooLong)
-            .OverridePropertyName(ProductFields.Model);
+            .NotEmpty().WithMessage(ProductMessages.NameRequired)
+            .MaximumLength(Product.NameMaxLength).WithMessage(ProductMessages.NameTooLong)
+            .OverridePropertyName(ProductFields.Name);
 
-        // El SKU es opcional: vacío genera uno automático (026).
-        validator.RuleFor(x => Product.NormalizeSku(x.Sku))
+        validator.RuleFor(x => Product.NormalizeSku(sku(x)))
             .Cascade(CascadeMode.Stop)
+            .NotEmpty().WithMessage(ProductMessages.SkuRequired)
             .MaximumLength(Product.SkuMaxLength).WithMessage(ProductMessages.SkuTooLong)
             .Must(s => !s.Any(char.IsWhiteSpace)).WithMessage(ProductMessages.SkuWithSpaces)
             .OverridePropertyName(ProductFields.Sku);
 
-        validator.RuleFor(x => Product.NormalizeBarcode(x.Barcode))
+        validator.RuleFor(x => Product.NormalizeBarcode(barcode(x)))
             .Must(Product.IsValidBarcode).WithMessage(ProductMessages.BarcodeFormat)
             .OverridePropertyName(ProductFields.Barcode);
 
-        validator.RuleFor(x => x.Measures)
-            .Must(m => (m ?? string.Empty).Trim().Length <= Product.MeasuresMaxLength).WithMessage(ProductMessages.MeasuresTooLong)
-            .OverridePropertyName(ProductFields.Measures);
+        validator.RuleFor(x => Money.Parse(priceText(x)))
+            .Cascade(CascadeMode.Stop)
+            .Must(r => r.Error != MoneyParseError.Empty).WithMessage(ProductMessages.PriceRequired)
+            .Must(r => r.Error != MoneyParseError.Format).WithMessage(ProductMessages.PriceFormat)
+            .Must(r => r.Error != MoneyParseError.TooManyDecimals).WithMessage(ProductMessages.PriceTooManyDecimals)
+            .Must(r => r.Error != MoneyParseError.TooLarge).WithMessage(ProductMessages.PriceTooLarge)
+            .Must(r => r.Value is { } price && Product.IsValidPrice(price)).WithMessage(ProductMessages.PriceNotPositive)
+            .OverridePropertyName(ProductFields.Price);
 
-        validator.RuleFor(x => x.Brand)
-            .Must(b => (b ?? string.Empty).Trim().Length <= Product.BrandMaxLength).WithMessage(ProductMessages.BrandTooLong)
-            .OverridePropertyName(ProductFields.Brand);
-
-        // Precios, embalaje y piezas por caja: un error por campo, con la regla de loseta / no loseta.
-        validator.RuleFor(x => x).Custom((x, context) =>
-        {
-            foreach (var error in ProductSupplierInput.Parse(x).Errors)
-            {
-                context.AddFailure(error.Field, error.Message);
-            }
-        });
-
-        validator.RuleFor(x => x.UnitCode)
+        validator.RuleFor(x => unitCode(x))
             .Must(UnitOfMeasure.IsValidCode).WithMessage(ProductMessages.UnitRequired)
             .OverridePropertyName(ProductFields.UnitCode);
 
-        validator.RuleFor(x => ParseMinimum(x.TracksInventory, x.MinimumStockText, x.UnitCode))
+        validator.RuleFor(x => ParseMinimum(tracksInventory(x), minimumStockText(x), unitCode(x)))
             .Must(r => r is not { Error: not null })
             .WithMessage(x =>
             {
-                var unit = UnitOfMeasure.Find(x.UnitCode);
-                var error = ParseMinimum(x.TracksInventory, x.MinimumStockText, x.UnitCode)!.Value.Error!.Value;
+                var unit = UnitOfMeasure.Find(unitCode(x));
+                var error = ParseMinimum(tracksInventory(x), minimumStockText(x), unitCode(x))!.Value.Error!.Value;
                 return InventoryMessages.ForMinimum(error, unit?.Name ?? string.Empty, unit?.DecimalPlaces ?? 0);
             })
             .OverridePropertyName(ProductFields.MinimumStock);
 
-        validator.RuleFor(x => ParseReorderPoint(x.TracksInventory, x.ReorderPointText, x.UnitCode))
+        validator.RuleFor(x => ParseReorderPoint(tracksInventory(x), reorderPointText(x), unitCode(x)))
             .Must(r => r is not { Error: not null })
             .WithMessage(x =>
             {
-                var unit = UnitOfMeasure.Find(x.UnitCode);
-                var error = ParseReorderPoint(x.TracksInventory, x.ReorderPointText, x.UnitCode)!.Value.Error!.Value;
+                var unit = UnitOfMeasure.Find(unitCode(x));
+                var error = ParseReorderPoint(tracksInventory(x), reorderPointText(x), unitCode(x))!.Value.Error!.Value;
                 return InventoryMessages.ForReorderPoint(error, unit?.Name ?? string.Empty, unit?.DecimalPlaces ?? 0);
             })
             .OverridePropertyName(ProductFields.ReorderPoint);
 
         // Solo con ambos umbrales capturados y válidos: el punto de reorden debe ser menor que el mínimo (FR-002).
         validator.RuleFor(x => IsBelowMinimum(
-                ParseMinimum(x.TracksInventory, x.MinimumStockText, x.UnitCode),
-                ParseReorderPoint(x.TracksInventory, x.ReorderPointText, x.UnitCode)))
+                ParseMinimum(tracksInventory(x), minimumStockText(x), unitCode(x)),
+                ParseReorderPoint(tracksInventory(x), reorderPointText(x), unitCode(x))))
             .Must(below => below)
             .WithMessage(ProductMessages.ReorderPointNotBelowMinimum)
             .OverridePropertyName(ProductFields.ReorderPoint);

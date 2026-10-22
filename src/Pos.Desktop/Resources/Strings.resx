@@ -33,23 +33,6 @@
   <data name="Startup_ContactSupport" xml:space="preserve"><value>No se restauró el respaldo. El POS no puede abrir una base dañada; contacte a soporte.</value></data>
   <data name="Editor_NewTitle" xml:space="preserve"><value>Nuevo producto</value></data>
   <data name="Editor_EditTitle" xml:space="preserve"><value>Editar producto</value></data>
-  <data name="Editor_Model" xml:space="preserve"><value>Modelo</value></data>
-  <data name="Editor_SupplierSection" xml:space="preserve"><value>Datos del proveedor</value></data>
-  <data name="Editor_Supplier" xml:space="preserve"><value>Proveedor</value></data>
-  <data name="Editor_NoSupplier" xml:space="preserve"><value>Sin proveedor</value></data>
-  <data name="Editor_Brand" xml:space="preserve"><value>Marca</value></data>
-  <data name="Editor_Measures" xml:space="preserve"><value>Medidas</value></data>
-  <data name="Editor_MeasuresHint" xml:space="preserve"><value>Ejemplo: 33 X 33</value></data>
-  <data name="Editor_Packaging" xml:space="preserve"><value>Embalaje (m² por caja)</value></data>
-  <data name="Editor_PackagingHint" xml:space="preserve"><value>Ejemplo: 1.80, o NA si no aplica</value></data>
-  <data name="Editor_PiecesPerBox" xml:space="preserve"><value>Piezas por caja</value></data>
-  <data name="Editor_PricePerSqm" xml:space="preserve"><value>Precio X M2</value></data>
-  <data name="Editor_PricePerBox" xml:space="preserve"><value>Precio X CAJA</value></data>
-  <data name="Editor_PiecePrice" xml:space="preserve"><value>Precio por pieza</value></data>
-  <data name="Editor_SkuHint" xml:space="preserve"><value>Opcional; si lo deja vacío se genera uno</value></data>
-  <data name="Editor_Suggested" xml:space="preserve"><value>Sugerido: ${0}</value></data>
-  <data name="Editor_UseSuggestion" xml:space="preserve"><value>Usar</value></data>
-  <data name="Editor_DuplicateIdentity" xml:space="preserve"><value>Ya existe un producto con este proveedor, modelo y medidas: {0} (SKU {1}).</value></data>
   <data name="Editor_Name" xml:space="preserve"><value>Nombre</value></data>
   <data name="Editor_Sku" xml:space="preserve"><value>SKU</value></data>
   <data name="Editor_Barcode" xml:space="preserve"><value>Código de barras (opcional)</value></data>
@@ -71,7 +54,7 @@
   <data name="Editor_Conflict" xml:space="preserve"><value>Otro proceso modificó este producto después de que lo abrió. ¿Recargar los datos actuales?</value></data>
   <data name="Editor_Reload" xml:space="preserve"><value>Recargar</value></data>
   <data name="Editor_NotFound" xml:space="preserve"><value>El producto ya no existe.</value></data>
-  <data name="Products_SearchPlaceholder" xml:space="preserve"><value>Buscar por modelo, medida, marca, SKU o código de barras (Ctrl+F)</value></data>
+  <data name="Products_SearchPlaceholder" xml:space="preserve"><value>Buscar por nombre, SKU o código de barras (Ctrl+F)</value></data>
   <data name="Products_ShowInactive" xml:space="preserve"><value>Mostrar inactivos</value></data>
   <data name="Products_New" xml:space="preserve"><value>Nuevo producto (Ctrl+N)</value></data>
   <data name="Products_Edit" xml:space="preserve"><value>Editar (F2)</value></data>
@@ -82,20 +65,6 @@
   <data name="Products_PreviousPage" xml:space="preserve"><value>Página anterior (Alt+RePág)</value></data>
   <data name="Products_NextPage" xml:space="preserve"><value>Página siguiente (Alt+AvPág)</value></data>
   <data name="Products_LastPage" xml:space="preserve"><value>Última página (Alt+Fin)</value></data>
-  <data name="Products_ColModel" xml:space="preserve"><value>Modelo</value></data>
-  <data name="Products_ColMeasures" xml:space="preserve"><value>Medidas</value></data>
-  <data name="Products_ColBrand" xml:space="preserve"><value>Marca</value></data>
-  <data name="Products_ColPerSqm" xml:space="preserve"><value>X M2</value></data>
-  <data name="Products_ColPerBox" xml:space="preserve"><value>X CAJA</value></data>
-  <data name="Products_NeedsReview" xml:space="preserve"><value>Para revisión</value></data>
-  <data name="Products_FilterBrand" xml:space="preserve"><value>Marca</value></data>
-  <data name="Products_FilterMeasures" xml:space="preserve"><value>Medida</value></data>
-  <data name="Products_FilterAll" xml:space="preserve"><value>Todas</value></data>
-  <data name="Products_ReviewOnly" xml:space="preserve"><value>Solo para revisión</value></data>
-  <data name="MigrationSummary_Title" xml:space="preserve"><value>Productos actualizados</value></data>
-  <data name="MigrationSummary_Message" xml:space="preserve"><value>Se actualizaron {0} productos al nuevo formato de proveedor.\n\n• Sin modelo: {1}\n• Loseta sin embalaje: {2}\n• Repetidos marcados «Para revisión»: {3}\n\nRevise los productos marcados para completar sus datos.</value></data>
-  <data name="MigrationSummary_ViewProducts" xml:space="preserve"><value>Ver productos para revisión</value></data>
-  <data name="MigrationSummary_Close" xml:space="preserve"><value>Cerrar</value></data>
   <data name="Products_ColImage" xml:space="preserve"><value>Imagen</value></data>
   <data name="Products_ColName" xml:space="preserve"><value>Nombre</value></data>
   <data name="Products_ColSku" xml:space="preserve"><value>SKU</value></data>
@@ -178,7 +147,7 @@
   <data name="Editor_InventoryLocked" xml:space="preserve"><value>Tiene movimientos de inventario; no se puede cambiar la unidad ni dejar de controlar el inventario.</value></data>
   <data name="Products_ColStock" xml:space="preserve"><value>Existencia</value></data>
   <data name="Products_ViewMovements" xml:space="preserve"><value>Ver movimientos</value></data>
-  <data name="Stock_SearchPlaceholder" xml:space="preserve"><value>Buscar por modelo, medida, marca, SKU o código de barras (Ctrl+F)</value></data>
+  <data name="Stock_SearchPlaceholder" xml:space="preserve"><value>Buscar por nombre, SKU o código de barras (Ctrl+F)</value></data>
   <data name="Stock_FilterAll" xml:space="preserve"><value>Todos</value></data>
   <data name="Stock_FilterNormal" xml:space="preserve"><value>Normal</value></data>
   <data name="Stock_FilterLow" xml:space="preserve"><value>Existencia baja</value></data>
@@ -245,9 +214,6 @@
   <data name="Payment_Transfer" xml:space="preserve"><value>Transferencia</value></data>
   <data name="Sale_CapturePlaceholder" xml:space="preserve"><value>Escanee o escriba un código, SKU o nombre y presione Enter</value></data>
   <data name="Sale_Empty" xml:space="preserve"><value>La venta está vacía. Escanee un producto o busque por nombre.</value></data>
-  <data name="Sale_ModeBox" xml:space="preserve"><value>Caja</value></data>
-  <data name="Sale_ModeSquareMeter" xml:space="preserve"><value>m²</value></data>
-  <data name="Sale_ModePiece" xml:space="preserve"><value>Pieza</value></data>
   <data name="Sale_ColName" xml:space="preserve"><value>Producto</value></data>
   <data name="Sale_ColSku" xml:space="preserve"><value>SKU</value></data>
   <data name="Sale_ColQuantity" xml:space="preserve"><value>Cantidad</value></data>
@@ -691,7 +657,6 @@
   <data name="Reports_Inventory_ChartTitle" xml:space="preserve"><value>Distribución de existencias</value></data>
   <data name="Reports_Inventory_Normal" xml:space="preserve"><value>Normal</value></data>
   <data name="Reports_Inventory_ColName" xml:space="preserve"><value>Nombre</value></data>
-  <data name="Reports_Inventory_ColPackaging" xml:space="preserve"><value>Embalaje (m²/caja)</value></data>
   <data name="Reports_Inventory_ColSku" xml:space="preserve"><value>SKU</value></data>
   <data name="Reports_Inventory_ColOnHand" xml:space="preserve"><value>Existencia</value></data>
   <data name="Reports_Inventory_ColMinimum" xml:space="preserve"><value>Mínimo</value></data>

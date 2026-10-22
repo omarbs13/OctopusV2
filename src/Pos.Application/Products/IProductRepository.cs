@@ -21,12 +21,6 @@ public interface IProductRepository
     /// <summary>Indica si otro producto no borrado usa el SKU (ya normalizado).</summary>
     Task<bool> SkuExistsAsync(string sku, Guid? excludingId, CancellationToken cancellationToken);
 
-    /// <summary>
-    /// Otro producto no borrado con la misma identidad (proveedor + modelo + medidas normalizados), sin
-    /// seguimiento, o nulo (026).
-    /// </summary>
-    Task<Product?> FindByIdentityAsync(string identityKey, Guid? excludingId, CancellationToken cancellationToken);
-
     /// <summary>Indica si otro producto no borrado usa el código de barras.</summary>
     Task<bool> BarcodeExistsAsync(string barcode, Guid? excludingId, CancellationToken cancellationToken);
 
@@ -69,9 +63,6 @@ public interface IProductRepository
         bool includeDeleted,
         CancellationToken cancellationToken);
 
-    /// <summary>Marcas y medidas distintas de los productos no borrados, ordenadas (026).</summary>
-    Task<ProductFilterOptions> GetFilterOptionsAsync(CancellationToken cancellationToken);
-
     void Add(Product product);
 
     /// <summary>
@@ -93,10 +84,6 @@ public interface IProductRepository
 /// <param name="Page">Página solicitada, base 1; si excede el total se devuelve la última.</param>
 /// <param name="PageSize">Registros por página.</param>
 /// <param name="Category">Filtro por categoría (016, FR-012); por omisión, todas.</param>
-/// <param name="MeasuresKey">Medidas normalizadas del texto buscado si tiene forma de medida ("60 x 60" → "60X60"); también se compara con las medidas (026).</param>
-/// <param name="Brand">Filtro exacto por marca (026), ya normalizada.</param>
-/// <param name="Measures">Filtro exacto por medidas (026), ya normalizadas.</param>
-/// <param name="NeedsReviewOnly">Solo los productos marcados "Para revisión" (026).</param>
 public sealed record ProductSearch(
     string? NameText,
     string? SkuText,
@@ -105,11 +92,7 @@ public sealed record ProductSearch(
     bool IncludeInactive,
     int Page,
     int PageSize,
-    CategoryFilter Category = default,
-    string? MeasuresKey = null,
-    string? Brand = null,
-    string? Measures = null,
-    bool NeedsReviewOnly = false);
+    CategoryFilter Category = default);
 
 /// <summary>Página del listado de productos (FR-006 y FR-007).</summary>
 /// <param name="Items">Productos de la página, ordenados por nombre y SKU.</param>
@@ -126,9 +109,6 @@ public sealed record ProductPage(IReadOnlyList<ProductListItemDto> Items, long T
     public static int PageCount(long totalCount, int pageSize) =>
         totalCount <= 0 ? 1 : (int)((totalCount + pageSize - 1) / pageSize);
 }
-
-/// <summary>Valores de los filtros Marca y Medida del listado de productos (026), tal como se capturaron.</summary>
-public sealed record ProductFilterOptions(IReadOnlyList<string> Brands, IReadOnlyList<string> Measures);
 
 public enum SaveStatus
 {

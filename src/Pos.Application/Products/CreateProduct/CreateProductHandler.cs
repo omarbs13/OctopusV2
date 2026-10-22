@@ -4,8 +4,8 @@ using Pos.Application.Abstractions;
 using Pos.Application.Audit;
 using Pos.Application.Categories;
 using Pos.Application.Licensing;
-using Pos.Application.Suppliers;
 using Pos.Domain.Categories;
+using Pos.Domain.Common;
 using Pos.Domain.Licensing;
 using Pos.Domain.Products;
 using Pos.Application.Users.Access;
@@ -24,7 +24,6 @@ public sealed partial class CreateProductHandler
     private readonly IProductRepository _products;
     private readonly IValidator<CreateProductCommand> _validator;
     private readonly ICategoryRepository _categories;
-    private readonly ISupplierRepository _suppliers;
     private readonly IWriteTransactions _transactions;
     private readonly IAuditLog _audit;
     private readonly ILogger<CreateProductHandler> _logger;
@@ -35,7 +34,6 @@ public sealed partial class CreateProductHandler
         IProductRepository products,
         IValidator<CreateProductCommand> validator,
         ICategoryRepository categories,
-        ISupplierRepository suppliers,
         IWriteTransactions transactions,
         IAuditLog audit,
         ILogger<CreateProductHandler> logger,
@@ -46,7 +44,6 @@ public sealed partial class CreateProductHandler
         _products = products;
         _validator = validator;
         _categories = categories;
-        _suppliers = suppliers;
         _transactions = transactions;
         _audit = audit;
         _logger = logger;
@@ -70,9 +67,7 @@ public sealed partial class CreateProductHandler
 
         // 025, FR-007: sin el módulo Categorías el producto se crea sin categoría.
         var selected = _license?.IsModuleActive(LicensedModule.Categories) == false ? null : command.CategoryId;
-        await using var transaction = selected is null && command.SupplierId is null
-            ? null
-            : await _transactions.BeginAsync(cancellationToken);
+        await using var transaction = selected is null ? null : await _transactions.BeginAsync(cancellationToken);
 
         Category? category = null;
         if (selected is { } categoryId)
@@ -85,30 +80,12 @@ public sealed partial class CreateProductHandler
             }
         }
 
-        var supplier = command.SupplierId is { } supplierId ? await _suppliers.GetAsync(supplierId, cancellationToken) : null;
-        if (command.SupplierId is not null && supplier is not { IsActive: true })
-        {
-            return Result.Failure<ProductDto>(
-                new ValidationFailed([new FieldError(ProductFields.Supplier, ProductMessages.SupplierNotAssignable)]));
-        }
-
-        var barcode = Product.NormalizeBarcode(command.Barcode);
         var sku = Product.NormalizeSku(command.Sku);
-        if (sku.Length == 0)
-        {
-            sku = await NewSkuAsync(cancellationToken);
-        }
-        else if (await _products.SkuExistsAsync(sku, null, cancellationToken))
+        var barcode = Product.NormalizeBarcode(command.Barcode);
+
+        if (await _products.SkuExistsAsync(sku, null, cancellationToken))
         {
             return Result.Failure<ProductDto>(new Duplicate(ProductFields.Sku));
-        }
-
-        var supplierData = ProductSupplierInput.Parse(command);
-        var details = supplierData.ToDetails(command);
-        var identityKey = ProductText.BuildIdentityKey(details.SupplierId, details.Model, details.Measures);
-        if (await _products.FindByIdentityAsync(identityKey, null, cancellationToken) is { } existing)
-        {
-            return Result.Failure<ProductDto>(new Duplicate(ProductFields.Identity, existing.Id, existing.Name, existing.Sku));
         }
 
         if (barcode is not null && await _products.BarcodeExistsAsync(barcode, null, cancellationToken))
@@ -116,10 +93,11 @@ public sealed partial class CreateProductHandler
             return Result.Failure<ProductDto>(new Duplicate(ProductFields.Barcode));
         }
 
+        var price = Money.Parse(command.PriceText).Value!.Value;
         var minimum = ProductRules.ParseMinimum(command.TracksInventory, command.MinimumStockText, command.UnitCode)?.Value;
         var reorderPoint = ProductRules.ParseReorderPoint(command.TracksInventory, command.ReorderPointText, command.UnitCode)?.Value;
         var product = Product.Create(
-            details, sku, barcode, command.UnitCode, command.TracksInventory, minimum, selected, reorderPoint);
+            command.Name, sku, barcode, price, command.UnitCode, command.TracksInventory, minimum, selected, reorderPoint);
         ProductImages.Apply(product, command.Image);
         _products.Add(product);
         _audit.Add(new AuditRecord(
@@ -127,7 +105,7 @@ public sealed partial class CreateProductHandler
             AuditActions.ProductEntity,
             product.Id,
             EntityName: product.Name,
-            Changes: AuditChanges.Created(ProductAuditFields.Snapshot(product, category?.Name, product.Image is not null, supplier?.Name))));
+            Changes: AuditChanges.Created(ProductAuditFields.Snapshot(product, category?.Name, product.Image is not null))));
 
         var outcome = await _products.SaveChangesAsync(product, expectedVersion: null, cancellationToken);
         if (outcome.Status == SaveStatus.Saved && transaction is not null)
@@ -137,23 +115,10 @@ public sealed partial class CreateProductHandler
 
         return outcome.Status switch
         {
-            SaveStatus.Saved => Result.Success(product.ToDto(category: category, warnings: supplierData.Warnings())),
+            SaveStatus.Saved => Result.Success(product.ToDto(category: category)),
             SaveStatus.Duplicate => Result.Failure<ProductDto>(new Duplicate(outcome.DuplicateField!)),
             _ => Result.Failure<ProductDto>(new Conflict()),
         };
-    }
-
-    /// <summary>Código automático que no usa ningún producto no borrado.</summary>
-    private async Task<string> NewSkuAsync(CancellationToken cancellationToken)
-    {
-        while (true)
-        {
-            var candidate = ProductText.GenerateSku();
-            if (!await _products.SkuExistsAsync(candidate, null, cancellationToken))
-            {
-                return candidate;
-            }
-        }
     }
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Alta de producto rechazada: la categoría no está disponible. CategoryId={CategoryId}")]

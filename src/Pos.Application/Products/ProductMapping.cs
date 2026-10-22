@@ -9,12 +9,7 @@ public static class ProductMapping
     /// <param name="product">Producto a convertir.</param>
     /// <param name="stock">Existencia del producto, o nula si no tiene movimientos.</param>
     /// <param name="category">Categoría del producto, o nula si no tiene (016).</param>
-    /// <param name="warnings">Advertencias que no impidieron guardar (026).</param>
-    public static ProductDto ToDto(
-        this Product product,
-        ProductStock? stock = null,
-        Category? category = null,
-        IReadOnlyList<string>? warnings = null)
+    public static ProductDto ToDto(this Product product, ProductStock? stock = null, Category? category = null)
     {
         ArgumentNullException.ThrowIfNull(product);
         return new ProductDto(
@@ -38,17 +33,6 @@ public static class ProductMapping
             product.CategoryId,
             category?.Name,
             category?.IsActive ?? true,
-            product.ReorderPointThousandths,
-            product.Model,
-            product.Measures,
-            product.Brand,
-            product.SupplierId,
-            product.PackagingThousandths,
-            product.PiecesPerBox,
-            product.PricePerSqmCents,
-            product.PricePerBoxCents,
-            product.PiecePriceCents,
-            product.NeedsReview,
-            warnings);
+            product.ReorderPointThousandths);
     }
 }

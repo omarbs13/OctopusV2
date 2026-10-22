@@ -30,11 +30,6 @@ public sealed class InMemoryInventoryRepository : IInventoryRepository
         Task.FromResult<IReadOnlyDictionary<Guid, ProductStock>>(
             _stocks.Where(s => productIds.Contains(s.Key)).ToDictionary(s => s.Key, s => s.Value));
 
-    public Task<IReadOnlyDictionary<Guid, long>> GetMovementQuantitiesAsync(
-        IReadOnlyCollection<Guid> movementIds,
-        CancellationToken cancellationToken) =>
-        Task.FromResult<IReadOnlyDictionary<Guid, long>>(new Dictionary<Guid, long>());
-
     public Task<bool> HasMovementsAsync(Guid productId, CancellationToken cancellationToken) =>
         Task.FromResult(_stocks.ContainsKey(productId));
 

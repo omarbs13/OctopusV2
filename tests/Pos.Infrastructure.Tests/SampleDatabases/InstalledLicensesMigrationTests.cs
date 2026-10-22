@@ -31,12 +31,12 @@ public sealed class InstalledLicensesMigrationTests
     }
 
     [Fact]
-    public async Task InstalledLicenses_EstaAplicadaYNoQuedanMigracionesPendientes()
+    public async Task InstalledLicenses_EsLaUltimaMigracion()
     {
         using var db = await TestDb.CreateAsync();
         await using var context = db.CreateDbContext();
 
-        Assert.Contains(context.Database.GetMigrations(), m => m.EndsWith("_InstalledLicenses", StringComparison.Ordinal));
+        Assert.EndsWith("_InstalledLicenses", context.Database.GetMigrations().Last(), StringComparison.Ordinal);
         Assert.Empty(await context.Database.GetPendingMigrationsAsync(Ct));
     }
 }

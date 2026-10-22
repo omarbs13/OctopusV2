@@ -16,20 +16,7 @@ internal static class ScenarioSql
             "NameSearch" TEXT NOT NULL,
             "Sku" TEXT NOT NULL,
             "Barcode" TEXT NULL,
-            "PriceCents" INTEGER NULL,
-            "Model" TEXT NOT NULL DEFAULT '',
-            "ModelKey" TEXT NOT NULL DEFAULT '',
-            "Measures" TEXT NULL,
-            "MeasuresKey" TEXT NULL,
-            "Brand" TEXT NULL,
-            "BrandSearch" TEXT NULL,
-            "SupplierId" TEXT NULL,
-            "PackagingThousandths" INTEGER NULL,
-            "PiecesPerBox" INTEGER NULL,
-            "PricePerSqmCents" INTEGER NULL,
-            "PricePerBoxCents" INTEGER NULL,
-            "IdentityKey" TEXT NULL,
-            "NeedsReview" INTEGER NOT NULL DEFAULT 0,
+            "PriceCents" INTEGER NOT NULL,
             "UnitCode" TEXT NOT NULL DEFAULT 'H87',
             "IsActive" INTEGER NOT NULL,
             "TracksInventory" INTEGER NOT NULL DEFAULT 0,
@@ -47,7 +34,6 @@ internal static class ScenarioSql
         CREATE UNIQUE INDEX "IX_Products_Barcode" ON "Products" ("Barcode") WHERE "DeletedAt" IS NULL AND "Barcode" IS NOT NULL;
         CREATE INDEX "IX_Products_NameSearch" ON "Products" ("NameSearch") WHERE "DeletedAt" IS NULL;
         CREATE UNIQUE INDEX "IX_Products_Sku" ON "Products" ("Sku") WHERE "DeletedAt" IS NULL;
-        CREATE UNIQUE INDEX "IX_Products_IdentityKey" ON "Products" ("IdentityKey") WHERE "DeletedAt" IS NULL AND "IdentityKey" IS NOT NULL;
         """;
 }
 

@@ -22,17 +22,16 @@ public class UpdateProductInventoryTests
         _inventory,
         _transactions,
         new InMemoryCategoryRepository(),
-        new InMemorySupplierRepository(),
         new RecordingAuditLog(),
         NullLogger<UpdateProductHandler>.Instance);
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     private Product Seed(string unit = "KGM", bool tracks = true, string sku = "AZU-1") =>
-        _products.Seed(Product.Create($"Azúcar {sku}", sku, null, Money.FromCents(2500), unit, tracks, null));
+        _products.Seed(Product.Create("Azúcar", sku, null, Money.FromCents(2500), unit, tracks, null));
 
     private static UpdateProductCommand Command(Product p, string? unit = null, bool? tracks = null, string? minimum = null) =>
-        new(p.Id, p.Version, p.Name, p.Sku, p.Barcode, unit ?? p.UnitCode, true, "25.00", TracksInventory: tracks ?? p.TracksInventory, MinimumStockText: minimum);
+        new(p.Id, p.Version, p.Name, p.Sku, p.Barcode, "25.00", unit ?? p.UnitCode, true, null, tracks ?? p.TracksInventory, minimum);
 
     [Fact]
     public async Task Without_movements_unit_and_tracking_can_change()

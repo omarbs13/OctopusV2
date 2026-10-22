@@ -10,7 +10,6 @@ using Pos.Infrastructure.Categories;
 using Pos.Infrastructure.Inventory;
 using Pos.Infrastructure.Persistence;
 using Pos.Infrastructure.Products;
-using Pos.Infrastructure.Suppliers;
 using Pos.Infrastructure.Tests.TestSupport;
 
 namespace Pos.Infrastructure.Tests.Products;
@@ -38,11 +37,10 @@ public sealed class BarcodeUseCaseTests : IAsyncLifetime
                 new ProductRepository(context),
                 new CreateProductValidator(),
                 new CategoryRepository(context),
-                new SupplierRepository(context),
                 new WriteTransactions(context),
                 new AuditLog(context),
                 NullLogger<CreateProductHandler>.Instance)
-            .HandleAsync(new CreateProductCommand(name, sku, barcode, "H87", "10.00"), Ct);
+            .HandleAsync(new CreateProductCommand(name, sku, barcode, "10.00", "H87"), Ct);
     }
 
     private async Task<ProductLookup> FindAsync(FindProductsForSaleQuery query)

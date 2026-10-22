@@ -6,18 +6,14 @@ using Pos.Application.Licensing;
 using Pos.Application.Products;
 using Pos.Application.Products.CreateProduct;
 using Pos.Application.Products.GetProduct;
-using Pos.Application.Products.ListSupplierOptions;
 using Pos.Application.Products.ListUnitsOfMeasure;
 using Pos.Application.Products.PrepareProductImage;
 using Pos.Application.Products.UpdateProduct;
 using Pos.Application.Reports.SetProductCritical;
-using Pos.Application.Suppliers;
 using Pos.Desktop.Categories;
 using Pos.Desktop.Common;
 using Pos.Desktop.Forms;
 using Pos.Desktop.Resources;
-using System.Collections.ObjectModel;
-using System.Globalization;
 using Pos.Domain.Common;
 using Pos.Domain.Products;
 
@@ -61,35 +57,7 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
     public partial string? CategoryError { get; set; }
 
     [ObservableProperty]
-    public partial string Model { get; set; } = string.Empty;
-
-    [ObservableProperty]
-    public partial string Measures { get; set; } = string.Empty;
-
-    [ObservableProperty]
-    public partial string Brand { get; set; } = string.Empty;
-
-    /// <summary>Proveedor elegido (026); la primera opción es "Sin proveedor".</summary>
-    [ObservableProperty]
-    public partial ProductSupplierChoice? SelectedSupplier { get; set; }
-
-    public ObservableCollection<ProductSupplierChoice> SupplierOptions { get; } = [];
-
-    /// <summary>Metros cuadrados por caja; vacío o "NA" = no aplica.</summary>
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(BoxPriceSuggestion), nameof(SquareMeterPriceSuggestion), nameof(PriceWarning))]
-    public partial string PackagingText { get; set; } = string.Empty;
-
-    [ObservableProperty]
-    public partial string PiecesPerBoxText { get; set; } = string.Empty;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(BoxPriceSuggestion), nameof(PriceWarning))]
-    public partial string PricePerSqmText { get; set; } = string.Empty;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(SquareMeterPriceSuggestion), nameof(PriceWarning))]
-    public partial string PricePerBoxText { get; set; } = string.Empty;
+    public partial string Name { get; set; } = string.Empty;
 
     [ObservableProperty]
     public partial string Sku { get; set; } = string.Empty;
@@ -97,9 +65,8 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
     [ObservableProperty]
     public partial string Barcode { get; set; } = string.Empty;
 
-    /// <summary>Precio por pieza (el precio de los productos que no son de loseta).</summary>
     [ObservableProperty]
-    public partial string PiecePriceText { get; set; } = string.Empty;
+    public partial string PriceText { get; set; } = string.Empty;
 
     /// <summary>Clave de la unidad de medida; "Pieza" por defecto en alta (003, FR-017).</summary>
     [ObservableProperty]
@@ -157,28 +124,7 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
     }
 
     [ObservableProperty]
-    public partial string? ModelError { get; set; }
-
-    [ObservableProperty]
-    public partial string? MeasuresError { get; set; }
-
-    [ObservableProperty]
-    public partial string? BrandError { get; set; }
-
-    [ObservableProperty]
-    public partial string? SupplierError { get; set; }
-
-    [ObservableProperty]
-    public partial string? PackagingError { get; set; }
-
-    [ObservableProperty]
-    public partial string? PiecesPerBoxError { get; set; }
-
-    [ObservableProperty]
-    public partial string? PricePerSqmError { get; set; }
-
-    [ObservableProperty]
-    public partial string? PricePerBoxError { get; set; }
+    public partial string? NameError { get; set; }
 
     [ObservableProperty]
     public partial string? SkuError { get; set; }
@@ -192,64 +138,7 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
     [ObservableProperty]
     public partial string? UnitCodeError { get; set; }
 
-    partial void OnUnitCodeChanged(string value)
-    {
-        OnPropertyChanged(nameof(OnHandText));
-        OnPropertyChanged(nameof(IsTile));
-        OnPropertyChanged(nameof(IsNotTile));
-    }
-
-    /// <summary>Loseta: unidad caja o metro cuadrado; solo entonces se piden embalaje, piezas y precios por m² y caja.</summary>
-    public bool IsTile => UnitOfMeasure.IsTile(UnitCode);
-
-    public bool IsNotTile => !IsTile;
-
-    /// <summary>X CAJA sugerido (X M2 × Embalaje) mientras el campo está vacío; nulo si no aplica.</summary>
-    public string? BoxPriceSuggestion =>
-        string.IsNullOrWhiteSpace(PricePerBoxText)
-        && ProductPricing.SuggestBoxPrice(ParseCents(PricePerSqmText), ParsePackaging(PackagingText)) is { } cents
-            ? Money.FromCents(cents).ToEditableString()
-            : null;
-
-    /// <summary>X M2 sugerido (X CAJA ÷ Embalaje) mientras el campo está vacío; nulo si no aplica.</summary>
-    public string? SquareMeterPriceSuggestion =>
-        string.IsNullOrWhiteSpace(PricePerSqmText)
-        && ProductPricing.SuggestSquareMeterPrice(ParseCents(PricePerBoxText), ParsePackaging(PackagingText)) is { } cents
-            ? Money.FromCents(cents).ToEditableString()
-            : null;
-
-    /// <summary>Advertencia (no bloquea) si X CAJA difiere más del 2 % de X M2 × Embalaje.</summary>
-    public string? PriceWarning =>
-        ParseCents(PricePerBoxText) is { } box && ParseCents(PricePerSqmText) is { } sqm && ParsePackaging(PackagingText) is { } packaging
-        && ProductPricing.ExceedsTolerance(box, sqm, packaging)
-            ? ProductMessages.PriceDifference
-            : null;
-
-    [RelayCommand]
-    private void UseBoxPriceSuggestion()
-    {
-        if (BoxPriceSuggestion is { } value)
-        {
-            PricePerBoxText = value;
-        }
-    }
-
-    [RelayCommand]
-    private void UseSquareMeterPriceSuggestion()
-    {
-        if (SquareMeterPriceSuggestion is { } value)
-        {
-            PricePerSqmText = value;
-        }
-    }
-
-    private static long? ParseCents(string text) => Money.TryParse(text, out var money) && money.Cents > 0 ? money.Cents : null;
-
-    private static long? ParsePackaging(string text)
-    {
-        var result = Quantity.Parse(text, decimalPlaces: 3);
-        return result.Value?.Thousandths;
-    }
+    partial void OnUnitCodeChanged(string value) => OnPropertyChanged(nameof(OnHandText));
 
     /// <summary>Imagen que se muestra en la vista previa: la actual o la recién seleccionada.</summary>
     [ObservableProperty]
@@ -273,9 +162,9 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
 
     public override string Title => IsEditMode ? Strings.Editor_EditTitle : Strings.Editor_NewTitle;
 
-    public bool IsModelRequired { get; } = true;
+    public bool IsNameRequired { get; } = true;
 
-    public bool IsSkuRequired { get; }
+    public bool IsSkuRequired { get; } = true;
 
     public bool IsBarcodeRequired { get; }
 
@@ -290,30 +179,7 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
     public async Task PrepareNewAsync()
     {
         await Category.LoadAsync();
-        await LoadSuppliersAsync(null);
         ResetOriginalState();
-    }
-
-    /// <summary>Carga los proveedores asignables; el actual del producto se conserva aunque esté inactivo.</summary>
-    private async Task LoadSuppliersAsync(Guid? currentSupplierId)
-    {
-        var (completed, result) = await _runner.RunAsync(
-            "ListarProveedoresProducto",
-            () => _useCases.RunAsync<ListProductSupplierOptionsHandler, Result<IReadOnlyList<SupplierOption>>>(
-                h => h.HandleAsync(currentSupplierId, CancellationToken.None)));
-
-        SupplierOptions.Clear();
-        var none = new ProductSupplierChoice(null, Strings.Editor_NoSupplier);
-        SupplierOptions.Add(none);
-        if (completed && result is { IsSuccess: true })
-        {
-            foreach (var supplier in result.Value)
-            {
-                SupplierOptions.Add(new ProductSupplierChoice(supplier.Id, supplier.Name));
-            }
-        }
-
-        SelectedSupplier = SupplierOptions.FirstOrDefault(o => o.Id == currentSupplierId) ?? none;
     }
 
     /// <summary>Carga un producto para editarlo. Devuelve falso si ya no existe (y lo informa).</summary>
@@ -338,7 +204,6 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
 
         Fill(result.Value);
         await Category.LoadAsync(_loadedCategoryId, _loadedCategoryName);
-        await LoadSuppliersAsync(result.Value.SupplierId);
         ResetOriginalState();
         return true;
     }
@@ -355,16 +220,10 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
             "GuardarProducto",
             () => _productId is { } id
                 ? _useCases.RunAsync<UpdateProductHandler, Result<ProductDto>>(h => h.HandleAsync(
-                    new UpdateProductCommand(
-                        id, _expectedVersion, Model, Sku, Barcode, UnitCode, IsActive, PiecePriceText, PricePerSqmText, PricePerBoxText,
-                        PackagingText, PiecesPerBoxText, Measures, Brand, SelectedSupplier?.Id, _imageChange, TracksInventory,
-                        MinimumStockText, Category.SelectedCategoryId, ReorderPointText),
+                    new UpdateProductCommand(id, _expectedVersion, Name, Sku, Barcode, PriceText, UnitCode, IsActive, _imageChange, TracksInventory, MinimumStockText, Category.SelectedCategoryId, ReorderPointText),
                     CancellationToken.None))
                 : _useCases.RunAsync<CreateProductHandler, Result<ProductDto>>(h => h.HandleAsync(
-                    new CreateProductCommand(
-                        Model, Sku, Barcode, UnitCode, PiecePriceText, PricePerSqmText, PricePerBoxText, PackagingText, PiecesPerBoxText,
-                        Measures, Brand, SelectedSupplier?.Id, _imageChange, TracksInventory, MinimumStockText,
-                        Category.SelectedCategoryId, ReorderPointText),
+                    new CreateProductCommand(Name, Sku, Barcode, PriceText, UnitCode, _imageChange, TracksInventory, MinimumStockText, Category.SelectedCategoryId, ReorderPointText),
                     CancellationToken.None)),
             new Dictionary<string, object?> { ["ProductId"] = _productId, ["Sku"] = Sku });
 
@@ -414,17 +273,10 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
 
     /// <summary>Valores como se guardarían: revertir un cambio o escribir el SKU en minúsculas no cuenta como cambio.</summary>
     protected override object CaptureState() => new ProductFormState(
-        Product.NormalizeName(Model),
+        Product.NormalizeName(Name),
         Product.NormalizeSku(Sku),
         Product.NormalizeBarcode(Barcode),
-        MoneyState(PiecePriceText),
-        MoneyState(PricePerSqmText),
-        MoneyState(PricePerBoxText),
-        PackagingText.Trim().ToUpperInvariant(),
-        PiecesPerBoxText.Trim(),
-        Measures.Trim(),
-        Brand.Trim(),
-        SelectedSupplier?.Id,
+        Money.TryParse(PriceText, out var price) ? price.Cents.ToString(System.Globalization.CultureInfo.InvariantCulture) : PriceText.Trim(),
         UnitCode,
         IsActive,
         _imageChange,
@@ -433,9 +285,6 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
         TracksInventory ? ReorderPointText.Trim() : string.Empty,
         TracksInventory && IsCritical,
         Category.SelectedCategoryId);
-
-    private static string MoneyState(string text) =>
-        Money.TryParse(text, out var money) ? money.Cents.ToString(CultureInfo.InvariantCulture) : text.Trim();
 
     [RelayCommand(CanExecute = nameof(CanChangeImage))]
     private async Task SelectImageAsync()
@@ -507,12 +356,6 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
                 FocusField = validation.Errors.Count > 0 ? validation.Errors[0].Field : null;
                 break;
 
-            case Duplicate { Field: ProductFields.Identity } identity:
-                ModelError = string.Format(
-                    CultureInfo.CurrentCulture, Strings.Editor_DuplicateIdentity, identity.ExistingName, identity.ExistingSku);
-                FocusField = ProductFields.Model;
-                break;
-
             case Duplicate duplicate:
                 SetError(
                     duplicate.Field,
@@ -551,18 +394,10 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
         _productId = product.Id;
         _expectedVersion = product.Version;
         IsEditMode = true;
-        Model = product.Model;
-        Measures = product.Measures ?? string.Empty;
-        Brand = product.Brand ?? string.Empty;
-        PackagingText = product.PackagingThousandths is { } packaging
-            ? Quantity.FromThousandths(packaging).ToEditableString(3)
-            : string.Empty;
-        PiecesPerBoxText = product.PiecesPerBox?.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
-        PricePerSqmText = CentsText(product.PricePerSqmCents);
-        PricePerBoxText = CentsText(product.PricePerBoxCents);
-        PiecePriceText = CentsText(product.PiecePriceCents);
+        Name = product.Name;
         Sku = product.Sku;
         Barcode = product.Barcode ?? string.Empty;
+        PriceText = Money.FromCents(product.PriceCents).ToEditableString();
         UnitCode = product.UnitCode;
         IsActive = product.IsActive;
         TracksInventory = product.TracksInventory;
@@ -586,35 +421,12 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
         ResetOriginalState();
     }
 
-    private static string CentsText(long? cents) => cents is { } value ? Money.FromCents(value).ToEditableString() : string.Empty;
-
     private void SetError(string field, string message)
     {
         switch (field)
         {
-            case ProductFields.Model:
-                ModelError = message;
-                break;
-            case ProductFields.Measures:
-                MeasuresError = message;
-                break;
-            case ProductFields.Brand:
-                BrandError = message;
-                break;
-            case ProductFields.Supplier:
-                SupplierError = message;
-                break;
-            case ProductFields.Packaging:
-                PackagingError = message;
-                break;
-            case ProductFields.PiecesPerBox:
-                PiecesPerBoxError = message;
-                break;
-            case ProductFields.PricePerSqm:
-                PricePerSqmError = message;
-                break;
-            case ProductFields.PricePerBox:
-                PricePerBoxError = message;
+            case ProductFields.Name:
+                NameError = message;
                 break;
             case ProductFields.Sku:
                 SkuError = message;
@@ -642,8 +454,7 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
 
     private void ClearErrors()
     {
-        ModelError = MeasuresError = BrandError = SupplierError = PackagingError = PiecesPerBoxError = PricePerSqmError = PricePerBoxError = null;
-        SkuError = BarcodeError = PriceError = UnitCodeError = MinimumStockError = ReorderPointError = TracksInventoryError = CategoryError = null;
+        NameError = SkuError = BarcodeError = PriceError = UnitCodeError = MinimumStockError = ReorderPointError = TracksInventoryError = CategoryError = null;
         FocusField = null;
     }
 }
@@ -651,17 +462,10 @@ public sealed partial class ProductEditorViewModel : FormViewModel<ProductDto>
 /// <summary>Estado normalizado del formulario de producto, para detectar cambios.</summary>
 /// <remarks>El cambio de imagen se compara por instancia: elegir otra imagen siempre cuenta como cambio.</remarks>
 internal sealed record ProductFormState(
-    string Model,
+    string Name,
     string Sku,
     string? Barcode,
-    string PiecePrice,
-    string PricePerSqm,
-    string PricePerBox,
-    string Packaging,
-    string PiecesPerBox,
-    string Measures,
-    string Brand,
-    Guid? SupplierId,
+    string Price,
     string UnitCode,
     bool IsActive,
     ProductImageChange Image,
@@ -670,9 +474,3 @@ internal sealed record ProductFormState(
     string ReorderPoint,
     bool IsCritical,
     Guid? CategoryId);
-
-/// <summary>Opción del selector de proveedor del producto; <c>Id</c> nulo = "Sin proveedor".</summary>
-public sealed record ProductSupplierChoice(Guid? Id, string Label)
-{
-    public override string ToString() => Label;
-}

@@ -11,8 +11,6 @@ using Pos.Application.Products;
 using Pos.Application.Receivables;
 using Pos.Application.Returns;
 using Pos.Domain.CashShifts;
-using Pos.Domain.Common;
-using Pos.Domain.Inventory;
 using Pos.Domain.Licensing;
 using Pos.Domain.Returns;
 using Pos.Domain.Sales;
@@ -200,18 +198,10 @@ public sealed partial class CancelSaleHandler
             : (await _inventory.GetStocksAsync([.. withMovement.Select(l => l.ProductId).Distinct()], cancellationToken))
                 .ToDictionary(s => s.Key, s => s.Value);
 
-        // 026: la existencia regresa en la unidad del producto, lo que realmente salió (la línea pudo venderse por m²).
-        var original = withMovement.Count == 0
-            ? new Dictionary<Guid, long>()
-            : (await _inventory.GetMovementQuantitiesAsync([.. withMovement.Select(l => l.SaleMovementId!.Value)], cancellationToken))
-                .ToDictionary(m => m.Key, m => m.Value);
         foreach (var line in withMovement)
         {
             var stock = stocks[line.ProductId];
-            var restored = original.TryGetValue(line.SaleMovementId!.Value, out var sold)
-                ? SaleStockRestore.Quantity(sold, line.QuantityThousandths, line.ReturnedQuantity, line.QuantityThousandths - line.ReturnedQuantity)
-                : line.QuantityThousandths;
-            var movement = stock.RecordSaleCancellation(Quantity.FromThousandths(restored), sale.Folio);
+            var movement = stock.RecordSaleCancellation(line.Quantity, sale.Folio);
             _inventory.AddMovement(movement);
             sale.LinkCancellationMovement(line.Id, movement.Id);
         }

@@ -1,6 +1,5 @@
 using Pos.Domain.Common;
 using Pos.Domain.Discounts;
-using Pos.Domain.Products;
 
 namespace Pos.Domain.Sales;
 
@@ -9,24 +8,6 @@ public enum UnavailableReason
 {
     Inactive,
     Deleted,
-}
-
-/// <summary>
-/// Precios y embalaje de un producto de loseta (026): con ellos una línea cambia de modalidad (caja, m² o
-/// pieza) sin volver a consultar el producto. <c>AvailableModes</c> ya considera inventario y embalaje.
-/// </summary>
-public sealed record TileSaleInfo(
-    IReadOnlyList<SaleMode> AvailableModes,
-    long? PricePerSqmCents,
-    long? PricePerBoxCents,
-    long? PiecePriceCents,
-    long? PackagingThousandths)
-{
-    /// <summary>Precio de la modalidad (X CAJA, X M2 o precio por pieza; derivado con el embalaje), o nulo.</summary>
-    public Money? PriceFor(SaleMode mode) =>
-        ProductPricing.PriceFor(mode, isTile: true, PricePerSqmCents, PricePerBoxCents, PiecePriceCents, PackagingThousandths) is { } cents
-            ? Money.FromCents(cents)
-            : null;
 }
 
 /// <summary>Producto que se agrega a la venta en curso, con los datos que la venta necesita.</summary>
@@ -38,8 +19,7 @@ public sealed record CartProduct(
     int DecimalPlaces,
     bool TracksInventory,
     Money UnitPrice,
-    UnavailableReason? UnavailableReason = null,
-    TileSaleInfo? Tile = null);
+    UnavailableReason? UnavailableReason = null);
 
 /// <summary>Precio y disponibilidad vigentes de un producto (revisión antes de cobrar).</summary>
 public sealed record CartPriceUpdate(Guid ProductId, Money UnitPrice, UnavailableReason? UnavailableReason);
@@ -64,15 +44,8 @@ public sealed record CartLine(
     Money UnitPrice,
     Quantity Quantity,
     UnavailableReason? UnavailableReason = null,
-    LineDiscount? Discount = null,
-    TileSaleInfo? Tile = null)
+    LineDiscount? Discount = null)
 {
-    /// <summary>Modalidad de la línea: la de su unidad de venta (026). Una pieza sin loseta es siempre <see cref="SaleMode.Piece"/>.</summary>
-    public SaleMode Mode => SaleModes.FromUnitCode(UnitCode) ?? SaleMode.Piece;
-
-    /// <summary>La línea ofrece más de una modalidad de venta.</summary>
-    public bool HasModes => Tile is { AvailableModes.Count: > 1 };
-
     /// <summary>Importe original: cantidad × precio.</summary>
     public Money Amount => SaleMath.LineAmount(Quantity, UnitPrice);
 

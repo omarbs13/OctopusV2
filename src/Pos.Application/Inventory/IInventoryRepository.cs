@@ -17,14 +17,6 @@ public interface IInventoryRepository
         IReadOnlyCollection<Guid> productIds,
         CancellationToken cancellationToken);
 
-    /// <summary>
-    /// Cantidad, en milésimas de la unidad del producto, de cada movimiento indicado (026: devolver o cancelar una
-    /// venta hecha en otra modalidad regresa lo que realmente salió). Los movimientos que no existen no aparecen.
-    /// </summary>
-    Task<IReadOnlyDictionary<Guid, long>> GetMovementQuantitiesAsync(
-        IReadOnlyCollection<Guid> movementIds,
-        CancellationToken cancellationToken);
-
     /// <summary>Indica si el producto tiene movimientos (existe su fila de existencia).</summary>
     Task<bool> HasMovementsAsync(Guid productId, CancellationToken cancellationToken);
 

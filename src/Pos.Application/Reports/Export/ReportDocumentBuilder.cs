@@ -11,7 +11,6 @@ using Pos.Application.Reports.GetMyShiftSummary;
 using Pos.Application.Reports.GetSalesReport;
 using Pos.Application.Users.Session;
 using Pos.Domain.CashShifts;
-using Pos.Domain.Common;
 using Pos.Domain.Inventory;
 
 namespace Pos.Application.Reports.Export;
@@ -318,11 +317,6 @@ public sealed class ReportDocumentBuilder
             [
                 new(ReportTexts.ColName, ReportColumnType.Text),
                 new(ReportTexts.ColSku, ReportColumnType.Text),
-                new(ReportTexts.ColModel, ReportColumnType.Text),
-                new(ReportTexts.ColMeasures, ReportColumnType.Text),
-                new(ReportTexts.ColPackaging, ReportColumnType.Text),
-                new(ReportTexts.ColPricePerSqm, ReportColumnType.Money),
-                new(ReportTexts.ColPricePerBox, ReportColumnType.Money),
                 new(ReportTexts.ColCategory, ReportColumnType.Text),
                 new(ReportTexts.ColOnHand, ReportColumnType.Quantity),
                 new(ReportTexts.ColMinimum, ReportColumnType.Quantity),
@@ -334,11 +328,6 @@ public sealed class ReportDocumentBuilder
             [
                 new TextCell(r.Name),
                 new TextCell(r.Sku),
-                new TextCell(r.Model),
-                r.Measures is { Length: > 0 } measures ? new TextCell(measures) : EmptyCell.Instance,
-                r.PackagingThousandths is { } packaging ? new TextCell(Quantity.FromThousandths(packaging).ToEditableString(3)) : EmptyCell.Instance,
-                r.PricePerSqmCents is { } perSqm ? new MoneyCell(perSqm) : EmptyCell.Instance,
-                r.PricePerBoxCents is { } perBox ? new MoneyCell(perBox) : EmptyCell.Instance,
                 new TextCell(CategoryMessages.Display(r.CategoryName, r.CategoryIsActive)),
                 new QuantityCell(r.OnHandThousandths, r.DecimalPlaces),
                 r.MinimumThousandths is { } minimum ? new QuantityCell(minimum, r.DecimalPlaces) : EmptyCell.Instance,
