@@ -41,13 +41,13 @@ public sealed class UnexpectedErrorTests : IDisposable
     public async Task Alta_ConservaLoCapturadoYPermiteReintentar()
     {
         var editor = CreateEditor();
-        (editor.Name, editor.Sku, editor.PriceText) = ("Café", "CAF-001", "10");
+        (editor.Model, editor.Sku, editor.PiecePriceText) = ("Café", "CAF-001", "10");
         _host.Repository.FailWith = Failure;
 
         await editor.SaveCommand.ExecuteAsync(null);
 
         AssertLoggedAndNotified("GuardarProducto");
-        Assert.Equal(("Café", "CAF-001", "10"), (editor.Name, editor.Sku, editor.PriceText));
+        Assert.Equal(("Café", "CAF-001", "10"), (editor.Model, editor.Sku, editor.PiecePriceText));
         Assert.Contains("Sku", _host.Sink.Events.Single(e => e.Level == LogEventLevel.Fatal).Properties.Keys);
 
         _host.Repository.FailWith = null;
@@ -78,13 +78,13 @@ public sealed class UnexpectedErrorTests : IDisposable
         var product = Seed();
         var editor = CreateEditor();
         await editor.LoadAsync(product.Id);
-        editor.Name = "Café de Olla";
+        editor.Model = "Café de Olla";
         _host.Repository.FailWith = Failure;
 
         await editor.SaveCommand.ExecuteAsync(null);
 
         AssertLoggedAndNotified("GuardarProducto");
-        Assert.Equal("Café de Olla", editor.Name);
+        Assert.Equal("Café de Olla", editor.Model);
         Assert.Equal(product.Id.ToString(), _host.Sink.Events.Single(e => e.Level == LogEventLevel.Fatal).Properties["ProductId"].ToString());
     }
 

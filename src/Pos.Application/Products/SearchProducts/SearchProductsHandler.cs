@@ -35,8 +35,12 @@ public sealed class SearchProductsHandler
         var text = query.Text?.Trim();
         var page = Math.Max(query.Page, 1);
         var pageSize = ProductPage.DefaultPageSize;
+        var brand = ProductText.NormalizeBrand(query.Brand);
+        var measures = ProductText.NormalizeMeasures(query.Measures);
         var search = string.IsNullOrEmpty(text)
-            ? new ProductSearch(null, null, null, BarcodeExact: false, query.IncludeInactive, page, pageSize, query.Category)
+            ? new ProductSearch(
+                null, null, null, BarcodeExact: false, query.IncludeInactive, page, pageSize, query.Category,
+                Brand: brand, Measures: measures, NeedsReviewOnly: query.NeedsReviewOnly)
             : new ProductSearch(
                 TextNormalizer.ForSearch(text),
                 text.ToUpperInvariant(),
@@ -45,7 +49,11 @@ public sealed class SearchProductsHandler
                 query.IncludeInactive,
                 page,
                 pageSize,
-                query.Category);
+                query.Category,
+                ProductText.LooksLikeMeasures(text) ? ProductText.NormalizeMeasures(text) : null,
+                brand,
+                measures,
+                query.NeedsReviewOnly);
 
         if (query.LocateProductId is { } productId
             && await _products.LocatePageAsync(search, productId, cancellationToken) is { } located)

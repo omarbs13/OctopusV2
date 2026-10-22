@@ -32,7 +32,7 @@ public sealed class ProductEditorViewModelEditTests : IDisposable
         Assert.True(editor.IsEditMode);
         Assert.Equal(Strings.Editor_EditTitle, editor.Title);
         Assert.Equal(("Café Molido", "CAF-001", "7501234567890", "1234.50", true),
-            (editor.Name, editor.Sku, editor.Barcode, editor.PriceText, editor.IsActive));
+            (editor.Model, editor.Sku, editor.Barcode, editor.PiecePriceText, editor.IsActive));
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public sealed class ProductEditorViewModelEditTests : IDisposable
         var product = Seed();
         var editor = CreateEditor();
         await editor.LoadAsync(product.Id);
-        editor.Name = "Café de Olla";
+        editor.Model = "Café de Olla";
 
         await editor.SaveCommand.ExecuteAsync(null);
 
@@ -55,15 +55,15 @@ public sealed class ProductEditorViewModelEditTests : IDisposable
         var editor = CreateEditor();
         await editor.LoadAsync(product.Id);
         _host.Repository.BumpVersion(product.Id);
-        editor.Name = "Mi cambio";
+        editor.Model = "Mi cambio";
         _host.Dialogs.ConfirmResult = true;
 
         await editor.SaveCommand.ExecuteAsync(null);
 
         Assert.Equal(Strings.Editor_Conflict, Assert.Single(_host.Dialogs.Confirmations));
-        Assert.Equal("Café Molido", editor.Name);
+        Assert.Equal("Café Molido", editor.Model);
 
-        editor.Name = "Mi cambio";
+        editor.Model = "Mi cambio";
         await editor.SaveCommand.ExecuteAsync(null);
         Assert.Equal("Mi cambio", _host.Repository.All.Single().Name);
     }
@@ -75,12 +75,12 @@ public sealed class ProductEditorViewModelEditTests : IDisposable
         var editor = CreateEditor();
         await editor.LoadAsync(product.Id);
         _host.Repository.BumpVersion(product.Id);
-        editor.Name = "Mi cambio";
+        editor.Model = "Mi cambio";
         _host.Dialogs.ConfirmResult = false;
 
         await editor.SaveCommand.ExecuteAsync(null);
 
-        Assert.Equal("Mi cambio", editor.Name);
+        Assert.Equal("Mi cambio", editor.Model);
         Assert.Equal("Café Molido", _host.Repository.All.Single().Name);
     }
 

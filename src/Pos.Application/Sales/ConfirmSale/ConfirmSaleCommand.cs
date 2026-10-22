@@ -20,7 +20,12 @@ public sealed record OrderDiscountInput(DiscountMode Mode, long Value, Guid? App
 }
 
 /// <summary>Una línea de la venta: producto, cantidad, el precio que vio el operador y su descuento (015).</summary>
-public sealed record ConfirmLineInput(Guid ProductId, long QuantityThousandths, long ExpectedUnitPriceCents, LineDiscountInput? Discount = null);
+public sealed record ConfirmLineInput(
+    Guid ProductId,
+    long QuantityThousandths,
+    long ExpectedUnitPriceCents,
+    LineDiscountInput? Discount = null,
+    SaleMode? Mode = null);
 
 /// <summary>
 /// Un pago. Para efectivo, <see cref="AmountCents"/> se ignora: lo recalcula <c>Checkout</c> a

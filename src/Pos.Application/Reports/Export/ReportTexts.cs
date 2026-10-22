@@ -68,6 +68,11 @@ public static class ReportTexts
     public const string NormalStock = "Normal";
     public const string ColName = "Nombre";
     public const string ColSku = "SKU";
+    public const string ColModel = "Modelo";
+    public const string ColMeasures = "Medidas";
+    public const string ColPackaging = "Embalaje (m²/caja)";
+    public const string ColPricePerSqm = "X M2";
+    public const string ColPricePerBox = "X CAJA";
     public const string ColOnHand = "Existencia";
     public const string ColMinimum = "Mínimo";
     public const string ColReorderPoint = "Punto de reorden";

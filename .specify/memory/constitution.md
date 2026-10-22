@@ -1,229 +1,256 @@
 <!--
 Sync Impact Report
-- Version change: 1.2.0 -> 1.3.0 (MINOR, según lo pidió el responsable del proyecto). Nota: la
-	regla de versionado de esta constitución reserva MINOR para agregar principios o secciones;
-	esta enmienda acota el alcance del Principio I (podría leerse como redefinición, MAJOR, o
-	como aclaración, PATCH). Se respeta MINOR por ser guía materialmente ampliada.
-- Principios modificados: I. La venta nunca se detiene (mismo título). Se aclara que protege
-	contra fallos técnicos, no contra la falta de licencia; sin módulo POS activo el sistema
-	puede bloquearse con dos garantías: (1) el vencimiento no interrumpe una venta en curso
-	(se permite terminarla, cobrarla y cerrar el turno abierto) y (2) siempre quedan disponibles
-	inicio de sesión, pantalla de licencia y exportación de respaldo. Se amplía la justificación.
-- Motivo: la funcionalidad 025 (licenciamiento coordinado con OctopusAdmin) exige el bloqueo
-	total sin módulo POS, que contradecía la lectura literal del Principio I.
-- Impacto en el código existente: ninguno inmediato. La spec 025 debe incorporar la garantía de
-	venta en curso y turno abierto (hoy no la contempla explícitamente).
-- Plan de migración: no aplica (no afecta datos ni esquema).
-- Secciones añadidas: ninguna. Secciones eliminadas: ninguna.
-- Plantillas: plan-template, spec-template y tasks-template leen la constitución al ejecutarse;
-	no requieren cambios.
-- Pendientes: ninguno. specs/025-coordinated-licensing/spec.md ya incorpora la garantía de venta
-	en curso y cierre de turno (FR-028, FR-030a y casos límite).
-Este informe es temporal y debe retirarse antes de confirmar la constitución en un commit.
+- Versión: 1.2.0 → 1.3.0 (MENOR)
+- Cambio: el principio V se amplía a la actualización de precios y existencias desde PDF
+  del proveedor (lectura local, mismo flujo validado y atómico) y la importación Excel con
+  una hoja por proveedor; se agrega el historial de precios (principio III); la impresión
+  pasa a ser "nota de venta" en hoja (PDF + servicio de impresión de Android) o tira
+  térmica Bluetooth.
+- Secciones modificadas: Principios III y V, Stack (Impresión, PDF), Alcance funcional.
+- Plantillas a revisar: ninguna adicional.
+
+Historial: 1.1.0 → 1.2.0 (MENOR)
+- Cambio: se agrega el principio IX (Licenciamiento sin conexión): prueba de 30 días y
+  activación con código firmado Ed25519 atado al dispositivo, sin borrar datos al vencer.
+- Secciones modificadas: Principios (IX nuevo), Alcance funcional (licenciamiento).
+- Plantillas a revisar: ninguna adicional.
+
+Historial: 1.0.0 → 1.1.0 (MENOR)
+- Cambio: se incorpora al alcance la impresión de la nota de venta (y solo de ella) y la
+  identidad visual de la app (ícono). Se permite el permiso de Bluetooth únicamente para
+  imprimir. "Impresión de tickets" se retira de la lista de fuera de alcance.
+- Secciones modificadas: Alcance funcional (Punto de venta y lista de exclusiones),
+  Stack tecnológico y restricciones (Impresión, Identidad visual), Principio I (permisos).
+- Plantillas a revisar: ninguna adicional.
+
+Historial: (plantilla) → 1.0.0
+- Ratificación inicial de la constitución de OctopusCovering.
+- Principios añadidos: I a VIII (todos nuevos).
+- Secciones añadidas: Stack tecnológico y restricciones, Alcance funcional, Flujo de desarrollo, Gobernanza.
+- Plantillas a revisar: .specify/templates/plan-template.md (Constitution Check),
+  .specify/templates/spec-template.md, .specify/templates/tasks-template.md — ⚠ pendiente de verificar alineación.
+- TODOs: ninguno.
 -->
-# Constitución de POS
 
-Punto de venta de escritorio para Windows y Linux, desarrollado en .NET 10 con Avalonia y
-SQLite local. El objetivo actual es un POS estable, en producción con clientes reales. Una
-versión web con API solo se desarrollará si un cliente la solicita; hasta entonces está fuera
-del proyecto.
+# Constitución de OctopusCovering
 
-## Core Principles
+OctopusCovering es una aplicación Android nativa para la operación diaria de un negocio
+de venta de loseta (piso y recubrimientos). Cubre punto de venta, clientes, proveedores,
+productos y reportes, y funciona por completo sin conexión a internet.
 
-### I. La venta nunca se detiene (estabilidad primero)
-- El POS funciona completamente sin conexión a internet; ninguna funcionalidad del flujo de
-	venta puede depender de la red.
-- Toda operación que modifique varios registros (una venta, un cobro, un corte de caja) se
-	ejecuta en una única transacción: se guarda completa o no se guarda.
-- Un error inesperado nunca debe cerrar la aplicación ni perder la venta en curso; se registra
-	en el log y se muestra al operador un mensaje comprensible, sin detalles técnicos.
-- SQLite opera en modo WAL. La aplicación realiza respaldos automáticos de la base de datos y
-	siempre respalda antes de aplicar migraciones.
-- La estabilidad tiene prioridad sobre funcionalidades nuevas: un defecto que afecte ventas,
-	cobros o cortes se corrige antes de continuar con otra funcionalidad.
-- Este principio protege contra fallos técnicos, no contra la falta de licencia. Sin el módulo
-	POS activo, el sistema puede bloquearse según las reglas de licenciamiento, siempre con dos
-	garantías:
-	- El vencimiento nunca interrumpe una venta en curso: se permite terminarla, cobrarla y
-		cerrar el turno abierto antes de aplicar el bloqueo.
-	- Siempre quedan disponibles el inicio de sesión, la pantalla de licencia y la exportación
-		de respaldo, porque los datos pertenecen al cliente.
+## Principios fundamentales
 
-**Justificación**: el POS está en producción con clientes reales; una venta perdida o una caja
-detenida tiene un costo directo para el negocio del cliente. El bloqueo por licencia es una
-decisión comercial y no un fallo, pero nunca debe dejar una venta a medias, un turno sin cerrar
-ni al cliente sin acceso a sus datos.
+### I. Offline primero (NO NEGOCIABLE)
 
-### II. Arquitectura por capas con dependencias hacia el centro
-- La solución se organiza en `Pos.Domain`, `Pos.Application`, `Pos.Infrastructure` y
-	`Pos.Desktop`, más sus proyectos de pruebas.
-- `Pos.Domain` no depende de ningún otro proyecto ni de librerías de infraestructura.
-- `Pos.Application` depende solo de `Pos.Domain` y define las interfaces (puertos) que necesita:
-	persistencia, reloj, usuario actual y dispositivos.
-- `Pos.Infrastructure` implementa esas interfaces (EF Core, SQLite, dispositivos) y depende de
-	Application y Domain.
-- `Pos.Desktop` depende de Application. Referencia Infrastructure únicamente para registrar
-	dependencias en el arranque (composition root). Ningún ViewModel ni vista accede al
-	`DbContext` ni a SQL.
-- Estas reglas se verifican con pruebas automáticas de arquitectura que forman parte de la
-	suite.
-- Dentro de cada capa, el código se organiza por funcionalidad (por ejemplo
-	`Productos/CrearProducto`), no por tipo técnico.
+- La app DEBE funcionar al 100 % sin conexión a internet. Ninguna función puede depender
+  de red, servicios en la nube, APIs externas ni cuentas en línea.
+- No se declara el permiso `android.permission.INTERNET` mientras no exista una
+  especificación aprobada que lo justifique.
+- Los permisos de Bluetooth se permiten solo para imprimir la nota de venta en una
+  impresora térmica, se piden en el momento de usarlos y la app funciona sin ellos.
+- Todos los datos viven en el dispositivo. Las dependencias de terceros que requieran red
+  (analítica, crash reporting remoto, fuentes o imágenes remotas) están prohibidas.
+- El diseño DEBE dejar la puerta abierta a una futura sincronización (IDs estables,
+  marcas de tiempo `createdAt`/`updatedAt` en entidades principales), sin implementarla.
 
-**Justificación**: las dependencias dirigidas hacia el dominio aíslan las reglas de negocio de
-la UI y de la persistencia. Las pruebas de arquitectura impiden que esos límites se erosionen
-con el tiempo.
+**Razón:** el negocio necesita vender aunque no haya señal; la conectividad es una
+posible evolución futura, no un requisito actual.
 
-### III. La lógica de negocio vive en el núcleo
-- Las reglas de negocio viven en Domain; la orquestación y la validación de entrada, en
-	Application mediante casos de uso.
-- Los ViewModels solo coordinan la interfaz: invocan casos de uso y presentan resultados. No
-	calculan totales, impuestos ni descuentos.
-- Cada caso de uso valida su entrada y devuelve un resultado explícito de éxito o de error de
-	negocio; las excepciones se reservan para fallas inesperadas.
+### II. Kotlin nativo y arquitectura por capas
 
-**Justificación**: las reglas de negocio concentradas en el núcleo se pueden probar sin UI y
-se pueden reutilizar si algún día existe otra interfaz.
+- Lenguaje: Kotlin (100 %). UI con Jetpack Compose y Material 3.
+- Arquitectura MVVM con capas claras: `ui` (Compose + ViewModel) → `domain`
+  (casos de uso y modelos) → `data` (repositorios, Room, archivos).
+- La UI nunca accede directamente a DAOs ni al sistema de archivos; siempre a través de
+  ViewModel → caso de uso/repositorio.
+- Organización por módulo funcional (feature): `pos`, `clientes`, `proveedores`,
+  `productos`, `reportes`, más un núcleo compartido (`core`: base de datos, imágenes,
+  formato de moneda, utilidades).
+- Concurrencia con Coroutines y Flow; inyección de dependencias con Hilt.
+- Simplicidad (YAGNI): no se agregan capas, librerías ni abstracciones sin un caso de uso
+  concreto en una especificación.
 
-### IV. Integridad de datos
-- Los identificadores son GUID v7 generados en la aplicación (`Guid.CreateVersion7`); no se
-	usan identificadores autoincrementales en entidades de negocio.
-- Toda fecha se almacena en UTC y se convierte a hora local solo al mostrarla.
-- Las entidades de negocio incluyen:
-	- Fecha y usuario de creación.
-	- Fecha y usuario de última modificación.
-	- Borrado lógico (`DeletedAt`).
-	- Una versión entera para concurrencia optimista.
-- No se eliminan físicamente registros con valor histórico o contable (ventas, cobros, cortes,
-	movimientos de inventario); se anulan o se marcan como borrados.
-- Los importes monetarios se representan en el dominio con un value object de dinero y se
-	almacenan como enteros en centavos. Nunca se usa `double` ni `float` para dinero.
-- El esquema cambia solo mediante migraciones de EF Core versionadas en el repositorio.
-- El esquema se gestiona con EF Core Code First: el modelo en C# es la fuente de verdad y no
-	se escriben scripts SQL manuales de esquema.
-- Las migraciones se aplican automáticamente al arrancar, en este orden obligatorio:
-	1. Verificar que haya una sola instancia de la aplicación en ejecución.
-	2. Detectar si la base es más nueva que la aplicación; en ese caso no abrirla.
-	3. Respaldar la base con la API de backup de SQLite.
-	4. Migrar.
-	5. Si la migración falla, restaurar el respaldo y no continuar.
-- Una migración publicada nunca se modifica ni se elimina; las correcciones se hacen con
-	migraciones nuevas.
-- El SQL generado de cada migración se revisa antes de integrarla, prestando atención a las
-	reconstrucciones de tablas.
-- Por cada versión publicada se conserva una base de ejemplo. Una prueba automática migra
-	todas esas bases a la versión actual y verifica la integridad de los datos.
-- Los catálogos fijos se siembran con `HasData`; los datos propios de cada instalación se
-	crean en el asistente de primer arranque.
+### III. Integridad de datos con SQLite (Room)
 
-**Justificación**: estas decisiones son baratas hoy y muy costosas de introducir después,
-porque obligarían a migrar datos de clientes en producción.
+- La persistencia DEBE usar SQLite a través de Room. Esquema versionado con migraciones
+  explícitas y probadas; `fallbackToDestructiveMigration` está prohibido en builds de
+  producción.
+- Claves foráneas activas, restricciones `NOT NULL`/`UNIQUE` donde aplique
+  (p. ej. SKU/código de producto único).
+- Montos monetarios se guardan como enteros en centavos (`Long`); nunca `Float`/`Double`.
+  Cantidades de loseta admiten la unidad del producto (pieza, caja, m²) con precisión
+  definida en la especificación de productos.
+- Una venta se registra en una sola transacción: encabezado, partidas, descuento de
+  inventario y pago se confirman juntos o no se confirma nada.
+- Las ventas confirmadas no se editan ni se borran físicamente; se cancelan/devuelven con
+  registro y motivo, para que los reportes sean auditables. Catálogos (productos, clientes,
+  proveedores) usan baja lógica (`activo = false`) cuando tienen historial.
+- Las ventas guardan una copia del precio y descripción al momento de la venta, para que
+  cambios posteriores al catálogo no alteren el historial.
+- Todo cambio de precio de un producto se registra en un historial de precios inmutable
+  (valor anterior, nuevo, fecha, origen y proveedor); las actualizaciones masivas se
+  agrupan en lotes reversibles.
 
-### V. Multiplataforma real (Windows y Linux)
-- Todo el código fuera de los adaptadores de plataforma debe funcionar igual en Windows y
-	Linux.
-- El acceso al hardware (impresora de tickets, cajón de dinero, lector de códigos, báscula) se
-	define mediante interfaces en Application, con implementaciones por sistema operativo en
-	Infrastructure.
-- Las rutas de archivos, configuración y datos se resuelven con las APIs multiplataforma de
-	.NET; no se escriben rutas fijas.
-- La integración continua compila y ejecuta las pruebas en Windows y en Linux.
+### IV. Imágenes de producto como archivos, no BLOBs
 
-**Justificación**: solo se puede garantizar el soporte a los dos sistemas operativos si se
-verifica de forma continua en ambos.
+- Las imágenes se guardan como archivos en el almacenamiento interno privado de la app
+  (`context.filesDir/product_images/`). En SQLite solo se guarda la ruta relativa (o
+  nombre de archivo) y metadatos; está prohibido guardar imágenes como BLOB en la base.
+- Al subir una imagen (cámara o galería vía Photo Picker, sin pedir permisos de
+  almacenamiento) se DEBE: corregir la orientación EXIF, redimensionar a un máximo de
+  1280 px por lado, comprimir (JPEG/WebP calidad ~80) y generar una miniatura (~300 px)
+  para listados.
+- Nombres de archivo generados (UUID), nunca el nombre original del usuario.
+- Al eliminar o reemplazar una imagen se borra el archivo correspondiente; existe una
+  rutina de limpieza de archivos huérfanos.
+- Carga de imágenes en la UI con Coil (lectura local, con caché), siempre fuera del hilo
+  principal.
+- Un producto puede tener varias imágenes en una tabla relacionada, con una marcada como
+  principal.
 
-### VI. Calidad verificable
-- `dotnet build` y `dotnet test` ejecutados desde la raíz terminan sin errores ni
-	advertencias; las advertencias se tratan como errores.
-- Política de pruebas mínimas. Por cada funcionalidad solo se escriben pruebas unitarias para:
-	- Reglas de negocio con cálculos (dinero, precios, inventario).
-	- Validaciones que protegen la integridad de datos.
-	- El defecto corregido, si lo hay: todo defecto corregido incluye una prueba que lo
-		reproduce.
-- Cada regla tiene una prueba que cubre el caso válido y el caso límite más importante; no se
-	prueban todas las combinaciones.
-- No se escriben pruebas de interfaz, de ViewModels ni de código sin lógica (mapeos,
-	configuraciones, DTOs).
-- Siempre son obligatorias, sin excepción: las pruebas de arranque y migraciones (incluida la
-	migración de las bases de ejemplo del Principio IV), las de consistencia de inventario y las
-	pruebas de arquitectura del Principio II.
-- La persistencia se prueba contra SQLite real (conexión en memoria o archivo temporal), nunca
-	con el proveedor InMemory de EF Core.
-- Al implementar, se ejecutan solo las pruebas del proyecto modificado. La integración continua
-	ejecuta la suite completa en Windows y Linux (Principio V).
+**Razón:** los BLOBs inflan la base, vuelven lentas las consultas y rompen el límite de
+`CursorWindow` (~2 MB); los archivos comprimidos en almacenamiento interno son rápidos,
+privados y fáciles de respaldar junto con la base.
 
-**Justificación**: las pruebas se concentran donde un error cuesta dinero o datos al cliente
-(importes, inventario, integridad, arranque y migraciones), y se evita el costo de mantener
-pruebas de bajo valor. El proveedor InMemory no reproduce transacciones, restricciones ni
-concurrencia de SQLite. Las pruebas de regresión evitan que un defecto corregido vuelva a
-aparecer.
+### V. Importación de productos desde Excel validada y atómica
 
-### VII. Simplicidad (YAGNI)
-- No se construye nada para un escenario hipotético. Quedan fuera hasta que un cliente lo
-	requiera: API, aplicación web, sincronización, multi-sucursal, microservicios y colas de
-	mensajes.
-- Solo se aceptan preparaciones para el futuro cuyo costo presente sea mínimo y cuya ausencia
-	obligaría a migrar datos (las definidas en el Principio IV).
-- No se usan MediatR ni repositorios genéricos. Los casos de uso son clases simples y los
-	repositorios, cuando existan, son específicos por agregado.
-- Cada dependencia externa nueva debe justificarse en el plan de la funcionalidad.
+- Los productos se dan de alta por formulario o por carga masiva de un archivo Excel
+  (`.xlsx`), seleccionado con el selector de documentos del sistema (SAF).
+- La app DEBE proveer/documentar una plantilla con columnas fijas; la especificación de
+  productos define las columnas exactas.
+- Flujo obligatorio: leer → validar cada fila → mostrar vista previa con errores por
+  fila (fila, columna, motivo) → el usuario confirma → insertar/actualizar en una sola
+  transacción. Nada se escribe si el usuario no confirma.
+- Se define explícitamente la regla de duplicados (por SKU/código): actualizar o
+  rechazar, según la especificación.
+- El parseo se hace en segundo plano y DEBE soportar al menos varios miles de filas sin
+  bloquear la UI. La librería de lectura de Excel se elige en el plan, priorizando que sea
+  liviana y compatible con Android.
+- Las imágenes no se importan por Excel en la primera versión; se agregan desde el
+  formulario del producto.
+- El libro de Excel puede traer una hoja por proveedor; cada hoja se relaciona con un
+  proveedor con confirmación del usuario.
+- La actualización de precios y existencias desde PDF del proveedor sigue el mismo flujo
+  (leer → validar → vista previa → confirmar → una sola transacción), se procesa en el
+  dispositivo sin internet, solo toca productos del proveedor elegido y nunca aplica
+  coincidencias aproximadas sin confirmación.
 
-**Justificación**: la complejidad sin un requisito real frena la entrega y agrega puntos de
-falla a un producto cuya prioridad es la estabilidad.
+### VI. Pruebas proporcionales al riesgo
 
-### VIII. Soporte y diagnóstico en campo
-- El logging es estructurado, con Serilog, y escribe en archivos rotativos dentro de la
-	carpeta de datos de la aplicación.
-- Cada error registrado incluye contexto suficiente para reproducirlo (operación, usuario,
-	identificadores), sin datos sensibles.
-- La aplicación muestra su versión y permite exportar los logs y un respaldo de la base para
-	soporte técnico.
+- Obligatorio tener pruebas unitarias para: cálculos de venta (subtotales, descuentos,
+  impuestos si aplican, totales), descuento de inventario, validación de la importación
+  de Excel y procesamiento de imágenes (redimensionado/rutas).
+- Obligatorio tener pruebas de DAO/Room (instrumentadas o con base en memoria) y pruebas
+  de cada migración de esquema.
+- Pruebas de UI (Compose) para el flujo crítico de punto de venta: agregar productos,
+  cobrar y ver la venta registrada.
+- Un cambio que rompa pruebas existentes no se integra.
 
-**Justificación**: el POS opera en equipos de clientes sin acceso directo del equipo de
-desarrollo; el diagnóstico depende de lo que la aplicación registre y permita exportar.
+### VII. UX simple para mostrador
 
-### IX. Seguridad local
-- Las contraseñas de usuarios se almacenan con un hash robusto (por ejemplo PBKDF2 o Argon2),
-	nunca en texto plano.
-- Las operaciones sensibles (anular ventas, abrir el cajón sin venta, descuentos fuera de
-	rango, cortes) quedan registradas en una bitácora de auditoría.
-- No se incluyen secretos ni credenciales en el repositorio.
+- Diseñada para uso rápido en mostrador: cobrar una venta común DEBE tomar pocos toques,
+  con búsqueda de producto por nombre o código.
+- Interfaz en español (México), moneda en pesos (MXN) con formato local; textos en
+  `strings.xml`, nunca hardcodeados.
+- Funcionar en teléfonos y tabletas Android (diseños adaptables); orientación vertical y
+  horizontal en tableta.
+- Toda acción destructiva (cancelar venta, desactivar producto, sobrescribir en
+  importación) pide confirmación.
+- Mensajes de error claros y accionables, sin jerga técnica.
+- Accesibilidad básica: tamaños táctiles ≥ 48 dp, contraste adecuado,
+  `contentDescription` en imágenes e íconos.
 
-**Justificación**: el manejo de efectivo exige trazabilidad de quién hizo cada operación
-sensible y protección de las credenciales de los operadores.
+### VIII. Respaldo y restauración local
 
-## Restricciones técnicas
+- Al ser offline, la app DEBE permitir exportar un respaldo completo (base de datos +
+  carpeta de imágenes) a un archivo `.zip` en una ubicación que el usuario elija (SAF:
+  memoria, USB, Drive del sistema si el usuario lo usa manualmente), y restaurarlo.
+- El respaldo se genera con la base en estado consistente (checkpoint de WAL o cierre
+  previo) e incluye la versión de esquema; restaurar valida la versión y aplica
+  migraciones si corresponde.
+- La app recuerda al usuario hacer respaldos periódicamente (p. ej. si pasaron más de
+  7 días desde el último).
 
-- .NET 10 (LTS), C# con nullable habilitado.
-- Avalonia (versión estable más reciente) con patrón MVVM mediante CommunityToolkit.Mvvm;
-	inyección de dependencias con Microsoft.Extensions.Hosting.
-- EF Core con proveedor SQLite.
-- FluentValidation para la validación de entrada en Application.
-- Serilog para logging; xUnit para pruebas; NetArchTest para pruebas de arquitectura.
-- `Directory.Build.props` con `TreatWarningsAsErrors` y analizadores habilitados; gestión
-	central de paquetes con `Directory.Packages.props`.
-- Idioma: el código (tipos, métodos, variables) en inglés; la interfaz de usuario, los
-	mensajes al operador y la documentación en español.
+### IX. Licenciamiento sin conexión
+
+- La app incluye un periodo de prueba de 30 días desde la primera apertura y se activa con
+  un código generado por el emisor de licencias, sin internet ni servidores.
+- El código está firmado digitalmente (Ed25519) y atado al ID del dispositivo; la app solo
+  contiene la llave pública. La llave privada nunca se guarda en la app ni en el
+  repositorio.
+- Al vencer la prueba o la licencia NUNCA se borran ni se bloquean los datos: se permite
+  consultar, respaldar, restaurar y exportar; solo se bloquean las operaciones que crean o
+  modifican información.
+- La lógica de licencia se aísla en su propio módulo y no debe impedir el uso de la app en
+  desarrollo ni en pruebas automatizadas.
+
+**Razón:** permite distribuir la app para prueba y cobrar por ella sin depender de internet,
+sin poner en riesgo la información del negocio.
+
+## Stack tecnológico y restricciones
+
+- **Plataforma:** Android; `minSdk` 26 (Android 8.0), `targetSdk` la versión estable más
+  reciente exigida por Google Play.
+- **Lenguaje/UI:** Kotlin, Jetpack Compose, Material 3, Navigation Compose.
+- **Datos:** SQLite vía Room; DataStore para preferencias.
+- **Impresión:** solo la nota de venta, sin internet: en hoja carta o media carta como PDF
+  impreso con el servicio de impresión de Android (o compartido), o en tira térmica
+  Bluetooth ESC/POS de 58 u 80 mm.
+- **PDF:** librería de lectura de texto de PDF que funcione en el dispositivo, definida en
+  el plan; sin OCR.
+- **Identidad visual:** ícono adaptativo propio (con versión monocromática) y nombre
+  visible "OctopusCovering".
+- **DI / asincronía:** Hilt, Coroutines, Flow.
+- **Imágenes:** Photo Picker / cámara, procesamiento propio (Bitmap/ImageDecoder), Coil.
+- **Excel:** librería de lectura `.xlsx` compatible con Android, definida en el plan.
+- **Build:** Gradle con Kotlin DSL y catálogo de versiones (`libs.versions.toml`).
+- **Calidad:** ktlint o detekt en el build; sin warnings nuevos de lint de Android.
+- **Seguridad:** datos en almacenamiento privado; `allowBackup` y reglas de backup
+  definidas explícitamente; sin datos sensibles en logs.
+
+## Alcance funcional
+
+Módulos de la primera versión:
+
+1. **Punto de venta:** registrar ventas con búsqueda de productos, cantidades, descuento,
+   cliente opcional (público en general por defecto), forma de pago, nota de venta en
+   pantalla e impresión de la nota de venta (y reimpresión) en la impresora del negocio.
+2. **Clientes:** alta, edición, búsqueda y baja lógica; historial de compras del cliente.
+3. **Proveedores:** alta, edición, búsqueda y baja lógica; relación proveedor ↔ productos.
+4. **Productos:** alta por formulario y por Excel, edición, existencias, precio, imágenes,
+   búsqueda y baja lógica.
+5. **Reportes (exactamente dos en esta versión):**
+   - **Reporte de ventas:** ventas por rango de fechas con totales.
+   - **Reporte de productos:** catálogo con existencias y precios.
+6. **Precios:** actualización de precios y existencias desde PDF del proveedor e historial
+   de precios (consulta dentro de Productos, no es un reporte adicional).
+7. **Licenciamiento:** prueba de 30 días y activación con código, según el principio IX.
+
+Cualquier reporte, módulo o integración adicional (facturación electrónica, sincronización
+en la nube, multiusuario, impresión de cualquier documento distinto de la nota de venta,
+compras a proveedor) queda fuera de alcance
+hasta que una especificación aprobada lo incorpore y, si contradice esta constitución, se
+enmiende primero.
 
 ## Flujo de desarrollo
 
-- Toda funcionalidad sigue el flujo de Spec Kit: especificación, plan, tareas e
-	implementación.
-- El plan de cada funcionalidad debe incluir una verificación explícita de cumplimiento de
-	esta constitución; cualquier desviación se justifica por escrito en el plan.
-- Cada funcionalidad se entrega con las pruebas que exige el Principio VI y con la
-	documentación necesaria para operarla o darle soporte.
+- Se trabaja con spec-kit: `specify` → `clarify` → `plan` → `tasks` → `implement`, una
+  especificación por módulo o funcionalidad.
+- Cada plan DEBE pasar el "Constitution Check" contra estos principios; las excepciones
+  se documentan con justificación en la sección de complejidad del plan.
+- Control de versiones con Git; una rama por especificación; commits pequeños y
+  descriptivos.
+- Versionado de la app con SemVer (`versionName`) y `versionCode` incremental; cada
+  cambio de esquema de base incrementa la versión de Room con su migración.
 
-## Governance
+## Gobernanza
 
-- Esta constitución prevalece sobre cualquier otra guía o práctica del proyecto.
-- Las enmiendas requieren documentar el motivo, el impacto en el código existente y un plan de
-	migración si aplica.
-- La constitución usa versionado semántico:
-	- MAJOR: eliminar o redefinir principios.
-	- MINOR: agregar principios o secciones.
-	- PATCH: aclaraciones.
-- El cumplimiento se verifica en la revisión de cada plan, según la verificación exigida en
-	"Flujo de desarrollo".
+- Esta constitución prevalece sobre cualquier otra práctica o preferencia del proyecto.
+- Las enmiendas se documentan en este archivo con su Sync Impact Report, se actualiza la
+  versión y la fecha, y se revisan las plantillas de `.specify/templates/` afectadas.
+- Versionado de la constitución (SemVer): MAYOR para eliminar o redefinir principios de
+  forma incompatible; MENOR para agregar principios o secciones; PARCHE para aclaraciones
+  y redacción.
+- Toda revisión de código y plan verifica el cumplimiento de estos principios.
 
-**Version**: 1.3.0 | **Ratified**: 2026-09-29 | **Last Amended**: 2026-10-03
+**Versión**: 1.3.0 | **Ratificada**: 2026-10-20 | **Última enmienda**: 2026-10-22

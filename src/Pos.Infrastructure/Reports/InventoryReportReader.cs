@@ -36,6 +36,11 @@ internal sealed class InventoryReportReader : IInventoryReportReader
                     p.Name,
                     p.NameSearch,
                     p.Sku,
+                    p.Model,
+                    p.Measures,
+                    p.PackagingThousandths,
+                    p.PricePerSqmCents,
+                    p.PricePerBoxCents,
                     p.IsActive,
                     Minimum = p.MinimumStockThousandths,
                     ReorderPoint = p.ReorderPointThousandths,
@@ -130,7 +135,12 @@ internal sealed class InventoryReportReader : IInventoryReportReader
                 i.Status,
                 i.Level,
                 i.Product.CategoryName,
-                i.Product.CategoryIsActive))
+                i.Product.CategoryIsActive,
+                i.Product.Model,
+                i.Product.Measures,
+                i.Product.PackagingThousandths,
+                i.Product.PricePerSqmCents,
+                i.Product.PricePerBoxCents))
             .ToList();
 
         return new InventoryReport(counts, rows, list.Count, page, query.PageSize);

@@ -5,12 +5,12 @@ namespace Pos.Domain.Tests.Products;
 public class UnitOfMeasureTests
 {
     [Fact]
-    public void Catalogo_TieneOchoUnidadesConClavesUnicasYPiezaPorDefecto()
+    public void Catalogo_TieneNueveUnidadesConClavesUnicasYPiezaPorDefecto()
     {
         Assert.Equal(
-            ["H87", "KGM", "GRM", "LTR", "MLT", "MTR", "XBX", "XPK"],
+            ["H87", "KGM", "GRM", "LTR", "MLT", "MTR", "XBX", "XPK", "MTK"],
             UnitOfMeasure.All.OrderBy(u => u.SortOrder).Select(u => u.Code));
-        Assert.Equal(8, UnitOfMeasure.All.Select(u => u.Code).Distinct(StringComparer.Ordinal).Count());
+        Assert.Equal(9, UnitOfMeasure.All.Select(u => u.Code).Distinct(StringComparer.Ordinal).Count());
         Assert.Equal("H87", UnitOfMeasure.Default.Code);
         Assert.Equal("Pieza", UnitOfMeasure.Default.Name);
         Assert.All(UnitOfMeasure.All, u => Assert.True(u.Code.Length <= UnitOfMeasure.CodeMaxLength));

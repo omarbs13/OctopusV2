@@ -66,7 +66,7 @@ public sealed class SampleDatabaseUpgradeTests
         Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM LicenseSeals"));
 
         // 003: unidad de medida (clarificación 1) e índices filtrados tras reconstruir Products.
-        Assert.Equal(8, Scalar<long>(connection, "SELECT COUNT(*) FROM UnitsOfMeasure"));
+        Assert.Equal(9, Scalar<long>(connection, "SELECT COUNT(*) FROM UnitsOfMeasure"));
         Assert.Equal(0, Scalar<long>(connection, "SELECT COUNT(*) FROM Products WHERE UnitCode IS NULL OR UnitCode NOT IN (SELECT Code FROM UnitsOfMeasure)"));
         if (sampleFile == "v0.1.0.db")
         {
@@ -113,8 +113,9 @@ public sealed class SampleDatabaseUpgradeTests
     /// <summary>004: los productos existentes quedan sin control de inventario, sin existencia ni movimientos (FR-023).</summary>
     private static void AssertInventory(SqliteConnection connection, string sampleFile)
     {
-        Assert.Equal(3, Scalar<long>(connection, "SELECT COUNT(*) FROM UnitsOfMeasure WHERE DecimalPlaces = 3 AND Code IN ('KGM', 'LTR', 'MTR')"));
-        Assert.Equal(5, Scalar<long>(connection, "SELECT COUNT(*) FROM UnitsOfMeasure WHERE DecimalPlaces = 0"));
+        // 026: caja y metro cuadrado admiten 3 decimales.
+        Assert.Equal(5, Scalar<long>(connection, "SELECT COUNT(*) FROM UnitsOfMeasure WHERE DecimalPlaces = 3 AND Code IN ('KGM', 'LTR', 'MTR', 'XBX', 'MTK')"));
+        Assert.Equal(4, Scalar<long>(connection, "SELECT COUNT(*) FROM UnitsOfMeasure WHERE DecimalPlaces = 0"));
 
         if (sampleFile == "v0.3.0.db")
         {

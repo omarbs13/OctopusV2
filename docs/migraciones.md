@@ -350,3 +350,35 @@ cambios son de interfaz y de preferencias locales en `<datos>/preferences/` (`wi
 `navigation.{userId}.json` por usuario; ver [carpeta-de-datos.md](carpeta-de-datos.md)), que no son datos
 de negocio. Se conserva la base de ejemplo `v0.17.0.db`, generada con el procedimiento habitual, para que
 `SampleDatabaseUpgradeTests` siga verificando la actualización desde cada versión publicada.
+
+## 026: campos de proveedor de loseta (`TileSupplierFields` y `TileSupplierFieldsData`)
+
+Esta funcionalidad reconstruye `Products` y calcula datos con C#, así que se reparte en tres pasos que corren
+juntos al arrancar (después del respaldo previo, dentro del mismo `MigrateAsync`):
+
+1. **`TileSupplierFields`** (esquema). Agrega a `Products` `Model`, `ModelKey`, `Measures`, `MeasuresKey`,
+   `Brand`, `BrandSearch`, `SupplierId`, `PackagingThousandths`, `PiecesPerBox`, `PricePerSqmCents`,
+   `PricePerBoxCents`, `IdentityKey` y `NeedsReview`, y vuelve **nulable** `PriceCents` (que ahora es el
+   precio por pieza; conserva su nombre de columna). Eso obliga a EF a **reconstruir la tabla**
+   (`ef_temp_Products`); el `INSERT … SELECT` copia todas las columnas y los índices se recrean con su filtro
+   `WHERE "DeletedAt" IS NULL`. También crea `ProductMigrationSummaries`, siembra la unidad `MTK` ("Metro
+   cuadrado", 3 decimales) y pasa `XBX` ("Caja") de 0 a 3 decimales. Índices nuevos: `IX_Products_IdentityKey`
+   (único filtrado `DeletedAt IS NULL AND IdentityKey IS NOT NULL`), `IX_Products_BrandSearch`,
+   `IX_Products_MeasuresKey` e `IX_Products_NeedsReview`.
+2. **`TileSupplierFieldsData`** (datos en SQL). Va aparte porque SQLite no permite mezclar SQL propio con la
+   reconstrucción pendiente de la tabla (EF avisa «`SqlOperation` … while a rebuild of table is pending»). Hace
+   `Model = Name` (completo, hasta 200 caracteres; los de más de 150 quedan «Para revisión»), y mueve el precio
+   de los productos de caja (`UnitCode = 'XBX'`) a `PricePerBoxCents` dejando `PriceCents` nulo; los demás
+   conservan su precio como precio por pieza.
+3. **`ProductIdentityBackfill`** (C#, `src/Pos.Infrastructure/Startup/`). Se ejecuta al terminar
+   `MigrateAsync`. Para cada producto con `ModelKey = ''` calcula `ModelKey`, `MeasuresKey`, `BrandSearch` e
+   `IdentityKey` (la normalización con acentos no se puede expresar en SQL). El producto más antiguo de cada
+   grupo duplicado conserva la clave; los demás quedan con `IdentityKey` nulo y `NeedsReview = 1`; también se
+   marcan las losetas sin embalaje. Escribe una sola fila en `ProductMigrationSummaries` (`Shown = 0`) si no
+   existe y registra los conteos en el log. Es **repetible** (solo toca lo que no se ha calculado), no cambia la
+   versión ni la fecha de los productos y, si algo falla, el arranque restaura el respaldo previo; restaurar un
+   respaldo anterior pasa por el mismo arranque y recibe el mismo tratamiento.
+
+`TileSupplierFieldsMigrationTests` migra `v0.17.0.db` (con una caja, un nombre de 200 caracteres y un duplicado
+preparados) y compara conteos, totales y líneas de venta; `ProductBackfillTests` cubre duplicados, repetición y
+10,000 productos en menos de 10 s.

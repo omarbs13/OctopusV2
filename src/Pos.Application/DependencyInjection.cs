@@ -19,6 +19,9 @@ using Pos.Application.Products.CountActiveProducts;
 using Pos.Application.Products.CreateProduct;
 using Pos.Application.Products.DeleteProduct;
 using Pos.Application.Products.GetProduct;
+using Pos.Application.Products.GetProductFilters;
+using Pos.Application.Products.ListSupplierOptions;
+using Pos.Application.Products.MigrationSummary;
 using Pos.Application.Products.ListUnitsOfMeasure;
 using Pos.Application.Products.PrepareProductImage;
 using Pos.Application.Products.SearchProducts;
@@ -197,6 +200,10 @@ public static class DependencyInjection
         services.AddScoped<UpdateProductHandler>();
         services.AddScoped<DeleteProductHandler>();
         services.AddScoped<CountActiveProductsHandler>();
+        services.AddScoped<ListProductSupplierOptionsHandler>();
+        services.AddScoped<GetProductFiltersHandler>();
+        services.AddScoped<GetMigrationSummaryHandler>();
+        services.AddScoped<MarkMigrationSummaryShownHandler>();
         services.AddSingleton<ListUnitsOfMeasureHandler>();
         services.AddScoped<PrepareProductImageHandler>();
 

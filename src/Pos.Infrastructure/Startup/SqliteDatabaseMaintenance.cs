@@ -1,20 +1,27 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Pos.Application.Abstractions;
 using Pos.Application.Startup;
 using Pos.Infrastructure.Persistence;
 
 namespace Pos.Infrastructure.Startup;
 
-public sealed class SqliteDatabaseMaintenance : IDatabaseMaintenance
+public sealed partial class SqliteDatabaseMaintenance : IDatabaseMaintenance
 {
     private readonly IDbContextFactory<PosDbContext> _contexts;
     private readonly IAppPaths _paths;
+    private readonly ILogger<SqliteDatabaseMaintenance> _logger;
 
-    public SqliteDatabaseMaintenance(IDbContextFactory<PosDbContext> contexts, IAppPaths paths)
+    public SqliteDatabaseMaintenance(
+        IDbContextFactory<PosDbContext> contexts,
+        IAppPaths paths,
+        ILogger<SqliteDatabaseMaintenance>? logger = null)
     {
         _contexts = contexts;
         _paths = paths;
+        _logger = logger ?? NullLogger<SqliteDatabaseMaintenance>.Instance;
     }
 
     public bool DatabaseExists() => File.Exists(_paths.DatabaseFile);
@@ -47,6 +54,12 @@ public sealed class SqliteDatabaseMaintenance : IDatabaseMaintenance
             Directory.CreateDirectory(Path.GetDirectoryName(_paths.DatabaseFile)!);
             await using var context = await _contexts.CreateDbContextAsync(cancellationToken);
             await context.Database.MigrateAsync(cancellationToken);
+
+            // 026: claves de identidad de los productos anteriores y resumen de la migración.
+            if (await ProductIdentityBackfill.RunAsync(context, DateTime.UtcNow, cancellationToken) is { } backfill)
+            {
+                LogProductBackfill(backfill.Migrated, backfill.WithoutModel, backfill.WithoutPackaging, backfill.Duplicates);
+            }
         }
         catch (Exception ex) when (SqliteErrors.Translate(ex) is { } translated
             && translated.Problem != DatabaseProblem.Corrupted)
@@ -154,4 +167,9 @@ public sealed class SqliteDatabaseMaintenance : IDatabaseMaintenance
             return false;
         }
     }
+
+    [LoggerMessage(
+        Level = LogLevel.Information,
+        Message = "Migración de productos: {Migrated} migrados, {WithoutModel} sin modelo, {WithoutPackaging} sin embalaje, {Duplicates} duplicados marcados")]
+    private partial void LogProductBackfill(int migrated, int withoutModel, int withoutPackaging, int duplicates);
 }

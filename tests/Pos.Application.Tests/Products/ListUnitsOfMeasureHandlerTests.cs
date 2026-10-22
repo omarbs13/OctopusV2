@@ -10,7 +10,7 @@ public class ListUnitsOfMeasureHandlerTests
         var units = new ListUnitsOfMeasureHandler().Handle();
 
         Assert.Equal(
-            ["Pieza", "Kilogramo", "Gramo", "Litro", "Mililitro", "Metro", "Caja", "Paquete"],
+            ["Pieza", "Kilogramo", "Gramo", "Litro", "Mililitro", "Metro", "Caja", "Paquete", "Metro cuadrado"],
             units.Select(u => u.Name));
         Assert.Equal("H87", units[0].Code);
     }

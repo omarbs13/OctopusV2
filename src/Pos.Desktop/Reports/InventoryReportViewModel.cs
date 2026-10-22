@@ -28,6 +28,19 @@ public sealed record InventoryReportRowItem(InventoryReportRow Row)
 
     public string Sku => Row.Sku;
 
+    public string Model => Row.Model;
+
+    public string Measures => Row.Measures ?? string.Empty;
+
+    /// <summary>Metros cuadrados por caja, o vacío si no aplica (026).</summary>
+    public string PackagingText => Row.PackagingThousandths is { } packaging
+        ? QuantityConverter.Format(packaging, 3)
+        : string.Empty;
+
+    public string PricePerSqmText => Row.PricePerSqmCents is { } cents ? MoneyConverter.Format(cents) : string.Empty;
+
+    public string PricePerBoxText => Row.PricePerBoxCents is { } cents ? MoneyConverter.Format(cents) : string.Empty;
+
     public string OnHandText => QuantityConverter.Format(Row.OnHandThousandths, Row.DecimalPlaces);
 
     public string MinimumText => QuantityConverter.FormatOrDash(Row.MinimumThousandths, Row.DecimalPlaces);

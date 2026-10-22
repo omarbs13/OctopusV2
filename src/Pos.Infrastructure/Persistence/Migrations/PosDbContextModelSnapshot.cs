@@ -880,6 +880,14 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         .HasMaxLength(48)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Brand")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("BrandSearch")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
                     b.Property<Guid?>("CategoryId")
                         .HasColumnType("TEXT");
 
@@ -892,6 +900,10 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("IdentityKey")
+                        .HasMaxLength(289)
+                        .HasColumnType("TEXT");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("INTEGER");
 
@@ -900,9 +912,31 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         .HasColumnType("INTEGER")
                         .HasDefaultValue(false);
 
+                    b.Property<string>("Measures")
+                        .HasMaxLength(49)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("MeasuresKey")
+                        .HasMaxLength(49)
+                        .HasColumnType("TEXT");
+
                     b.Property<long?>("MinimumStockThousandths")
                         .HasColumnType("INTEGER")
                         .HasColumnName("MinimumStock");
+
+                    b.Property<string>("Model")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("");
+
+                    b.Property<string>("ModelKey")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -914,9 +948,26 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
-                    b.Property<long>("Price")
+                    b.Property<bool>("NeedsReview")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
+                    b.Property<long?>("PackagingThousandths")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("PiecePriceCents")
                         .HasColumnType("INTEGER")
                         .HasColumnName("PriceCents");
+
+                    b.Property<int?>("PiecesPerBox")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("PricePerBoxCents")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("PricePerSqmCents")
+                        .HasColumnType("INTEGER");
 
                     b.Property<long?>("ReorderPointThousandths")
                         .HasColumnType("INTEGER")
@@ -925,6 +976,9 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.Property<string>("Sku")
                         .IsRequired()
                         .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("SupplierId")
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("TracksInventory")
@@ -956,9 +1010,26 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("IX_Products_Barcode")
                         .HasFilter("\"DeletedAt\" IS NULL AND \"Barcode\" IS NOT NULL");
 
+                    b.HasIndex("BrandSearch")
+                        .HasDatabaseName("IX_Products_BrandSearch")
+                        .HasFilter("\"DeletedAt\" IS NULL");
+
                     b.HasIndex("CategoryId")
                         .HasDatabaseName("IX_Products_CategoryId")
                         .HasFilter("\"DeletedAt\" IS NULL");
+
+                    b.HasIndex("IdentityKey")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Products_IdentityKey")
+                        .HasFilter("\"DeletedAt\" IS NULL AND \"IdentityKey\" IS NOT NULL");
+
+                    b.HasIndex("MeasuresKey")
+                        .HasDatabaseName("IX_Products_MeasuresKey")
+                        .HasFilter("\"DeletedAt\" IS NULL");
+
+                    b.HasIndex("NeedsReview")
+                        .HasDatabaseName("IX_Products_NeedsReview")
+                        .HasFilter("\"DeletedAt\" IS NULL AND \"NeedsReview\" = 1");
 
                     b.HasIndex("Sku")
                         .IsUnique()
@@ -1017,6 +1088,34 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.HasKey("ProductId");
 
                     b.ToTable("ProductImages", (string)null);
+                });
+
+            modelBuilder.Entity("Pos.Domain.Products.ProductMigrationSummary", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("DuplicateCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("MigratedCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("Shown")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("WithoutModelCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("WithoutPackagingCount")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ProductMigrationSummaries", (string)null);
                 });
 
             modelBuilder.Entity("Pos.Domain.Products.UnitOfMeasure", b =>
@@ -1088,7 +1187,7 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         new
                         {
                             Code = "XBX",
-                            DecimalPlaces = 0,
+                            DecimalPlaces = 3,
                             Name = "Caja",
                             SortOrder = 7
                         },
@@ -1098,6 +1197,13 @@ namespace Pos.Infrastructure.Persistence.Migrations
                             DecimalPlaces = 0,
                             Name = "Paquete",
                             SortOrder = 8
+                        },
+                        new
+                        {
+                            Code = "MTK",
+                            DecimalPlaces = 3,
+                            Name = "Metro cuadrado",
+                            SortOrder = 9
                         });
                 });
 

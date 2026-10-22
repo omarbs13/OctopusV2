@@ -40,6 +40,12 @@ public partial class ProductEditorView : UserControl
             return;
         }
 
+        if (field == ProductFields.Supplier)
+        {
+            SupplierBox.Focus();
+            return;
+        }
+
         if (field == ProductFields.UnitCode)
         {
             UnitBox.Focus();
@@ -63,6 +69,12 @@ public partial class ProductEditorView : UserControl
             ProductFields.Sku => SkuBox,
             ProductFields.Barcode => BarcodeBox,
             ProductFields.Price => PriceBox,
+            ProductFields.Brand => BrandBox,
+            ProductFields.Measures => MeasuresBox,
+            ProductFields.Packaging => PackagingBox,
+            ProductFields.PiecesPerBox => PiecesPerBoxBox,
+            ProductFields.PricePerSqm => PricePerSqmBox,
+            ProductFields.PricePerBox => PricePerBoxBox,
             ProductFields.MinimumStock => MinimumStockBox,
             ProductFields.ReorderPoint => ReorderPointBox,
             _ => NameBox,

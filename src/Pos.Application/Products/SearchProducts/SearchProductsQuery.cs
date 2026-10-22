@@ -11,9 +11,15 @@ namespace Pos.Application.Products.SearchProducts;
 /// en lugar de <paramref name="Page"/> (por ejemplo, tras guardarlo).
 /// </param>
 /// <param name="Category">Filtro por categoría o "Sin categoría", combinado con el texto (016, FR-012).</param>
+/// <param name="Brand">Marca exacta elegida en el filtro (026); nulo = todas.</param>
+/// <param name="Measures">Medidas exactas elegidas en el filtro (026); nulo = todas.</param>
+/// <param name="NeedsReviewOnly">Solo productos "Para revisión" (026).</param>
 public sealed record SearchProductsQuery(
     string? Text,
     bool IncludeInactive,
     int Page = 1,
     Guid? LocateProductId = null,
-    CategoryFilter Category = default);
+    CategoryFilter Category = default,
+    string? Brand = null,
+    string? Measures = null,
+    bool NeedsReviewOnly = false);

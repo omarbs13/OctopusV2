@@ -61,6 +61,42 @@ public class ExportReportHandlerTests
     }
 
     [Fact]
+    public async Task Inventario_IncluyeModeloMedidasEmbalajeXM2YXCajaConVacioCuandoNoAplican()
+    {
+        var env = Environment.For(UserRole.Cashier);
+        env.Inventory =
+        [
+            new InventoryReportRow(
+                Guid.NewGuid(), "Piedra 33 X 33", "PI-1", 3_000, null, null, "Caja", 3, StockStatus.Normal, StockAlertLevel.None,
+                Model: "Piedra", Measures: "33 X 33", PackagingThousandths: 1640, PricePerSqmCents: 17503, PricePerBoxCents: 28705),
+            new InventoryReportRow(Guid.NewGuid(), "Café", "CAF-1", 5_000, null, null, "Pieza", 0, StockStatus.Normal, StockAlertLevel.None, Model: "Café"),
+        ];
+
+        var result = await env.Handler.HandleAsync(ExportRequest.ForInventory(new InventoryReportQuery(new DateOnly(2026, 9, 30)), ExportFormat.Pdf), TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        var table = env.Pdf.Document!.Tables.Single();
+        var headers = table.Columns.Select(c => c.Header).ToList();
+        foreach (var header in new[] { "Modelo", "Medidas", "Embalaje (m²/caja)", "X M2", "X CAJA" })
+        {
+            Assert.Contains(header, headers);
+        }
+
+        var tile = table.Rows[0];
+        Assert.Equal("Piedra", ((TextCell)tile[headers.IndexOf("Modelo")]).Text);
+        Assert.Equal("33 X 33", ((TextCell)tile[headers.IndexOf("Medidas")]).Text);
+        Assert.Equal("1.640", ((TextCell)tile[headers.IndexOf("Embalaje (m²/caja)")]).Text);
+        Assert.Equal(17503, ((MoneyCell)tile[headers.IndexOf("X M2")]).Cents);
+        Assert.Equal(28705, ((MoneyCell)tile[headers.IndexOf("X CAJA")]).Cents);
+
+        var plain = table.Rows[1];
+        Assert.IsType<EmptyCell>(plain[headers.IndexOf("Medidas")]);
+        Assert.IsType<EmptyCell>(plain[headers.IndexOf("Embalaje (m²/caja)")]);
+        Assert.IsType<EmptyCell>(plain[headers.IndexOf("X M2")]);
+        Assert.IsType<EmptyCell>(plain[headers.IndexOf("X CAJA")]);
+    }
+
+    [Fact]
     public async Task SinDatos_NoGeneraArchivoYSinPermisoSeRechaza()
     {
         var empty = Environment.For(UserRole.Admin);

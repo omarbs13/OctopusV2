@@ -60,6 +60,8 @@ public class PosDbContext : DbContext
 
     public DbSet<ProductImage> ProductImages => Set<ProductImage>();
 
+    public DbSet<ProductMigrationSummary> ProductMigrationSummaries => Set<ProductMigrationSummary>();
+
     public DbSet<ProductStock> ProductStocks => Set<ProductStock>();
 
     public DbSet<InventoryMovement> InventoryMovements => Set<InventoryMovement>();
@@ -150,6 +152,7 @@ public class PosDbContext : DbContext
         modelBuilder.ApplyConfiguration(new UnitOfMeasureConfiguration());
         modelBuilder.ApplyConfiguration(new ProductConfiguration());
         modelBuilder.ApplyConfiguration(new ProductImageConfiguration());
+        modelBuilder.ApplyConfiguration(new ProductMigrationSummaryConfiguration());
         modelBuilder.ApplyConfiguration(new ProductStockConfiguration());
         modelBuilder.ApplyConfiguration(new InventoryMovementConfiguration());
         modelBuilder.ApplyConfiguration(new SaleConfiguration());

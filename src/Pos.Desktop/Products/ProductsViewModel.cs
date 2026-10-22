@@ -6,6 +6,7 @@ using Pos.Application.Abstractions;
 using Pos.Application.Licensing;
 using Pos.Application.Products;
 using Pos.Application.Products.DeleteProduct;
+using Pos.Application.Products.GetProductFilters;
 using Pos.Application.Products.SearchProducts;
 using Pos.Desktop.Categories;
 using Pos.Desktop.Common;
@@ -18,7 +19,7 @@ using Pos.Domain.Users;
 namespace Pos.Desktop.Products;
 
 /// <summary>Pantalla de Productos: listado, búsqueda y apertura del editor.</summary>
-public sealed partial class ProductsViewModel : PageViewModel, IDisposable
+public sealed partial class ProductsViewModel : PageViewModel, INavigationArgumentReceiver, IDisposable
 {
     /// <summary>Espera tras la última tecla antes de buscar.</summary>
     public static readonly TimeSpan SearchDelay = TimeSpan.FromMilliseconds(250);
@@ -32,6 +33,7 @@ public sealed partial class ProductsViewModel : PageViewModel, IDisposable
     private CancellationTokenSource? _pendingSearch;
     private int _searchVersion;
     private bool _suppressAutoSearch;
+    private bool _suppressFilterSearch;
 
     public ProductsViewModel(
         UseCases useCases,
@@ -75,6 +77,22 @@ public sealed partial class ProductsViewModel : PageViewModel, IDisposable
 
     [ObservableProperty]
     public partial string SearchText { get; set; } = string.Empty;
+
+    /// <summary>Opciones del filtro "Marca"; la primera es "Todas" (026).</summary>
+    public ObservableCollection<string> BrandOptions { get; } = [Strings.Products_FilterAll];
+
+    /// <summary>Opciones del filtro "Medida"; la primera es "Todas" (026).</summary>
+    public ObservableCollection<string> MeasureOptions { get; } = [Strings.Products_FilterAll];
+
+    [ObservableProperty]
+    public partial string? SelectedBrand { get; set; } = Strings.Products_FilterAll;
+
+    [ObservableProperty]
+    public partial string? SelectedMeasure { get; set; } = Strings.Products_FilterAll;
+
+    /// <summary>Solo los productos marcados "Para revisión" (026).</summary>
+    [ObservableProperty]
+    public partial bool NeedsReviewOnly { get; set; }
 
     [ObservableProperty]
     public partial bool IncludeInactive { get; set; }
@@ -120,7 +138,80 @@ public sealed partial class ProductsViewModel : PageViewModel, IDisposable
     public override async Task OnActivatedAsync()
     {
         await CategoryFilter.LoadAsync();
+        await LoadFiltersAsync();
         await SearchAsync();
+    }
+
+    /// <summary>
+    /// Navegación desde el resumen de la migración: deja activo el filtro "Para revisión". La búsqueda la
+    /// hace <see cref="OnActivatedAsync"/>, que sigue a este método.
+    /// </summary>
+    public void Receive(object argument)
+    {
+        if (argument is not ProductsReviewFilter)
+        {
+            return;
+        }
+
+        _suppressFilterSearch = true;
+        try
+        {
+            SearchText = string.Empty;
+            SelectedBrand = SelectedMeasure = Strings.Products_FilterAll;
+            NeedsReviewOnly = true;
+            CurrentPage = 1;
+        }
+        finally
+        {
+            _suppressFilterSearch = false;
+        }
+    }
+
+    partial void OnSelectedBrandChanged(string? value) => ApplyFilterChange();
+
+    partial void OnSelectedMeasureChanged(string? value) => ApplyFilterChange();
+
+    partial void OnNeedsReviewOnlyChanged(bool value) => ApplyFilterChange();
+
+    private void ApplyFilterChange()
+    {
+        if (_suppressFilterSearch)
+        {
+            return;
+        }
+
+        CurrentPage = 1;
+        _ = SearchNowAsync();
+    }
+
+    /// <summary>Marcas y medidas distintas para los filtros; conserva la selección si sigue existiendo.</summary>
+    private async Task LoadFiltersAsync()
+    {
+        var (completed, result) = await _runner.RunQuietlyResultAsync(
+            "CargarFiltrosProductos",
+            () => _useCases.RunAsync<GetProductFiltersHandler, Result<ProductFilterOptions>>(
+                h => h.HandleAsync(CancellationToken.None)));
+        if (!completed || result is not { IsSuccess: true })
+        {
+            return;
+        }
+
+        var brand = SelectedBrand;
+        var measure = SelectedMeasure;
+        Replace(BrandOptions, result.Value.Brands);
+        Replace(MeasureOptions, result.Value.Measures);
+        SelectedBrand = BrandOptions.Contains(brand ?? string.Empty) ? brand : Strings.Products_FilterAll;
+        SelectedMeasure = MeasureOptions.Contains(measure ?? string.Empty) ? measure : Strings.Products_FilterAll;
+    }
+
+    private static void Replace(ObservableCollection<string> options, IReadOnlyList<string> values)
+    {
+        options.Clear();
+        options.Add(Strings.Products_FilterAll);
+        foreach (var value in values)
+        {
+            options.Add(value);
+        }
     }
 
     public void Dispose()
@@ -258,6 +349,7 @@ public sealed partial class ProductsViewModel : PageViewModel, IDisposable
     private async Task OnEditorSavedAsync(ProductDto product)
     {
         // Se muestra la página donde quedó el producto guardado (003, FR-012).
+        await LoadFiltersAsync();
         await SearchAsync(product.Id);
 
         var visibleByStatus = product.IsActive || IncludeInactive;
@@ -301,7 +393,15 @@ public sealed partial class ProductsViewModel : PageViewModel, IDisposable
     private async Task SearchAsync(Guid? locateProductId = null)
     {
         var version = Interlocked.Increment(ref _searchVersion);
-        var query = new SearchProductsQuery(SearchText, IncludeInactive, CurrentPage, locateProductId, CategoryFilter.Filter);
+        var query = new SearchProductsQuery(
+            SearchText,
+            IncludeInactive,
+            CurrentPage,
+            locateProductId,
+            CategoryFilter.Filter,
+            SelectedBrand == Strings.Products_FilterAll ? null : SelectedBrand,
+            SelectedMeasure == Strings.Products_FilterAll ? null : SelectedMeasure,
+            NeedsReviewOnly);
 
         var (completed, result) = await _runner.RunAsync(
             "BuscarProductos",
@@ -336,3 +436,6 @@ public sealed partial class ProductsViewModel : PageViewModel, IDisposable
         SelectedItem = Items.FirstOrDefault(i => i.Id == selectedId);
     }
 }
+
+/// <summary>Argumento de navegación: abrir Productos con el filtro "Para revisión" (026).</summary>
+public sealed record ProductsReviewFilter;

@@ -1,5 +1,6 @@
 using Pos.Domain.Inventory;
 using Pos.Domain.Products;
+using Pos.Domain.Sales;
 
 namespace Pos.Application.Sales;
 
@@ -24,6 +25,18 @@ internal static class SaleProductMapping
             unit.DecimalPlaces,
             product.TracksInventory,
             product.TracksInventory ? stock?.OnHandThousandths ?? 0 : null,
-            ReasonOf(product));
+            ReasonOf(product),
+            TileOf(product));
     }
+
+    /// <summary>Precios, embalaje y modalidades de un producto de loseta; nulo si no es de loseta (026).</summary>
+    public static TileSaleInfo? TileOf(Product product) =>
+        product.IsTile
+            ? new TileSaleInfo(
+                product.AvailableModes,
+                product.PricePerSqmCents,
+                product.PricePerBoxCents,
+                product.PiecePriceCents,
+                product.PackagingThousandths)
+            : null;
 }

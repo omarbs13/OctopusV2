@@ -22,6 +22,7 @@ public class UpdateProductHandlerTests
         _inventory,
         _transactions,
         new InMemoryCategoryRepository(),
+        new InMemorySupplierRepository(),
         new RecordingAuditLog(),
         NullLogger<UpdateProductHandler>.Instance);
 
@@ -31,7 +32,7 @@ public class UpdateProductHandlerTests
         _repository.Seed(Product.Create("Café", sku, barcode, Money.FromCents(8950), "H87"));
 
     private static UpdateProductCommand Command(Product p, string? sku = null, string? barcode = null, string name = "Café Molido", string price = "95.00", bool active = true, int? version = null) =>
-        new(p.Id, version ?? p.Version, name, sku ?? p.Sku, barcode ?? p.Barcode, price, "H87", active);
+        new(p.Id, version ?? p.Version, name, sku ?? p.Sku, barcode ?? p.Barcode, "H87", active, price);
 
     [Fact]
     public async Task DatosValidos_ActualizaEIncrementaLaVersion()
@@ -55,7 +56,7 @@ public class UpdateProductHandlerTests
         var result = await Handler.HandleAsync(Command(product, name: "", price: "12,50"), Ct);
 
         var error = Assert.IsType<ValidationFailed>(result.Error);
-        Assert.Equal([ProductFields.Name, ProductFields.Price], error.Errors.Select(e => e.Field));
+        Assert.Equal([ProductFields.Model, ProductFields.Price], error.Errors.Select(e => e.Field));
     }
 
     [Fact]
@@ -93,7 +94,7 @@ public class UpdateProductHandlerTests
     [Fact]
     public async Task ProductoInexistente_DevuelveNotFound()
     {
-        var command = new UpdateProductCommand(Guid.CreateVersion7(), 1, "Nombre", "SKU1", null, "1", "H87", true);
+        var command = new UpdateProductCommand(Guid.CreateVersion7(), 1, "Nombre", "SKU1", null, "H87", true, "1");
 
         var result = await Handler.HandleAsync(command, Ct);
 

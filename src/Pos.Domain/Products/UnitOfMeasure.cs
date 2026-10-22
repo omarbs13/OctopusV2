@@ -24,12 +24,16 @@ public sealed record UnitOfMeasure(string Code, string Name, int SortOrder, int 
         new("LTR", "Litro", 4, 3),
         new("MLT", "Mililitro", 5),
         new("MTR", "Metro", 6, 3),
-        new("XBX", "Caja", 7),
+        new("XBX", "Caja", 7, 3),
         new("XPK", "Paquete", 8),
+        new("MTK", "Metro cuadrado", 9, 3),
     ];
 
     /// <summary>Valor inicial de un producto nuevo y de los productos existentes al actualizar.</summary>
     public static UnitOfMeasure Default => Piece;
+
+    /// <summary>Unidades en las que se vende loseta: caja y metro cuadrado (026).</summary>
+    public static bool IsTile(string? code) => code is "XBX" or "MTK";
 
     /// <summary>Indica si la clave existe en el catálogo (comparación ordinal exacta).</summary>
     public static bool IsValidCode(string? code) =>

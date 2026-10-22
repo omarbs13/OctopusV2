@@ -59,40 +59,53 @@
         </StackPanel>
 
         <!-- Tabla -->
-        <Grid ColumnDefinitions="*,160,140,120,120,140,120,130" Margin="12,0">
+        <Grid ColumnDefinitions="*,160,140,140,110,110,100,100,120,120,140,120,130" Margin="12,0">
           <Button Grid.Column="0" Classes="flat" Content="{Binding NameHeader}" FontWeight="SemiBold"
                   Command="{Binding SortByCommand}" CommandParameter="{x:Static rep:InventoryReportSort.Name}" />
           <Button Grid.Column="1" Classes="flat" Content="{Binding CategoryHeader}" FontWeight="SemiBold"
                   Command="{Binding SortByCommand}" CommandParameter="{x:Static rep:InventoryReportSort.Category}" />
           <Button Grid.Column="2" Classes="flat" Content="{Binding SkuHeader}" FontWeight="SemiBold"
                   Command="{Binding SortByCommand}" CommandParameter="{x:Static rep:InventoryReportSort.Sku}" />
-          <Button Grid.Column="3" Classes="flat" Content="{Binding OnHandHeader}" FontWeight="SemiBold"
+          <Button Grid.Column="8" Classes="flat" Content="{Binding OnHandHeader}" FontWeight="SemiBold"
                   HorizontalAlignment="Right"
                   Command="{Binding SortByCommand}" CommandParameter="{x:Static rep:InventoryReportSort.OnHand}" />
-          <TextBlock Grid.Column="4" Text="{x:Static res:Strings.Reports_Inventory_ColMinimum}" FontWeight="SemiBold"
+          <TextBlock Grid.Column="9" Text="{x:Static res:Strings.Reports_Inventory_ColMinimum}" FontWeight="SemiBold"
                      TextAlignment="Right" VerticalAlignment="Center" />
-          <TextBlock Grid.Column="5" Text="{x:Static res:Strings.Reports_Inventory_ColReorderPoint}" FontWeight="SemiBold"
+          <TextBlock Grid.Column="10" Text="{x:Static res:Strings.Reports_Inventory_ColReorderPoint}" FontWeight="SemiBold"
                      TextAlignment="Right" VerticalAlignment="Center" />
-          <TextBlock Grid.Column="6" Text="{x:Static res:Strings.Reports_Inventory_ColUnit}" FontWeight="SemiBold"
+          <TextBlock Grid.Column="11" Text="{x:Static res:Strings.Reports_Inventory_ColUnit}" FontWeight="SemiBold"
                      Margin="12,0,0,0" VerticalAlignment="Center" />
-          <TextBlock Grid.Column="7" Text="{x:Static res:Strings.Reports_Inventory_ColStatus}" FontWeight="SemiBold"
+          <TextBlock Grid.Column="12" Text="{x:Static res:Strings.Reports_Inventory_ColStatus}" FontWeight="SemiBold"
                      VerticalAlignment="Center" />
+          <TextBlock Grid.Column="3" Text="{x:Static res:Strings.Products_ColModel}" FontWeight="SemiBold" VerticalAlignment="Center" />
+          <TextBlock Grid.Column="4" Text="{x:Static res:Strings.Products_ColMeasures}" FontWeight="SemiBold" VerticalAlignment="Center" />
+          <TextBlock Grid.Column="5" Text="{x:Static res:Strings.Reports_Inventory_ColPackaging}" FontWeight="SemiBold"
+                     TextAlignment="Right" VerticalAlignment="Center" />
+          <TextBlock Grid.Column="6" Text="{x:Static res:Strings.Products_ColPerSqm}" FontWeight="SemiBold"
+                     TextAlignment="Right" VerticalAlignment="Center" />
+          <TextBlock Grid.Column="7" Text="{x:Static res:Strings.Products_ColPerBox}" FontWeight="SemiBold"
+                     TextAlignment="Right" VerticalAlignment="Center" />
         </Grid>
         <ItemsControl ItemsSource="{Binding Rows}">
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="vm:InventoryReportRowItem">
-              <Grid ColumnDefinitions="*,160,140,120,120,140,120,130" Margin="12,0" MinHeight="36">
+              <Grid ColumnDefinitions="*,160,140,140,110,110,100,100,120,120,140,120,130" Margin="12,0" MinHeight="36">
                 <Grid.Styles>
                   <Style Selector="TextBlock"><Setter Property="VerticalAlignment" Value="Center" /></Style>
                 </Grid.Styles>
                 <TextBlock Grid.Column="0" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
                 <TextBlock Grid.Column="1" Text="{Binding Category}" TextTrimming="CharacterEllipsis" />
                 <TextBlock Grid.Column="2" Text="{Binding Sku}" />
-                <TextBlock Grid.Column="3" Text="{Binding OnHandText}" TextAlignment="Right" FontWeight="SemiBold" />
-                <TextBlock Grid.Column="4" Text="{Binding MinimumText}" TextAlignment="Right" />
-                <TextBlock Grid.Column="5" Text="{Binding ReorderPointText}" TextAlignment="Right" />
-                <TextBlock Grid.Column="6" Text="{Binding Unit}" Margin="12,0,0,0" />
-                <TextBlock Grid.Column="7" Text="{Binding StatusText}" />
+                <TextBlock Grid.Column="3" Text="{Binding Model}" TextTrimming="CharacterEllipsis" />
+                <TextBlock Grid.Column="4" Text="{Binding Measures}" TextTrimming="CharacterEllipsis" />
+                <TextBlock Grid.Column="5" Text="{Binding PackagingText}" TextAlignment="Right" />
+                <TextBlock Grid.Column="6" Text="{Binding PricePerSqmText}" TextAlignment="Right" />
+                <TextBlock Grid.Column="7" Text="{Binding PricePerBoxText}" TextAlignment="Right" />
+                <TextBlock Grid.Column="8" Text="{Binding OnHandText}" TextAlignment="Right" FontWeight="SemiBold" />
+                <TextBlock Grid.Column="9" Text="{Binding MinimumText}" TextAlignment="Right" />
+                <TextBlock Grid.Column="10" Text="{Binding ReorderPointText}" TextAlignment="Right" />
+                <TextBlock Grid.Column="11" Text="{Binding Unit}" Margin="12,0,0,0" />
+                <TextBlock Grid.Column="12" Text="{Binding StatusText}" />
               </Grid>
             </DataTemplate>
           </ItemsControl.ItemTemplate>

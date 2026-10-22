@@ -17,10 +17,10 @@ public sealed class ProductEditorViewModelCreateTests : IDisposable
 
     private static void Fill(ProductEditorViewModel editor, string name = "Café Molido", string sku = "caf-001", string barcode = "", string price = "89.5")
     {
-        editor.Name = name;
+        editor.Model = name;
         editor.Sku = sku;
         editor.Barcode = barcode;
-        editor.PriceText = price;
+        editor.PiecePriceText = price;
     }
 
     [Fact]
@@ -80,12 +80,12 @@ public sealed class ProductEditorViewModelCreateTests : IDisposable
         await editor.SaveCommand.ExecuteAsync(null);
 
         Assert.False(savedRaised);
-        Assert.Equal(ProductMessages.NameRequired, editor.NameError);
+        Assert.Equal(ProductMessages.ModelRequired, editor.ModelError);
         Assert.Equal(ProductMessages.SkuWithSpaces, editor.SkuError);
         Assert.Equal(ProductMessages.BarcodeFormat, editor.BarcodeError);
         Assert.Equal(ProductMessages.PriceFormat, editor.PriceError);
-        Assert.Equal(ProductFields.Name, editor.FocusField);
-        Assert.Equal(("", "A B", "AB_12", "12,50"), (editor.Name, editor.Sku, editor.Barcode, editor.PriceText));
+        Assert.Equal(ProductFields.Model, editor.FocusField);
+        Assert.Equal(("", "A B", "AB_12", "12,50"), (editor.Model, editor.Sku, editor.Barcode, editor.PiecePriceText));
     }
 
     [Fact]
@@ -95,10 +95,10 @@ public sealed class ProductEditorViewModelCreateTests : IDisposable
         Fill(editor, name: "");
         await editor.SaveCommand.ExecuteAsync(null);
 
-        editor.Name = "Café";
+        editor.Model = "Café";
         await editor.SaveCommand.ExecuteAsync(null);
 
-        Assert.Null(editor.NameError);
+        Assert.Null(editor.ModelError);
         Assert.Single(_host.Repository.All);
     }
 

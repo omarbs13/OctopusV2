@@ -1,7 +1,9 @@
+using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Pos.Application.Abstractions;
 using Pos.Application.Licensing;
+using Pos.Application.Products.MigrationSummary;
 using Pos.Application.Security;
 using Pos.Application.Security.GetSecuritySettings;
 using Pos.Application.Users;
@@ -11,7 +13,9 @@ using Pos.Application.Users.StartSession;
 using Pos.Desktop.Auth;
 using Pos.Desktop.Common;
 using Pos.Desktop.Inventory;
+using Pos.Desktop.Products;
 using Pos.Desktop.Resources;
+using Pos.Domain.Users;
 using Serilog;
 
 namespace Pos.Desktop.Shell;
@@ -225,6 +229,52 @@ public sealed partial class RootViewModel : ViewModelBase, ISessionActions, ISes
         // Alertas de existencia (022): primera revisión ya con la ventana principal; se detiene con el ámbito.
         scope.GetRequiredService<StockAlertMonitor>().Start();
         await ConfigureIdleLockAsync();
+        await ShowProductMigrationSummaryAsync(scope);
+    }
+
+    /// <summary>
+    /// 026: tras actualizar desde una versión anterior, el primer inicio de sesión muestra una sola vez el resumen
+    /// de la migración de productos, con acceso directo a los que quedaron "Para revisión".
+    /// </summary>
+    private async Task ShowProductMigrationSummaryAsync(SessionScope scope)
+    {
+        var (completed, result) = await _runner.RunQuietlyResultAsync(
+            "CargarResumenMigracionProductos",
+            () => _useCases.RunAsync<GetMigrationSummaryHandler, Result<MigrationSummaryDto?>>(
+                h => h.HandleAsync(CancellationToken.None)));
+        if (!completed || result is not { IsSuccess: true, Value: { } summary })
+        {
+            return;
+        }
+
+        var message = string.Format(
+            CultureInfo.CurrentCulture,
+            Strings.MigrationSummary_Message,
+            summary.Migrated,
+            summary.WithoutModel,
+            summary.WithoutPackaging,
+            summary.Duplicates);
+        var canView = scope.GetRequiredService<ICurrentPermissions>().Has(Permission.ViewProducts);
+        var openProducts = canView
+            ? await _dialogs.AskAsync(
+                Strings.MigrationSummary_Title, message, Strings.MigrationSummary_ViewProducts, Strings.MigrationSummary_Close)
+            : await ShowAndReturnFalseAsync(message);
+
+        await _runner.RunQuietlyResultAsync(
+            "MarcarResumenMigracionVisto",
+            () => _useCases.RunAsync<MarkMigrationSummaryShownHandler, Result>(
+                h => h.HandleAsync(CancellationToken.None)));
+
+        if (openProducts)
+        {
+            await scope.Main.Navigator.NavigateAsync(ProductsModule.PageId, new ProductsReviewFilter());
+        }
+    }
+
+    private async Task<bool> ShowAndReturnFalseAsync(string message)
+    {
+        await _dialogs.ShowMessageAsync(Strings.MigrationSummary_Title, message);
+        return false;
     }
 
     /// <summary>Lee el tiempo de inactividad configurado (15 minutos por defecto; 0 lo desactiva).</summary>

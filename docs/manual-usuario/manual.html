@@ -409,14 +409,29 @@ barras, unidad, precio, existencia y estado. Muestra 100 productos por página.<
 <h3>Datos generales <span class="numero">1</span></h3>
 <table class="tabla">
   <tr><th style="width:28%">Campo</th><th>Reglas</th></tr>
-  <tr><td>Nombre</td><td>Obligatorio. Es lo que aparece en el ticket.</td></tr>
-  <tr><td>SKU</td><td>Clave interna obligatoria y única.</td></tr>
+  <tr><td>Modelo</td><td>Obligatorio, hasta 150 caracteres (admite <code>&amp; - / ( )</code>). Junto con las medidas forma el nombre que aparece en el ticket.</td></tr>
+  <tr><td>SKU (opcional)</td><td>Clave interna única. Si lo deja vacío, el sistema genera uno.</td></tr>
   <tr><td>Código de barras (opcional)</td><td>De 1 a 48 caracteres: letras, números, espacios interiores y <code>- . $ / + %</code>. Se guarda en mayúsculas. No puede repetirse en otro producto. Puede escanearlo directamente en el campo.</td></tr>
-  <tr><td>Precio</td><td>Precio de venta. Ejemplo: <code>1234.50</code> o <code>1,234.50</code>.</td></tr>
-  <tr><td>Unidad de medida</td><td>Pieza, kilo, litro, etc. Las piezas solo admiten cantidades enteras; las unidades a granel admiten hasta 3 decimales.</td></tr>
+  <tr><td>Unidad de medida</td><td>Pieza, kilo, litro, caja, metro cuadrado, etc. Las piezas solo admiten cantidades enteras; las unidades a granel, la caja y el metro cuadrado admiten hasta 3 decimales. Con <b>Caja</b> o <b>Metro cuadrado</b> el producto es de <b>loseta</b>.</td></tr>
   <tr><td>Categoría</td><td>Opcional. Solo se ofrecen categorías activas. Con muchas opciones puede escribir para buscar.</td></tr>
   <tr><td>Activo</td><td>Un producto inactivo no se puede vender, pero conserva su historial.</td></tr>
 </table>
+<h3>Datos del proveedor <span class="numero">1b</span></h3>
+<table class="tabla">
+  <tr><th style="width:28%">Campo</th><th>Reglas</th></tr>
+  <tr><td>Proveedor</td><td>Opcional. Solo se ofrecen proveedores activos.</td></tr>
+  <tr><td>Marca</td><td>Opcional, hasta 100 caracteres. Se puede buscar y filtrar por marca.</td></tr>
+  <tr><td>Medidas</td><td>Opcional, hasta 49 caracteres (por ejemplo <code>33 X 33</code>, <code>120*240</code>). Se guarda como se escribe.</td></tr>
+  <tr><td>Embalaje (m² por caja)</td><td>Solo losetas. Hasta 3 decimales y mayor que 0 (<code>1.8</code> y <code>1.80</code> son lo mismo); escriba <code>NA</code> si no aplica.</td></tr>
+  <tr><td>Piezas por caja</td><td>Solo losetas. Entero mayor que 0.</td></tr>
+  <tr><td>Precio X M2 / Precio X CAJA</td><td>Solo losetas; capture al menos uno. Si falta uno y hay embalaje, el sistema lo calcula al vender. Bajo cada campo vacío aparece un precio <b>sugerido</b> con el botón <b>Usar</b>; no se llena solo. Si ambos están capturados y X CAJA difiere más del 2 % de X M2 × Embalaje, aparece una advertencia amarilla que no impide guardar.</td></tr>
+  <tr><td>Precio por pieza</td><td>Obligatorio si el producto no es de loseta (por ejemplo <code>1234.50</code>); opcional en losetas.</td></tr>
+</table>
+<div class="caja nota"><b class="t">Producto repetido</b>
+No puede haber dos productos con el mismo proveedor, modelo y medidas, sin importar mayúsculas, acentos,
+espacios ni la forma de escribir la «por» (<code>33 X 33</code> = <code>33x33</code>, <code>120*240</code> =
+<code>120X240</code>). El mensaje indica el producto que ya existe. Con otra medida o con otro proveedor sí
+se puede.</div>
 <h3>Imagen <span class="numero">2</span></h3>
 <p>Pulse <b>Seleccionar imagen…</b> y elija un archivo JPG, PNG o WEBP. El sistema la optimiza
 automáticamente. Use <b>Cambiar imagen…</b> o <b>Quitar imagen</b> para modificarla.</p>
@@ -434,6 +449,15 @@ pulse <b>Recargar</b> para ver los datos vigentes.</p>
 <div class="caja nota"><b class="t">Unidad e inventario bloqueados</b>
 Cuando un producto ya tiene movimientos de inventario, no se puede cambiar su unidad ni desactivar el
 control de inventario.</div>
+
+<h2 id="cat-revision">Productos «Para revisión» tras actualizar</h2>
+<p>Al actualizar desde una versión anterior, todos los productos se conservan: su nombre pasa a ser el
+<b>Modelo</b> y los de caja guardan su precio como <b>X CAJA</b>. En el primer inicio de sesión aparece, una sola vez,
+un resumen con los productos migrados, los que quedaron sin modelo, las losetas sin embalaje y los repetidos. Pulse
+<b>Ver productos para revisión</b> para abrir el listado filtrado. Los repetidos (mismo proveedor, modelo y medidas)
+quedan todos, con la insignia <b>Para revisión</b>; al editar uno de modo que ya no se repita, la marca se quita
+sola. En <span class="ruta">Catálogos → Productos</span> también puede filtrar por <b>Marca</b>, <b>Medida</b> y
+<b>Solo para revisión</b>, y buscar por modelo, medida (<code>60 x 60</code>), marca, SKU o código de barras.</p>
 
 <h2 id="cat-borrar">Desactivar o borrar un producto</h2>
 <p>Para dejar de vender un producto sin perder nada, desmarque <b>Activo</b>. <b>Borrar</b> lo quita del
@@ -725,6 +749,15 @@ Todas las acciones tienen tecla rápida y también un botón grande para pantall
 Si vende más de lo que hay, el sistema advierte «La existencia no alcanza para: …» y permite continuar. La
 existencia queda en negativo y el producto aparece «Sin existencia» en el inventario.</div>
 
+<h2 id="pdv-modalidad">Vender losetas por caja, metro cuadrado o pieza</h2>
+<p>Cada línea de un producto de loseta muestra botones <b>Caja</b>, <b>m²</b> y <b>Pieza</b> con las modalidades
+que tienen precio. La línea inicia con la unidad del producto; al cambiar de modalidad se toma el precio
+correspondiente (X CAJA, X M2 o precio por pieza; si falta uno se calcula con el embalaje) y la cantidad se ajusta
+a los decimales de la nueva unidad. Ejemplo: 3 cajas a $287.05 y 4.92 m² a $175.03 suman $861.15. Los productos
+que controlan inventario solo ofrecen las modalidades que se pueden convertir a su unidad (m² ÷ embalaje =
+cajas); la existencia siempre se descuenta en la unidad del producto y, al cancelar o devolver, regresa
+exactamente lo que salió.</p>
+
 <h2 id="pdv-cobrar">Cobrar</h2>
 <p>Pulse <kbd>F12</kbd> o <b>Cobrar (F12)</b>. Se abre la ventana <b>Cobro</b> con el total.</p>
 <figure class="captura" id="IMG-07-03" data-titulo="Ventana «Cobro»" data-wireframe="cobro">
@@ -1008,7 +1041,7 @@ esperado, contado, diferencia y %. Los turnos abiertos aparecen «En curso».</p
 <h2 id="rep-inventario">Reporte de inventario</h2>
 <div class="etiquetas"><span class="etq todos">Cajero y Administrador</span></div>
 <p><span class="ruta">Reportes → Inventario</span>: existencias <b>al cierre de una fecha</b>. Tarjetas de total de
-productos, activos, existencia baja y sin existencia; gráfica de distribución; tabla con existencia, mínimo, punto
+productos, activos, existencia baja y sin existencia; gráfica de distribución; tabla con modelo, medidas, embalaje, X M2, X CAJA (vacíos cuando no aplican), existencia, mínimo, punto
 de reorden, unidad, categoría y estado. Filtros por estado (incluye <b>En alerta</b> y <b>Urgente</b>), categoría y
 búsqueda. No muestra costos.</p>
 <figure class="captura" id="IMG-11-03" data-titulo="Reportes → Inventario">

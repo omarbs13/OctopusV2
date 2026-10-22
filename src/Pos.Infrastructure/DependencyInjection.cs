@@ -17,6 +17,7 @@ using Pos.Application.Reports;
 using Pos.Application.Returns;
 using Pos.Application.Reports.Export;
 using Pos.Application.Products;
+using Pos.Application.Products.MigrationSummary;
 using Pos.Application.Sales;
 using Pos.Application.Audit;
 using Pos.Application.Security;
@@ -91,6 +92,7 @@ public static class DependencyInjection
         services.AddScoped(sp => sp.GetRequiredService<IDbContextFactory<PosDbContext>>().CreateDbContext());
 
         services.AddScoped<IProductRepository, ProductRepository>();
+        services.AddScoped<IProductMigrationSummaryRepository, ProductMigrationSummaryRepository>();
         services.AddScoped<IBusinessProfileRepository, BusinessProfileRepository>();
         services.AddScoped<IInventoryRepository, InventoryRepository>();
         services.AddScoped<IStockAlertStore, StockAlertStore>();

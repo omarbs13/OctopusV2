@@ -193,7 +193,7 @@ public sealed partial class ConfirmSaleHandler
             : (await _inventory.GetStocksAsync(tracked, cancellationToken)).ToDictionary(s => s.Key, s => s.Value);
 
         var reviews = command.Lines
-            .Select(l => SaleReviewer.Review(l.ProductId, l.QuantityThousandths, products.GetValueOrDefault(l.ProductId), stocks, inventoryActive))
+            .Select(l => SaleReviewer.Review(l.ProductId, l.QuantityThousandths, products.GetValueOrDefault(l.ProductId), stocks, inventoryActive, l.Mode))
             .ToList();
         var changed = reviews.Zip(command.Lines).Any(x =>
             x.First.NotSellableReason is not null || x.First.CurrentPriceCents != x.Second.ExpectedUnitPriceCents);
@@ -229,7 +229,8 @@ public sealed partial class ConfirmSaleHandler
             command.Lines.Select(l =>
             {
                 var product = products[l.ProductId];
-                var unit = UnitOfMeasure.Find(product.UnitCode) ?? UnitOfMeasure.Default;
+                var mode = l.Mode ?? product.InitialMode;
+                var unit = UnitOfMeasure.Find(product.UnitCodeFor(mode)) ?? UnitOfMeasure.Default;
                 return new CartLine(
                     product.Id,
                     product.Name,
@@ -237,7 +238,7 @@ public sealed partial class ConfirmSaleHandler
                     unit.Code,
                     unit.DecimalPlaces,
                     product.TracksInventory,
-                    product.Price,
+                    Money.FromCents(product.PriceFor(mode) ?? 0),
                     Quantity.FromThousandths(l.QuantityThousandths));
             }));
 
@@ -335,8 +336,14 @@ public sealed partial class ConfirmSaleHandler
                     _inventory.AddStock(stock);
                 }
 
-                var unit = UnitOfMeasure.Find(line.UnitCode) ?? UnitOfMeasure.Default;
-                var movement = stock.RecordSale(line.Quantity, unit, folio);
+                // 026: el inventario está en la unidad del producto; lo vendido en otra modalidad se convierte
+                // con el embalaje (m² ÷ embalaje = cajas).
+                var product = products[line.ProductId];
+                var unit = UnitOfMeasure.Find(product.UnitCode) ?? UnitOfMeasure.Default;
+                var saleMode = SaleModes.FromUnitCode(line.UnitCode) ?? product.InitialMode;
+                var converted = product.ToProductUnitThousandths(saleMode, line.Quantity.Thousandths)
+                    ?? throw new DomainException("No se puede descontar del inventario: falta el embalaje del producto.");
+                var movement = stock.RecordSale(Quantity.FromThousandths(converted), unit, folio);
                 _inventory.AddMovement(movement);
                 movementId = movement.Id;
             }

@@ -3928,6 +3928,15 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Marca.
+        /// </summary>
+        public static string Editor_Brand {
+            get {
+                return ResourceManager.GetString("Editor_Brand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cambiar imagen….
         /// </summary>
         public static string Editor_ChangeImage {
@@ -3960,6 +3969,15 @@ namespace Pos.Desktop.Resources {
         public static string Editor_DuplicateBarcode {
             get {
                 return ResourceManager.GetString("Editor_DuplicateBarcode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Ya existe un producto con este proveedor, modelo y medidas: {0} (SKU {1})..
+        /// </summary>
+        public static string Editor_DuplicateIdentity {
+            get {
+                return ResourceManager.GetString("Editor_DuplicateIdentity", resourceCulture);
             }
         }
         
@@ -4036,6 +4054,24 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Medidas.
+        /// </summary>
+        public static string Editor_Measures {
+            get {
+                return ResourceManager.GetString("Editor_Measures", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Ejemplo: 33 X 33.
+        /// </summary>
+        public static string Editor_MeasuresHint {
+            get {
+                return ResourceManager.GetString("Editor_MeasuresHint", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Existencia mínima.
         /// </summary>
         public static string Editor_MinimumStock {
@@ -4050,6 +4086,15 @@ namespace Pos.Desktop.Resources {
         public static string Editor_MinimumStockHint {
             get {
                 return ResourceManager.GetString("Editor_MinimumStockHint", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Modelo.
+        /// </summary>
+        public static string Editor_Model {
+            get {
+                return ResourceManager.GetString("Editor_Model", resourceCulture);
             }
         }
         
@@ -4081,6 +4126,15 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Sin proveedor.
+        /// </summary>
+        public static string Editor_NoSupplier {
+            get {
+                return ResourceManager.GetString("Editor_NoSupplier", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to El producto ya no existe..
         /// </summary>
         public static string Editor_NotFound {
@@ -4099,6 +4153,42 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Embalaje (m² por caja).
+        /// </summary>
+        public static string Editor_Packaging {
+            get {
+                return ResourceManager.GetString("Editor_Packaging", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Ejemplo: 1.80, o NA si no aplica.
+        /// </summary>
+        public static string Editor_PackagingHint {
+            get {
+                return ResourceManager.GetString("Editor_PackagingHint", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Precio por pieza.
+        /// </summary>
+        public static string Editor_PiecePrice {
+            get {
+                return ResourceManager.GetString("Editor_PiecePrice", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Piezas por caja.
+        /// </summary>
+        public static string Editor_PiecesPerBox {
+            get {
+                return ResourceManager.GetString("Editor_PiecesPerBox", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Precio.
         /// </summary>
         public static string Editor_Price {
@@ -4113,6 +4203,24 @@ namespace Pos.Desktop.Resources {
         public static string Editor_PriceHint {
             get {
                 return ResourceManager.GetString("Editor_PriceHint", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Precio X CAJA.
+        /// </summary>
+        public static string Editor_PricePerBox {
+            get {
+                return ResourceManager.GetString("Editor_PricePerBox", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Precio X M2.
+        /// </summary>
+        public static string Editor_PricePerSqm {
+            get {
+                return ResourceManager.GetString("Editor_PricePerSqm", resourceCulture);
             }
         }
         
@@ -4189,6 +4297,42 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Opcional; si lo deja vacío se genera uno.
+        /// </summary>
+        public static string Editor_SkuHint {
+            get {
+                return ResourceManager.GetString("Editor_SkuHint", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Sugerido: ${0}.
+        /// </summary>
+        public static string Editor_Suggested {
+            get {
+                return ResourceManager.GetString("Editor_Suggested", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Proveedor.
+        /// </summary>
+        public static string Editor_Supplier {
+            get {
+                return ResourceManager.GetString("Editor_Supplier", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Datos del proveedor.
+        /// </summary>
+        public static string Editor_SupplierSection {
+            get {
+                return ResourceManager.GetString("Editor_SupplierSection", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Controla inventario.
         /// </summary>
         public static string Editor_TracksInventory {
@@ -4203,6 +4347,15 @@ namespace Pos.Desktop.Resources {
         public static string Editor_Unit {
             get {
                 return ResourceManager.GetString("Editor_Unit", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Usar.
+        /// </summary>
+        public static string Editor_UseSuggestion {
+            get {
+                return ResourceManager.GetString("Editor_UseSuggestion", resourceCulture);
             }
         }
         
@@ -4815,6 +4968,42 @@ namespace Pos.Desktop.Resources {
         public static string Menu_Toggle {
             get {
                 return ResourceManager.GetString("Menu_Toggle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cerrar.
+        /// </summary>
+        public static string MigrationSummary_Close {
+            get {
+                return ResourceManager.GetString("MigrationSummary_Close", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Se actualizaron {0} productos al nuevo formato de proveedor.\n\n• Sin modelo: {1}\n• Loseta sin embalaje: {2}\n• Repetidos marcados «Para revisión»: {3}\n\nRevise los productos marcados para completar sus datos..
+        /// </summary>
+        public static string MigrationSummary_Message {
+            get {
+                return ResourceManager.GetString("MigrationSummary_Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Productos actualizados.
+        /// </summary>
+        public static string MigrationSummary_Title {
+            get {
+                return ResourceManager.GetString("MigrationSummary_Title", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Ver productos para revisión.
+        /// </summary>
+        public static string MigrationSummary_ViewProducts {
+            get {
+                return ResourceManager.GetString("MigrationSummary_ViewProducts", resourceCulture);
             }
         }
         
@@ -6178,6 +6367,15 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Marca.
+        /// </summary>
+        public static string Products_ColBrand {
+            get {
+                return ResourceManager.GetString("Products_ColBrand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Imagen.
         /// </summary>
         public static string Products_ColImage {
@@ -6187,11 +6385,47 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Medidas.
+        /// </summary>
+        public static string Products_ColMeasures {
+            get {
+                return ResourceManager.GetString("Products_ColMeasures", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Modelo.
+        /// </summary>
+        public static string Products_ColModel {
+            get {
+                return ResourceManager.GetString("Products_ColModel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Nombre.
         /// </summary>
         public static string Products_ColName {
             get {
                 return ResourceManager.GetString("Products_ColName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to X CAJA.
+        /// </summary>
+        public static string Products_ColPerBox {
+            get {
+                return ResourceManager.GetString("Products_ColPerBox", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to X M2.
+        /// </summary>
+        public static string Products_ColPerSqm {
+            get {
+                return ResourceManager.GetString("Products_ColPerSqm", resourceCulture);
             }
         }
         
@@ -6295,6 +6529,33 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Todas.
+        /// </summary>
+        public static string Products_FilterAll {
+            get {
+                return ResourceManager.GetString("Products_FilterAll", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Marca.
+        /// </summary>
+        public static string Products_FilterBrand {
+            get {
+                return ResourceManager.GetString("Products_FilterBrand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Medida.
+        /// </summary>
+        public static string Products_FilterMeasures {
+            get {
+                return ResourceManager.GetString("Products_FilterMeasures", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Primera página (Alt+Inicio).
         /// </summary>
         public static string Products_FirstPage {
@@ -6318,6 +6579,15 @@ namespace Pos.Desktop.Resources {
         public static string Products_LastPage {
             get {
                 return ResourceManager.GetString("Products_LastPage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Para revisión.
+        /// </summary>
+        public static string Products_NeedsReview {
+            get {
+                return ResourceManager.GetString("Products_NeedsReview", resourceCulture);
             }
         }
         
@@ -6358,7 +6628,16 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Buscar por nombre, SKU o código de barras (Ctrl+F).
+        ///   Looks up a localized string similar to Solo para revisión.
+        /// </summary>
+        public static string Products_ReviewOnly {
+            get {
+                return ResourceManager.GetString("Products_ReviewOnly", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Buscar por modelo, medida, marca, SKU o código de barras (Ctrl+F).
         /// </summary>
         public static string Products_SearchPlaceholder {
             get {
@@ -7587,6 +7866,15 @@ namespace Pos.Desktop.Resources {
         public static string Reports_Inventory_ColOnHand {
             get {
                 return ResourceManager.GetString("Reports_Inventory_ColOnHand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Embalaje (m²/caja).
+        /// </summary>
+        public static string Reports_Inventory_ColPackaging {
+            get {
+                return ResourceManager.GetString("Reports_Inventory_ColPackaging", resourceCulture);
             }
         }
         
@@ -9171,6 +9459,33 @@ namespace Pos.Desktop.Resources {
         public static string Sale_LineInactive {
             get {
                 return ResourceManager.GetString("Sale_LineInactive", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Caja.
+        /// </summary>
+        public static string Sale_ModeBox {
+            get {
+                return ResourceManager.GetString("Sale_ModeBox", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Pieza.
+        /// </summary>
+        public static string Sale_ModePiece {
+            get {
+                return ResourceManager.GetString("Sale_ModePiece", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to m².
+        /// </summary>
+        public static string Sale_ModeSquareMeter {
+            get {
+                return ResourceManager.GetString("Sale_ModeSquareMeter", resourceCulture);
             }
         }
         
@@ -11182,7 +11497,7 @@ namespace Pos.Desktop.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Buscar por nombre, SKU o código de barras (Ctrl+F).
+        ///   Looks up a localized string similar to Buscar por modelo, medida, marca, SKU o código de barras (Ctrl+F).
         /// </summary>
         public static string Stock_SearchPlaceholder {
             get {

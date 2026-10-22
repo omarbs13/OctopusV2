@@ -75,7 +75,12 @@ public sealed class ProductPagingTests : IAsyncLifetime
     [Fact]
     public async Task NombresIguales_OrdenEstablePorSku()
     {
-        await SeedAsync(Enumerable.Range(1, 150).Select(i => P("Mismo nombre", $"S-{150 - i:000}")));
+        // El mismo modelo solo puede repetirse con proveedores distintos (026).
+        await SeedAsync(Enumerable.Range(1, 150).Select(i => Product.Create(
+            new ProductDetails("Mismo nombre", SupplierId: Guid.CreateVersion7(), PiecePriceCents: 100),
+            $"S-{150 - i:000}",
+            null,
+            "H87")));
 
         var first = await SearchAsync();
         var second = await SearchAsync(page: 2);

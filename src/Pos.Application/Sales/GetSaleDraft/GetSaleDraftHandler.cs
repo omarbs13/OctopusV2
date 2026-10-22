@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Pos.Application.Abstractions;
+using Pos.Domain.Products;
 using Pos.Application.Products;
 using Pos.Application.Users.Access;
 using Pos.Domain.Users;
@@ -58,18 +59,25 @@ public sealed partial class GetSaleDraftHandler
                 continue;
             }
 
+            // 026: la modalidad guardada; los borradores anteriores (sin modalidad) o una modalidad que el producto
+            // ya no ofrece usan la de su unidad y el precio vigente.
             var dto = SaleProductMapping.ToDto(product, stock: null);
+            var mode = line.Mode is { } saved && (saved == product.InitialMode || product.AvailableModes.Contains(saved))
+                ? saved
+                : product.InitialMode;
+            var unit = UnitOfMeasure.Find(product.UnitCodeFor(mode)) ?? UnitOfMeasure.Default;
             lines.Add(new RecoveredLineDto(
                 product.Id,
                 product.Name,
                 product.Sku,
-                dto.UnitCode,
-                dto.DecimalPlaces,
+                unit.Code,
+                unit.DecimalPlaces,
                 product.TracksInventory,
-                product.Price.Cents,
+                product.PriceFor(mode) ?? 0,
                 line.QuantityThousandths,
                 dto.NotSellableReason,
-                line.Discount));
+                line.Discount,
+                dto.Tile));
         }
 
         if (lines.Count == 0)

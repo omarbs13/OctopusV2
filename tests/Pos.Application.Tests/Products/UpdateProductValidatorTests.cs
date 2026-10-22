@@ -9,7 +9,7 @@ public class UpdateProductValidatorTests
     private static readonly UpdateProductValidator Validator = new();
 
     private static UpdateProductCommand Valid() =>
-        new(Guid.CreateVersion7(), 1, "Café Molido", "CAF-001", null, "89.50", "KGM", IsActive: true);
+        new(Guid.CreateVersion7(), 1, "Café Molido", "CAF-001", null, "KGM", IsActive: true, PiecePriceText: "89.50");
 
     private static IEnumerable<(string Field, string Message)> Errors(UpdateProductCommand command) =>
         Validator.Validate(command).Errors.Select(e => (e.PropertyName, e.ErrorMessage));
@@ -28,7 +28,7 @@ public class UpdateProductValidatorTests
     [InlineData("0", ProductMessages.PriceNotPositive)]
     public void PrecioInvalido_MismosMensajesQueElAlta(string price, string message)
     {
-        Assert.Equal([(ProductFields.Price, message)], Errors(Valid() with { PriceText = price }));
+        Assert.Equal([(ProductFields.Price, message)], Errors(Valid() with { PiecePriceText = price }));
     }
 
     [Fact]
@@ -40,8 +40,8 @@ public class UpdateProductValidatorTests
     [Fact]
     public void ObligatoriosVacios_CadaUnoEnSuCampo()
     {
-        var fields = Errors(Valid() with { Name = "", Sku = "", PriceText = "", UnitCode = "" }).Select(e => e.Field);
+        var fields = Errors(Valid() with { Model = "", Sku = "A B", PiecePriceText = "", UnitCode = "" }).Select(e => e.Field);
 
-        Assert.Equal([ProductFields.Name, ProductFields.Sku, ProductFields.Price, ProductFields.UnitCode], fields);
+        Assert.Equal([ProductFields.Model, ProductFields.Sku, ProductFields.Price, ProductFields.UnitCode], fields);
     }
 }

@@ -34,6 +34,16 @@ public sealed class InventoryRepository : IInventoryRepository
         return stocks.ToDictionary(s => s.ProductId);
     }
 
+    public async Task<IReadOnlyDictionary<Guid, long>> GetMovementQuantitiesAsync(
+        IReadOnlyCollection<Guid> movementIds,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(movementIds);
+        return await _context.InventoryMovements.AsNoTracking()
+            .Where(m => movementIds.Contains(m.Id))
+            .ToDictionaryAsync(m => m.Id, m => m.QuantityThousandths, cancellationToken);
+    }
+
     public Task<bool> HasMovementsAsync(Guid productId, CancellationToken cancellationToken) =>
         _context.ProductStocks.AnyAsync(s => s.ProductId == productId, cancellationToken);
 

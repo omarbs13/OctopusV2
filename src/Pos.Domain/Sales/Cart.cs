@@ -1,5 +1,6 @@
 using Pos.Domain.Common;
 using Pos.Domain.Discounts;
+using Pos.Domain.Products;
 
 namespace Pos.Domain.Sales;
 
@@ -150,7 +151,8 @@ public sealed class Cart
                 product.DecimalPlaces,
                 product.TracksInventory,
                 product.UnitPrice,
-                added);
+                added,
+                Tile: product.Tile);
             Replace(-1, line);
             return;
         }
@@ -159,6 +161,41 @@ public sealed class Cart
         var sum = checked(current.Quantity.Thousandths + added.Thousandths);
         ValidateQuantity(QuantityFrom(sum), current.DecimalPlaces);
         Replace(index, current with { Quantity = QuantityFrom(sum) });
+    }
+
+    /// <summary>
+    /// Cambia la modalidad de venta de una línea de loseta (026): toma el precio y los decimales de la nueva
+    /// unidad y conserva la cantidad, ajustada a esos decimales con la mitad hacia arriba (mínimo uno). Si falla,
+    /// la línea no cambia.
+    /// </summary>
+    public void SetMode(Guid productId, SaleMode mode)
+    {
+        var index = _lines.FindIndex(l => l.ProductId == productId);
+        if (index < 0)
+        {
+            throw new DomainException("El producto no está en la venta.");
+        }
+
+        var current = _lines[index];
+        if (current.Tile is not { } tile || !tile.AvailableModes.Contains(mode) || tile.PriceFor(mode) is not { } price)
+        {
+            throw new DomainException("El producto no se vende en esa modalidad.");
+        }
+
+        var unitCode = mode.UnitCode();
+        var decimalPlaces = UnitOfMeasure.Find(unitCode)?.DecimalPlaces ?? 0;
+        var quantity = current.Quantity.FitsDecimals(decimalPlaces)
+            ? current.Quantity
+            : AdjustToDecimals(current.Quantity, decimalPlaces);
+        ValidateQuantity(quantity, decimalPlaces);
+        Replace(index, current with { UnitCode = unitCode, DecimalPlaces = decimalPlaces, UnitPrice = price, Quantity = quantity });
+    }
+
+    private static Quantity AdjustToDecimals(Quantity quantity, int decimalPlaces)
+    {
+        var step = (long)Math.Pow(10, 3 - Math.Clamp(decimalPlaces, 0, 3));
+        var rounded = (quantity.Thousandths + (step / 2)) / step * step;
+        return QuantityFrom(Math.Max(rounded, step));
     }
 
     /// <summary>Cambia la cantidad de una línea; si falla, conserva el valor anterior.</summary>

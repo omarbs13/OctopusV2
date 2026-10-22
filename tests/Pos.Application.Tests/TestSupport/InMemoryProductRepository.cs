@@ -95,6 +95,21 @@ public sealed class InMemoryProductRepository : IProductRepository
         return Task.FromResult(_stored.Values.Any(p => !p.IsDeleted && (p.Sku == sku || (barcode != null && p.Barcode == barcode))));
     }
 
+    public Task<ProductFilterOptions> GetFilterOptionsAsync(CancellationToken cancellationToken)
+    {
+        var visible = _stored.Values.Where(p => !p.IsDeleted).ToList();
+        return Task.FromResult(new ProductFilterOptions(
+            [.. visible.Where(p => p.Brand is not null).Select(p => p.Brand!).Distinct().Order()],
+            [.. visible.Where(p => p.Measures is not null).Select(p => p.Measures!).Distinct().Order()]));
+    }
+
+    public Task<Product?> FindByIdentityAsync(string identityKey, Guid? excludingId, CancellationToken cancellationToken)
+    {
+        ThrowIfFailing();
+        return Task.FromResult(_stored.Values.FirstOrDefault(
+            p => !p.IsDeleted && p.IdentityKey == identityKey && (excludingId == null || p.Id != excludingId)));
+    }
+
     public Task<ProductPage> SearchAsync(ProductSearch search, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(search);
@@ -110,12 +125,19 @@ public sealed class InMemoryProductRepository : IProductRepository
                 p.Name,
                 p.Sku,
                 p.Barcode,
-                p.Price.Cents,
                 p.UnitCode,
                 UnitOfMeasure.All.Single(u => u.Code == p.UnitCode).Name,
                 p.IsActive,
                 p.Version,
-                p.Image?.Thumbnail))
+                p.Image?.Thumbnail,
+                Model: p.Model,
+                Measures: p.Measures,
+                Brand: p.Brand,
+                PackagingThousandths: p.PackagingThousandths,
+                PricePerSqmCents: p.PricePerSqmCents,
+                PricePerBoxCents: p.PricePerBoxCents,
+                PiecePriceCents: p.PiecePriceCents,
+                NeedsReview: p.NeedsReview))
             .ToList();
         return Task.FromResult(new ProductPage(items, matches.Count, page, search.PageSize));
     }

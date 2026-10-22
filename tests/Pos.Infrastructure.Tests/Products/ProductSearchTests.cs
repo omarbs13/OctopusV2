@@ -142,4 +142,101 @@ public sealed class ProductSearchTests : IAsyncLifetime
         Assert.Equal(0, result.TotalCount);
         Assert.Equal(1, result.TotalPages);
     }
+
+    // --- 026: modelo, medidas y marca ---------------------------------------------------------------------------
+
+    private static Product Tile(string model, string? measures, string sku, string? brand = null, bool review = false)
+    {
+        var product = Product.Create(
+            new ProductDetails(model, measures, brand, PricePerSqmCents: 17503, PricePerBoxCents: 28705, PackagingThousandths: 1640),
+            sku,
+            null,
+            "XBX");
+        if (review)
+        {
+            product.MarkForReview();
+        }
+
+        return product;
+    }
+
+    private async Task<ProductPage> SearchQueryAsync(SearchProductsQuery query)
+    {
+        await using var context = _db.CreateDbContext();
+        return (await new SearchProductsHandler(new AllowAllAccessControl(), new ProductRepository(context)).HandleAsync(query, Ct)).Value;
+    }
+
+    [Fact]
+    public async Task ModeloEncuentraTodasLasMedidas()
+    {
+        await SeedAsync(
+            Tile("FORT WOOD", "18X60", "FW-1"),
+            Tile("Fort Wood", "20X90", "FW-2"),
+            Tile("FORT WOOD", "30X60", "FW-3"),
+            Tile("Otro", "18X60", "OT-1"));
+
+        var result = await SearchAsync("fort wood");
+
+        Assert.Equal(["FW-1", "FW-2", "FW-3"], result.Items.Select(i => i.Sku).Order());
+    }
+
+    [Fact]
+    public async Task TextoConFormaDeMedida_ComparaConLaMedidaNormalizada()
+    {
+        await SeedAsync(Tile("Piedra", "60X60", "P-1"), Tile("Piedra", "30X60", "P-2"), Tile("Otro", "33 X 33", "O-1"));
+
+        Assert.Equal(["P-1"], (await SearchAsync("60 x 60")).Items.Select(i => i.Sku));
+        Assert.Equal(["P-1"], (await SearchAsync("60*60")).Items.Select(i => i.Sku));
+        Assert.Equal(["O-1"], (await SearchAsync("33x33")).Items.Select(i => i.Sku));
+    }
+
+    [Fact]
+    public async Task MarcaSinAcentosNiMayusculas_EncuentraElProducto()
+    {
+        await SeedAsync(Tile("Piedra", "60X60", "P-1", brand: "Cerámica Ñandú"), Tile("Otro", "60X60", "O-1", brand: "Otra"));
+
+        var result = await SearchAsync("ceramica");
+
+        Assert.Equal(["P-1"], result.Items.Select(i => i.Sku));
+    }
+
+    [Fact]
+    public async Task Filtros_MarcaMedidaYParaRevision()
+    {
+        await SeedAsync(
+            Tile("Piedra", "60X60", "P-1", brand: "Alfa"),
+            Tile("Piedra", "30X60", "P-2", brand: "Alfa", review: true),
+            Tile("Madera", "60 x 60", "M-1", brand: "Beta"));
+
+        Assert.Equal(["P-1", "P-2"], (await SearchQueryAsync(new SearchProductsQuery(null, false, Brand: "alfa"))).Items.Select(i => i.Sku).Order());
+        Assert.Equal(["M-1", "P-1"], (await SearchQueryAsync(new SearchProductsQuery(null, false, Measures: "60X60"))).Items.Select(i => i.Sku).Order());
+        Assert.Equal(["P-2"], (await SearchQueryAsync(new SearchProductsQuery(null, false, NeedsReviewOnly: true))).Items.Select(i => i.Sku));
+        Assert.Equal(["P-1"], (await SearchQueryAsync(new SearchProductsQuery(null, false, Brand: "Alfa", Measures: "60X60"))).Items.Select(i => i.Sku));
+    }
+
+    [Fact]
+    public async Task OpcionesDeFiltro_SonLasMarcasYMedidasDistintas()
+    {
+        await SeedAsync(
+            Tile("Piedra", "60X60", "P-1", brand: "Alfa"),
+            Tile("Piedra B", "60 x 60", "P-2", brand: "ALFA"),
+            Tile("Madera", "30X60", "M-1", brand: "Beta"),
+            P("Café", "CAF-1"));
+        await using var context = _db.CreateDbContext();
+
+        var options = await new ProductRepository(context).GetFilterOptionsAsync(Ct);
+
+        Assert.Equal(2, options.Brands.Count);
+        Assert.Equal(2, options.Measures.Count);
+    }
+
+    [Fact]
+    public async Task ListadoTrae_ModeloMedidasMarcaYPrecios()
+    {
+        await SeedAsync(Tile("Piedra", "60X60", "P-1", brand: "Alfa"));
+
+        var item = Assert.Single((await SearchAsync(null)).Items);
+
+        Assert.Equal(("Piedra", "60X60", "Alfa", 17503L, 28705L, 28705L), (item.Model, item.Measures, item.Brand, item.PricePerSqmCents, item.PricePerBoxCents, item.PriceCents));
+    }
 }

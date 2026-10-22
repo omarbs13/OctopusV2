@@ -5,8 +5,8 @@ using Pos.Application.Audit;
 using Pos.Application.Categories;
 using Pos.Application.Inventory;
 using Pos.Application.Licensing;
+using Pos.Application.Suppliers;
 using Pos.Domain.Audit;
-using Pos.Domain.Common;
 using Pos.Domain.Licensing;
 using Pos.Domain.Products;
 using Pos.Application.Users.Access;
@@ -27,6 +27,7 @@ public sealed partial class UpdateProductHandler
     private readonly IInventoryRepository _inventory;
     private readonly IWriteTransactions _transactions;
     private readonly ICategoryRepository _categories;
+    private readonly ISupplierRepository _suppliers;
     private readonly IAuditLog _audit;
     private readonly ILogger<UpdateProductHandler> _logger;
     private readonly ILicenseState? _license;
@@ -38,6 +39,7 @@ public sealed partial class UpdateProductHandler
         IInventoryRepository inventory,
         IWriteTransactions transactions,
         ICategoryRepository categories,
+        ISupplierRepository suppliers,
         IAuditLog audit,
         ILogger<UpdateProductHandler> logger,
         ILicenseState? license = null)
@@ -49,6 +51,7 @@ public sealed partial class UpdateProductHandler
         _inventory = inventory;
         _transactions = transactions;
         _categories = categories;
+        _suppliers = suppliers;
         _audit = audit;
         _logger = logger;
     }
@@ -118,8 +121,29 @@ public sealed partial class UpdateProductHandler
             return Result.Failure<ProductDto>(new CategoryNotAssignable());
         }
 
+        // Un proveedor nuevo debe estar activo; el que ya tenía se conserva aunque esté inactivo.
+        var supplier = command.SupplierId is { } supplierId ? await _suppliers.GetAsync(supplierId, cancellationToken) : null;
+        if (command.SupplierId is { } chosenSupplier && chosenSupplier != product.SupplierId && supplier is not { IsActive: true })
+        {
+            return Result.Failure<ProductDto>(
+                new ValidationFailed([new FieldError(ProductFields.Supplier, ProductMessages.SupplierNotAssignable)]));
+        }
+
         var sku = Product.NormalizeSku(command.Sku);
+        if (sku.Length == 0)
+        {
+            sku = product.Sku;
+        }
+
         var barcode = Product.NormalizeBarcode(command.Barcode);
+
+        var supplierData = ProductSupplierInput.Parse(command);
+        var details = supplierData.ToDetails(command);
+        var identityKey = ProductText.BuildIdentityKey(details.SupplierId, details.Model, details.Measures);
+        if (await _products.FindByIdentityAsync(identityKey, product.Id, cancellationToken) is { } existing)
+        {
+            return Result.Failure<ProductDto>(new Duplicate(ProductFields.Identity, existing.Id, existing.Name, existing.Sku));
+        }
 
         if (await _products.SkuExistsAsync(sku, product.Id, cancellationToken))
         {
@@ -136,17 +160,19 @@ public sealed partial class UpdateProductHandler
             ? category
             : product.CategoryId is { } previousId ? await _categories.GetAsync(previousId, cancellationToken) : null;
         var hadImage = imageChanges ? product.Image is not null : await _products.HasImageAsync(product.Id, cancellationToken);
-        var before = ProductAuditFields.Snapshot(product, previousCategory?.Name, hadImage);
+        var previousSupplier = product.SupplierId == command.SupplierId
+            ? supplier
+            : product.SupplierId is { } previousSupplierId ? await _suppliers.GetAsync(previousSupplierId, cancellationToken) : null;
+        var before = ProductAuditFields.Snapshot(product, previousCategory?.Name, hadImage, previousSupplier?.Name);
 
-        var price = Money.Parse(command.PriceText).Value!.Value;
         var minimum = ProductRules.ParseMinimum(command.TracksInventory, command.MinimumStockText, command.UnitCode)?.Value;
         var reorderPoint = ProductRules.ParseReorderPoint(command.TracksInventory, command.ReorderPointText, command.UnitCode)?.Value;
         product.Update(
-            command.Name, sku, barcode, price, command.UnitCode, command.IsActive, command.TracksInventory, minimum, hasMovements, categoryId, reorderPoint);
+            details, sku, barcode, command.UnitCode, command.IsActive, command.TracksInventory, minimum, hasMovements, categoryId, reorderPoint);
         ProductImages.Apply(product, command.Image);
 
         var hasImage = imageChanges ? product.Image is not null : hadImage;
-        var changes = AuditChanges.Compare(before, ProductAuditFields.Snapshot(product, category?.Name, hasImage)).ToList();
+        var changes = AuditChanges.Compare(before, ProductAuditFields.Snapshot(product, category?.Name, hasImage, supplier?.Name)).ToList();
         if (command.Image is ProductImageChange.Replace && hadImage)
         {
             // La instantánea no distingue un reemplazo: antes y después valen "Con imagen".
@@ -166,7 +192,7 @@ public sealed partial class UpdateProductHandler
 
         return outcome.Status switch
         {
-            SaveStatus.Saved => Result.Success(product.ToDto(stock, category)),
+            SaveStatus.Saved => Result.Success(product.ToDto(stock, category, supplierData.Warnings())),
             SaveStatus.Duplicate => Result.Failure<ProductDto>(new Duplicate(outcome.DuplicateField!)),
             _ => Result.Failure<ProductDto>(new Conflict()),
         };

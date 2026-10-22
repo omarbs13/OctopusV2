@@ -33,6 +33,11 @@ public sealed class ProductRepository : IProductRepository
             p => p.DeletedAt == null && p.Sku == sku && (excludingId == null || p.Id != excludingId),
             cancellationToken);
 
+    public Task<Product?> FindByIdentityAsync(string identityKey, Guid? excludingId, CancellationToken cancellationToken) =>
+        _context.Products.AsNoTracking().FirstOrDefaultAsync(
+            p => p.DeletedAt == null && p.IdentityKey == identityKey && (excludingId == null || p.Id != excludingId),
+            cancellationToken);
+
     public Task<bool> BarcodeExistsAsync(string barcode, Guid? excludingId, CancellationToken cancellationToken) =>
         _context.Products.AnyAsync(
             p => p.DeletedAt == null && p.Barcode == barcode && (excludingId == null || p.Id != excludingId),
@@ -71,7 +76,6 @@ public sealed class ProductRepository : IProductRepository
                     p.Name,
                     p.Sku,
                     p.Barcode,
-                    p.Price.Cents,
                     p.UnitCode,
                     u.Name,
                     p.IsActive,
@@ -81,7 +85,15 @@ public sealed class ProductRepository : IProductRepository
                     p.TracksInventory ? (s == null ? 0L : s.OnHandThousandths) : null,
                     u.DecimalPlaces,
                     c == null ? null : c.Name,
-                    c == null || c.IsActive))
+                    c == null || c.IsActive,
+                    p.Model,
+                    p.Measures,
+                    p.Brand,
+                    p.PackagingThousandths,
+                    p.PricePerSqmCents,
+                    p.PricePerBoxCents,
+                    p.PiecePriceCents,
+                    p.NeedsReview))
             .Skip((page - 1) * search.PageSize)
             .Take(search.PageSize)
             .ToListAsync(cancellationToken);
@@ -135,7 +147,8 @@ public sealed class ProductRepository : IProductRepository
     {
         ArgumentNullException.ThrowIfNull(nameText);
         var products = _context.Products.AsNoTracking().Where(p => p.DeletedAt == null);
-        products = ProductTextFilter.Apply(products, nameText, nameText.ToUpperInvariant(), nameText, barcodeExact: false);
+        products = ProductTextFilter.Apply(
+            products, nameText, nameText.ToUpperInvariant(), nameText, barcodeExact: false, ProductText.LooksLikeMeasures(nameText) ? ProductText.NormalizeMeasures(nameText) : null);
         return await products
             .OrderByDescending(p => p.IsActive)
             .ThenBy(p => p.NameSearch)
@@ -157,6 +170,24 @@ public sealed class ProductRepository : IProductRepository
         }
 
         return await products.ToListAsync(cancellationToken);
+    }
+
+    public async Task<ProductFilterOptions> GetFilterOptionsAsync(CancellationToken cancellationToken)
+    {
+        var visible = _context.Products.AsNoTracking().Where(p => p.DeletedAt == null);
+        var brands = await visible
+            .Where(p => p.BrandSearch != null)
+            .GroupBy(p => p.BrandSearch)
+            .Select(g => g.Min(p => p.Brand)!)
+            .OrderBy(b => b)
+            .ToListAsync(cancellationToken);
+        var measures = await visible
+            .Where(p => p.MeasuresKey != null)
+            .GroupBy(p => p.MeasuresKey)
+            .Select(g => g.Min(p => p.Measures)!)
+            .OrderBy(m => m)
+            .ToListAsync(cancellationToken);
+        return new ProductFilterOptions(brands, measures);
     }
 
     public void Add(Product product) => _context.Products.Add(product);
@@ -207,12 +238,28 @@ public sealed class ProductRepository : IProductRepository
             query = query.Where(p => p.IsActive);
         }
 
-        query = ProductTextFilter.Apply(query, search.NameText, search.SkuText, search.BarcodeText, search.BarcodeExact);
+        query = ProductTextFilter.Apply(query, search.NameText, search.SkuText, search.BarcodeText, search.BarcodeExact, search.MeasuresKey);
+        if (search.Brand is { } brand)
+        {
+            query = query.Where(p => p.BrandSearch == brand);
+        }
+
+        if (search.Measures is { } measures)
+        {
+            query = query.Where(p => p.MeasuresKey == measures);
+        }
+
+        if (search.NeedsReviewOnly)
+        {
+            query = query.Where(p => p.NeedsReview);
+        }
 
         return query.WhereCategory(search.Category);
     }
 
     /// <summary>SQLite indica en el mensaje la columna del índice violado: "UNIQUE constraint failed: Products.Sku".</summary>
     private static string DuplicateField(string message) =>
-        message.Contains("Products.Barcode", StringComparison.Ordinal) ? ProductFields.Barcode : ProductFields.Sku;
+        message.Contains("Products.Barcode", StringComparison.Ordinal) ? ProductFields.Barcode
+        : message.Contains("Products.IdentityKey", StringComparison.Ordinal) ? ProductFields.Identity
+        : ProductFields.Sku;
 }

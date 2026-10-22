@@ -3,7 +3,10 @@ using Pos.Domain.Products;
 
 namespace Pos.Infrastructure.Products;
 
-/// <summary>Filtro de texto de productos (nombre, SKU y código de barras), compartido por Productos y Existencias.</summary>
+/// <summary>
+/// Filtro de texto de productos (nombre, marca, medidas, SKU y código de barras), compartido por Productos y
+/// Existencias.
+/// </summary>
 internal static class ProductTextFilter
 {
     /// <summary>Carácter de escape para LIKE.</summary>
@@ -14,7 +17,8 @@ internal static class ProductTextFilter
         string? nameText,
         string? skuText,
         string? barcodeText,
-        bool barcodeExact)
+        bool barcodeExact,
+        string? measuresKey = null)
     {
         if (nameText is null)
         {
@@ -25,14 +29,20 @@ internal static class ProductTextFilter
         var skuPattern = LikeContains(skuText ?? nameText);
         var barcode = barcodeText ?? nameText;
         var barcodePattern = LikeContains(barcode);
+        var hasMeasures = measuresKey is not null;
+        var measuresPattern = LikeContains(measuresKey ?? string.Empty);
 
         return barcodeExact
             ? query.Where(p =>
                 EF.Functions.Like(p.NameSearch, namePattern, LikeEscape)
+                || EF.Functions.Like(p.BrandSearch, namePattern, LikeEscape)
+                || (hasMeasures && EF.Functions.Like(p.MeasuresKey, measuresPattern, LikeEscape))
                 || EF.Functions.Like(p.Sku, skuPattern, LikeEscape)
                 || p.Barcode == barcode)
             : query.Where(p =>
                 EF.Functions.Like(p.NameSearch, namePattern, LikeEscape)
+                || EF.Functions.Like(p.BrandSearch, namePattern, LikeEscape)
+                || (hasMeasures && EF.Functions.Like(p.MeasuresKey, measuresPattern, LikeEscape))
                 || EF.Functions.Like(p.Sku, skuPattern, LikeEscape)
                 || EF.Functions.Like(p.Barcode, barcodePattern, LikeEscape));
     }

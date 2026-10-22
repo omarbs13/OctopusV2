@@ -132,4 +132,31 @@ public sealed class InventoryReportReaderTests
         var e = await ProductAsync(db, "INV-E", 25);
         await MoveAsync(db, e, MovementType.Initial, "7", 25);
     }
+
+    [Fact]
+    public async Task TraeModeloMedidasEmbalajeYPreciosDeLoseta_SinCambiarLosConteos()
+    {
+        using var db = await TestDb.CreateAsync();
+        var tile = Product.Create(
+            new ProductDetails("Piedra", "33 X 33", PackagingThousandths: 1640, PricePerSqmCents: 17503, PricePerBoxCents: 28705),
+            "TILE-R",
+            null,
+            "XBX",
+            tracksInventory: true);
+        await using (var context = db.CreateDbContext())
+        {
+            context.Products.Add(tile);
+            await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        db.Clock.UtcNow = Utc(10);
+        await SalesTestSupport.StockAsync(db, tile, "3");
+
+        var report = await GetAsync(db, EndOf(30), new InventoryReportQuery(new DateOnly(2026, 9, 30)));
+
+        var row = Assert.Single(report.Rows);
+        Assert.Equal(("Piedra", "33 X 33", 1640L, 17503L, 28705L), (row.Model, row.Measures, row.PackagingThousandths, row.PricePerSqmCents, row.PricePerBoxCents));
+        Assert.Equal(3_000, row.OnHandThousandths);
+        Assert.Equal(1, report.Counts.Total);
+    }
 }

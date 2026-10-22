@@ -29,7 +29,8 @@ public sealed record SaleProductDto(
     int DecimalPlaces,
     bool TracksInventory,
     long? OnHandThousandths,
-    NotSellableReason? NotSellableReason);
+    NotSellableReason? NotSellableReason,
+    TileSaleInfo? Tile = null);
 
 /// <summary>
 /// Resultado de buscar para vender. <see cref="Format"/> solo se llena con <see cref="LookupKind.None"/>
@@ -61,7 +62,12 @@ public sealed record DraftOrderDiscountDto(string Kind, DiscountMode? Mode = nul
 }
 
 /// <summary>Línea del borrador tal como se guarda: producto, cantidad, precio que vio el operador y su descuento (015).</summary>
-public sealed record DraftLineDto(Guid ProductId, long QuantityThousandths, long UnitPriceCents, DraftDiscountDto? Discount = null);
+public sealed record DraftLineDto(
+    Guid ProductId,
+    long QuantityThousandths,
+    long UnitPriceCents,
+    DraftDiscountDto? Discount = null,
+    SaleMode? Mode = null);
 
 public sealed record StoredDraft(Guid DraftId, IReadOnlyList<DraftLineDto> Lines, DraftOrderDiscountDto? OrderDiscount = null);
 
@@ -76,7 +82,8 @@ public sealed record RecoveredLineDto(
     long CurrentPriceCents,
     long QuantityThousandths,
     NotSellableReason? NotSellableReason,
-    DraftDiscountDto? Discount = null);
+    DraftDiscountDto? Discount = null,
+    TileSaleInfo? Tile = null);
 
 /// <summary>
 /// Venta conservada. Sus descuentos se conservan aunque el módulo Descuentos ya no esté activo: son partes
